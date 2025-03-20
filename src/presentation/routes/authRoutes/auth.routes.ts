@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express'
-import asyncMiddleware from '../../../utils/tryCatch'
-import { validateRequest } from '../../../middleware/validateRequest'
+
 import {
   loginSchema,
   UserSchema,
@@ -13,6 +12,7 @@ import {
 import { AuthService } from '../../../application/useCases/Auth'
 import { UserRepository } from '../../../infrastructure/repositories/UserRepository'
 import { AuthController } from '../../../presentation/controllers/Auth.controller'
+import { asyncMiddleware, validateRequest } from '../index.t'
 
 const userRepository = new UserRepository()
 const service = new AuthService(userRepository)

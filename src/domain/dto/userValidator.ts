@@ -53,3 +53,23 @@ export const loginSchema = z.object({
 export const verifyMfaSchema = z.object({
   otp: z.string().length(6, "OTP must be 6 digits")
 });
+
+export const updatePasswordSchema = z.object({
+  oldPassword: z.string().min(8, "Password must be at least 8 characters long"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one digit")
+    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+});
+
+export const updateProfileSchema = z.object({
+  first_name: z.string().min(2, "Firstname must have at least 2 characters").optional(),
+  last_name: z.string().min(2, "Lastname must have at least 2 characters").optional(),
+  email: z.string().email("Invalid email format").optional(),
+  phone_number: z.string().min(10, "Phone number must have at least 10 digits").optional(),
+  profile: z.string().optional(),
+  image: z.string().url("Invalid image URL").optional(),
+
+});

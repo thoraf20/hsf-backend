@@ -11,3 +11,8 @@ export type loginType = {
 export type veriftOtpType =  {
     otp: string
 }
+
+export type resetPassword = {
+     oldPassword :  string 
+     newPassword:  string
+}

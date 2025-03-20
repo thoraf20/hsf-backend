@@ -1,21 +1,35 @@
-import { Request, Response, NextFunction } from 'express'
+import { Request} from 'express'
+import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
+interface AuthRequest extends Request {
+  user?: any;
+}
 
-export const authMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const token = req.headers.authorization?.split(' ')[1]
-  if (!token) return res.status(401).json({ error: 'Unauthorized' })
+const authenticate = (req: AuthRequest, res, next,) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '');
+
+  if (!token) {
+    return res.status(401).json({
+      ok: false,
+      status: StatusCodes.UNAUTHORIZED,
+      message: 'Access denied. No token provided.',
+    });
+  }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      userId: string
-    }
-    req.user = { id: decoded.userId }
-    next()
-  } catch {
-    return res.status(401).json({ error: 'Invalid token' })
+    const secret = process.env.SECRET_TOKEN!;
+    const decoded = jwt.verify(token, secret);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    res.status(StatusCodes.FORBIDDEN).json({
+      ok: false,
+      status: StatusCodes.FORBIDDEN,
+      message: 'Invalid token.',
+    });
   }
-}
+};
+
+export { authenticate, AuthRequest };
+
+ 

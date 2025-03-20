@@ -9,6 +9,8 @@ import helmet from 'helmet'
 import { StatusCodes } from 'http-status-codes'
 import IndexRouters from '../presentation/routes/index'
 import '../infrastructure/cache/redisClient'
+// import { Admin } from '../application/useCases/Admin'
+// import { UserRepository } from '../infrastructure/repositories/UserRepository'
 const app: Application = express()
 
 app.use(cors())
@@ -18,6 +20,18 @@ app.use(helmet())
 app.use(morgan('combined'))
 app.use(morgan('dev'))
 
+// const userRepo = new UserRepository
+// const create_admin = new Admin(userRepo)
+
+// create_admin.createAdmin({
+//   first_name: "Admin",
+//   last_name: "Admin",
+//   email : process.env.ADMIN_EMAIL,
+//   phone_number: process.env.ADMIN_PHONE,
+//   password: process.env.ADMIN_PASS,
+//   role_id: Number(process.env.ADMIN_ROLEID),
+//   is_email_verified:  true
+// })
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ message:  "✅ Sever is ready and ok", ip: `Application was connected  from ${req.ip}`, url : req.originalUrl, statusCode: StatusCodes.OK})
 })

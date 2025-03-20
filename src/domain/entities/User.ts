@@ -1,5 +1,7 @@
 // Import the Role enum
 
+import { Role } from "../../domain/enums/rolesEmun";
+
 export class User {
   id?: string;
   first_name: string;
@@ -11,10 +13,12 @@ export class User {
   password: string;
   image?: string;
   user_agent?: string;
-  failed_login_attempts: number;
+  role?: Role;
+  failed_login_attempts?: number;
   is_email_verified?: boolean;
   is_phone_verified?: boolean;
   is_mfa_enabled?: boolean;
+  is_default_password?: boolean
   constructor(data: User) {
     this.id = data.id;
     this.first_name = data.first_name;
@@ -30,5 +34,9 @@ export class User {
     this.is_email_verified = data.is_email_verified ?? false;
     this.is_phone_verified = data.is_phone_verified ?? false;
     this.is_mfa_enabled = data.is_mfa_enabled ?? false;
+    this.role = data.role
+    this.is_default_password = data.is_default_password
   }
 }
+
+
