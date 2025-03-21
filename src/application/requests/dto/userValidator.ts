@@ -34,7 +34,6 @@ export const RequestPasswordResetOtpSchema = z.object({
 })
 
 export const ResetPasswordOtpSchema = z.object({
-  email: z.string().email("Invalid email format"),
   newPassword: z.string()
     .min(8, "Password must be at least 8 characters long")
     .regex(/[A-Z]/, "Password must contain at least one uppercase letter")

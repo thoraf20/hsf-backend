@@ -6,6 +6,7 @@ export interface IPropertyRepository {
   createProperty(property: PropertyDetails): Promise<PropertyDetails>
   findPropertyById(id: string): Promise<PropertyDetails | null>
   findAddressById(id: string): Promise<PropertyAddress | null>
+  findPropertiesByUserId(user_id: string): Promise<PropertyDetails[]>
   updateProperty(id: string, property: Record<string, any>): Promise<PropertyDetails | null>
   updateAddress(id: string, address: Record<string, any>): Promise<PropertyAddress | null>
   findPropertiesByCity(city: string): Promise<PropertyDetails[]>

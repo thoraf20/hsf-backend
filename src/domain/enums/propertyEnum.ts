@@ -16,3 +16,8 @@ export enum PropertyFeatureEnum {
     SAUNA = 'Sauna',
     FAMILYROOM = 'Family Room',
 }
+
+export enum DocumentTypeEnum  {
+    LEGAL_REPORT = 'Legal Report',
+    VERIFICATION_REPORT = 'Verification Report',
+}

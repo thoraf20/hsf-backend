@@ -1,13 +1,13 @@
 import { IUserRepository } from '../../domain/interfaces/IUserRepository'
 import { User } from '../../domain/entities/User'
-import { Hashing } from '../../utils/hashing'
+import { Hashing } from '../../shared/utils/hashing'
 import { ApplicationCustomError } from '../../middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { RedisClient } from '../../infrastructure/cache/redisClient'
-import { generateRandomSixNumbers } from '../../utils/helpers'
+import { generateRandomSixNumbers } from '../../shared/utils/helpers'
 import { OtpEnum } from '../../domain/enums/otpEnum'
 import { CacheEnumKeys } from '../../domain/enums/cacheEnum'
-import { loginType, ResetPasswordType } from '../../domain/types/userType'
+import { loginType, ResetPasswordType } from '../../shared/types/userType'
 import { ExistingUsers } from './duplicate'
 
 export class AuthService {
@@ -47,39 +47,38 @@ export class AuthService {
    */
 
   async verifyAccount(otp: string): Promise<void> {
-    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`;
-    const details = await this.client.getKey(key);
-  
+    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
+    const details = await this.client.getKey(key)
+
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
-        'Invalid or expired OTP.'
-      );
+        'Invalid or expired OTP.',
+      )
     }
-  
-    const { id, type } = typeof details === 'string' ? JSON.parse(details) : details;
+
+    const { id, type } =
+      typeof details === 'string' ? JSON.parse(details) : details
     console.log(details)
-  
+
     if (type !== OtpEnum.EMAIL_VERIFICATION) {
-      await this.client.deleteKey(key);
+      await this.client.deleteKey(key)
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
-        'Invalid OTP type.'
-      );
+        'Invalid OTP type.',
+      )
     }
-  
-    const user = await this.userRepository.findById(id);
-    if (!user) {
-      await this.client.deleteKey(key); 
-      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.');
-    }
-  
-    await this.userRepository.update(id, { is_email_verified: true });
-  
 
-    await this.client.deleteKey(key);
+    const user = await this.userRepository.findById(id)
+    if (!user) {
+      await this.client.deleteKey(key)
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.')
+    }
+
+    await this.userRepository.update(id, { is_email_verified: true })
+
+    await this.client.deleteKey(key)
   }
-  
 
   async resendOtp(email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(email)
@@ -125,7 +124,7 @@ export class AuthService {
   async resetPassword(input: ResetPasswordType): Promise<void> {
     const key = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.otp}`
     const details = await this.client.getKey(key)
-
+    console.log("Here")
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -148,19 +147,20 @@ export class AuthService {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.')
     }
 
-    user.password = await this.userRepository.hashedPassword(input.newPassword)
-    await this.userRepository.update(id, user)
+    const newpassword = await this.userRepository.hashedPassword(input.newPassword)
+    await this.userRepository.update(id, {password: newpassword})
     await this.client.deleteKey(key)
-    
   }
 
   /**
    * Login user and return JWT token
    */
   async login(
-    input: loginType
+    input: loginType,
   ): Promise<{ token: string; user: Record<string, any> } | never> {
-    let user = await this.userRepository.findByIdentifier(input.identifier) as any
+    let user = (await this.userRepository.findByIdentifier(
+      input.identifier,
+    )) as any
 
     if (!user) {
       throw new ApplicationCustomError(
@@ -179,7 +179,10 @@ export class AuthService {
       )
     }
 
-    const isValid = await this.userRepository.comparedPassword(input.password, user.password)
+    const isValid = await this.userRepository.comparedPassword(
+      input.password,
+      user.password,
+    )
 
     if (!isValid) {
       const failedLoginAttempts = (user.failed_login_attempts || 0) + 1
@@ -209,9 +212,12 @@ export class AuthService {
     if (user.failed_login_attempts > 0) {
       await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
-    if(user.is_email_verified === false){
+    if (user.is_email_verified === false) {
       await this.resendOtp(user.email)
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, 'Please verify your email, An otp is sent to your email')
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Please verify your email, An otp is sent to your email',
+      )
     }
 
     // Generate token
@@ -221,37 +227,34 @@ export class AuthService {
     return { token, ...user }
   }
 
+  /**
+   * Verify MFA OTP
+   */
+  async verifyMfa(otp: string): Promise<boolean> {
+    const key = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${otp}`
+    const details = await this.client.getKey(key)
 
-/**
- * Verify MFA OTP
- */
-async verifyMfa(otp: string): Promise<boolean> {
-  const key = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${otp}`;
-  const details = await this.client.getKey(key);
+    if (!details) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid or expired OTP.',
+      )
+    }
 
-  if (!details) {
-    throw new ApplicationCustomError(
-      StatusCodes.BAD_REQUEST,
-      'Invalid or expired OTP.' 
-    );
+    const { id, type } =
+      typeof details === 'string' ? JSON.parse(details) : details
+    const findUserById = await this.userRepository.findById(id)
+
+    if (type !== OtpEnum.MFA_VERIFICATION || !findUserById) {
+      await this.client.deleteKey(key)
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid OTP type or user mismatch.',
+      )
+    }
+
+    await this.userRepository.update(id, { is_mfa_enabled: true })
+    await this.client.deleteKey(key)
+    return true
   }
-
-  const { id, type } = typeof details === 'string' ? JSON.parse(details) : details;
-  const findUserById = await this.userRepository.findById(id);
-
-  if (type !== OtpEnum.MFA_VERIFICATION || !findUserById) {
-    await this.client.deleteKey(key);
-    throw new ApplicationCustomError(
-      StatusCodes.BAD_REQUEST,
-      'Invalid OTP type or user mismatch.'
-    );
-  }
-
-  await this.userRepository.update(id, { is_mfa_enabled: true });
-  await this.client.deleteKey(key);
-  return  true
 }
-
-}
-
-

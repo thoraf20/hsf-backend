@@ -12,12 +12,14 @@ export async function up(knex: Knex): Promise<void> {
         table.integer('numbers_of_bedroom').notNullable();
         table.integer('numbers_of_bathroom').notNullable();
         table.string('property_condition').notNullable();
-        table.specificType('financial_options', 'text ARRAY').notNullable();
+        table.specificType('financial_types', 'text ARRAY').notNullable();
         table.specificType('property_feature', 'text ARRAY').notNullable();
         table.specificType('property_images', 'text ARRAY').notNullable();
         table.uuid("property_address_id").references("id").inTable("property_address").onDelete("CASCADE");
         table.index(["property_name", "property_type"], "idx_property_name_type");
         table.index(["property_price"], "idx_property_price");
+        table.jsonb('documents');
+        table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.boolean('is_sold').defaultTo(false);
         table.timestamps(true, true);
     })

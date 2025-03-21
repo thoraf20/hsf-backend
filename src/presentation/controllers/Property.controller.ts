@@ -9,8 +9,8 @@ export class PropertyController {
 
     constructor(private readonly propertyService: PropertyService) {}
 
-    public async createProperty(input: PropertyAddress & PropertyDetails): Promise<ApiResponse<any>> {
-        const property = await this.propertyService.createProperty(input)
+    public async createProperty(input: PropertyAddress & PropertyDetails, user_id: string): Promise<ApiResponse<any>> {
+        const property = await this.propertyService.createProperty(input, user_id)
         return createResponse(
             StatusCodes.CREATED,
             'Property created successfully',
@@ -23,6 +23,24 @@ export class PropertyController {
             StatusCodes.OK,
             'Properties fetched successfully',
             properties
+        )
+    }
+
+    public async getPropertyByUserId(user_id: string): Promise<ApiResponse<any>> {
+        const properties = await this.propertyService.getPropertyByUserId(user_id)
+        return createResponse(
+            StatusCodes.OK,
+            'Properties fetched successfully',
+            properties
+        )
+    }
+
+    async getPropertyById(id: string): Promise<ApiResponse<any>> {
+        const property = await this.propertyService.getPropertyById(id)
+        return createResponse(
+            StatusCodes.OK,
+            'Property fetched successfully',
+            property
         )
     }
 }

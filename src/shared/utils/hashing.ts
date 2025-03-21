@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
-import configs from '../config/config'
+import configs from '../../config/config'
 import Jwt from 'jsonwebtoken'
 
 const secret = process.env.SECRET_TOKEN as string | 'theSecretofDoom'

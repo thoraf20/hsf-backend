@@ -1,9 +1,9 @@
-import db from '../database/knex'
-import { IPropertyRepository } from '../../domain/interfaces/IPropertyRepository'
+import db from '../../database/knex'
+import { IPropertyRepository } from '../../../domain/interfaces/IPropertyRepository'
 import {
   PropertyDetails,
   PropertyAddress,
-} from '../../domain/entities/Property'
+} from '../../../domain/entities/Property'
 
 export class PropertyRepository implements IPropertyRepository {
   async createAddress(address: PropertyAddress): Promise<PropertyAddress> {
@@ -30,7 +30,6 @@ export class PropertyRepository implements IPropertyRepository {
         'property_address.id',
       )
       .select('property_details.*', 'property_address.*')
-     
 
     if (filters) {
       if (filters.city) {
@@ -60,15 +59,14 @@ export class PropertyRepository implements IPropertyRepository {
             )
           }
           if (filters.limit) {
-            query = query.limit(filters.limit);
-            }
-            if (filters.offset) {
-            query = query.offset(filters.offset);
-            }
-          
+            query = query.limit(filters.limit)
+          }
+          if (filters.offset) {
+            query = query.offset(filters.offset)
+          }
         }
 
-        const properties = await query;
+        const properties = await query
         return properties.map((property) => new PropertyDetails(property))
       }
     }
@@ -76,9 +74,17 @@ export class PropertyRepository implements IPropertyRepository {
     return query
   }
 
-
   async findPropertyById(id: string): Promise<PropertyDetails | null> {
-    const property = await db('property_details').where({ id }).first()
+    const property = await db('property_address')
+    .leftJoin(
+      'property_details',
+      'property_address.id',
+      '=',
+      'property_details.property_address_id',
+    )
+    .select('property_details.*', 'property_address.*')
+    .where('property_address.id', id)
+    .first()
     return property ? new PropertyDetails(property) : null
   }
 
@@ -140,5 +146,59 @@ export class PropertyRepository implements IPropertyRepository {
       .select('*')
 
     return properties.map((property) => new PropertyDetails(property))
+  }
+
+  async findPropertiesByUserId(user_id: string, filters?: Record<string, any>,): Promise<PropertyDetails[]> {
+    let query = db('property_details')
+    .join(
+      'property_address',
+      'property_details.property_address_id',
+      '=',
+      'property_address.id',
+    )
+    .select('property_details.*', 'property_address.*')
+    .where('property_details.user_id', user_id)
+
+  if (filters) {
+    if (filters.city) {
+      query = query.where('property_address.city', filters.city)
+    }
+    if (filters.minPrice && filters.maxPrice) {
+      query = query.whereBetween('property_details.property_price', [
+        filters.minPrice,
+        filters.maxPrice,
+      ])
+    }
+    if (filters.propertyName) {
+      if (filters) {
+        if (filters.city) {
+          query = query.where('property_address.city', filters.city)
+        }
+        if (filters.minPrice && filters.maxPrice) {
+          query = query.whereBetween('property_details.property_price', [
+            filters.minPrice,
+            filters.maxPrice,
+          ])
+        }
+        if (filters.propertyName) {
+          query = query.where(
+            'property_details.property_name',
+            filters.propertyName,
+          )
+        }
+        if (filters.limit) {
+          query = query.limit(filters.limit)
+        }
+        if (filters.offset) {
+          query = query.offset(filters.offset)
+        }
+      }
+
+      const properties = await query
+      return properties.map((property) => new PropertyDetails(property))
+    }
+  }
+
+  return query
   }
 }

@@ -8,9 +8,9 @@ import {
   RequestPasswordResetOtpSchema,
   ResetPasswordOtpSchema,
   verifyMfaSchema,
-} from '../../../domain/dto/userValidator'
+} from '../../../application/requests/dto/userValidator'
 import { AuthService } from '../../../application/useCases/Auth'
-import { UserRepository } from '../../../infrastructure/repositories/UserRepository'
+import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
 import { AuthController } from '../../../presentation/controllers/Auth.controller'
 import { asyncMiddleware, validateRequest } from '../index.t'
 

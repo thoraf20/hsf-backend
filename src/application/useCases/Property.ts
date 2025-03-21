@@ -13,7 +13,7 @@ export class PropertyService {
   }
 
   async createProperty(
-    input: PropertyAddress & PropertyDetails,
+    input: PropertyAddress & PropertyDetails, user_id : string
   ): Promise<PropertyAddress | PropertyDetails> {
     const findIfPropartyExist =
       await this.propertyRepository.findPropertiesName(input.property_name)
@@ -42,9 +42,11 @@ export class PropertyService {
       numbers_of_bedroom: input.numbers_of_bedroom,
       numbers_of_bathroom: input.numbers_of_bathroom,
       property_condition: input.property_condition,
-      financial_options: input.financial_options,
+      financial_types: JSON.stringify(input.financial_types),
       property_feature: input.property_feature,
       property_images: input.property_images,
+      documents: JSON.stringify(input.documents),
+      user_id,
     })
 
     return { ...address, ...properties_details }
@@ -65,4 +67,14 @@ export class PropertyService {
     }
     return fetchProperty
   }
+
+  public async getPropertyByUserId(user_id: string): Promise<Array<PropertyAddress | PropertyDetails>> {
+    const fetchProperty = await this.propertyRepository.findPropertiesByUserId(user_id)
+    return fetchProperty
+  }
+
+
+
 }
+
+
