@@ -1,16 +1,18 @@
-import { PropertyDetails, PropertyAddress } from '../../domain/entities/Property'
+import { Properties } from '../../domain/entities/Property'
 
 
 export interface IPropertyRepository {
-  createAddress(address: PropertyAddress): Promise<PropertyAddress>
-  createProperty(property: PropertyDetails): Promise<PropertyDetails>
-  findPropertyById(id: string): Promise<PropertyDetails | null>
-  findAddressById(id: string): Promise<PropertyAddress | null>
-  findPropertiesByUserId(user_id: string): Promise<PropertyDetails[]>
-  updateProperty(id: string, property: Record<string, any>): Promise<PropertyDetails | null>
-  updateAddress(id: string, address: Record<string, any>): Promise<PropertyAddress | null>
-  findPropertiesByCity(city: string): Promise<PropertyDetails[]>
-  findPropertiesByPriceRange(min: number, max: number): Promise<PropertyDetails[]>
-  findPropertiesName(property_name: string): Promise<PropertyDetails[]>
-  getAllProperties(filters?: Record<string, any>): Promise<PropertyDetails[]>
+  createProperties(address: Properties): Promise<Properties>
+  findPropertyById(id: string): Promise<Properties | null>
+  findPropertiesByUserId(user_id: string): Promise<Properties[]>
+  updateProperty(id: string, property: Record<string, any>): Promise<Properties | null>
+  findPropertiesByPriceRange(min: number, max: number): Promise<Properties[]>
+  findPropertiesName(property_name: string): Promise<Properties>
+  getAllProperties(filters?: Record<string, any>): Promise<Properties[]>
+  softDeleteProperty(id: string): Promise<boolean>
+  deleteProperty(id: string): Promise<boolean>
+  addWatchlistProperty(property_id: string, user_id: string): Promise<boolean>
+  getWatchlistProperty(user_id: string): Promise<Properties[]>
+  getIfWatchListPropertyIsAdded (property_id: string, user_id: string): Promise<Properties | null>
+  removeWatchList (property_id: string, user_id: string): Promise<boolean>
 }

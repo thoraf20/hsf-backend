@@ -1,15 +1,10 @@
 import { Router } from 'express'
-import authRoutes from './authRoutes/auth.routes'
-import propertyRoute from './property/property.routes'
-import adminRoute from './admin/admin.routes'
-import userRoutes from './userRoutes/user.routes'
-import { authenticate } from './index.t'
+import routes from './index.routes'
+
 
 const IndexRouters: Router = Router()
 
-IndexRouters.use('/auth', authRoutes)
-IndexRouters.use('/property', propertyRoute)
-IndexRouters.use('/admin', authenticate, adminRoute)
-IndexRouters.use('/user', authenticate, userRoutes)
+IndexRouters.use('/', routes)
+
 
 export default IndexRouters

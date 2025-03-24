@@ -1,80 +1,98 @@
-import { ApplicationCustomError } from '../../middleware/errors/customError'
 import {
-  PropertyAddress,
-  PropertyDetails,
+  Properties,
 } from '../../domain/entities/Property'
 import { IPropertyRepository } from '../../domain/interfaces/IPropertyRepository'
-import { StatusCodes } from 'http-status-codes'
+import { PropertyBaseUtils } from './utils'
 
 export class PropertyService {
   private propertyRepository: IPropertyRepository
+  private readonly utilsProperty: PropertyBaseUtils
   constructor(propertyRepository: IPropertyRepository) {
     this.propertyRepository = propertyRepository
+    this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
   async createProperty(
-    input: PropertyAddress & PropertyDetails, user_id : string
-  ): Promise<PropertyAddress | PropertyDetails> {
-    const findIfPropartyExist =
-      await this.propertyRepository.findPropertiesName(input.property_name)
-    if (findIfPropartyExist.length > 0) {
-      throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'Property already exist',
-      )
-    }
-    const address = await this.propertyRepository.createAddress({
-      street_address: input.street_address,
-      city: input.city,
-      unit_number: input.unit_number,
-      postal_code: input.postal_code,
-      landmark: input.landmark,
-      state: input.state,
-    })
-
-    const properties_details = await this.propertyRepository.createProperty({
-      property_name: input.property_name,
-      property_address_id: address.id,
-      property_type: input.property_type,
-      property_size: input.property_size,
-      property_price: input.property_price,
-      property_description: input.property_description,
-      numbers_of_bedroom: input.numbers_of_bedroom,
-      numbers_of_bathroom: input.numbers_of_bathroom,
-      property_condition: input.property_condition,
-      financial_types: JSON.stringify(input.financial_types),
-      property_feature: input.property_feature,
-      property_images: input.property_images,
+    input: Properties, user_id : string
+  ): Promise<Properties> {
+      await this.utilsProperty.findIfPropertyExistByName(input.property_name)
+  
+    const address = await this.propertyRepository.createProperties({
+      ...input,
       documents: JSON.stringify(input.documents),
-      user_id,
+      user_id
     })
-
-    return { ...address, ...properties_details }
+    return { ...address}
   }
 
-  public async getAllProperties(): Promise<Array<PropertyAddress | PropertyDetails>> {
+  public async getAllProperties(): Promise<Array<Properties>> {
     const fetchProperties = await this.propertyRepository.getAllProperties()
     return fetchProperties
   }
 
-  public async getPropertyById(id: string): Promise<PropertyAddress | PropertyDetails> {
-    const fetchProperty = await this.propertyRepository.findPropertyById(id)
-    if (!fetchProperty) {
-      throw new ApplicationCustomError(
-        StatusCodes.NOT_FOUND,
-        'Property not found',
-      )
-    }
+  public async getPropertyById(id: string): Promise<Properties> {
+    const fetchProperty =   await this.utilsProperty.findIfPropertyExist(id)
     return fetchProperty
   }
 
-  public async getPropertyByUserId(user_id: string): Promise<Array<PropertyAddress | PropertyDetails>> {
+  public async getPropertyByUserId(user_id: string): Promise<Array<Properties>> {
     const fetchProperty = await this.propertyRepository.findPropertiesByUserId(user_id)
     return fetchProperty
   }
 
+  public async updateProperty(
+    id: string,
+    input: Partial<Properties>
+  ): Promise<Properties> {
+    const existingProperty = await this.utilsProperty.findIfPropertyExist(id);
+  
+    if (input.property_name) {
+      await this.utilsProperty.findIfPropertyExistByName(input.property_name);
+    }
+  
+    const updateData = Object.fromEntries(
+      Object.entries({
+        ...input,
+        financial_types: input.financial_types ? JSON.stringify(input.financial_types) : undefined,
+        documents: input.documents ? JSON.stringify(input.documents) : undefined,
+      }).filter(([_, v]) => v !== undefined) // Remove undefined values
+    );
+  
+    if (Object.keys(updateData).length > 0) {
+      await this.propertyRepository.updateProperty(id, updateData);
+    }
+  
+    return { ...existingProperty, ...updateData };
+  }
+  
+ public async deleteProperty(id: string): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyExist(id)
+    return this.propertyRepository.deleteProperty(id)
+  }
 
 
+  public async softDeleteProperty(id: string): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyExist(id)
+    return await this.propertyRepository.softDeleteProperty(id)
+  }
+
+
+  public async addWatchlistProperty(property_id: string, user_id: string): Promise<boolean> {
+    await Promise.all ([
+      this.utilsProperty.findIfPropertyExist(property_id),
+      this.utilsProperty.findIfWatchListIsAdded(property_id, user_id)
+    ])
+    return await this.propertyRepository.addWatchlistProperty(property_id, user_id)
+  }
+
+  public async getWatchlistProperty(user_id: string): Promise<Array<Properties>> {
+    return await this.propertyRepository.getWatchlistProperty(user_id)
+  }
+
+  public async removePropertyWatchList(property_id: string, user_id: string): Promise<boolean>  {
+      await this.utilsProperty.findIfPropertyExist(property_id)
+     return await this.propertyRepository.removeWatchList(property_id, user_id)
+  }
 }
 
 

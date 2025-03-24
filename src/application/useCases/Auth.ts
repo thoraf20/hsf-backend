@@ -8,7 +8,8 @@ import { generateRandomSixNumbers } from '../../shared/utils/helpers'
 import { OtpEnum } from '../../domain/enums/otpEnum'
 import { CacheEnumKeys } from '../../domain/enums/cacheEnum'
 import { loginType, ResetPasswordType } from '../../shared/types/userType'
-import { ExistingUsers } from './duplicate'
+import { ExistingUsers } from './utils'
+import { EmailService } from './Email'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -28,6 +29,7 @@ export class AuthService {
    * Register a new user
    */
   async register(input: User): Promise<User> {
+ 
     await this.existingUsers.beforeCreate(input.email, input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const user = await this.userRepository.create(
@@ -38,6 +40,13 @@ export class AuthService {
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
+   EmailService.sendEmail("registration", {
+      recipient: input.email,
+      subject: "Welcome to YourApp – Verify Your Email",
+      html: `<p>Your OTP is: <strong>${otp}</strong></p>`, // Direct HTML
+      type: "registration",
+    });
+
     delete user.password
     return user
   }
@@ -124,7 +133,7 @@ export class AuthService {
   async resetPassword(input: ResetPasswordType): Promise<void> {
     const key = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.otp}`
     const details = await this.client.getKey(key)
-    console.log("Here")
+    console.log('Here')
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -147,8 +156,10 @@ export class AuthService {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.')
     }
 
-    const newpassword = await this.userRepository.hashedPassword(input.newPassword)
-    await this.userRepository.update(id, {password: newpassword})
+    const newpassword = await this.userRepository.hashedPassword(
+      input.newPassword,
+    )
+    await this.userRepository.update(id, { password: newpassword })
     await this.client.deleteKey(key)
   }
 

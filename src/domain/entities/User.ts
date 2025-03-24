@@ -19,22 +19,11 @@ export class User {
   is_phone_verified?: boolean
   is_mfa_enabled?: boolean
   is_default_password?: boolean
-  constructor(data: User) {
-    this.id = data.id
-    this.first_name = data.first_name
-    this.last_name = data.last_name
-    this.email = data.email
-    this.phone_number = data.phone_number
-    this.profile = data.profile
-    this.role_id = data.role_id ?? 0
-    this.password = data.password
-    this.image = data.image
-    this.user_agent = data.user_agent
-    this.failed_login_attempts = data.failed_login_attempts ?? 0
-    this.is_email_verified = data.is_email_verified ?? false
-    this.is_phone_verified = data.is_phone_verified ?? false
-    this.is_mfa_enabled = data.is_mfa_enabled ?? false
-    this.role = data.role
-    this.is_default_password = data.is_default_password
-  }
+  constructor(data: Partial<User>) {
+    Object.assign(this, {
+        created_at: new Date(),
+        updated_at: new Date(),
+        ...data
+    });
+}
 }

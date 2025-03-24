@@ -1,7 +1,7 @@
 import { IUserRepository } from '.../../../domain/interfaces/IUserRepository'
 import { User } from '../../domain/entities/User'
 import { RedisClient } from '../../infrastructure/cache/redisClient'
-import { ExistingUsers } from './duplicate'
+import { ExistingUsers } from './utils'
 import { ApplicationCustomError } from '../../middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import {

@@ -16,9 +16,10 @@ export class UserService {
   }
 
   public async update(input: User, id: string): Promise<void> {
+    const user = await this.userRepository.findById(id)
     const [existedEmail, existedPhone] = await Promise.all([
       input.email
-        ? this.userRepository.findByPhone(input.email)
+        ? this.userRepository.findByEmail(input.email)
         : Promise.resolve(null),
       input.phone_number
         ? this.userRepository.findByPhone(input.phone_number)
@@ -29,7 +30,7 @@ export class UserService {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Email already exists',
-      )
+      ) 
     }
 
     if (existedPhone && existedPhone.id !== id) {
@@ -40,6 +41,19 @@ export class UserService {
     }
 
     if (input.email) {
+      if(!input.password) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          'Password is required for email update',
+        )
+      }
+      const validPassword = await this.userRepository.comparedPassword(input.password, user.password)
+      if(!validPassword) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          'Password is incorrect',
+        )
+      }
       const token = generateRandomSixNumbers()
       console.log(token)
       const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
