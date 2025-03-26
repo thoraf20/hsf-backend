@@ -9,7 +9,8 @@ import { OtpEnum } from '../../domain/enums/otpEnum'
 import { CacheEnumKeys } from '../../domain/enums/cacheEnum'
 import { loginType, ResetPasswordType } from '../../shared/types/userType'
 import { ExistingUsers } from './utils'
-import { EmailService } from './Email'
+import { Role } from '../../domain/enums/rolesEmun'
+import emailTemplates  from '../../infrastructure/email/template/constant'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -27,26 +28,22 @@ export class AuthService {
 
   /**
    * Register a new user
-   */
+   */ 
   async register(input: User): Promise<User> {
  
     await this.existingUsers.beforeCreate(input.email, input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
-    const user = await this.userRepository.create(
-      new User({ ...input, role_id: 1 }),
+    const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
+    let user = await this.userRepository.create(
+      new User({ ...input, role_id: findRole.id }),
     )
     const otp = generateRandomSixNumbers()
-    console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
-   EmailService.sendEmail("registration", {
-      recipient: input.email,
-      subject: "Welcome to YourApp – Verify Your Email",
-      html: `<p>Your OTP is: <strong>${otp}</strong></p>`, // Direct HTML
-      type: "registration",
-    });
-
+    emailTemplates.welcomeEmail(input.email, `${input.first_name} ${input.last_name}`)
+    emailTemplates.emailVerificationEmail(input.email, otp.toString())
+    user = await this.userRepository.findById(user.id)
     delete user.password
     return user
   }
@@ -108,6 +105,7 @@ export class AuthService {
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
+    emailTemplates.emailVerificationEmail(email, otp.toString())
   }
 
   /**
@@ -269,3 +267,5 @@ export class AuthService {
     return true
   }
 }
+
+

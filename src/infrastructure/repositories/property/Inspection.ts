@@ -1,6 +1,8 @@
+import { Properties } from "../../../domain/entities/Property";
 import { Inspection } from "../../../domain/entities/Inspection";
 import { IInspectionRepository } from "../../../domain/interfaces/IInspectionRepository";
 import db from '../../database/knex'
+
 
 
 export class InspectionRepository implements IInspectionRepository {
@@ -21,4 +23,31 @@ export class InspectionRepository implements IInspectionRepository {
           .first();
       return foundInspection ? new Inspection(foundInspection) : null;
   }
+
+//   async getAllScheduleInspection(filter?: Record<string, any>): Promise<Inspection & Properties | void> {
+//              const properties
+//   }
+
+async getScheduleInspection(user_id: string): Promise<(Inspection & Properties)[]> {
+    const inspections = await db("inspection")
+        .select(
+            "inspection.id as inspection_id",
+            "inspection.*",
+            "properties.id as property_id",
+            "properties.*",  // Ensure this matches the actual column name
+            "inspection.inspection_date",
+            "users.id as user_id"
+        )
+        .join("properties", "inspection.property_id", "properties.id")
+        .join("users", "inspection.user_id", "users.id")
+        .where("inspection.user_id", user_id);
+
+    return inspections.map((inspection) => ({
+        ...new Inspection(inspection),  // Ensure `Inspection` constructor accepts this format
+        ...new Properties(inspection), // Ensure `Properties` constructor accepts this format
+    }));
+}
+
+
+
 }

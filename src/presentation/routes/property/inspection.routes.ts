@@ -18,5 +18,11 @@ inspectionRoutes.post('/property/schedule', authenticate, isHomeBuyer, validateR
 }))
 
 
+inspectionRoutes.get('/fetch-all', authenticate, isHomeBuyer,  asyncMiddleware(async (req, res) => {
+       const {user} = req 
+       const inspection = await inspectionController.getScheduleInspection(user.id)
+       res.status(inspection.statusCode).json(inspection)
+}))
+
 
 export default inspectionRoutes

@@ -1,3 +1,4 @@
+import { Properties } from "../../domain/entities/Property";
 import { Inspection } from "../../domain/entities/Inspection";
 
 
@@ -5,5 +6,7 @@ import { Inspection } from "../../domain/entities/Inspection";
 export interface IInspectionRepository {
     createInpection (input: Inspection): Promise<Inspection>
     getAlreadySchedulesInspection (property_id: string, user_id: string) : Promise<Inspection> 
+    getScheduleInspection (user_id: string): Promise<Inspection[] & Properties[]> 
+    // getAllScheduleInspection (filter: Record<string, any>): Promise<Inspection & Properties> 
 
 }

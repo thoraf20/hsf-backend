@@ -30,7 +30,7 @@ export class UserService {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Email already exists',
-      ) 
+      )
     }
 
     if (existedPhone && existedPhone.id !== id) {
@@ -41,14 +41,17 @@ export class UserService {
     }
 
     if (input.email) {
-      if(!input.password) {
+      if (!input.password) {
         throw new ApplicationCustomError(
           StatusCodes.BAD_REQUEST,
           'Password is required for email update',
         )
       }
-      const validPassword = await this.userRepository.comparedPassword(input.password, user.password)
-      if(!validPassword) {
+      const validPassword = await this.userRepository.comparedPassword(
+        input.password,
+        user.password,
+      )
+      if (!validPassword) {
         throw new ApplicationCustomError(
           StatusCodes.BAD_REQUEST,
           'Password is incorrect',
@@ -94,11 +97,13 @@ export class UserService {
     if (!user) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
     }
-    const isOldPasswordValid = await this.userRepository.comparedPassword(
-      input.oldPassword,
-      user.password,
-    )
-    if (!isOldPasswordValid) {
+
+    if (
+      !(await this.userRepository.comparedPassword(
+        input.oldPassword,
+        user.password,
+      ))
+    ) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'Old password is incorrect',
@@ -115,8 +120,13 @@ export class UserService {
     const hashedNewPassword = await this.userRepository.hashedPassword(
       input.newPassword,
     )
-    await this.userRepository.update(id, { password: hashedNewPassword })
+
+    const updatePayload: Partial<User> = { password: hashedNewPassword }
+    if (user.is_default_password) updatePayload.is_default_password = false
+
+    await this.userRepository.update(id, updatePayload)
   }
+
   public async EnableAndDisableMfa(
     id: string,
   ): Promise<{ is_mfa_enabled: boolean }> {

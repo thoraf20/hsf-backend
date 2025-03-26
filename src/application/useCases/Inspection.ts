@@ -31,4 +31,10 @@ export class InspectionService {
 
         return scheduleInspection;
     }
+
+
+    public async getInspectionSchedule (user_id: string) : Promise<Inspection[]> {
+        const Inspection = await this.inspectionRepository.getScheduleInspection(user_id)
+        return Inspection
+    }
 }

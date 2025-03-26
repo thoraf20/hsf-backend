@@ -24,7 +24,7 @@ export class Admin {
     await this.existingUsers.beforeCreate(input.email, input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const user = await this.userRepository.create(
-      new User({ ...input, role_id: 2 }),
+      new User({ ...input, role_id: process.env.ADMIN_ROLEID}),
     )
     console.log(`Admin with id ${user.id} has been created`)
     return user
@@ -37,10 +37,11 @@ export class Admin {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
     input.role_id = checkRole.id
+    const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(
-      generateDefaultPassword(),
+      defaultPassword 
     )
-    console.log(password)
+    console.log(defaultPassword)
     delete input.role
     let user = await this.userRepository.create(
       new User({ ...input, password, is_default_password: true }),
@@ -51,6 +52,7 @@ export class Admin {
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
     user = await this.userRepository.findById(user.id)
+    delete user.password
     return user
   }
 }

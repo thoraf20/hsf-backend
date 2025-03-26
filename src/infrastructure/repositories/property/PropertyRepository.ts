@@ -17,9 +17,8 @@ export class PropertyRepository implements IPropertyRepository {
     filters?: Record<string, any>,
   ): Promise<Properties[]> {
     let query = db('properties')
-    
       .select('properties.*')
-
+      .orderBy('properties.id', 'desc')
     if (filters) {
       if (filters.city) {
         query = query.where('properties.city', filters.city)
@@ -112,6 +111,7 @@ export class PropertyRepository implements IPropertyRepository {
     let query = db('properties')
     .select('properties.*')
     .where('properties.user_id', user_id)
+    .orderBy('properties.id', 'desc')
 
   if (filters) {
     if (filters.city) {

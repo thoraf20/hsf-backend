@@ -1,32 +1,44 @@
 import { Knex } from "knex";
+import { v4 as uuidv4 } from "uuid";
 
 export async function seed(knex: Knex): Promise<void> {
     await knex("role_permissions").del();
     await knex("permissions").del();
     await knex("roles").del();
 
+    // Generate UUIDs for roles
+    const roles = [
+        { id: uuidv4(), name: "home_buyer" },
+        { id: uuidv4(), name: "admin" },
+        { id: uuidv4(), name: "developer" },
+        { id: uuidv4(), name: "trustee" },
+        { id: uuidv4(), name: "bank" },
+    ];
+
     // Insert roles
-    await knex("roles").insert([
-        { id: 1, name: "home_buyer" },
-        { id: 2, name: "admin" },
-        { id: 3, name: "developer" },
-        { id: 4, name: "trustee" },
-        { id: 5, name: "bank" },
-    ]);
+    await knex("roles").insert(roles);
+
+    // Generate UUIDs for permissions
+    const permissions = [
+        { id: uuidv4(), name: "create_user" },
+        { id: uuidv4(), name: "delete_user" },
+        { id: uuidv4(), name: "update_user" },
+        { id: uuidv4(), name: "view_users" },
+    ];
 
     // Insert permissions
-    await knex("permissions").insert([
-        { id: 1, name: "create_user" },
-        { id: 2, name: "delete_user" },
-        { id: 3, name: "update_user" },
-        { id: 4, name: "view_users" },
-    ]);
+    await knex("permissions").insert(permissions);
 
-    // Assign permissions to the admin role (role_id = 2)
-    await knex("role_permissions").insert([
-        { role_id: 2, permission_id: 1 }, // Admin can create users
-        { role_id: 2, permission_id: 2 }, // Admin can delete users
-        { role_id: 2, permission_id: 3 }, // Admin can update users
-        { role_id: 2, permission_id: 4 }, // Admin can view users
-    ]);
+    // Find admin role ID
+    const adminRole = roles.find((role) => role.name === "admin");
+    
+    // Assign permissions to the admin role
+    if (adminRole) {
+        const rolePermissions = permissions.map((permission) => ({
+            role_id: adminRole.id,
+            permission_id: permission.id,
+        }));
+
+        await knex("role_permissions").insert(rolePermissions);
+    }
 }

@@ -16,4 +16,14 @@ export class InspectionController {
                 schedule
            )
     }
+
+    public async getScheduleInspection (user: string): Promise<ApiResponse<any>> { 
+        const inspection =  await this.inspectionService.getInspectionSchedule(user)
+        return createResponse (
+             StatusCodes.OK,
+             'Inspection retrived successfully',
+             inspection
+        )
+
+    }
 }

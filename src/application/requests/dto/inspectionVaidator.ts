@@ -41,7 +41,7 @@ export const inspectionSchema = z.object({
   
     meeting_platform: z.nativeEnum(MeetingPlatform, {
       errorMap: () => ({ message: 'Invalid meeting platform. Choose from WhatsApp, Google Meet, Zoom, Teams, or FaceTime.' }),
-    }),
+    }).optional(),
   
     inspection_meeting_type: z.nativeEnum(InspectionMeetingType, {
       errorMap: () => ({ message: 'Invalid meeting type. Choose In Person or Video Chat.' }),

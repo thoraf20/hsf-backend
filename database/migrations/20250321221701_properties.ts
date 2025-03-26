@@ -13,7 +13,7 @@ export async function up(knex: Knex): Promise<void> {
         table.string('property_name').notNullable();
         table.string('property_type').notNullable();
         table.string('property_size').notNullable();
-        table.string('property_price').notNullable();
+        table.decimal('property_price', 12, 2).notNullable();
         table.string('property_description').notNullable();
         table.integer('numbers_of_bedroom').notNullable();
         table.integer('numbers_of_bathroom').notNullable();
@@ -29,6 +29,8 @@ export async function up(knex: Knex): Promise<void> {
         table.uuid("user_id").notNullable().references("id").inTable("users").onDelete("CASCADE");
         table.boolean('is_sold').defaultTo(false);
         table.boolean("is_live").defaultTo(false);
+        table.index(['state', 'city'], 'idx_state_city');
+        table.timestamps(true, true);
     })
 }
 

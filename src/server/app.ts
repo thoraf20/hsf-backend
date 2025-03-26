@@ -10,7 +10,7 @@ import { StatusCodes } from 'http-status-codes'
 import IndexRouters from '../presentation/routes/index'
 import '../infrastructure/cache/redisClient'
 // import { Admin } from '../application/useCases/Admin'
-// import { UserRepository } from '../infrastructure/repositories/UserRepository'
+// import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 const app: Application = express()
 
 app.use(cors())
@@ -29,7 +29,7 @@ app.use(morgan('dev'))
 //   email : process.env.ADMIN_EMAIL,
 //   phone_number: process.env.ADMIN_PHONE,
 //   password: process.env.ADMIN_PASS,
-//   role_id: Number(process.env.ADMIN_ROLEID),
+//   role_id: process.env.ADMIN_ROLEID,
 //   is_email_verified:  true
 // })
 app.get('/', (req: Request, res: Response) => {
