@@ -1,6 +1,6 @@
 import express, { Application, Request, Response } from 'express'
 import cors from 'cors'
-import setupSecurity,  { bruteforce, speedLimiter } from '../middleware/security'
+import setupSecurity,  { speedLimiter } from '../middleware/security'
 // import rateLimiter from '../middleware/rateLimiter'
 import { ErrorHandler } from '../middleware/errors/errorHandler'
 import '../infrastructure/database/dbConnect'
@@ -55,7 +55,7 @@ app.use(morgan('dev'))
 //   role_id: process.env.ADMIN_ROLEID,
 //   is_email_verified:  true
 // })
-app.use(bruteforce.prevent);
+
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({ message:  "✅ Sever is ready and ok", ip: `Application was connected  from ${req.ip}`, url : req.originalUrl, statusCode: StatusCodes.OK})
 })

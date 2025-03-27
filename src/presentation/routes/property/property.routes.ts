@@ -2,8 +2,18 @@ import { PropertyRepository } from '../../../infrastructure/repositories/propert
 import { PropertyService } from '../../../application/useCases/Property'
 import { Router } from 'express'
 import { PropertyController } from '../../controllers/Property.controller'
-import { asyncMiddleware, authenticate, requireRole, Role, validateRequest } from '../index.t'
-import { PropertySchema, UpdateSchema } from '../../../application/requests/dto/propertyValidator'
+import {
+  asyncMiddleware,
+  authenticate,
+  requireRole,
+  Role,
+  validateRequest,
+} from '../index.t'
+import {
+  PropertySchema,
+  UpdateSchema,
+} from '../../../application/requests/dto/propertyValidator'
+import { limiter } from '../../../middleware/security'
 // import { limiter } from '../../../middleware/security'
 
 const propertyRoute: Router = Router()
@@ -15,7 +25,7 @@ propertyRoute.post(
   '/create',
   authenticate,
   requireRole(Role.DEVELOPER),
-  // limiter,
+  limiter,
   validateRequest(PropertySchema),
   asyncMiddleware(async (req, res) => {
     const { body, user } = req
@@ -36,7 +46,7 @@ propertyRoute.get(
   '/developer-properties',
   authenticate,
   requireRole(Role.DEVELOPER),
-  // limiter,
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const properties = await controller.getPropertyByUserId(user.id)
@@ -47,7 +57,7 @@ propertyRoute.get(
   '/watchlist',
   authenticate,
   requireRole(Role.HOME_BUYER),
-  // limiter,
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user } = req
     console.log(user)
@@ -59,7 +69,7 @@ propertyRoute.get(
 
 propertyRoute.get(
   '/:id',
-  // limiter,
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { id } = req.params
     const property = await controller.getPropertyById(id)
@@ -71,7 +81,7 @@ propertyRoute.put(
   '/update/:id',
   authenticate,
   requireRole(Role.DEVELOPER),
-  // limiter,
+  limiter,
   validateRequest(UpdateSchema),
   asyncMiddleware(async (req, res) => {
     const { body, params } = req
@@ -83,8 +93,8 @@ propertyRoute.put(
 propertyRoute.delete(
   '/delete/:id',
   authenticate,
- requireRole(Role.DEVELOPER),
-  // limiter,
+  requireRole(Role.DEVELOPER),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { id } = req.params
     const property = await controller.deleteProperty(id)
@@ -95,20 +105,22 @@ propertyRoute.delete(
   '/remove-watchlist/:property_id',
   authenticate,
   requireRole(Role.HOME_BUYER),
-  // limiter,
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
-    const property = await controller.removeFromWatchList(params.property_id, user.id)
+    const property = await controller.removeFromWatchList(
+      params.property_id,
+      user.id,
+    )
     res.status(property.statusCode).json(property)
   }),
 )
 
-
 propertyRoute.delete(
   '/soft-delete/:id',
   authenticate,
-   requireRole(Role.DEVELOPER),
-  // limiter,
+  requireRole(Role.DEVELOPER),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { id } = req.params
     const property = await controller.softDeleteProperty(id)
@@ -116,23 +128,20 @@ propertyRoute.delete(
   }),
 )
 
-
 propertyRoute.post(
   '/add-watchlist/:property_id',
   authenticate,
   requireRole(Role.HOME_BUYER),
-  // limiter,
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
-  
-    const property = await controller.addWatchlistProperty(params.property_id, user.id)
+
+    const property = await controller.addWatchlistProperty(
+      params.property_id,
+      user.id,
+    )
     res.status(property.statusCode).json(property)
   }),
 )
-
-
-
-
-
 
 export default propertyRoute

@@ -6,15 +6,6 @@ import slowDown from "express-slow-down";
 import redis from '../infrastructure/cache/redisClient';
 import RedisStore, { RedisReply } from "rate-limit-redis";
 
-
-
-// const getRateLimitTiers =  (user: any, ip: string, path: string) => {
-//   if (user?.isPremium) return { windowMs: 15 * 60 * 1000, max: 500 }; 
-//   if (user) return { windowMs: 15 * 60 * 1000, max: 200 }; 
-//   if (path.startsWith('/api/v1/admin')) return { windowMs: 15 * 60 * 1000, max: 50 };
-//   if (path.startsWith('/api/v1/payment')) return { windowMs: 15 * 60 * 1000, max: 100 };
-//   return { windowMs: 15 * 60 * 1000, max: 100 };
-// };
 const store = new ExpressBrute.MemoryStore();
 export const bruteforce = new ExpressBrute(store, {
   freeRetries: 5,

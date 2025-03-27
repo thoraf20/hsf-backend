@@ -13,6 +13,7 @@ import { AuthService } from '../../../application/useCases/Auth'
 import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
 import { AuthController } from '../../../presentation/controllers/Auth.controller'
 import { asyncMiddleware, validateRequest } from '../index.t'
+import { bruteforce } from '../../../middleware/security'
 
 const userRepository = new UserRepository()
 const service = new AuthService(userRepository)
@@ -31,6 +32,7 @@ authRoutes.post(
 
 authRoutes.post(
   '/login',
+  bruteforce.prevent,
   validateRequest(loginSchema),
   asyncMiddleware(async (req: Request, res: Response) => {
     const { body } = req
