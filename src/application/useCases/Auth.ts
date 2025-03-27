@@ -230,8 +230,10 @@ export class AuthService {
     }
 
     // Generate token
-    const token = await this.hashData.accessCode(user.id)
+
     user = await this.userRepository.findById(user.id)
+    console.log(user.role)
+    const token = await this.hashData.accessCode(user.user_id, user.role)
     delete user.password
     return { token, ...user }
   }

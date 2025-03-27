@@ -1,40 +1,65 @@
-import { InspectionMeetingType } from "../../domain/enums/propertyEnum";
-import { Inspection } from "../../domain/entities/Inspection";
-import { IInspectionRepository } from "../../domain/interfaces/IInspectionRepository";
-import { InspectionBaseUtils } from "./utils";
-import { ApplicationCustomError } from "../../middleware/errors/customError";
-import { StatusCodes } from "http-status-codes";
-
-
+import { InspectionMeetingType } from '../../domain/enums/propertyEnum'
+import { Inspection } from '../../domain/entities/Inspection'
+import { IInspectionRepository } from '../../domain/interfaces/IInspectionRepository'
+import { InspectionBaseUtils } from './utils'
+import { ApplicationCustomError } from '../../middleware/errors/customError'
+import { StatusCodes } from 'http-status-codes'
 
 export class InspectionService {
-    private inspectionRepository : IInspectionRepository
-    private utilsInspection : InspectionBaseUtils 
-    constructor(inspectionRepository: IInspectionRepository) {
-        this.inspectionRepository = inspectionRepository
-        this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
+  private inspectionRepository: IInspectionRepository
+  private utilsInspection: InspectionBaseUtils
+  constructor(inspectionRepository: IInspectionRepository) {
+    this.inspectionRepository = inspectionRepository
+    this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
+  }
+
+  public async ScheduleInspection(
+    input: Inspection,
+    user_id: string,
+  ): Promise<Inspection> {
+    await this.utilsInspection.findALreadyScheduledInspection(
+      input.property_id,
+      user_id,
+    )
+    let meet_link: string = ''
+    if (
+      input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT &&
+      !input.amount
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Payment is required for ${InspectionMeetingType.VIDEO_CHAT}`,
+      )
     }
-    
 
-    public async ScheduleInspection (input: Inspection, user_id: string) : Promise<Inspection> {
-        await this.utilsInspection.findALreadyScheduledInspection(input.property_id, user_id)
-        let meet_link: string = "";
-        if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT && !input.amount) {
-            throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Payment is required for ${InspectionMeetingType.VIDEO_CHAT}`);
-        }
+    const scheduleInspection = await this.inspectionRepository.createInpection(
+    {
+        ...input,
+        meet_link, 
+        user_id,
+      },
+    )
 
-        const scheduleInspection = await this.inspectionRepository.createInpection({
-            ...input,
-            meet_link,
-            user_id
-        });
+    return scheduleInspection
+  }
 
-        return scheduleInspection;
-    }
+  public async getInspectionSchedule(user_id: string): Promise<Inspection[]> {
+    const Inspection =
+      await this.inspectionRepository.getScheduleInspection(user_id)
+    return Inspection
+  }
 
+  public async getAllInspectionByDeveloperId(
+    dev_id: string,
+  ): Promise<Inspection[]> {
+    const Inspection =
+      await this.inspectionRepository.getAllScheduleInspection(dev_id)
+    return Inspection
+  }
 
-    public async getInspectionSchedule (user_id: string) : Promise<Inspection[]> {
-        const Inspection = await this.inspectionRepository.getScheduleInspection(user_id)
-        return Inspection
-    }
+  public async getInspectionById(property_id: string): Promise<Inspection> {
+    const inspection =
+      await this.inspectionRepository.getScheduleInspectionById(property_id)
+    return inspection
+  }
 }

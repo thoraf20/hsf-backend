@@ -24,19 +24,37 @@ export class InspectionRepository implements IInspectionRepository {
       return foundInspection ? new Inspection(foundInspection) : null;
   }
 
-//   async getAllScheduleInspection(filter?: Record<string, any>): Promise<Inspection & Properties | void> {
-//              const properties
-//   }
+  async getAllScheduleInspection(user_id: string, filter?: Record<string, any>): Promise<(Inspection & Properties)[]> {
+             const inspections =   await db("inspection")
+             .select(
+                 "inspection.id as inspection_id",
+                 "inspection.user_id as home_buyer_id",
+                 "inspection.*",
+                 "properties.id as property_id",
+                 "properties.*",  // Ensure this matches the actual column name
+                 "inspection.inspection_date",
+                 "properties.user_id as developer_id"
+             )
+             .join("properties", "inspection.property_id", "properties.id")
+             .join("users", "inspection.user_id", "users.id")
+             .where("properties.user_id", user_id);
+     
+         return inspections.map((inspection) => ({
+             ...new Inspection(inspection),  // Ensure `Inspection` constructor accepts this format
+             ...new Properties(inspection), // Ensure `Properties` constructor accepts this format
+         }));
+  }
 
 async getScheduleInspection(user_id: string): Promise<(Inspection & Properties)[]> {
     const inspections = await db("inspection")
         .select(
             "inspection.id as inspection_id",
+            "inspection.user_id as home_buyer_id",
             "inspection.*",
             "properties.id as property_id",
-            "properties.*",  // Ensure this matches the actual column name
+            "properties.*",  
             "inspection.inspection_date",
-            "users.id as user_id"
+            "properties.user_id as developer_id"
         )
         .join("properties", "inspection.property_id", "properties.id")
         .join("users", "inspection.user_id", "users.id")
@@ -46,7 +64,36 @@ async getScheduleInspection(user_id: string): Promise<(Inspection & Properties)[
         ...new Inspection(inspection),  // Ensure `Inspection` constructor accepts this format
         ...new Properties(inspection), // Ensure `Properties` constructor accepts this format
     }));
+
+
+    
 }
+
+async getScheduleInspectionById(inspection_id: string): Promise<Inspection & Properties> {
+    const inspection = await db("inspection")
+        .select(
+            "inspection.id as inspection_id",
+            "inspection.user_id as home_buyer_id",
+            "inspection.*",
+            "properties.id as property_id",
+            "properties.*",  
+            "inspection.inspection_date",
+            "properties.user_id as developer_id"
+        )
+        .join("properties", "inspection.property_id", "properties.id")
+        .join("users", "inspection.user_id", "users.id")
+        .where("inspection.id", inspection_id)
+        .first(); 
+
+    if (!inspection) return null; 
+
+    return {
+        ...new Inspection(inspection), 
+        ...new Properties(inspection),  
+    };
+}
+
+
 
 
 

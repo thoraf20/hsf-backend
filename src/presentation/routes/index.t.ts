@@ -2,16 +2,15 @@ import asyncMiddleware from '../../shared/utils/tryCatch'
 import { validateRequest } from '../../middleware/validateRequest'
 import { authenticate } from '../../middleware/authMiddleware'
 import {
-  isAdmin,
-  isDevelopers,
-  isHomeBuyer,
+requireRole
 } from '../../middleware/permissionMiddleware'
+import { Role } from '../../domain/enums/rolesEmun'
 
 export {
   asyncMiddleware,
   validateRequest,
   authenticate,
-  isAdmin,
-  isDevelopers,
-  isHomeBuyer,
+  requireRole,
+  Role
 }
+ 

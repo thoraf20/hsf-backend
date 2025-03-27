@@ -5,16 +5,17 @@ import adminRoute from './admin/admin.routes'
 import userRoutes from './userRoutes/user.routes'
 import { authenticate } from './index.t'
 import authRoutes from "./authRoutes/auth.routes";
+// import { authLimiter, limiter } from "../../middleware/security";
 
 
 
 const routes: Router = Router()
 
 routes.use('/property', propertyRoutes)
-routes.use('/inspection', authenticate, inspectionRoutes)
-routes.use('/admin', authenticate, adminRoute)
-routes.use('/user', authenticate, userRoutes)
-routes.use('/auth', authRoutes)
+routes.use('/inspection', authenticate,  inspectionRoutes)
+routes.use('/admin', authenticate,  adminRoute)
+routes.use('/user', authenticate,  userRoutes)
+routes.use('/auth',  authRoutes)
 
 
 export default routes

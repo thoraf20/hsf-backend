@@ -12,7 +12,6 @@ export class Properties {
   property_feature: string[]
   property_images: string[]
   documents: any
-  property_address_id: string
   user_id: string
   is_sold?: boolean
   street_address: string

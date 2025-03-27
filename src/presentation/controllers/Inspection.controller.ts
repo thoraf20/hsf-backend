@@ -26,4 +26,24 @@ export class InspectionController {
         )
 
     }
+    public async getDevScheduleInspection (user: string): Promise<ApiResponse<any>> { 
+        const inspection =  await this.inspectionService.getAllInspectionByDeveloperId(user)
+        return createResponse (
+             StatusCodes.OK,
+             'Inspection retrived successfully',
+             inspection
+        )
+
+    }
+
+
+    public async getInspectionById (property_id: string) : Promise<ApiResponse<any>> { 
+        const inspection =  await this.inspectionService.getInspectionById(property_id)
+        return createResponse (
+             StatusCodes.OK,
+             'Inspection retrived successfully',
+             inspection
+        )
+
+    }
 }

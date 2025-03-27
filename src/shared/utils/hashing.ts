@@ -2,6 +2,7 @@ import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import configs from '../../config/config'
 import Jwt from 'jsonwebtoken'
+import { Role } from '../../domain/enums/rolesEmun'
 
 const secret = process.env.SECRET_TOKEN as string | 'theSecretofDoom'
 console.log(configs.salt.app_key)
@@ -21,8 +22,8 @@ export class Hashing {
     return verify
   }
 
-  public async accessCode(id: string): Promise<string> {
-    const access_key = this.jwt.sign({ id }, secret, {
+  public async accessCode(id: string, role: Role): Promise<string> {
+    const access_key = this.jwt.sign({ id, role }, secret, {
       expiresIn: '1d',
     })
     return access_key

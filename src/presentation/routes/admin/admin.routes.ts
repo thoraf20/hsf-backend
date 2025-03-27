@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
-import { asyncMiddleware, isAdmin, validateRequest } from '../index.t'
+import { asyncMiddleware, requireRole, Role, validateRequest } from '../index.t'
 import { AgentsSchema } from '../../../application/requests/dto/adminValidator'
 import { AdminController } from '../../../presentation/controllers/Admin.controller'
 import { Admin } from '../../../application/useCases/Admin'
@@ -13,7 +13,7 @@ const controller = new AdminController(service)
 
 adminRoute.post(
   '/invite',
-  isAdmin,
+  requireRole(Role.ADMIN),
   validateRequest(AgentsSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req

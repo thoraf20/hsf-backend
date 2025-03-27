@@ -1,6 +1,4 @@
-import {
-  Properties,
-} from '../../domain/entities/Property'
+import { Properties } from '../../domain/entities/Property'
 import { IPropertyRepository } from '../../domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from './utils'
 
@@ -13,16 +11,19 @@ export class PropertyService {
   }
 
   async createProperty(
-    input: Properties, user_id : string
+    input: Properties,
+    user_id: string,
   ): Promise<Properties> {
-      await this.utilsProperty.findIfPropertyExistByName(input.property_name)
-  
-    const address = await this.propertyRepository.createProperties({
-      ...input,
-      documents: JSON.stringify(input.documents),
-      user_id
-    })
-    return { ...address}
+    await this.utilsProperty.findIfPropertyExistByName(input.property_name)
+
+    const address = await this.propertyRepository.createProperties(
+      new Properties({
+        ...input,
+        documents: JSON.stringify(input.documents),
+        user_id,
+      }),
+    )
+    return { ...address }
   }
 
   public async getAllProperties(): Promise<Array<Properties>> {
@@ -31,68 +32,82 @@ export class PropertyService {
   }
 
   public async getPropertyById(id: string): Promise<Properties> {
-    const fetchProperty =   await this.utilsProperty.findIfPropertyExist(id)
+    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id)
     return fetchProperty
   }
 
-  public async getPropertyByUserId(user_id: string): Promise<Array<Properties>> {
-    const fetchProperty = await this.propertyRepository.findPropertiesByUserId(user_id)
+  public async getPropertyByUserId(
+    user_id: string,
+  ): Promise<Array<Properties>> {
+    const fetchProperty =
+      await this.propertyRepository.findPropertiesByUserId(user_id)
     return fetchProperty
   }
 
   public async updateProperty(
     id: string,
-    input: Partial<Properties>
+    input: Partial<Properties>,
   ): Promise<Properties> {
-    const existingProperty = await this.utilsProperty.findIfPropertyExist(id);
-  
+    const existingProperty = await this.utilsProperty.findIfPropertyExist(id)
+
     if (input.property_name) {
-      await this.utilsProperty.findIfPropertyExistByName(input.property_name);
+      await this.utilsProperty.findIfPropertyExistByName(input.property_name)
     }
-  
+
     const updateData = Object.fromEntries(
       Object.entries({
         ...input,
-        financial_types: input.financial_types ? JSON.stringify(input.financial_types) : undefined,
-        documents: input.documents ? JSON.stringify(input.documents) : undefined,
-      }).filter(([_, v]) => v !== undefined) // Remove undefined values
-    );
-  
+        financial_types: input.financial_types
+          ? JSON.stringify(input.financial_types)
+          : undefined,
+        documents: input.documents
+          ? JSON.stringify(input.documents)
+          : undefined,
+      }).filter(([_, v]) => v !== undefined), // Remove undefined values
+    )
+
     if (Object.keys(updateData).length > 0) {
-      await this.propertyRepository.updateProperty(id, updateData);
+      await this.propertyRepository.updateProperty(id, updateData)
     }
-  
-    return { ...existingProperty, ...updateData };
+
+    return { ...existingProperty, ...updateData }
   }
-  
- public async deleteProperty(id: string): Promise<boolean> {
+
+  public async deleteProperty(id: string): Promise<boolean> {
     await this.utilsProperty.findIfPropertyExist(id)
     return this.propertyRepository.deleteProperty(id)
   }
-
 
   public async softDeleteProperty(id: string): Promise<boolean> {
     await this.utilsProperty.findIfPropertyExist(id)
     return await this.propertyRepository.softDeleteProperty(id)
   }
 
-
-  public async addWatchlistProperty(property_id: string, user_id: string): Promise<boolean> {
-    await Promise.all ([
+  public async addWatchlistProperty(
+    property_id: string,
+    user_id: string,
+  ): Promise<boolean> {
+    await Promise.all([
       this.utilsProperty.findIfPropertyExist(property_id),
-      this.utilsProperty.findIfWatchListIsAdded(property_id, user_id)
+      this.utilsProperty.findIfWatchListIsAdded(property_id, user_id),
     ])
-    return await this.propertyRepository.addWatchlistProperty(property_id, user_id)
+    return await this.propertyRepository.addWatchlistProperty(
+      property_id,
+      user_id,
+    )
   }
 
-  public async getWatchlistProperty(user_id: string): Promise<Array<Properties>> {
+  public async getWatchlistProperty(
+    user_id: string,
+  ): Promise<Array<Properties>> {
     return await this.propertyRepository.getWatchlistProperty(user_id)
   }
 
-  public async removePropertyWatchList(property_id: string, user_id: string): Promise<boolean>  {
-      await this.utilsProperty.findIfPropertyExist(property_id)
-     return await this.propertyRepository.removeWatchList(property_id, user_id)
+  public async removePropertyWatchList(
+    property_id: string,
+    user_id: string,
+  ): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyExist(property_id)
+    return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
 }
-
-
