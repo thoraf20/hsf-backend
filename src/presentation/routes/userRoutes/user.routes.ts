@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { asyncMiddleware, validateRequest } from '../index.t'
 import { UserController } from '../../../presentation/controllers/User.controller'
-import { UserService } from '../../../application/useCases/User'
+import { UserService } from '../../../application/useCases/User/User'
 import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
 import {
   updatePasswordSchema,
@@ -9,8 +9,8 @@ import {
   verifyOtpSchema,
 } from '../../../application/requests/dto/userValidator'
 const userRoutes: Router = Router()
-const userRepo = new UserRepository()
-const userServices = new UserService(userRepo)
+
+const userServices = new UserService(new UserRepository())
 const userController = new UserController(userServices)
 
 userRoutes.put(

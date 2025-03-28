@@ -1,6 +1,6 @@
-import { Properties } from '../../domain/entities/Property'
-import { IPropertyRepository } from '../../domain/interfaces/IPropertyRepository'
-import { PropertyBaseUtils } from './utils'
+import { Properties } from '../../../domain/entities/Property'
+import { IPropertyRepository } from '../../../domain/interfaces/IPropertyRepository'
+import { PropertyBaseUtils } from '../utils'
 
 export class PropertyService {
   private propertyRepository: IPropertyRepository
@@ -110,4 +110,6 @@ export class PropertyService {
     await this.utilsProperty.findIfPropertyExist(property_id)
     return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
+
+
 }

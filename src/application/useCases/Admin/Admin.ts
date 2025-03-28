@@ -1,15 +1,16 @@
 import { IUserRepository } from '.../../../domain/interfaces/IUserRepository'
-import { User } from '../../domain/entities/User'
-import { RedisClient } from '../../infrastructure/cache/redisClient'
-import { ExistingUsers } from './utils'
-import { ApplicationCustomError } from '../../middleware/errors/customError'
+import { User } from '../../../domain/entities/User'
+import { RedisClient } from '../../../infrastructure/cache/redisClient'
+import { ExistingUsers } from '../utils'
+import { ApplicationCustomError } from '../../../middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import {
   generateRandomSixNumbers,
   generateDefaultPassword,
-} from '../../shared/utils/helpers'
-import { CacheEnumKeys } from '../../domain/enums/cacheEnum'
-import { OtpEnum } from '../../domain/enums/otpEnum'
+} from '../../../shared/utils/helpers'
+import { CacheEnumKeys } from '../../../domain/enums/cacheEnum'
+import { OtpEnum } from '../../../domain/enums/otpEnum'
+import { Role } from '../../../domain/enums/rolesEmun'
 
 export class Admin {
   private userRepository: IUserRepository
@@ -23,8 +24,9 @@ export class Admin {
   public async createAdmin(input: User): Promise<User> {
     await this.existingUsers.beforeCreate(input.email, input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
+    const findRole = await this.userRepository.getRoleByName(Role.SUPER_ADMIN)
     const user = await this.userRepository.create(
-      new User({ ...input, role_id: process.env.ADMIN_ROLEID}),
+      new User({ ...input, role_id: findRole.id }),
     )
     console.log(`Admin with id ${user.id} has been created`)
     return user
@@ -38,9 +40,7 @@ export class Admin {
     }
     input.role_id = checkRole.id
     const defaultPassword = generateDefaultPassword()
-    const password = await this.userRepository.hashedPassword(
-      defaultPassword 
-    )
+    const password = await this.userRepository.hashedPassword(defaultPassword)
     console.log(defaultPassword)
     delete input.role
     let user = await this.userRepository.create(

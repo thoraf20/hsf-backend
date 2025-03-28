@@ -1,7 +1,8 @@
-import { ApiResponse, createResponse } from '../response/responseType'
-import { PropertyService } from '../../application/useCases/Property'
-import { Properties } from '../../domain/entities/Property'
+import { ApiResponse, createResponse } from '../../response/responseType'
+import { PropertyService } from '../../../application/useCases/Properties/Property'
+import { Properties } from '../../../domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
+
 
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
@@ -91,4 +92,6 @@ export class PropertyController {
       {},
     )
   }
+
+ 
 }

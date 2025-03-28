@@ -1,3 +1,5 @@
+import { propertyApprovalStatus } from "../../domain/enums/propertyEnum"
+
 export class Properties {
   id?: string
   property_name: string
@@ -12,10 +14,12 @@ export class Properties {
   property_feature: string[]
   property_images: string[]
   documents: any
+  status?: propertyApprovalStatus
   user_id: string
   is_sold?: boolean
   street_address: string
   city: string
+  is_live?: boolean
   unit_number: string
   postal_code: string
   landmark: string

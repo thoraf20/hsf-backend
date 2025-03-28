@@ -1,12 +1,13 @@
-import { CacheEnumKeys } from '../../domain/enums/cacheEnum'
-import { User } from '../../domain/entities/User'
-import { IUserRepository } from '../../domain/interfaces/IUserRepository'
-import { generateRandomSixNumbers } from '../../shared/utils/helpers'
-import { RedisClient } from '../../infrastructure/cache/redisClient'
-import { OtpEnum } from '../../domain/enums/otpEnum'
-import { ApplicationCustomError } from '../../middleware/errors/customError'
+import { User } from '.../../../domain/entities/User'
+import { IUserRepository } from '.../../../domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
-import { resetPassword } from '../../shared/types/userType'
+import { ApplicationCustomError } from '../../../middleware/errors/customError'
+import { resetPassword } from '../../../shared/types/userType'
+import { CacheEnumKeys } from '../../../domain/enums/cacheEnum'
+import { OtpEnum } from '../../../domain/enums/otpEnum'
+import { RedisClient } from '../../../infrastructure/cache/redisClient'
+import { generateRandomSixNumbers } from '../../../shared/utils/helpers'
+
 
 export class UserService {
   private userRepository: IUserRepository
@@ -16,6 +17,7 @@ export class UserService {
   }
 
   public async update(input: User, id: string): Promise<void> {
+
     const user = await this.userRepository.findById(id)
     const [existedEmail, existedPhone] = await Promise.all([
       input.email
@@ -74,6 +76,7 @@ export class UserService {
     }
 
     await this.userRepository.update(id, input)
+    
   }
 
   public async verifyUpdate(otp: string): Promise<void> {

@@ -18,7 +18,9 @@ export class PropertyRepository implements IPropertyRepository {
   ): Promise<Properties[]> {
     let query = db('properties')
       .select('properties.*')
+      .where({is_live: true})
       .orderBy('properties.id', 'desc')
+      
     if (filters) {
       if (filters.city) {
         query = query.where('properties.city', filters.city)
@@ -189,4 +191,62 @@ export class PropertyRepository implements IPropertyRepository {
   async removeWatchList(property_id: string, user_id: string): Promise<boolean> {
           return await db('property_watchlist').where('property_id', property_id).andWhere('user_id', user_id).del()
   }
+
+  async ApproveOrDisApproveProperties(property_id: string, input: Record<string, any>): Promise<void | number> {
+    const properties =  await db('properties').update(input).where('id', property_id)
+     return properties
+} 
+
+
+
+// get property to be approved By admin
+async getAllPropertiesTobeApproved(
+  filters?: Record<string, any>,
+): Promise<Properties[]> {
+  let query = db('properties')
+    .select('properties.*')
+    .orderBy('properties.id', 'desc')
+    
+  if (filters) {
+    if (filters.city) {
+      query = query.where('properties.city', filters.city)
+    }
+    if (filters.minPrice && filters.maxPrice) {
+      query = query.whereBetween('properties.property_price', [
+        filters.minPrice,
+        filters.maxPrice,
+      ])
+    }
+    if (filters.propertyName) {
+      if (filters) {
+        if (filters.city) {
+          query = query.where('properties.city', filters.city)
+        }
+        if (filters.minPrice && filters.maxPrice) {
+          query = query.whereBetween('properties.property_price', [
+            filters.minPrice,
+            filters.maxPrice,
+          ])
+        }
+        if (filters.propertyName) {
+          query = query.where(
+            'properties.property_name',
+            filters.propertyName,
+          )
+        }
+        if (filters.limit) {
+          query = query.limit(filters.limit)
+        }
+        if (filters.offset) {
+          query = query.offset(filters.offset)
+        }
+      }
+
+      const properties = await query
+      return properties.map((property) => new Properties(property))
+    }
+  }
+
+  return query
+}
 }

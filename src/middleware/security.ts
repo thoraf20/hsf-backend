@@ -8,7 +8,7 @@ import RedisStore, { RedisReply } from "rate-limit-redis";
 
 const store = new ExpressBrute.MemoryStore();
 export const bruteforce = new ExpressBrute(store, {
-  freeRetries: 5,
+  freeRetries: 100,
   minWait: 5 * 60 * 1000, 
   maxWait: 60 * 60 * 1000, 
 });
@@ -35,8 +35,8 @@ export const limiter = rateLimit({
     sendCommand: (...args: [string, ...string[]]) => redis.call(...args) as Promise<RedisReply>,
   }),
   keyGenerator: (req) => req.user?.id || req.ip, 
-  windowMs: 15 * 60 * 1000, // 15 min window
-  max: 100, // Max 100 requests per window per IP
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message:{
     error :{
           text: "Too many requests, try again in 10 minutes.",
@@ -47,10 +47,6 @@ export const limiter = rateLimit({
   
   standardHeaders: true, 
   legacyHeaders: false, 
-  // skip: (req) => {
-  //   // Skip rate limiting for certain whitelisted IPs or users
-  //   return req.user?.isAdmin || WHITELISTED_IPS.includes(req.ip);
-  // }
 });
 
 

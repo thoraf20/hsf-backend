@@ -1,11 +1,11 @@
-// import { User } from "domain/entities/User";
-// import { IAdminRepository } from "../../domain/interfaces/IAdminRepository";
-// import db from "../database/knex";
+// import { IAdminRepository } from "../../../domain/interfaces/IAdminRepository";
+// import db from "../../database/knex";
 
 
 // export  class AdminRepository implements IAdminRepository { 
-//    inviteAgents(input: User): Promise<User> {
-//         [newUser] 
-//    }
+   // async ApproveOrDisApproveProperties(property_id: string): Promise<void | number> {
+   //     const properties =  await db('properties').update({is_live: true}).where('id', property_id)
+   //      return properties
+   // } 
 
 // }

@@ -1,8 +1,8 @@
-import { InspectionMeetingType } from '../../domain/enums/propertyEnum'
-import { Inspection } from '../../domain/entities/Inspection'
-import { IInspectionRepository } from '../../domain/interfaces/IInspectionRepository'
-import { InspectionBaseUtils } from './utils'
-import { ApplicationCustomError } from '../../middleware/errors/customError'
+import { InspectionMeetingType } from '../../../domain/enums/propertyEnum'
+import { Inspection } from '../../../domain/entities/Inspection'
+import { IInspectionRepository } from '../../../domain/interfaces/IInspectionRepository'
+import { InspectionBaseUtils } from '../utils'
+import { ApplicationCustomError } from '../../../middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 
 export class InspectionService {
@@ -32,13 +32,11 @@ export class InspectionService {
       )
     }
 
-    const scheduleInspection = await this.inspectionRepository.createInpection(
-    {
-        ...input,
-        meet_link, 
-        user_id,
-      },
-    )
+    const scheduleInspection = await this.inspectionRepository.createInpection({
+      ...input,
+      meet_link,
+      user_id,
+    })
 
     return scheduleInspection
   }

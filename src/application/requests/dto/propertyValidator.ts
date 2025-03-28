@@ -1,6 +1,7 @@
 import {
   DocumentTypeEnum,
   FinancialOptionsEnum,
+  propertyApprovalStatus,
   PropertyFeatureEnum,
 } from '../../../domain/enums/propertyEnum'
 import { z } from 'zod'
@@ -94,3 +95,8 @@ export const UpdateSchema = z.object({
   documents: z.array(DocumentSchema).optional(), // ✅ Updated: documents should be an array of objects
   payment_duration: z.string().optional(),
 });
+
+
+export const UpdatePropertyStatus = z.object({
+      status: z.nativeEnum(propertyApprovalStatus)
+})

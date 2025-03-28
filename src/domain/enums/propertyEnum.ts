@@ -36,3 +36,9 @@ export enum MeetingPlatform {
     VIDEO_CHAT = 'Video Chat',
   }
   
+
+  export enum propertyApprovalStatus {
+     PENDING = "Pending",
+     APPROVED = "Approved",
+     DECLINED = "Declined"
+  }

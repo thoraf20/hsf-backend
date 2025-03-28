@@ -2,7 +2,7 @@ import {
   ApiResponse,
   createResponse,
 } from '../../presentation/response/responseType'
-import { AuthService } from '../../application/useCases/Auth'
+import { AuthService } from '../../application/useCases/Auth/Auth'
 import { User } from '../../domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 import {

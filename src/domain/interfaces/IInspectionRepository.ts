@@ -9,5 +9,6 @@ export interface IInspectionRepository {
     getScheduleInspection (user_id: string): Promise<Inspection[] & Properties[]> 
     getAllScheduleInspection ( user_id: string, filter?: Record<string, any>): Promise<Inspection[] & Properties[]> 
     getScheduleInspectionById (inspection_id: string): Promise<Inspection & Properties> 
+    
 
 }

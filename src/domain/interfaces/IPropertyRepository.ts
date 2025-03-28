@@ -15,4 +15,6 @@ export interface IPropertyRepository {
   getWatchlistProperty(user_id: string): Promise<Properties[]>
   getIfWatchListPropertyIsAdded (property_id: string, user_id: string): Promise<Properties | null>
   removeWatchList (property_id: string, user_id: string): Promise<boolean>
+  ApproveOrDisApproveProperties(property_id: string, input: Record<string, any>): Promise<void | number>
+  getAllPropertiesTobeApproved(filters?: Record<string, any>): Promise<Properties[]>
 }

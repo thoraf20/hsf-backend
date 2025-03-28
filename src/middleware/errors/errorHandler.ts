@@ -1,6 +1,7 @@
 import { ErrorRequestHandler, NextFunction, Response, Request } from 'express'
 import { ApplicationError } from '../../shared/utils/error'
 import { StatusCodes } from 'http-status-codes'
+import logger from '../logger'
 
 export const ErrorHandler: ErrorRequestHandler = (
   error: Error,
@@ -17,6 +18,7 @@ export const ErrorHandler: ErrorRequestHandler = (
     return next()
   } else {
     console.log(error)
+    logger.error(error)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,
       message:

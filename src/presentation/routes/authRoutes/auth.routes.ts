@@ -9,14 +9,14 @@ import {
   ResetPasswordOtpSchema,
   verifyMfaSchema,
 } from '../../../application/requests/dto/userValidator'
-import { AuthService } from '../../../application/useCases/Auth'
+import { AuthService } from '../../../application/useCases/Auth/Auth'
 import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
 import { AuthController } from '../../../presentation/controllers/Auth.controller'
 import { asyncMiddleware, validateRequest } from '../index.t'
 import { bruteforce } from '../../../middleware/security'
 
-const userRepository = new UserRepository()
-const service = new AuthService(userRepository)
+
+const service = new AuthService(new UserRepository())
 const controller = new AuthController(service)
 const authRoutes: Router = Router()
 
