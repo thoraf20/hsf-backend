@@ -23,11 +23,18 @@ userRoutes.put(
   }),
 )
 
+userRoutes.get('/profile', asyncMiddleware(async (req: Request, res: Response) => {
+  const { user } = req
+  const userProfile = await userController.getUserById(user.id)
+  return res.status(userProfile.statusCode).json(userProfile)
+}),
+)
+
 userRoutes.post(
   '/verify-update',
   validateRequest(verifyOtpSchema),
   asyncMiddleware(async (req, res) => {
-    const { body } = req
+    const { body } = req 
     const userUpdate = await userController.verifyUpdate(body.otp)
     res.status(userUpdate.statusCode).json(userUpdate)
   }),

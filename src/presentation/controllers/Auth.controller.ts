@@ -14,7 +14,16 @@ import {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  public async registerUser(input: User): Promise<ApiResponse<any>> {
+  public async registerEmail(input: Record<string, any>): Promise<ApiResponse<any>> {
+   await this.authService.checkRegisterEmail(input)
+    return createResponse(
+      StatusCodes.CREATED,
+      'Please verify your email before you  ontinue',
+      {},
+    )
+  }
+
+  public async registerUser(input: Omit<User, 'email' | 'tempId'> & { tempId: string }): Promise<ApiResponse<any>> {
     const user = await this.authService.register(input)
     return createResponse(
       StatusCodes.CREATED,
@@ -24,8 +33,8 @@ export class AuthController {
   }
 
   public async verifyOtp(input: veriftOtpType): Promise<ApiResponse<any>> {
-    await this.authService.verifyAccount(input.otp)
-    return createResponse(StatusCodes.OK, 'OTP verified successfully')
+    const regDetails = await this.authService.verifyAccount(input.otp)
+    return createResponse(StatusCodes.OK, 'OTP verified successfully',  regDetails)
   }
 
   public async login(input: loginType): Promise<ApiResponse<any>> {

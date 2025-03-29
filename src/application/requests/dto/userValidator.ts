@@ -2,9 +2,9 @@ import { z } from 'zod';
 
 
 export const UserSchema = z.object({
+  tempId: z.string(),
   first_name: z.string().min(2, "Firstname must have at least 2 characters"),
   last_name: z.string().min(2, "Lastname must have at least 2 characters"),
-  email: z.string().email("Invalid email format"),
   phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
   password: z.string()
     .min(8, "Password must be at least 8 characters long")
@@ -20,6 +20,10 @@ export const UserSchema = z.object({
   isEmailVerified: z.boolean().default(false),
   isPhoneVerified: z.boolean().default(false),
 });
+
+export const RegisterEmail = z.object({ 
+  email: z.string().email("Invalid email format"),
+})
 
 export const verifyOtpSchema = z.object({
   otp: z.string().length(6, "OTP must be 6 digits")

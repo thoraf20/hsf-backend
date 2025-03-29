@@ -17,6 +17,11 @@ export class UserController {
     return createResponse(StatusCodes.OK, 'User updated successfully', {})
   }
 
+  public async getUserById(id: string): Promise<ApiResponse<any>> {
+    await this.userService.getUserProfile(id)
+    return createResponse(StatusCodes.OK, 'User retrived successfully', {})
+  }
+
   public async resetPassword(
     input: resetPassword,
     id: string,

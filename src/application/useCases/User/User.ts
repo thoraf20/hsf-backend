@@ -16,6 +16,10 @@ export class UserService {
     this.userRepository = userRepository
   }
 
+  public async getUserProfile (user: string) : Promise<User> {
+       return await this.userRepository.findById(user)
+  }
+
   public async update(input: User, id: string): Promise<void> {
 
     const user = await this.userRepository.findById(id)
