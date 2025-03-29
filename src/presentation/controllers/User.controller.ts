@@ -18,8 +18,8 @@ export class UserController {
   }
 
   public async getUserById(id: string): Promise<ApiResponse<any>> {
-    await this.userService.getUserProfile(id)
-    return createResponse(StatusCodes.OK, 'User retrived successfully', {})
+    const user = await this.userService.getUserProfile(id)
+    return createResponse(StatusCodes.OK, 'User retrived successfully', user)
   }
 
   public async resetPassword(
