@@ -244,6 +244,7 @@ export class AuthService {
       await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
     if (user.is_email_verified === false) {
+      await this.userRepository.update(user.id, {is_email_verified: true})
       await this.resendOtp(user.email)
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
