@@ -65,6 +65,7 @@ export class AuthService {
         new User({ ...input, email, role_id: findRole.id }),
     );
 
+    await this.userRepository.update(user.id, {is_email_verified: true})
     user = await this.userRepository.findById(user.id);
     delete user.password;
 
