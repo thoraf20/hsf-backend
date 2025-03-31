@@ -1,16 +1,16 @@
-import { IUserRepository } from '.../../../domain/interfaces/IUserRepository'
-import { User } from '../../../domain/entities/User'
-import { RedisClient } from '../../../infrastructure/cache/redisClient'
+import { IUserRepository } from '@domain/interfaces/IUserRepository'
+import { User } from '@domain/entities/User'
+import { RedisClient } from '@infrastructure/cache/redisClient'
 import { ExistingUsers } from '../utils'
-import { ApplicationCustomError } from '../../../middleware/errors/customError'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import {
   generateRandomSixNumbers,
   generateDefaultPassword,
-} from '../../../shared/utils/helpers'
-import { CacheEnumKeys } from '../../../domain/enums/cacheEnum'
-import { OtpEnum } from '../../../domain/enums/otpEnum'
-import { Role } from '../../../domain/enums/rolesEmun'
+} from '@shared/utils/helpers'
+import { CacheEnumKeys } from '@domain/enums/cacheEnum'
+import { OtpEnum } from '@domain/enums/otpEnum'
+import { Role } from '@domain/enums/rolesEmun'
 
 export class Admin {
   private userRepository: IUserRepository

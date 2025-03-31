@@ -1,7 +1,7 @@
 import { SeekPaginationResult } from "@shared/types/paginate"
-import { Properties } from "../../../domain/entities/Property"
-import { propertyApprovalStatus } from "../../../domain/enums/propertyEnum"
-import { IPropertyRepository } from "../../../domain/interfaces/IPropertyRepository"
+import { Properties } from "@domain/entities/Property"
+import { propertyApprovalStatus } from "@domain/enums/propertyEnum"
+import { IPropertyRepository } from "@domain/interfaces/IPropertyRepository"
 import { PropertyBaseUtils } from "../utils"
 
 

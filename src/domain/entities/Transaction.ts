@@ -1,4 +1,4 @@
-import { TransactionEnum } from ".../../../domain/enums/transactionEnum";
+import { TransactionEnum } from "@domain/enums/transactionEnum";
 
 
 export class Transaction {

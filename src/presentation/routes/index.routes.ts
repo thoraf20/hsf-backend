@@ -1,6 +1,6 @@
 import { Router } from "express";
 import webhook from "./webbook/utils.routes";
-import propertyRoutes from "@routes/property/property.routes";
+import propertyRoute from "./property/property.routes";
 import inspectionRoutes from "@routes/property/inspection.routes";
 import adminRoute from '@routes/admin/admin.routes'
 import userRoutes from '@routes/userRoutes/user.routes'
@@ -17,7 +17,7 @@ const routes: Router = Router()
 
 routes.use('/developer', authenticate, limiter, developerRoutes)
 routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
-routes.use('/property', propertyRoutes)
+routes.use('/property', propertyRoute)
 routes.use('/inspection', authenticate, limiter,  inspectionRoutes)
 routes.use('/admin', authenticate,  limiter, adminRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)

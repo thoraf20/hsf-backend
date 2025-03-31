@@ -1,12 +1,12 @@
-import { User } from '.../../../domain/entities/User'
-import { IUserRepository } from '.../../../domain/interfaces/IUserRepository'
+import { User } from '@domain/entities/User'
+import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
-import { ApplicationCustomError } from '../../../middleware/errors/customError'
-import { resetPassword } from '../../../shared/types/userType'
-import { CacheEnumKeys } from '../../../domain/enums/cacheEnum'
-import { OtpEnum } from '../../../domain/enums/otpEnum'
-import { RedisClient } from '../../../infrastructure/cache/redisClient'
-import { generateRandomSixNumbers } from '../../../shared/utils/helpers'
+import { ApplicationCustomError } from '@middleware/errors/customError'
+import { resetPassword } from '@shared/types/userType'
+import { CacheEnumKeys } from '@domain/enums/cacheEnum'
+import { OtpEnum } from '@domain/enums/otpEnum'
+import { RedisClient } from '@infrastructure/cache/redisClient'
+import { generateRandomSixNumbers } from '@shared/utils/helpers'
 
 
 export class UserService {
