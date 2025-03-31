@@ -1,7 +1,7 @@
-import { PropertyRepository } from '../../../infrastructure/repositories/property/PropertyRepository'
-import { PropertyService } from '../../../application/useCases/Properties/Property'
+import { PropertyRepository } from '@infrastructure/repositories/property/PropertyRepository'
+import { PropertyService } from '@application/useCases/Properties/Property'
 import { Router } from 'express'
-import { PropertyController } from '../../controllers/property/Property.controller'
+import { PropertyController } from '@controllers/property/Property.controller'
 import {
   asyncMiddleware,
   authenticate,
@@ -12,8 +12,8 @@ import {
 import {
   PropertySchema,
   UpdateSchema,
-} from '../../../application/requests/dto/propertyValidator'
-// import { limiter } from '../../../middleware/security'
+} from '@application/requests/dto/propertyValidator'
+// import { limiter } from '@middleware/security'
 
 const propertyRoute: Router = Router()
 const service = new PropertyService(new PropertyRepository())
@@ -47,7 +47,7 @@ propertyRoute.get(
   // limiter,
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
-    const properties = await controller.getPropertyByUserId(user.id, query);
+    const properties = await controller.getPropertyByUserId(user.id, query)
     res.status(properties.statusCode).json(properties)
   }),
 )
@@ -74,7 +74,6 @@ propertyRoute.get(
     res.status(property.statusCode).json(property)
   }),
 )
-
 
 propertyRoute.put(
   '/update/:id',
@@ -142,6 +141,5 @@ propertyRoute.post(
     res.status(property.statusCode).json(property)
   }),
 )
-
 
 export default propertyRoute

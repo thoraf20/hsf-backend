@@ -1,6 +1,6 @@
-import { User } from '../../domain/entities/User'
-import { UserService } from '../../application/useCases/User/User'
-import { resetPassword } from '../../shared/types/userType'
+import { User } from '@domain/entities/User'
+import { UserService } from '@application/useCases/User/User'
+import { resetPassword } from '@shared/types/userType'
 import { ApiResponse, createResponse } from '../response/responseType'
 import { StatusCodes } from 'http-status-codes'
 

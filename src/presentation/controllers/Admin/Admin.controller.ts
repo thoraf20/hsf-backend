@@ -1,6 +1,6 @@
-import { ApiResponse, createResponse } from '../../response/responseType'
-import { Admin } from '../../../application/useCases/Admin/Admin'
-import { User } from '../../../domain/entities/User'
+import { ApiResponse, createResponse } from '@presentation/response/responseType'
+import { Admin } from '@application/useCases/Admin/Admin'
+import { User } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 
 export class AdminController {

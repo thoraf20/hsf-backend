@@ -1,4 +1,4 @@
-import { ApplicationError } from '../../shared/utils/error'
+import { ApplicationError } from '@shared/utils/error'
 
 export class ApplicationCustomError extends ApplicationError {
   constructor(statusCode: number, message: string, body = null) {

@@ -1,6 +1,5 @@
-import { Transaction } from "../../domain/entities/Transaction";
-
+import { Transaction } from '@domain/entities/Transaction'
 
 export interface ITransaction {
-    saveTransaction (input: Transaction) : Promise<Transaction>
-} 
+  saveTransaction(input: Transaction): Promise<Transaction>
+}

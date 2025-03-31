@@ -1,14 +1,14 @@
 import { Router } from 'express'
-import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
+import { UserRepository } from '@infrastructure/repositories/user/UserRepository'
 import {
   asyncMiddleware,
   requireRoles,
   Role,
   validateRequest,
 } from '../index.t'
-import { AgentsSchema } from '../../../application/requests/dto/adminValidator'
-import { AdminController } from '../../controllers/Admin/Admin.controller'
-import { Admin } from '../../../application/useCases/Admin/Admin'
+import { AgentsSchema } from '@application/requests/dto/adminValidator'
+import { AdminController } from '@controllers/Admin/Admin.controller'
+import { Admin } from '@application/useCases/Admin/Admin'
 
 const adminRoute: Router = Router()
 

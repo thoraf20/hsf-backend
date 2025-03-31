@@ -1,4 +1,4 @@
-import { Role } from '../../../domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEmun'
 import { z } from 'zod'
 
 export const AgentsSchema = z.object({

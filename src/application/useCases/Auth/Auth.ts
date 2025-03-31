@@ -1,17 +1,17 @@
-import { IUserRepository } from '../../../domain/interfaces/IUserRepository'
-import { User } from '../../../domain/entities/User'
-import { Hashing } from '../../../shared/utils/hashing'
-import { ApplicationCustomError } from '../../../middleware/errors/customError'
+import { IUserRepository } from '@domain/interfaces/IUserRepository'
+import { User } from '@domain/entities/User'
+import { Hashing } from '@shared/utils/hashing'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
-import { RedisClient } from '../../../infrastructure/cache/redisClient'
-import { generateRandomSixNumbers } from '../../../shared/utils/helpers'
-import { OtpEnum } from '../../../domain/enums/otpEnum'
-import { CacheEnumKeys } from '../../../domain/enums/cacheEnum'
-import { loginType, ResetPasswordType } from '../../../shared/types/userType'
+import { RedisClient } from '@infrastructure/cache/redisClient'
+import { generateRandomSixNumbers } from '@shared/utils/helpers'
+import { OtpEnum } from '@domain/enums/otpEnum'
+import { CacheEnumKeys } from '@domain/enums/cacheEnum'
+import { loginType, ResetPasswordType } from '@shared/types/userType'
 import { ExistingUsers } from '../utils'
-import { Role } from '../../../domain/enums/rolesEmun'
-import emailTemplates  from '../../../infrastructure/email/template/constant'
-import { v4 as uuidv4 } from 'uuid';
+import { Role } from '@domain/enums/rolesEmun'
+import emailTemplates from '@infrastructure/email/template/constant'
+import { v4 as uuidv4 } from 'uuid'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -29,84 +29,89 @@ export class AuthService {
 
   /**
    * Register a new user
-   */ 
+   */
 
-
-
-  async checkRegisterEmail (input: Record<string, any>): Promise<void> {
-    await this.existingUsers.beforeCreateEmail(input.email)  
+  async checkRegisterEmail(input: Record<string, any>): Promise<void> {
+    await this.existingUsers.beforeCreateEmail(input.email)
     const otp = generateRandomSixNumbers()
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
-    const details = {email : input.email, otp, type: OtpEnum.EMAIL_VERIFICATION, is_email_verified: false }
+    const details = {
+      email: input.email,
+      otp,
+      type: OtpEnum.EMAIL_VERIFICATION,
+      is_email_verified: false,
+    }
     await this.client.setKey(key, details, 60)
     emailTemplates.welcomeEmail(input.email, `${input.email}`)
     emailTemplates.emailVerificationEmail(input.email, otp.toString())
-    
-  } 
-  async register(input: Omit<User, 'email' | 'tempId'> & { tempId: string }): Promise<User> {
-    const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${input.tempId}`;
-    const regDetails = await this.client.getKey(tempKey);
+  }
+  async register(
+    input: Omit<User, 'email' | 'tempId'> & { tempId: string },
+  ): Promise<User> {
+    const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${input.tempId}`
+    const regDetails = await this.client.getKey(tempKey)
 
     if (!regDetails || !regDetails.is_email_verified) {
-        throw new ApplicationCustomError(
-            StatusCodes.BAD_REQUEST,
-            'Email is not verified. Please verify your email before registering.',
-        );
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Email is not verified. Please verify your email before registering.',
+      )
     }
 
-    const email = regDetails.email; // Get verified email
-    delete input.tempId; // Ensure tempId is not stored
+    const email = regDetails.email // Get verified email
+    delete input.tempId // Ensure tempId is not stored
 
-    await this.existingUsers.beforeCreatePhone(input.phone_number);
-    input.password = await this.userRepository.hashedPassword(input.password);
-    const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER);
+    await this.existingUsers.beforeCreatePhone(input.phone_number)
+    input.password = await this.userRepository.hashedPassword(input.password)
+    const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
 
     let user = await this.userRepository.create(
-        new User({ ...input, email, role_id: findRole.id }),
-    );
+      new User({ ...input, email, role_id: findRole.id }),
+    )
 
-    await this.userRepository.update(user.id, {is_email_verified: true})
-    user = await this.userRepository.findById(user.id);
-    delete user.password;
+    await this.userRepository.update(user.id, { is_email_verified: true })
+    user = await this.userRepository.findById(user.id)
+    delete user.password
 
     // Remove temp key after successful registration
-    await this.client.deleteKey(tempKey);
+    await this.client.deleteKey(tempKey)
 
-    return user;
-}
+    return user
+  }
 
   /**
    * Verify use email or phone number
    */
 
   async verifyAccount(otp: string): Promise<any> {
-    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`;
-    const details = await this.client.getKey(key);
+    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
+    const details = await this.client.getKey(key)
 
     if (!details) {
-        throw new ApplicationCustomError(
-            StatusCodes.BAD_REQUEST,
-            'Invalid or expired OTP.',
-        );
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid or expired OTP.',
+      )
     }
 
-    const { email, type } = typeof details === 'string' ? JSON.parse(details) : details;
+    const { email, type } =
+      typeof details === 'string' ? JSON.parse(details) : details
 
     if (type !== OtpEnum.EMAIL_VERIFICATION) {
-        await this.client.deleteKey(key);
-        throw new ApplicationCustomError(
-            StatusCodes.BAD_REQUEST,
-            'Invalid OTP type.',
-        );
+      await this.client.deleteKey(key)
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid OTP type.',
+      )
     }
 
-    const tempId = uuidv4();
-    const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`;
-    await this.client.setKey(tempKey, { email, is_email_verified: true }, 600);
-    await this.client.deleteKey(key); // Delete OTP after verification
+    const tempId = uuidv4()
+    const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
+    await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
+    await this.client.deleteKey(key) // Delete OTP after verification
 
-    return {tempId}; // Return temporary ID to the user
-}
+    return { tempId } // Return temporary ID to the user
+  }
 
   async resendOtp(email: string): Promise<void> {
     const user = await this.userRepository.findByEmail(email)
@@ -291,5 +296,3 @@ export class AuthService {
     return true
   }
 }
-
-

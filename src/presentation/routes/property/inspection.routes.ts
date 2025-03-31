@@ -1,18 +1,21 @@
 import { Router } from 'express'
-import { InspectionRepository } from '../../../infrastructure/repositories/property/Inspection'
-import { InspectionService } from '../../../application/useCases/Properties/Inspection'
-import { InspectionController } from '../../../presentation/controllers/property/Inspection.controller'
+import { InspectionRepository } from '@infrastructure/repositories/property/Inspection'
+import { InspectionService } from '@application/useCases/Properties/Inspection'
+import { InspectionController } from '@presentation/controllers/property/Inspection.controller'
 import {
   asyncMiddleware,
   requireRoles,
   Role,
   validateRequest,
 } from '../index.t'
-import { inspectionSchema } from '../../../application/requests/dto/inspectionVaidator'
-import { TransactionRepository } from '../../../infrastructure/repositories/transaction/TransactionRepository'
+import { inspectionSchema } from '@application/requests/dto/inspectionVaidator'
+import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
 
 const inspectionRoutes: Router = Router()
-const service = new InspectionService(new InspectionRepository(), new TransactionRepository())
+const service = new InspectionService(
+  new InspectionRepository(),
+  new TransactionRepository(),
+)
 const inspectionController = new InspectionController(service)
 
 inspectionRoutes.post(
