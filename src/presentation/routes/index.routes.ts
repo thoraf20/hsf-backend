@@ -7,6 +7,7 @@ import { authenticate } from './index.t'
 import authRoutes from "./authRoutes/auth.routes";
 import { limiter } from "../../middleware/security";
 import managePropertyRoute from "./admin/ManageProperty.routes";
+import webhook from "./webbook/utils.routes";
 
 
 
@@ -18,6 +19,7 @@ routes.use('/admin', authenticate,  limiter, adminRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)
 routes.use('/user', authenticate, limiter,   userRoutes)
 routes.use('/auth',  authRoutes)
+routes.use('/webhook', webhook)
 
 
 export default routes

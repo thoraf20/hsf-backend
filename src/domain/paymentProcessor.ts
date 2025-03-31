@@ -5,8 +5,6 @@ import PaymentProcessor from "./interfaces/IPaymentProcessor";
 import { Payment } from "./entities/Payment";
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || "";
-
-// Create an Axios instance with Keep-Alive
 const axiosInstance = axios.create({
   baseURL: "https://api.paystack.co",
   headers: {
@@ -19,20 +17,21 @@ const axiosInstance = axios.create({
 export class PaystackProcessor implements PaymentProcessor {
   constructor(public input: Payment) {}
 
-  async createProcess(input: Payment): Promise<Payment> {
+  async createProcess(input: Payment): Promise<any> {
     try {
       const requestBody = {
         ...input,
-        amount: input.amount * 100, // Convert amount to kobo
+        amount: Number(input.amount) * 100, // Convert amount to kobo
         currency: "NGN",
       
       };
 
       const response = await axiosInstance.post("/transaction/initialize", requestBody);
-
       if (response.data.status) {
-        return new Payment({ ...input});
+        return response.data.data
       }
+
+   
 
       throw new Error("Payment initialization failed");
     } catch (error) {
@@ -41,3 +40,7 @@ export class PaystackProcessor implements PaymentProcessor {
     }
   }
 }
+
+
+
+

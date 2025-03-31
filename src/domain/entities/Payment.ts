@@ -1,8 +1,9 @@
 export class Payment {
     id?: string;
-    userId: string;
+    userId?: string;
     amount: number;
-    currency: string;
+    email: string;
+    currency?: string;
     status?: "pending" | "success" | "failed";
     metaData?: Record<string, any>
     createdAt?: Date;

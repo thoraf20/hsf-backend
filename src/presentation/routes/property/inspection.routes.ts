@@ -9,9 +9,10 @@ import {
   validateRequest,
 } from '../index.t'
 import { inspectionSchema } from '../../../application/requests/dto/inspectionVaidator'
+import { TransactionRepository } from '../../../infrastructure/repositories/transaction/TransactionRepository'
 
 const inspectionRoutes: Router = Router()
-const service = new InspectionService(new InspectionRepository())
+const service = new InspectionService(new InspectionRepository(), new TransactionRepository())
 const inspectionController = new InspectionController(service)
 
 inspectionRoutes.post(

@@ -1,3 +1,4 @@
+import { PaymentEnum } from "../../domain/enums/PaymentEnum";
 import { FinancialOptionsEnum, InspectionMeetingType, MeetingPlatform } from "../../domain/enums/propertyEnum";
 
 export class Inspection {
@@ -17,7 +18,7 @@ export class Inspection {
   user_id: string;
   created_at?: Date;
   updated_at?: Date;
-
+  payment_type?: PaymentEnum
   constructor(data: Partial<Inspection>) {
       Object.assign(this, {
           inspection_fee_paid: false,

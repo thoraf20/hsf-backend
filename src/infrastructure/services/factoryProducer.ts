@@ -4,12 +4,9 @@ import { PaystackProcessor } from '../../domain/paymentProcessor';
 import { Payment } from '../../domain/entities/Payment';
 
 export class PaymentProcessorFactory {
-    public async createPaymentProcessor(type: PaymentEnum, input: Payment): Promise<PaymentProcessor> {
-        switch (type) {
-            case PaymentEnum.PAYSTACK:
-                return new PaystackProcessor(input);
-            default:
-                throw new Error("Unsupported payment processor type");
-        }
+    public async createPaymentProcessor(type: string, input: Payment): Promise<PaymentProcessor> {
+       if(type === PaymentEnum.PAYSTACK) {
+        return new PaystackProcessor(input);
+       }
     }
 }

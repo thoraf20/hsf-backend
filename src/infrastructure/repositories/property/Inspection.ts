@@ -31,17 +31,17 @@ export class InspectionRepository implements IInspectionRepository {
                  "inspection.user_id as home_buyer_id",
                  "inspection.*",
                  "properties.id as property_id",
-                 "properties.*",  // Ensure this matches the actual column name
+                 "properties.*",  
                  "inspection.inspection_date",
-                 "properties.user_id as developer_id"
+                 "properties.user_id as developer_id" 
              )
              .join("properties", "inspection.property_id", "properties.id")
              .join("users", "inspection.user_id", "users.id")
              .where("properties.user_id", user_id);
      
          return inspections.map((inspection) => ({
-             ...new Inspection(inspection),  // Ensure `Inspection` constructor accepts this format
-             ...new Properties(inspection), // Ensure `Properties` constructor accepts this format
+             ...new Inspection(inspection), 
+             ...new Properties(inspection), 
          }));
   }
 
@@ -61,8 +61,8 @@ async getScheduleInspection(user_id: string): Promise<(Inspection & Properties)[
         .where("inspection.user_id", user_id);
 
     return inspections.map((inspection) => ({
-        ...new Inspection(inspection),  // Ensure `Inspection` constructor accepts this format
-        ...new Properties(inspection), // Ensure `Properties` constructor accepts this format
+        ...new Inspection(inspection), 
+        ...new Properties(inspection), 
     }));
 
 
