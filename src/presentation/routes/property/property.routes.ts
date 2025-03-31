@@ -46,8 +46,8 @@ propertyRoute.get(
   requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const properties = await controller.getPropertyByUserId(user.id)
+    const { user, query } = req
+    const properties = await controller.getPropertyByUserId(user.id, query);
     res.status(properties.statusCode).json(properties)
   }),
 )
@@ -75,6 +75,7 @@ propertyRoute.get(
   }),
 )
 
+
 propertyRoute.put(
   '/update/:id',
   authenticate,
@@ -82,8 +83,8 @@ propertyRoute.put(
   // limiter,
   validateRequest(UpdateSchema),
   asyncMiddleware(async (req, res) => {
-    const { body, params } = req
-    const property = await controller.updateProperty(body, params.id)
+    const { body, params, user } = req
+    const property = await controller.updateProperty(body, params.id, user.id)
     res.status(property.statusCode).json(property)
   }),
 )
@@ -94,8 +95,8 @@ propertyRoute.delete(
   requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
-    const { id } = req.params
-    const property = await controller.deleteProperty(id)
+    const { params, user } = req
+    const property = await controller.deleteProperty(params.id, user.id)
     res.status(property.statusCode).json(property)
   }),
 )
@@ -120,8 +121,8 @@ propertyRoute.delete(
   requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
-    const { id } = req.params
-    const property = await controller.softDeleteProperty(id)
+    const { params, user } = req
+    const property = await controller.softDeleteProperty(params.id, user.id)
     res.status(property.statusCode).json(property)
   }),
 )

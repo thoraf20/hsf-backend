@@ -1,10 +1,10 @@
-import { Properties } from '../../domain/entities/Property'
-
+import { Properties } from '@domain/entities/Property'
+import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
   findPropertyById(id: string): Promise<Properties | null>
-  findPropertiesByUserId(user_id: string): Promise<Properties[]>
+  findPropertiesByUserId(user_id: string, filters?: PropertyFilters): Promise<Properties[]>
   updateProperty(id: string, property: Record<string, any>): Promise<Properties | null>
   findPropertiesByPriceRange(min: number, max: number): Promise<Properties[]>
   findPropertiesName(property_name: string): Promise<Properties>
@@ -17,4 +17,5 @@ export interface IPropertyRepository {
   removeWatchList (property_id: string, user_id: string): Promise<boolean>
   ApproveOrDisApproveProperties(property_id: string, input: Record<string, any>): Promise<void | number>
   getAllPropertiesTobeApproved(filters?: Record<string, any>): Promise<Properties[]>
+  getAllUserPropertyCount(user_id: string): Promise<PropertyCount>
 }

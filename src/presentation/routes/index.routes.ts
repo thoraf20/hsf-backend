@@ -1,17 +1,21 @@
 import { Router } from "express";
-import propertyRoutes from "./property/property.routes";
-import inspectionRoutes from "./property/inspection.routes";
-import adminRoute from './admin/admin.routes'
-import userRoutes from './userRoutes/user.routes'
-import { authenticate } from './index.t'
-import authRoutes from "./authRoutes/auth.routes";
-import { limiter } from "../../middleware/security";
-import managePropertyRoute from "./admin/ManageProperty.routes";
+import propertyRoutes from "@routes/property/property.routes";
+import inspectionRoutes from "@routes/property/inspection.routes";
+import adminRoute from '@routes/admin/admin.routes'
+import userRoutes from '@routes/userRoutes/user.routes'
+import { authenticate } from '@routes/index.t'
+import authRoutes from "@routes/authRoutes/auth.routes";
+import { limiter } from "@middleware/security";
+import managePropertyRoute from "@routes/admin/ManageProperty.routes";
+import enquiryRoutes from "@routes/property/enquiry.routes";
+import developerRoutes from "@routes/developer/developer.routes";
 
 
 
 const routes: Router = Router()
 
+routes.use('/developer', authenticate, limiter, developerRoutes)
+routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoutes)
 routes.use('/inspection', authenticate, limiter,  inspectionRoutes)
 routes.use('/admin', authenticate,  limiter, adminRoute)

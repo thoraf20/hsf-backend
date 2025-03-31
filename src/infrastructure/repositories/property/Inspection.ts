@@ -24,6 +24,25 @@ export class InspectionRepository implements IInspectionRepository {
       return foundInspection ? new Inspection(foundInspection) : null;
   }
 
+  async getSchedulesInspectionForProperty(property_ids: string[]): Promise<Inspection[]> {
+    if( property_ids.length < 1){
+        return []
+    }
+    let query = db('inspection');
+    let index = 0;
+    for(var  property_id of property_ids){
+        if (index == 0){
+            query = query.where({ property_id });
+        } else {
+            query = query.and.where({ property_id });
+        }
+        index++
+        
+    }
+    const foundInspection = await query.select("*").then((inspections) => inspections.map(inspection => new Inspection(inspection)));
+    return foundInspection
+}
+
   async getAllScheduleInspection(user_id: string, filter?: Record<string, any>): Promise<(Inspection & Properties)[]> {
              const inspections =   await db("inspection")
              .select(

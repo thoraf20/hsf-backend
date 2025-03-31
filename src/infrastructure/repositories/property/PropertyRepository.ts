@@ -3,6 +3,7 @@ import { IPropertyRepository } from '../../../domain/interfaces/IPropertyReposit
 import {
   Properties,
 } from '../../../domain/entities/Property'
+import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
@@ -109,7 +110,20 @@ export class PropertyRepository implements IPropertyRepository {
     return property ? new Properties(property) : null
   }
 
-  async findPropertiesByUserId(user_id: string, filters?: Record<string, any>,): Promise<Properties[]> {
+  async getAllUserPropertyCount(user_id: string): Promise<PropertyCount> {
+    let properties = await db('properties')
+    .select('properties.*')
+    .where('properties.user_id', user_id)
+    .orderBy('properties.id', 'desc') as Properties[];
+
+    const queryresp =  properties.reduce((acc: PropertyCount, curr: Properties)=> {
+      return {total: acc.total + 1, pending: acc.pending +  (curr.is_live ? 0 : 1) , totalViewed : 0}
+    }, {total: 0, pending: 0, totalViewed : 0} )
+
+    return queryresp
+  }
+
+  async findPropertiesByUserId(user_id: string, filters?: PropertyFilters,): Promise<Properties[]> {
     let query = db('properties')
     .select('properties.*')
     .where('properties.user_id', user_id)
@@ -119,9 +133,9 @@ export class PropertyRepository implements IPropertyRepository {
     if (filters.city) {
       query = query.where('properties.city', filters.city)
     }
-    if (filters.minPrice && filters.maxPrice) {
+    if (filters.maxPrice) {
       query = query.whereBetween('properties.property_price', [
-        filters.minPrice,
+        filters.minPrice || "0",
         filters.maxPrice,
       ])
     }
@@ -130,9 +144,9 @@ export class PropertyRepository implements IPropertyRepository {
         if (filters.city) {
           query = query.where('properties.city', filters.city)
         }
-        if (filters.minPrice && filters.maxPrice) {
+        if (filters.maxPrice) {
           query = query.whereBetween('properties.property_price', [
-            filters.minPrice,
+            filters.minPrice || "0",
             filters.maxPrice,
           ])
         }

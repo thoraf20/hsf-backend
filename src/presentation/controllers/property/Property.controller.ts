@@ -2,6 +2,7 @@ import { ApiResponse, createResponse } from '../../response/responseType'
 import { PropertyService } from '../../../application/useCases/Properties/Property'
 import { Properties } from '../../../domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
+import { PropertyFilters } from '@shared/types/repoTypes'
 
 
 export class PropertyController {
@@ -27,8 +28,8 @@ export class PropertyController {
     )
   }
 
-  public async getPropertyByUserId(user_id: string): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getPropertyByUserId(user_id)
+  public async getPropertyByUserId(user_id: string, filters?: PropertyFilters): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getPropertyByUserId(user_id, filters)
     return createResponse(
       StatusCodes.OK,
       'Properties fetched successfully',
@@ -47,16 +48,17 @@ export class PropertyController {
   async updateProperty(
     input: Properties,
     id: string,
+    user_id: string,
   ): Promise<ApiResponse<any>> {
-    await this.propertyService.updateProperty(id, input)
+    await this.propertyService.updateProperty(id,user_id, input)
     return createResponse(StatusCodes.OK, 'Property updated successfully', {})
   }
-  async deleteProperty(id: string): Promise<ApiResponse<any>> {
-    await this.propertyService.deleteProperty(id)
+  async deleteProperty(id: string, user_id: string): Promise<ApiResponse<any>> {
+    await this.propertyService.deleteProperty(id, user_id)
     return createResponse(StatusCodes.OK, 'Property deleted successfully', {})
   }
-  async softDeleteProperty(id: string): Promise<ApiResponse<any>> {
-    await this.propertyService.softDeleteProperty(id)
+  async softDeleteProperty(id: string, user_id: string): Promise<ApiResponse<any>> {
+    await this.propertyService.softDeleteProperty(id, user_id)
     return createResponse(StatusCodes.OK, 'Property deleted successfully', {})
   }
 
