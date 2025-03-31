@@ -12,8 +12,8 @@ import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
 
-import { Admin } from '@application/useCases/Admin/Admin'
-import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
+// import { Admin } from '../application/useCases/Admin'
+// import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 const app: Application = express()
 
 app.use(cors())
@@ -39,17 +39,17 @@ app.use(speedLimiter)
 app.use(morgan('combined'))
 app.use(morgan('dev'))
 
-const userRepo = new UserRepository
-const create_admin = new Admin(userRepo)
+// const userRepo = new UserRepository
+// const create_admin = new Admin(userRepo)
 
-create_admin.createAdmin({
-  first_name: "Super",
-  last_name: "Admin",
-  email : process.env.ADMIN_EMAIL,
-  phone_number: process.env.ADMIN_PHONE,
-  password: process.env.ADMIN_PASS,
-  is_email_verified:  true
-})
+// create_admin.createAdmin({
+//   first_name: "Super",
+//   last_name: "Admin",
+//   email : process.env.ADMIN_EMAIL,
+//   phone_number: process.env.ADMIN_PHONE,
+//   password: process.env.ADMIN_PASS,
+//   is_email_verified:  true
+// })
 
 app.get('/', (req: Request, res: Response) => {
   res
