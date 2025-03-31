@@ -8,7 +8,7 @@ import {
   SortDateBy,
 } from '@shared/types/repoTypes'
 import {
-  SeekPaginationOption,
+  SeekPaginationOption, 
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
