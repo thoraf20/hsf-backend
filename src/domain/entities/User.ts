@@ -1,9 +1,8 @@
 // Import the Role enum
 
-import { PartialEntity } from '@shared/types/partials'
 import { Role } from '../enums/rolesEmun'
 
-export class User extends PartialEntity<User> {
+export class User  {
   id?: string
   first_name: string
   last_name: string
@@ -20,5 +19,13 @@ export class User extends PartialEntity<User> {
   is_phone_verified?: boolean
   is_mfa_enabled?: boolean
   is_default_password?: boolean
+  constructor(data: Partial<User>) {
+    Object.assign(this, {
+        created_at: new Date(),
+        updated_at: new Date(),
+        ...data
+    });
+}
+
 }
 

@@ -197,7 +197,7 @@ export class AuthService {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
     )) as any
-
+ console.log(user)
     if (!user) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
@@ -248,13 +248,7 @@ export class AuthService {
     if (user.failed_login_attempts > 0) {
       await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
-    if (user.is_email_verified === false) {
-      await this.resendOtp(user.email)
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Please verify your email, An otp is sent to your email',
-      )
-    }
+
 
     // Generate token
 

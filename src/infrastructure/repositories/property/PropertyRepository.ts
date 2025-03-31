@@ -100,6 +100,7 @@ export class PropertyRepository implements IPropertyRepository {
     }
 
     const results = (await query).map((item) => new Properties(item))
+    console.log(results)
 
     return new SeekPaginationResult<Properties>({
       result: results,
@@ -269,27 +270,26 @@ export class PropertyRepository implements IPropertyRepository {
   }
 
   // get property to be approved By admin
-  async getAllPropertiesTobeApproved(
-    filters?: PropertyFilters,
-  ): Promise<SeekPaginationResult<Properties>> {
+  async getAllPropertiesTobeApproved(filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>> {
     let query = db('properties')
       .select('properties.*')
-      .orderBy('properties.id', 'desc')
+      .orderBy('properties.id', 'desc');
 
-    query = this.useFilter(query, filters)
     if (filters) {
-      if (filters?.result_per_page && filters?.page_number) {
-        const offset = (filters.page_number - 1) * filters.result_per_page
-        query = query.limit(filters.result_per_page).offset(offset)
+      query = this.useFilter(query, filters);
+  
+      if (filters.result_per_page && filters.page_number) {
+        const offset = (filters.page_number - 1) * filters.result_per_page;
+        query = query.limit(filters.result_per_page).offset(offset);
       }
     }
-
-    const results = (await query).map((item) => new Properties(item))
-
+    const results = await query;
+    const properties = results.map((item) => new Properties(item));
     return new SeekPaginationResult<Properties>({
-      result: results,
+      result: properties,
       page: filters?.page_number || 1,
-      result_per_page: filters?.result_per_page || results.length,
-    })
+      result_per_page: filters?.result_per_page || properties.length,
+    });
   }
+  
 }
