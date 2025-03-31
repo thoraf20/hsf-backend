@@ -8,6 +8,7 @@ import {
   RequestPasswordResetOtpSchema,
   ResetPasswordOtpSchema,
   verifyMfaSchema,
+  RegisterEmail,
 } from '../../../application/requests/dto/userValidator'
 import { AuthService } from '../../../application/useCases/Auth/Auth'
 import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
@@ -19,6 +20,13 @@ import { bruteforce } from '../../../middleware/security'
 const service = new AuthService(new UserRepository())
 const controller = new AuthController(service)
 const authRoutes: Router = Router()
+
+
+authRoutes.post('/verify-email', validateRequest(RegisterEmail), asyncMiddleware(async (req, res) => {
+         const {body} = req 
+         const  verifyEmail = await controller.registerEmail(body)
+         res.status(verifyEmail.statusCode).json(verifyEmail)
+}) )
 
 authRoutes.post(
   '/register',

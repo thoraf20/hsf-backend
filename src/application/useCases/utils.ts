@@ -17,21 +17,11 @@ export class ExistingUsers {
   ) {
     this.userRepository = userRepository
   }
-  public async beforeCreate(
-    email: string,
+  public async beforeCreatePhone(
     phone_number: string,
   ): Promise<void> {
-    const [existingUser, existingPhone] = await Promise.all([
-      this.userRepository.findByEmail(email),
-      this.userRepository.findByPhone(phone_number),
-    ])
-
-    if (existingUser) {
-      throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'Email is already in use.',
-      )
-    }
+   const existingPhone = await this.userRepository.findByPhone(phone_number)
+ 
 
     if (existingPhone) {
       throw new ApplicationCustomError(
@@ -39,6 +29,19 @@ export class ExistingUsers {
         'Phone number is already in use.',
       )
     }
+  }
+  public async beforeCreateEmail(
+    email: string,
+  ): Promise<void> {
+  const existingUser = await this.userRepository.findByEmail(email) 
+    console.log(email)
+    if (existingUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email is already in use.',
+      )
+    }
+
   }
 
 

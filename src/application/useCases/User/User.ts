@@ -16,6 +16,12 @@ export class UserService {
     this.userRepository = userRepository
   }
 
+  public async getUserProfile (user: string) : Promise<User> {
+      const users = await this.userRepository.findById(user)
+      delete users.password
+      return users
+  }
+
   public async update(input: User, id: string): Promise<void> {
 
     const user = await this.userRepository.findById(id)

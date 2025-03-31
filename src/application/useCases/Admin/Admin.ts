@@ -22,7 +22,8 @@ export class Admin {
   }
 
   public async createAdmin(input: User): Promise<User> {
-    await this.existingUsers.beforeCreate(input.email, input.phone_number)
+    await this.existingUsers.beforeCreateEmail(input.email)
+    await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.SUPER_ADMIN)
     const user = await this.userRepository.create(
@@ -33,7 +34,8 @@ export class Admin {
   }
 
   public async inviteAgents(input: User): Promise<User> {
-    await this.existingUsers.beforeCreate(input.email, input.phone_number)
+    await this.existingUsers.beforeCreateEmail(input.email)
+    await this.existingUsers.beforeCreatePhone(input.phone_number)
     const checkRole = await this.userRepository.getRoleByName(input.role)
     if (!checkRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
