@@ -13,7 +13,24 @@
     "noUnusedLocals": true,
 
     "paths": {
-      "*": ["node_modules/*"]
+      "*": ["node_modules/*"],
+      "@controllers/*": ["presentation/controllers/*"],
+      "@routes/*": ["presentation/routes/*"],
+      "@repositories/*": ["infrastructure/repositories/*"],
+      "@providers/*": ["infrastructure/providers/*"],
+      "@interfaces/*": ["domain/interfaces/*"],
+      "@entities/*": ["domain/entities/*"],
+      "@use-cases/*": ["application/useCases/*"],
+      "@validators/*": ["application/requests/dto/*"],
+      "@application/*": ["application/*"],
+      "@config/*": ["config/*"],
+      "@domain/*": ["domain/*"],
+      "@infrastructure/*": ["infrastructure/*"],
+      "@middleware/*": ["middleware/*"],
+      "@presentation/*": ["presentation/*"],
+      "@server/*": ["server/*"],
+      "@shared/*": ["shared/*"],
+      "@workers/*": ["workers/*"],
     }
   },
   "ts-node": {

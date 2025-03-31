@@ -1,6 +1,7 @@
+import { PartialEntity } from '@shared/types/partials'
 import { propertyApprovalStatus } from "../../domain/enums/propertyEnum"
 
-export class Properties {
+export class Properties extends PartialEntity<Properties> {
   id?: string
   property_name: string
   property_type: string
@@ -29,17 +30,16 @@ export class Properties {
   updated_at?: Date
   deleted_at?: Date
   constructor(data: Partial<Properties>) {
-    Object.assign(this, {
+
+    super({
+      ...data, 
       documents :
       typeof data.documents === 'string'
         ? JSON.stringify(data.documents)
         : Array.isArray(data.documents)
           ? data.documents
           : [],
-        created_at: new Date(),
-        updated_at: new Date(),
-        ...data
-    });
+    })
 }
 }
 

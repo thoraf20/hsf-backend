@@ -1,6 +1,8 @@
+import { PropertyFilters } from '@shared/types/repoTypes'
 import { Properties } from '../../../domain/entities/Property'
 import { IPropertyRepository } from '../../../domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
+import { SeekPaginationResult } from '@shared/types/paginate'
 
 export class PropertyService {
   private propertyRepository: IPropertyRepository
@@ -26,7 +28,7 @@ export class PropertyService {
     return { ...address }
   }
 
-  public async getAllProperties(): Promise<Array<Properties>> {
+  public async getAllProperties(): Promise<SeekPaginationResult<Properties>> {
     const fetchProperties = await this.propertyRepository.getAllProperties()
     return fetchProperties
   }
@@ -38,16 +40,19 @@ export class PropertyService {
 
   public async getPropertyByUserId(
     user_id: string,
-  ): Promise<Array<Properties>> {
+    filters?: PropertyFilters
+  ): Promise<SeekPaginationResult<Properties>> {
     const fetchProperty =
-      await this.propertyRepository.findPropertiesByUserId(user_id)
+      await this.propertyRepository.findPropertiesByUserId(user_id, filters)
     return fetchProperty
   }
 
   public async updateProperty(
     id: string,
+    user_id: string,
     input: Partial<Properties>,
   ): Promise<Properties> {
+    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
     const existingProperty = await this.utilsProperty.findIfPropertyExist(id)
 
     if (input.property_name) {
@@ -73,12 +78,14 @@ export class PropertyService {
     return { ...existingProperty, ...updateData }
   }
 
-  public async deleteProperty(id: string): Promise<boolean> {
+  public async deleteProperty(id: string, user_id: string): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
     await this.utilsProperty.findIfPropertyExist(id)
     return this.propertyRepository.deleteProperty(id)
   }
 
-  public async softDeleteProperty(id: string): Promise<boolean> {
+  public async softDeleteProperty(id: string, user_id: string): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
     await this.utilsProperty.findIfPropertyExist(id)
     return await this.propertyRepository.softDeleteProperty(id)
   }

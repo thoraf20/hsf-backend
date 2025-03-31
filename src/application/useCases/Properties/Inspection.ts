@@ -10,6 +10,7 @@ import { ITransaction } from '../../../domain/interfaces/ITransactionRepository'
 import { TransactionEnum } from '../../../domain/enums/transactionEnum';
 import { generateTransactionId } from '../../../shared/utils/helpers';
 import { PaymentEnum } from '../../../domain/enums/PaymentEnum';
+import { SeekPaginationResult } from '@shared/types/paginate';
 
 export class InspectionService {
   private inspectionRepository: IInspectionRepository;
@@ -95,7 +96,7 @@ export class InspectionService {
 
   public async getAllInspectionByDeveloperId(
     dev_id: string,
-  ): Promise<Inspection[]> {
+  ): Promise<SeekPaginationResult<Record<string, any>>> {
     const Inspection =
       await this.inspectionRepository.getAllScheduleInspection(dev_id)
     return Inspection

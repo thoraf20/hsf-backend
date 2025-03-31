@@ -5,6 +5,8 @@ import { IPropertyRepository } from '../../domain/interfaces/IPropertyRepository
 import { Properties } from '../../domain/entities/Property'
 import { IInspectionRepository } from '../../domain/interfaces/IInspectionRepository'
 import { Inspection } from '../../domain/entities/Inspection'
+import { IEnquiresRepository } from '@interfaces/IEnquiresRepository'
+import { Enquiry } from '@entities/Enquires'
 
 
 export class ExistingUsers {
@@ -77,6 +79,25 @@ export class PropertyBaseUtils {
     }
     return properties;
   }
+
+  public async findIfPropertyBelongsToUser(property_id: string, user_id:string): Promise<Properties> {
+    const properties = await this.propertyRepository.findPropertyById(property_id) as Properties;
+    if (properties) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Property does not exist',
+      )
+    }
+
+    if (properties.user_id != user_id){
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Property does not exist',
+      )
+    }
+
+    return properties;
+  }
      
 
   public async findIfWatchListIsAdded (property_id: string, user_id: string) : Promise<Properties> {
@@ -110,4 +131,64 @@ export class InspectionBaseUtils {
           return findInpection
 
       }
+}
+
+export class EnquiryBaseUtils{
+  private enquiryRepository: IEnquiresRepository
+  private propertyRepository: IPropertyRepository;
+  constructor (enquiryRepo: IEnquiresRepository, propertyRepo: IPropertyRepository) {
+    this.enquiryRepository = enquiryRepo;
+    this.propertyRepository = propertyRepo;
+ }
+
+ public async confirmEnquiryExist(enquiry_id: string, user_id: string) : Promise<Enquiry>{
+    const enquiry = await this.enquiryRepository.getEnquiry(enquiry_id);
+
+    if (!enquiry){
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Enquiry doesnt exist'
+       )
+    }
+    return enquiry
+ }
+
+ public async confirmEnquiryExistForUser(enquiry_id: string, user_id: string) : Promise<Enquiry>{
+  const enquiry = await this.enquiryRepository.getEnquiry(enquiry_id);
+
+  if (!enquiry){
+    throw new ApplicationCustomError(
+      StatusCodes.CONFLICT,
+      'Enquiry doesnt exist'
+     )
+  }
+
+  if (enquiry.customer_id !=  user_id &&  enquiry.developer_id != user_id)
+
+  return enquiry
+}
+
+ public async confirmEnquiryDoesntExist(property_id: string, user_id: string): Promise<void> {
+  const enquiry = await this.enquiryRepository.getUserEnquiryOfProduct(property_id, user_id);
+
+  if (enquiry != null){
+    throw new ApplicationCustomError(
+      StatusCodes.CONFLICT,
+      'Enquiry already exist'
+     )
+  }
+}
+
+ public async checkPropertyExist(property_id: string){
+  const property = await this.propertyRepository.findPropertyById(property_id);
+
+  if (property == null){
+    throw new ApplicationCustomError(
+      StatusCodes.CONFLICT,
+      'property doesn\'t exist'
+     )
+  }
+
+  return property
+}
 }
