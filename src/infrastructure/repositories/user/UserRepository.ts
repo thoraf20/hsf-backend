@@ -59,7 +59,7 @@ export class UserRepository implements IUserRepository {
       .where({ email: identifier })
       .orWhere({ phone_number: identifier })
       .first()
-    return user ? new User(user) : null
+    return user 
   }
 
   public async getRoleByName(
