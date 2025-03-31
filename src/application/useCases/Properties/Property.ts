@@ -2,6 +2,7 @@ import { PropertyFilters } from '@shared/types/repoTypes'
 import { Properties } from '../../../domain/entities/Property'
 import { IPropertyRepository } from '../../../domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
+import { SeekPaginationResult } from '@shared/types/paginate'
 
 export class PropertyService {
   private propertyRepository: IPropertyRepository
@@ -27,7 +28,7 @@ export class PropertyService {
     return { ...address }
   }
 
-  public async getAllProperties(): Promise<Array<Properties>> {
+  public async getAllProperties(): Promise<SeekPaginationResult<Properties>> {
     const fetchProperties = await this.propertyRepository.getAllProperties()
     return fetchProperties
   }
@@ -40,7 +41,7 @@ export class PropertyService {
   public async getPropertyByUserId(
     user_id: string,
     filters?: PropertyFilters
-  ): Promise<Array<Properties>> {
+  ): Promise<SeekPaginationResult<Properties>> {
     const fetchProperty =
       await this.propertyRepository.findPropertiesByUserId(user_id, filters)
     return fetchProperty

@@ -1,6 +1,7 @@
+import { PartialEntity } from '@shared/types/partials'
 
 
-export class Enquires {
+export class Enquires extends PartialEntity<Enquires>{
     id?: string;
     property_id: string;
     customer_id: string;
@@ -11,31 +12,17 @@ export class Enquires {
 
 
     constructor(data: Partial<Enquires>) {
-        Object.assign(this, {
-            closed: false,
-            created_at: new Date(),
-            updated_at: new Date(),
-            ...data
-        });
+        super({...data, closed: false});
     }
 }
 
-export class EnquiryMsg {
+export class EnquiryMsg extends PartialEntity<EnquiryMsg> {
     id?: string;
     enquiry_id: string;
     owner_id: string;
     message: string;
     created_at?: Date;
     updated_at?: Date;
-
-
-    constructor(data: Partial<EnquiryMsg>) {
-        Object.assign(this, {
-            created_at: new Date(),
-            updated_at: new Date(),
-            ...data
-        });
-    }
 }
 
 export type Enquiry = Enquires & { messages: EnquiryMsg[] };

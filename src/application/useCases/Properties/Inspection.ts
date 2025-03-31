@@ -4,6 +4,7 @@ import { IInspectionRepository } from '../../../domain/interfaces/IInspectionRep
 import { InspectionBaseUtils } from '../utils'
 import { ApplicationCustomError } from '../../../middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
+import { SeekPaginationResult } from '@shared/types/paginate'
 
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
@@ -49,7 +50,7 @@ export class InspectionService {
 
   public async getAllInspectionByDeveloperId(
     dev_id: string,
-  ): Promise<Inspection[]> {
+  ): Promise<SeekPaginationResult<Record<string, any>>> {
     const Inspection =
       await this.inspectionRepository.getAllScheduleInspection(dev_id)
     return Inspection

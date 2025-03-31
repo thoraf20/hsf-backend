@@ -1,4 +1,6 @@
-export class Payment {
+import { PartialEntity } from '@shared/types/partials'
+
+export class Payment extends PartialEntity<Payment> {
     id?: string;
     userId: string;
     amount: number;
@@ -7,14 +9,5 @@ export class Payment {
     metaData?: Record<string, any>
     createdAt?: Date;
     updatedAt?: Date;
-  
-    constructor(data: Partial<Payment>) {
-      Object.assign(this, {
-          inspection_fee_paid: false,
-          created_at: new Date(),
-          updated_at: new Date(),
-          ...data
-      });
-  }
   }
   

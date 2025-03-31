@@ -44,16 +44,16 @@ export class ManageDeveloper {
   }
 
   public async getAllLeads(developer_id: string, filters: PropertyFilters) {
-    //TODO: paginate
     const enquiries =
       await this.enquiryRepository.getAllUserEnquiries(developer_id)
     const property_ids = await this.propertyRepository
       .findPropertiesByUserId(developer_id, filters)
-      .then((properties) => properties.map((p) => p.id))
+      .then((properties) => properties.result.map((p) => p.id))
     const inspection =
       await this.inspectionRepository.getSchedulesInspectionForProperty(
         property_ids,
       )
+      
     return { enquiries, inspection }
   }
 

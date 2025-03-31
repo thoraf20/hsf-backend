@@ -1,6 +1,7 @@
 import { Enquires, Enquiry, EnquiryMsg } from "@entities/Enquires";
 import { IEnquiresRepository } from "@interfaces/IEnquiresRepository";
 import db from "@infrastructure/database/knex";
+import { SeekPaginationOption, SeekPaginationResult } from "@shared/types/paginate";
 
 
 export class EnquiryRepository implements IEnquiresRepository{
@@ -31,11 +32,24 @@ export class EnquiryRepository implements IEnquiresRepository{
         return {...enquiry, messages }
     }
 
-    async getAllUserEnquiries(user_id: string): Promise<Enquires[]> {
-        const enquires = await db(this.tablename)
+    async getAllUserEnquiries(user_id: string, paginate?: SeekPaginationOption): Promise<SeekPaginationResult<Enquires>> {
+        let query =  db(this.tablename)
         .where({ customer_id: user_id }).or.where({ developer_id: user_id }) 
-        .select("*");
-        return enquires.map((enquiry: any) => new Enquires(enquiry) );
+
+        if (paginate){
+            const offset = (paginate.page_number - 1) * paginate.result_per_page;
+            query = query.limit(paginate.result_per_page)
+            .offset(offset);
+        }
+
+        const enquires = (await query.select("*"));
+        const results = enquires.map((enquiry: any) => new Enquires(enquiry) );
+
+        return new SeekPaginationResult<Enquires>({
+            result: results,
+            page: paginate?.page_number || 1,
+            result_per_page: paginate?.result_per_page || results.length,
+        })
     }
 
     async getEnquiry(id: string): Promise<Enquiry> {

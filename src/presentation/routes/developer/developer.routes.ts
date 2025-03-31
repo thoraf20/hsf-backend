@@ -41,5 +41,27 @@ developerRoutes.get(
     })
 )
 
+developerRoutes.get(
+    "/leads",
+    requireRoles([Role.DEVELOPER]),
+    asyncMiddleware(async (req, res) => {
+        const { user, query } = req
+        const response = await controller.getPropertyLeads(user.id, query);
+        res.status(response.statusCode).json(response)
+    })
+)
+
+developerRoutes.get(
+    "/leads/info",
+    requireRoles([Role.DEVELOPER]),
+    asyncMiddleware(async (req, res) => {
+        const { user, query } = req
+        const query_id = query.id as string;
+        const lead_type = query.lead_type as 'inspection' | 'enquiry';
+        const response = await controller.getPropertyLeadInfo(user.id,query_id, lead_type );
+        res.status(response.statusCode).json(response)
+    })
+)
+
 
 export default developerRoutes

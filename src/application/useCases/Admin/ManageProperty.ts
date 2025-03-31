@@ -1,3 +1,4 @@
+import { SeekPaginationResult } from "@shared/types/paginate"
 import { Properties } from "../../../domain/entities/Property"
 import { propertyApprovalStatus } from "../../../domain/enums/propertyEnum"
 import { IPropertyRepository } from "../../../domain/interfaces/IPropertyRepository"
@@ -40,7 +41,7 @@ export class manageProperty {
         return { is_live: newPropertyStatus }
       }
 
-      public async GetPropertyToBeApprove (): Promise<Properties[]> {
+      public async GetPropertyToBeApprove (): Promise<SeekPaginationResult<Properties>> {
           return await this.propertyRepository.getAllPropertiesTobeApproved()
       }
 }
