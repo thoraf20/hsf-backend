@@ -1,6 +1,6 @@
 import { PropertyFilters } from '@shared/types/repoTypes'
-import { Properties } from '../../../domain/entities/Property'
-import { IPropertyRepository } from '../../../domain/interfaces/IPropertyRepository'
+import { Properties } from '@domain/entities/Property'
+import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { SeekPaginationResult } from '@shared/types/paginate'
 
@@ -40,10 +40,12 @@ export class PropertyService {
 
   public async getPropertyByUserId(
     user_id: string,
-    filters?: PropertyFilters
+    filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    const fetchProperty =
-      await this.propertyRepository.findPropertiesByUserId(user_id, filters)
+    const fetchProperty = await this.propertyRepository.findPropertiesByUserId(
+      user_id,
+      filters,
+    )
     return fetchProperty
   }
 
@@ -52,7 +54,7 @@ export class PropertyService {
     user_id: string,
     input: Partial<Properties>,
   ): Promise<Properties> {
-    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
+    await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
     const existingProperty = await this.utilsProperty.findIfPropertyExist(id)
 
     if (input.property_name) {
@@ -79,13 +81,16 @@ export class PropertyService {
   }
 
   public async deleteProperty(id: string, user_id: string): Promise<boolean> {
-    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
+    await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
     await this.utilsProperty.findIfPropertyExist(id)
     return this.propertyRepository.deleteProperty(id)
   }
 
-  public async softDeleteProperty(id: string, user_id: string): Promise<boolean> {
-    await this.utilsProperty.findIfPropertyBelongsToUser( id ,user_id);
+  public async softDeleteProperty(
+    id: string,
+    user_id: string,
+  ): Promise<boolean> {
+    await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
     await this.utilsProperty.findIfPropertyExist(id)
     return await this.propertyRepository.softDeleteProperty(id)
   }
@@ -117,6 +122,4 @@ export class PropertyService {
     await this.utilsProperty.findIfPropertyExist(property_id)
     return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
-
-
 }

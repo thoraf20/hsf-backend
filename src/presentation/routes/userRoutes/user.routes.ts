@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express'
 import { asyncMiddleware, validateRequest } from '../index.t'
-import { UserController } from '../../../presentation/controllers/User.controller'
-import { UserService } from '../../../application/useCases/User/User'
-import { UserRepository } from '../../../infrastructure/repositories/user/UserRepository'
+import { UserController } from '@presentation/controllers/User.controller'
+import { UserService } from '@application/useCases/User/User'
+import { UserRepository } from '@infrastructure/repositories/user/UserRepository'
 import {
   updatePasswordSchema,
   updateProfileSchema,
   verifyOtpSchema,
-} from '../../../application/requests/dto/userValidator'
+} from '@application/requests/dto/userValidator'
 const userRoutes: Router = Router()
 
 const userServices = new UserService(new UserRepository())
@@ -23,18 +23,20 @@ userRoutes.put(
   }),
 )
 
-userRoutes.get('/profile', asyncMiddleware(async (req: Request, res: Response) => {
-  const { user } = req
-  const userProfile = await userController.getUserById(user.id)
-  return res.status(userProfile.statusCode).json(userProfile)
-}),
+userRoutes.get(
+  '/profile',
+  asyncMiddleware(async (req: Request, res: Response) => {
+    const { user } = req
+    const userProfile = await userController.getUserById(user.id)
+    return res.status(userProfile.statusCode).json(userProfile)
+  }),
 )
 
 userRoutes.post(
   '/verify-update',
   validateRequest(verifyOtpSchema),
   asyncMiddleware(async (req, res) => {
-    const { body } = req 
+    const { body } = req
     const userUpdate = await userController.verifyUpdate(body.otp)
     res.status(userUpdate.statusCode).json(userUpdate)
   }),

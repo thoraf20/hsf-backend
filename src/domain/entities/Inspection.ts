@@ -1,12 +1,11 @@
-import { PaymentEnum } from '../../domain/enums/PaymentEnum'
-import { PartialEntity } from '@shared/types/partials'
+import { PaymentEnum } from '@domain/enums/PaymentEnum'
 import {
   FinancialOptionsEnum,
   InspectionMeetingType,
   MeetingPlatform,
-} from '../../domain/enums/propertyEnum'
+} from '@domain/enums/propertyEnum'
 
-export class Inspection extends PartialEntity<Inspection> {
+export class Inspection{
   id?: string
   purchase_plan_type: FinancialOptionsEnum
   property_id: string
@@ -31,7 +30,6 @@ export class Inspection extends PartialEntity<Inspection> {
       created_at: new Date(),
       updated_at: new Date(),
     }
-    super(data)
     Object.assign(this, data)
   }
 }

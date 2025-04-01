@@ -1,9 +1,9 @@
-import { InspectionService } from '../../../application/useCases/Properties/Inspection'
-import { Inspection } from '../../../domain/entities/Inspection'
+import { InspectionService } from '@application/useCases/Properties/Inspection'
+import { Inspection } from '@domain/entities/Inspection'
 import {
   ApiResponse,
   createResponse,
-} from '../../../presentation/response/responseType'
+} from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
 
 export class InspectionController {

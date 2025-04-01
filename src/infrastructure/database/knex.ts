@@ -1,5 +1,5 @@
 import knex from 'knex'
-import configs from '../../config/config'
+import configs from '@config/config'
 
 const db = knex({
   client: 'pg',
@@ -8,14 +8,13 @@ const db = knex({
     user: configs.database.user,
     password: configs.database.password,
     database: configs.database.database,
-    port: configs.database.port
+    port: configs.database.port,
   },
   pool: { min: 2, max: 10 },
   migrations: {
-    directory: '../../migrations',
+    directory: '@migrations',
     tableName: 'knex_migrations',
   },
 })
 
 export default db
- 

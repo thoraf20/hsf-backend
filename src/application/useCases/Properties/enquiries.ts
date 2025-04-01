@@ -4,7 +4,7 @@ import { IPropertyRepository } from "@interfaces/IPropertyRepository";
 import { EnquiryBaseUtils } from "@use-cases/utils";
 
 
-
+ 
 export class EnquiryService {
 
     private enquiryRepository: IEnquiresRepository

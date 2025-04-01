@@ -1,7 +1,7 @@
-import db from '../../database/knex'
-import { IUserRepository } from '../../../domain/interfaces/IUserRepository'
-import { User } from '../../../domain/entities/User'
-import { Hashing } from '../../../shared/utils/hashing'
+import db from '@infrastructure/database/knex'
+import { IUserRepository } from '@domain/interfaces/IUserRepository'
+import { User } from '@domain/entities/User'
+import { Hashing } from '@shared/utils/hashing'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()

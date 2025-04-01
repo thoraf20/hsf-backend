@@ -1,8 +1,8 @@
 import 'dotenv/config'
 import bcrypt from 'bcryptjs'
-import configs from '../../config/config'
+import configs from '@config/config'
 import Jwt from 'jsonwebtoken'
-import { Role } from '../../domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEmun'
 
 const secret = process.env.SECRET_TOKEN as string | 'theSecretofDoom'
 console.log(configs.salt.app_key)

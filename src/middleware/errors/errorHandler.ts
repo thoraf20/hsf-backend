@@ -1,5 +1,5 @@
 import { ErrorRequestHandler, NextFunction, Response, Request } from 'express'
-import { ApplicationError } from '../../shared/utils/error'
+import { ApplicationError } from '@shared/utils/error'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../logger'
 
