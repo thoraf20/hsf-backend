@@ -1,5 +1,7 @@
 import { Knex } from "knex";
-import { v4 as uuidv4 } from "uuid";
+import * as uuid from "uuid"
+
+const uuidv4 = uuid.v4 
 
 export async function seed(knex: Knex): Promise<void> {
     // Define roles

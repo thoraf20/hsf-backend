@@ -86,22 +86,22 @@ export class PropertyRepository implements IPropertyRepository {
   async getAllProperties(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    let query = db('properties')
+    let query =  db('properties')
       .select('properties.*')
-      .where({ is_live: true })
-      .orderBy('properties.id', 'desc')
-
-    query = this.useFilter(query, filters)
-    if (filters) {
-      if (filters?.result_per_page && filters?.page_number) {
-        const offset = (filters.page_number - 1) * filters.result_per_page
-        query = query.limit(filters.result_per_page).offset(offset)
+      .where({is_live: true})
+      .orderBy('properties.id', 'desc');
+      
+    query = this.useFilter(query, filters);
+    if (filters){
+      if (filters?.result_per_page && filters?.page_number){
+        const offset = (filters.page_number - 1) * filters.result_per_page;
+        query = query.limit(filters.result_per_page)
+        .offset(offset);
       }
     }
 
-    const results = (await query).map((item) => new Properties(item))
-    console.log(results)
-
+    const r = await query
+    const results = r.map((item) => new Properties({...item}))
     return new SeekPaginationResult<Properties>({
       result: results,
       page: filters?.page_number || 1,

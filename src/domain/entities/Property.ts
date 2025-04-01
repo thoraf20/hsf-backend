@@ -30,8 +30,17 @@ export class Properties {
   deleted_at?: Date
 
   constructor(data: Partial<Properties>) {
-    Object.assign(this, {
-      ...data,
-    })
+    let complete_data = {
+      documents :
+      typeof data.documents === 'string'
+        ? JSON.stringify(data.documents)
+        : Array.isArray(data.documents)
+          ? data.documents
+          : [],
+          ...data, 
+    }
+    if (data) {
+      Object.assign(this, complete_data);
+    }
   }
 }

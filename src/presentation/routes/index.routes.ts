@@ -1,6 +1,6 @@
 import { Router } from "express";
 import webhook from "./webbook/utils.routes";
-import propertyRoute from "./property/property.routes";
+import propertyRoute from "@routes/property/property.routes";
 import inspectionRoutes from "@routes/property/inspection.routes";
 import adminRoute from '@routes/admin/admin.routes'
 import userRoutes from '@routes/userRoutes/user.routes'

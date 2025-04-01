@@ -23,12 +23,13 @@ export class Inspection{
   created_at?: Date
   updated_at?: Date
   payment_type?: PaymentEnum
-  constructor(data: Partial<Inspection>) {
-    Object.assign(this, {
-        created_at: new Date(),
-        updated_at: new Date(),
-        ...data
-    });
-}
-
+  constructor(d: Partial<Inspection>) {
+    let data = {
+      ...d,
+      inspection_fee_paid: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    Object.assign(this, data)
+  }
 }

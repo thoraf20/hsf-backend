@@ -1,6 +1,6 @@
-import { PartialEntity } from '@shared/types/partials'
+import { PartialInstantiable } from '@shared/types/partials'
 
-export class Payment extends PartialEntity<Payment> {
+export class Payment extends PartialInstantiable<Payment> {
     id?: string;
     userId?: string;
     amount: number;
@@ -10,5 +10,12 @@ export class Payment extends PartialEntity<Payment> {
     metaData?: Record<string, any>
     createdAt?: Date;
     updatedAt?: Date;
+
+    constructor(data: Partial<Payment>) {
+      super(data)
+      if (data) {
+        Object.assign(this, data);
+      }
+    }
   }
   
