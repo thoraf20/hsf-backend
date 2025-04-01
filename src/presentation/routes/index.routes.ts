@@ -13,6 +13,7 @@ import developerRoutes from "@routes/developer/developer.routes";
 
 
 
+
 const routes: Router = Router()
 
 routes.use('/developer', authenticate, limiter, developerRoutes)
