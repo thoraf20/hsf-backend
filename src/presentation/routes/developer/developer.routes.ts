@@ -7,6 +7,7 @@ import { asyncMiddleware, Role } from '@routes/index.t'
 import { InspectionRepository } from '@repositories/property/Inspection'
 import { EnquiryRepository } from '@repositories/property/enquiries'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
 
 const developerRoutes: Router = Router()
 
@@ -15,6 +16,7 @@ const managePropertyservice = new ManageDeveloper(
   new InspectionRepository(),
   new EnquiryRepository(),
   new UserRepository(),
+  new TransactionRepository()
 )
 
 const controller = new DeveloperController(managePropertyservice)
@@ -60,6 +62,45 @@ developerRoutes.get(
       user.id,
       query_id,
       lead_type,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+developerRoutes.get(
+  '/clients',
+  requireRoles([Role.DEVELOPER]),
+  asyncMiddleware(async (req, res) => {
+    const { user, query } = req
+    const response = await controller.getAllClients(
+      user.id,
+      query
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+developerRoutes.get(
+  '/payments',
+  requireRoles([Role.DEVELOPER]),
+  asyncMiddleware(async (req, res) => {
+    const { user, query } = req
+    const response = await controller.getAllPayments(
+      user.id,
+      query
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+developerRoutes.get(
+  '/payment/:id',
+  requireRoles([Role.DEVELOPER]),
+  asyncMiddleware(async (req, res) => {
+    const { user, params } = req
+    const response = await controller.getPaymentsInfo(
+      user.id,
+      params.id
     )
     res.status(response.statusCode).json(response)
   }),

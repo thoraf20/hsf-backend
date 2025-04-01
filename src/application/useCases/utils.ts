@@ -95,6 +95,8 @@ export class PropertyBaseUtils {
     return properties
   }
 
+  find 
+
   public async findIfWatchListIsAdded(
     property_id: string,
     user_id: string,
