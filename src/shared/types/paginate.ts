@@ -11,4 +11,9 @@ export class SeekPaginationResult<T> extends PartialInstantiable<
   result_per_page: number;
   result: T[];
   page: number;
+
+  constructor(data : Partial<SeekPaginationResult<T>>){
+    super(data)
+    Object.assign(this, data);
+  }
 }

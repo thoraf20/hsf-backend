@@ -30,16 +30,19 @@ export class Properties extends PartialEntity<Properties> {
   updated_at?: Date
   deleted_at?: Date
   constructor(data: Partial<Properties>) {
-
-    super({
-      ...data, 
+    let complete_data = {
       documents :
       typeof data.documents === 'string'
         ? JSON.stringify(data.documents)
         : Array.isArray(data.documents)
           ? data.documents
           : [],
-    })
+          ...data, 
+    }
+    super(complete_data)
+    if (data) {
+      Object.assign(this, complete_data);
+    }
 }
 }
 

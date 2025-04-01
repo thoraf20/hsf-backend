@@ -83,10 +83,10 @@ export class PropertyRepository implements IPropertyRepository {
   async getAllProperties(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    let query = db('properties')
+    let query =  db('properties')
       .select('properties.*')
       .where({is_live: true})
-      .orderBy('properties.id', 'desc')
+      .orderBy('properties.id', 'desc');
       
     query = this.useFilter(query, filters);
     if (filters){
@@ -97,7 +97,13 @@ export class PropertyRepository implements IPropertyRepository {
       }
     }
 
-    const results = (await query).map(item => new Properties(item))
+    const r = await query
+
+    
+
+    const results = r.map((item) => new Properties({...item}))
+
+    console.log("\n\n\n\n", results, "\n\n\n\n")
 
     return new SeekPaginationResult<Properties>({
       result: results,
