@@ -10,12 +10,15 @@ import { limiter } from "@middleware/security";
 import managePropertyRoute from "@routes/admin/ManageProperty.routes";
 import enquiryRoutes from "@routes/property/enquiry.routes";
 import developerRoutes from "@routes/developer/developer.routes";
+import preQualifierRoutes from "@routes/property/preQualifiier/prequalify.routes";
+
 
 
 
 const routes: Router = Router()
 
 routes.use('/developer', authenticate, limiter, developerRoutes)
+routes.use('/pre-qualifier', authenticate, preQualifierRoutes)
 routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoute)
 routes.use('/inspection', authenticate, limiter,  inspectionRoutes)

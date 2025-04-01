@@ -84,7 +84,7 @@ export class AuthService {
    */
 
   async verifyAccount(otp: string): Promise<any> {
-    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
+    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}` ? `${CacheEnumKeys.preQualify_VERIFICATION}-${otp}` : null
     const details = await this.client.getKey(key)
 
     if (!details) {
@@ -94,30 +94,33 @@ export class AuthService {
       )
     }
 
-    const { email, type } =
+    const { email, type} =
       typeof details === 'string' ? JSON.parse(details) : details
 
-    if (type !== OtpEnum.EMAIL_VERIFICATION) {
+    if (type !== OtpEnum.EMAIL_VERIFICATION || type !== OtpEnum.PREQUALIFY) {
       await this.client.deleteKey(key)
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         'Invalid OTP type.',
       )
     }
-
     const tempId = uuidv4()
-    const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
-    await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
+    if(type === OtpEnum.EMAIL_VERIFICATION) {
+      const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
+      await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
+    }
+
+
     await this.client.deleteKey(key) // Delete OTP after verification
 
     return { tempId } // Return temporary ID to the user
   }
 
-  async resendOtp(email: string): Promise<void> {
+  async resendOtp(email: string): Promise<void |  any> {
     const user = await this.userRepository.findByEmail(email)
 
     if (!user) {
-      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.')
+      return false
     }
 
     if (user.is_email_verified) {
@@ -138,11 +141,11 @@ export class AuthService {
   /**
    * Request forgotten password reset
    */
-  async requestPasswordReset(email: string): Promise<void> {
+  async requestPasswordReset(email: string): Promise<void | boolean> {
     const user = await this.userRepository.findByEmail(email)
 
     if (!user) {
-      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found.')
+      return false
     }
 
     const otp = generateRandomSixNumbers()

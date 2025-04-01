@@ -64,7 +64,7 @@ export class AuthController {
     email: string,
   ): Promise<ApiResponse<any>> {
     await this.authService.requestPasswordReset(email)
-    return createResponse(StatusCodes.OK, 'OTP sent successfully')
+    return createResponse(StatusCodes.OK, 'Otp will be sent to this email if this account exist')
   }
 
   public async resetPasswordController(input: ResetPasswordType): Promise<any> {

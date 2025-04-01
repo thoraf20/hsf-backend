@@ -14,12 +14,6 @@ export async function up(knex: Knex): Promise<void> {
             .inTable('prequalify_personal_information')
             .onDelete('CASCADE')
             .onUpdate('CASCADE');
-        table.uuid('property_id')
-            .notNullable()
-            .references('id')
-            .inTable('properties')
-            .onDelete('CASCADE')
-            .onUpdate('CASCADE');
     });
 }
 

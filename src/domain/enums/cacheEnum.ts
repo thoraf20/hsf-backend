@@ -4,5 +4,6 @@ export enum CacheEnumKeys {
      LOGIN_ATTEMPT_LOCK = `login_attempt_lock`,
      MFA_VERIFICATION_KEY = `mfa_verification`,
      EMAIL_CHANGE = `request_email_update`,
-     CONTINUE_REGISTRATION = "continue_registration"
+     CONTINUE_REGISTRATION = "continue_registration",
+     preQualify_VERIFICATION= `Prequalify`
 }
