@@ -6,6 +6,8 @@ import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 import { IInspectionRepository } from '@interfaces/IInspectionRepository'
 import { IEnquiresRepository } from '@interfaces/IEnquiresRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
+import { ITransaction } from '@interfaces/ITransactionRepository'
+import { SeekPaginationOption } from '@shared/types/paginate'
 
 export class ManageDeveloper {
   private propertyRepository: IPropertyRepository
@@ -13,17 +15,20 @@ export class ManageDeveloper {
   private inspectionRepository: IInspectionRepository
   private enquiryRepository: IEnquiresRepository
   private userRepository: IUserRepository
+  private transactionRepository: ITransaction
 
   constructor(
     propertyRepo: IPropertyRepository,
     inspectionrepo: IInspectionRepository,
     enquiryRepo: IEnquiresRepository,
     userRepository: IUserRepository,
+    transactionRepo: ITransaction
   ) {
     this.propertyRepository = propertyRepo
     this.enquiryRepository = enquiryRepo
     this.userRepository = userRepository
     this.inspectionRepository = inspectionrepo
+    this.transactionRepository = transactionRepo
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
@@ -100,15 +105,27 @@ export class ManageDeveloper {
   }
 
 
-  public async getAllClient(developer_id: string){
-    // TODO: dependent on payment and paginate
+  public async getAllClient(developer_id: string, paginate?: SeekPaginationOption){
+    const property_ids = await this.propertyRepository
+    .findPropertiesByUserId(developer_id)
+    .then((properties) => properties.result.map((p) => p.id));
+    const users = this.transactionRepository. fetchUserFromTransactionByPaymentIds(property_ids,  paginate)
+    return users
   }
 
-  public async getAllPayments(developer_id: string){
-    // TODO: dependent on payment and paginate
+  public async getAllPayments(developer_id: string, paginate?: SeekPaginationOption ){
+    const property_ids = await this.propertyRepository
+    .findPropertiesByUserId(developer_id)
+    .then((properties) => properties.result.map((p) => p.id));
+
+    const transactions = await this.transactionRepository.getAlltransactionbyIds(property_ids, paginate);
+
+    return transactions
   }
 
-  public async getPaymentsInfo(developer_id: string){
-    // TODO: dependent on payment 
+  public async getPaymentsInfo(developer_id: string, payment_id: string){
+    const transaction = await this.transactionRepository.getTransactionById(payment_id)
+    await this.utilsProperty.findIfPropertyBelongsToUser(transaction.property_id, developer_id )
+    return transaction
   }
 }
