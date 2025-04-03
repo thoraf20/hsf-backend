@@ -5,7 +5,7 @@ import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
 
-  findPropertyById(id: string): Promise<Properties | null>
+  findPropertyById(id: string, userRole?: string ): Promise<Properties | null>
 
   findPropertiesByUserId(user_id: string, filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>>
   
@@ -15,7 +15,7 @@ export interface IPropertyRepository {
   
   findPropertiesName(property_name: string): Promise<Properties>
   
-  getAllProperties(filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>>
+  getAllProperties(filters?: PropertyFilters, userRole?: string, userId?: string): Promise<SeekPaginationResult<Properties> | any>
   
   softDeleteProperty(id: string): Promise<boolean>
   

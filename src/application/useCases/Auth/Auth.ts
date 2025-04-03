@@ -78,7 +78,8 @@ export class AuthService {
     const emailKey = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const passwordKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${otp}`
     const details = await this.client.getKey(emailKey) || await this.client.getKey(passwordKey)
-    
+    await this.client.checkAndClearCache(emailKey)
+    await this.client.checkAndClearCache(passwordKey)
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -102,7 +103,6 @@ export class AuthService {
       await this.client.setKey(tempKey, { id, is_email_verified: true }, 600)
     }
     
-    // Delete both potential keys
     await this.client.deleteKey(emailKey)
     await this.client.deleteKey(passwordKey)
     
@@ -154,6 +154,7 @@ export class AuthService {
   async resetPassword(input: ResetPasswordType): Promise<void> {
     const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.tempId}`
     const regDetails = await this.client.getKey(tempKey)
+    await this.client.checkAndClearCache(tempKey)
     if (!regDetails) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -186,7 +187,7 @@ export class AuthService {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
     )) as any
- console.log(user)
+ 
     if (!user) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
@@ -195,7 +196,9 @@ export class AuthService {
     }
 
     const lockKey = `${CacheEnumKeys.LOGIN_ATTEMPT_LOCK}-${user.id}`
+    await this.client.checkAndClearCache(lockKey)
     const isLocked = await this.client.getKey(lockKey)
+ 
 
     if (isLocked) {
       throw new ApplicationCustomError(
@@ -211,9 +214,10 @@ export class AuthService {
 
     if (!isValid) {
       const failedLoginAttempts = (user.failed_login_attempts || 0) + 1
-
+      console.log(user)
       if (failedLoginAttempts >= 3) {
-        await this.client.setKey(lockKey, true, 600) // Lock account for 10 mins
+        await this.client.setKey(lockKey, true, 600);
+        // Lock account for 10 mins
         await this.userRepository.update(user.id, {
           failed_login_attempts: failedLoginAttempts,
         })
@@ -235,7 +239,7 @@ export class AuthService {
     }
 
     if (user.failed_login_attempts > 0) {
-      await this.userRepository.update(user.id, { failed_login_attempts: 0 })
+      await this.userRepository.update(user.id, { failed_login_attempts: 0 })   
     }
 
 
@@ -244,6 +248,7 @@ export class AuthService {
     user = await this.userRepository.findById(user.id)
     console.log(user.role)
     const token = await this.hashData.accessCode(user.user_id, user.role)
+    await this.client.deleteKey(lockKey)
     delete user.password
     return { token, ...user }
   }

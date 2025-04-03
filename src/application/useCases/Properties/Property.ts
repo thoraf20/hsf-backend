@@ -28,13 +28,13 @@ export class PropertyService {
     return { ...address }
   }
 
-  public async getAllProperties(): Promise<SeekPaginationResult<Properties>> {
-    const fetchProperties = await this.propertyRepository.getAllProperties()
+  public async getAllProperties(filter?: PropertyFilters,  userRole?: string, userId?: string): Promise<SeekPaginationResult<Properties>> {
+    const fetchProperties = await this.propertyRepository.getAllProperties(filter, userRole, userId)
     return fetchProperties
   }
 
-  public async getPropertyById(id: string): Promise<Properties> {
-    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id)
+  public async getPropertyById(id: string, userRole: string ): Promise<Properties> {
+    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id, userRole)
     return fetchProperty
   }
 

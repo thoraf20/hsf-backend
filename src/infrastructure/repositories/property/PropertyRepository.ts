@@ -85,41 +85,73 @@ export class PropertyRepository implements IPropertyRepository {
 
   async getAllProperties(
     filters?: PropertyFilters,
+    userRole?: string | "guest",
+    userId?: string 
   ): Promise<SeekPaginationResult<Properties>> {
-    let query =  db('properties')
+    let query = db('properties')
       .select('properties.*')
-      .where({is_live: true})
+      .where({ is_live: true })
       .orderBy('properties.id', 'desc');
-      
-    query = this.useFilter(query, filters);
-    if (filters){
-      if (filters?.result_per_page && filters?.page_number){
-        const offset = (filters.page_number - 1) * filters.result_per_page;
-        query = query.limit(filters.result_per_page)
-        .offset(offset);
-      }
+    if (userId) {
+      query = query.select(
+        db.raw(
+          `(SELECT EXISTS (
+            SELECT 1 FROM property_watchlist 
+            WHERE property_watchlist.property_id = properties.id 
+            AND property_watchlist.user_id = ?
+          )) AS is_whitelisted`,
+          [userId]
+        )
+      );
     }
+ 
+    query = query
+      .join('users', 'users.id', '=', 'properties.user_id')
+      .modify((qb) => {
+        if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
+          qb.select(db.raw("NULL as documents"));
+        }
+      });
+  
+    query = this.useFilter(query, filters);
+    if (filters?.result_per_page && filters?.page_number) {
+      const offset = (filters.page_number - 1) * filters.result_per_page;
+      query = query.limit(filters.result_per_page).offset(offset);
+    }
+  
+    const r = await query;
 
-    const r = await query
-    const results = r.map((item) => new Properties({...item}))
+    const results = r.map((item) => {
+      const isWhitelisted = item.is_whitelisted
+      return { ...item, is_whitelisted: isWhitelisted };
+    });
+  
+   
     return new SeekPaginationResult<Properties>({
-      result: results,
+      result: results, 
       page: filters?.page_number || 1,
       result_per_page: filters?.result_per_page || results.length,
-    })
+    });
   }
+  
+  
 
-  async findPropertyById(id: string): Promise<Properties | null> {
-    const property = await db('properties')
-      .select('properties.*')
-      .where('id', id)
-      .first()
-    if (!property) {
-      return null
-    }
-    return {
-      ...new Properties(property),
-    }
+  async findPropertyById(id: string, userRole?: string): Promise<Properties | null> {
+    let query = db('properties')
+    .select('properties.*')
+    .where({ is_live: true })
+    .andWhere('properties.id', id)
+    .first()
+    .orderBy('properties.id', 'desc');
+
+  query = query
+    .join('users', 'users.id', '=', 'properties.user_id')
+    .modify((qb) => {
+      if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
+        qb.select(db.raw("NULL as documents")); 
+      }
+    });
+    return  query
   }
 
   async updateProperty(

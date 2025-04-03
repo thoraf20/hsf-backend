@@ -13,6 +13,7 @@ import {
   PropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
+import { optionalAuth } from '@middleware/authMiddleware'
 // import { limiter } from '@middleware/security'
 
 const propertyRoute: Router = Router()
@@ -34,8 +35,11 @@ propertyRoute.post(
 
 propertyRoute.get(
   '/all',
+  optionalAuth,
   asyncMiddleware(async (req, res) => {
-    const properties = await controller.getAllProperties()
+    const {query, user} = req as any
+    console.log(user)
+    const properties = await controller.getAllProperties(query, user.role, user.id) 
     res.status(properties.statusCode).json(properties)
   }),
 )
@@ -68,9 +72,11 @@ propertyRoute.get(
 propertyRoute.get(
   '/:id',
   // limiter,
+  optionalAuth,
   asyncMiddleware(async (req, res) => {
-    const { id } = req.params
-    const property = await controller.getPropertyById(id)
+    const { params, user} = req as any
+    console.log(params)
+    const property = await controller.getPropertyById(params.id, user.role)
     res.status(property.statusCode).json(property)
   }),
 )

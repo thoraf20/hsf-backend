@@ -28,7 +28,7 @@ export class Properties {
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date
-
+  
   constructor(data: Partial<Properties>) {
     let complete_data = {
       documents :

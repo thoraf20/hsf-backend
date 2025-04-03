@@ -23,6 +23,6 @@ export type PropertyFilters = Partial<{
     min_price: string;
     max_price: string;
     city: string;
-} & SeekPaginationOption >;
+} & SeekPaginationOption  >;
 
 export type PropertyCount = { total: number, pending: number, totalViewed: number};

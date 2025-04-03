@@ -43,9 +43,10 @@ export class PropertyBaseUtils {
     this.propertyRepository = propertyRepository
   }
 
-  public async findIfPropertyExist(id: string): Promise<Properties> {
+  public async findIfPropertyExist(id: string, userRole?: string ): Promise<Properties> {
     const properties = (await this.propertyRepository.findPropertyById(
       id,
+      userRole,
     )) as Properties
     if (!properties) {
       throw new ApplicationCustomError(
@@ -73,7 +74,7 @@ export class PropertyBaseUtils {
 
   public async findIfPropertyBelongsToUser(
     property_id: string,
-    user_id: string,
+    user_id: string
   ): Promise<Properties> {
     const properties = (await this.propertyRepository.findPropertyById(
       property_id,

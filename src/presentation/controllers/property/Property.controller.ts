@@ -18,8 +18,8 @@ export class PropertyController {
       property,
     )
   }
-  public async getAllProperties(): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getAllProperties()
+  public async getAllProperties(PropertyFilters: PropertyFilters, userRole: string, userId?: string): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getAllProperties(PropertyFilters, userRole, userId)
     return createResponse(
       StatusCodes.OK,
       'Properties fetched successfully',
@@ -42,8 +42,8 @@ export class PropertyController {
     )
   }
 
-  async getPropertyById(id: string): Promise<ApiResponse<any>> {
-    const property = await this.propertyService.getPropertyById(id)
+  async getPropertyById(id: string, userRole: string): Promise<ApiResponse<any>> {
+    const property = await this.propertyService.getPropertyById(id, userRole)
     return createResponse(
       StatusCodes.OK,
       'Property fetched successfully',
