@@ -44,7 +44,7 @@ export const ResetPasswordOtpSchema = z.object({
     .regex(/[a-z]/, "Password must contain at least one lowercase letter")
     .regex(/[0-9]/, "Password must contain at least one digit")
     .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-     otp: z.string().length(6, "OTP must be 6 digits")
+     tempId: z.string().nonempty()
 });
 
 

@@ -31,43 +31,18 @@ export class employmentInformation {
     employer_address?: string;
     employer_state?: string
     created_at?: Date;
-    personal_information_id: string;
-    updated_at?: Date;
-      constructor(data: Partial<employmentInformation>) {
-        Object.assign(this, {
-          ...data,
-        })
-      }
-}
-
-
-export class financialInformation {
-    financial_information_id?:  string;
     net_income: string;
     industry_type?: string;
     employment_type?:string;
     existing_loan_obligation?:  string;
     rsa: string;
-    employment_information_id: string;
-    created_at?: Date;
-    updated_at?: Date;
-      constructor(data: Partial<financialInformation>) {
-        Object.assign(this, {
-          ...data,
-        })
-      }
-}
-
-
-export class propertyInformation {
     property_information_id?: string;
     preferred_developer: string;
     property_name: string;
     preferred_lender: string;
     personal_information_id: string;
-    created_at?: Date;
     updated_at?: Date;
-      constructor(data: Partial<financialInformation>) {
+      constructor(data: Partial<employmentInformation>) {
         Object.assign(this, {
           ...data,
         })
@@ -84,7 +59,7 @@ export class prequalifyStatus {
     verification?: boolean
     created_at?: Date;
     updated_at?: Date;
-      constructor(data: Partial<financialInformation>) {
+      constructor(data: Partial<prequalifyStatus>) {
         Object.assign(this, {
           ...data,
         })
@@ -92,4 +67,21 @@ export class prequalifyStatus {
 }
 
 
-export type preQualify = personalinformation & financialInformation & employmentInformation & prequalifyStatus & propertyInformation
+export class payment_calculator {
+  payment_calculator_id?: string;
+  house_price: string;
+  interest_rate: string;
+  terms: string;
+  type?: string;
+  repayment_type: string;
+  est_money_payment: string;
+  personal_information_id: string
+  constructor(data: Partial<payment_calculator>) {
+    Object.assign(this, {
+      ...data,
+    })
+  }
+}
+
+
+export type preQualify = personalinformation  & employmentInformation & prequalifyStatus & payment_calculator

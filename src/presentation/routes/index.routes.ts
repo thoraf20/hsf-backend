@@ -11,6 +11,7 @@ import managePropertyRoute from "@routes/admin/ManageProperty.routes";
 import enquiryRoutes from "@routes/property/enquiry.routes";
 import developerRoutes from "@routes/developer/developer.routes";
 import preQualifierRoutes from "@routes/property/preQualifiier/prequalify.routes";
+import propertyPurchaseRoutes from "./property/purchaseProperty.routes";
 
 
 
@@ -21,6 +22,7 @@ routes.use('/developer', authenticate, limiter, developerRoutes)
 routes.use('/pre-qualifier', authenticate, preQualifierRoutes)
 routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoute)
+routes.use('/purchase-property', authenticate, limiter, propertyPurchaseRoutes)
 routes.use('/inspection', authenticate, limiter,  inspectionRoutes)
 routes.use('/admin', authenticate,  limiter, adminRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)

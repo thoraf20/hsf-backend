@@ -44,4 +44,26 @@ export default {
       )
     }
   },
+
+  ResetVerificationEmail(email: string, otp: string) {
+    let subject = `Reset Password Email`
+    let text = `Verify you account`
+    let html = templates.ResetPassword.replace(`{{otp}}`, otp).replace(
+      `{{Date}}`,
+      new Date().toUTCString(),
+    )
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      // Log only the error message to avoid circular structure issues
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

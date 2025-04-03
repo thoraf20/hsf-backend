@@ -26,4 +26,31 @@ export class preQualifyController {
             {}
         )
     }
+    public async getPrequalifierByUserId  (user_id:string) :Promise<ApiResponse<any>>
+    {
+        const preQualifier = await this.service.getPrequalifierByUserId(user_id)
+        return createResponse(
+            StatusCodes.OK,
+            `Success`,
+            preQualifier 
+        )
+    }
+    public async getAllPreQualifierToBeapproved () :Promise<ApiResponse<any>>
+    {
+        const preQualifier =   await this.service.getAllPreQualifierToBeapproved()
+        return createResponse(
+            StatusCodes.OK,
+            `Success`,
+            preQualifier 
+        )
+    }
+    public async getAllPreQualifierById (id: string) :Promise<ApiResponse<any>>
+    {
+        const preQualifier =    await this.service.getAllPreQualifierById(id)
+        return createResponse(
+            StatusCodes.OK,
+            `Success`,
+            preQualifier
+        )
+    }
 }

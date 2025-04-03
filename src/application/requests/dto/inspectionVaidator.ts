@@ -45,11 +45,11 @@ export const inspectionSchema = z
       .string()
       .min(3, { message: 'Full name must be at least 3 characters long.' })
       .max(100, { message: 'Full name must not exceed 100 characters.' })
-      .trim(),
+      .trim().nonempty(),
 
     email: z
       .string()
-      .email({ message: 'Invalid email format.' })
+      .email({ message: 'Invalid email format.' }).nonempty()
       .max(100, { message: 'Email must not exceed 100 characters.' })
       .transform((email) => email.toLowerCase().trim()),
 
@@ -58,7 +58,7 @@ export const inspectionSchema = z
       .regex(
         /^\+?\d{7,15}$/,
         'Phone number must be between 7-15 digits and may start with "+".',
-      ),
+      ).nonempty(),
 
     meeting_platform: z
       .nativeEnum(MeetingPlatform, {

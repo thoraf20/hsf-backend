@@ -23,17 +23,11 @@ export class AuthService {
     this.existingUsers = new ExistingUsers(this.userRepository)
   }
 
-  /**
-   * Validate if email or phone number already exists
-   */
-
-  /**
-   * Register a new user
-   */
 
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {
     await this.existingUsers.beforeCreateEmail(input.email)
     const otp = generateRandomSixNumbers()
+    console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = {
       email: input.email,
@@ -41,7 +35,7 @@ export class AuthService {
       type: OtpEnum.EMAIL_VERIFICATION,
       is_email_verified: false,
     }
-    await this.client.setKey(key, details, 60)
+    await this.client.setKey(key, details, 600)
     emailTemplates.welcomeEmail(input.email, `${input.email}`)
     emailTemplates.emailVerificationEmail(input.email, otp.toString())
   }
@@ -58,8 +52,8 @@ export class AuthService {
       )
     }
 
-    const email = regDetails.email // Get verified email
-    delete input.tempId // Ensure tempId is not stored
+    const email = regDetails.email
+    delete input.tempId 
 
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
@@ -73,47 +67,46 @@ export class AuthService {
     user = await this.userRepository.findById(user.id)
     delete user.password
 
-    // Remove temp key after successful registration
     await this.client.deleteKey(tempKey)
 
     return user
   }
 
-  /**
-   * Verify use email or phone number
-   */
+
 
   async verifyAccount(otp: string): Promise<any> {
-    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}` ? `${CacheEnumKeys.preQualify_VERIFICATION}-${otp}` : null
-    const details = await this.client.getKey(key)
-
+    const emailKey = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
+    const passwordKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${otp}`
+    const details = await this.client.getKey(emailKey) || await this.client.getKey(passwordKey)
+    
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         'Invalid or expired OTP.',
       )
     }
-
-    const { email, type} =
+    
+    const { email, type, id } =
       typeof details === 'string' ? JSON.parse(details) : details
-
-    if (type !== OtpEnum.EMAIL_VERIFICATION || type !== OtpEnum.PREQUALIFY) {
-      await this.client.deleteKey(key)
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Invalid OTP type.',
-      )
-    }
+    
     const tempId = uuidv4()
-    if(type === OtpEnum.EMAIL_VERIFICATION) {
+    
+    if (type === OtpEnum.EMAIL_VERIFICATION) {
       const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
       await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
     }
-
-
-    await this.client.deleteKey(key) // Delete OTP after verification
-
-    return { tempId } // Return temporary ID to the user
+    
+    if (type === OtpEnum.PASSWORD_RESET) {
+      const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${tempId}`
+      console.log(id)
+      await this.client.setKey(tempKey, { id, is_email_verified: true }, 600)
+    }
+    
+    // Delete both potential keys
+    await this.client.deleteKey(emailKey)
+    await this.client.deleteKey(passwordKey)
+    
+    return { tempId }
   }
 
   async resendOtp(email: string): Promise<void |  any> {
@@ -149,34 +142,27 @@ export class AuthService {
     }
 
     const otp = generateRandomSixNumbers()
-    console.log(otp)
     const key = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.PASSWORD_RESET }
-    await this.client.setKey(key, details, 60)
+    await this.client.setKey(key, details, 600)
+    emailTemplates.ResetVerificationEmail(email, otp.toString())
   }
 
   /**
    * Reset password using OTP
    */
   async resetPassword(input: ResetPasswordType): Promise<void> {
-    const key = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.otp}`
-    const details = await this.client.getKey(key)
-    console.log('Here')
-    if (!details) {
+    const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.tempId}`
+    const regDetails = await this.client.getKey(tempKey)
+    if (!regDetails) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
-        'Invalid or expired OTP.',
+        'Session expired....',
       )
     }
 
-    const { id, type } = details
-
-    if (type !== OtpEnum.PASSWORD_RESET) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Invalid OTP type.',
-      )
-    }
+    const { id } = regDetails
+    console.log(regDetails)
 
     const user = await this.userRepository.findById(id)
 
@@ -188,7 +174,7 @@ export class AuthService {
       input.newPassword,
     )
     await this.userRepository.update(id, { password: newpassword })
-    await this.client.deleteKey(key)
+    await this.client.deleteKey(tempKey)
   }
 
   /**

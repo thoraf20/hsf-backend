@@ -23,5 +23,20 @@ preQualifierRoutes.post('/verification', requireRoles(Role.HOME_BUYER), validate
             const  verified = await controller.verification(body)
             res.status(verified.statusCode).json(verified)
 }))
+preQualifierRoutes.get('/home-buyer/fetct-all', requireRoles(Role.HOME_BUYER),   asyncMiddleware(async (req, res) => {
+            const {user} = req 
+            const  prequalify = await controller.getPrequalifierByUserId(user.id)
+            res.status(prequalify.statusCode).json(prequalify)
+}))
+preQualifierRoutes.get('/agents/fetch-all', requireRoles([Role.ADMIN, Role.SUPER_ADMIN]),   asyncMiddleware(async (req, res) => {
+            const {body} = req 
+            const  prequalify = await controller.verification(body)
+            res.status(prequalify.statusCode).json(prequalify)
+}))
+preQualifierRoutes.get('/single/:statusId', requireRoles(Role.HOME_BUYER),   asyncMiddleware(async (req, res) => {
+            const {params} = req 
+            const  prequalify = await controller.getAllPreQualifierById(params.statusId)
+            res.status(prequalify.statusCode).json(prequalify)
+}))
 
 export default preQualifierRoutes

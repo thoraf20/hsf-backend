@@ -1,5 +1,5 @@
 export type ResetPasswordType = { 
-    otp: string, 
+    tempId: string, 
     newPassword: string
 }
 

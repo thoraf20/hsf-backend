@@ -5,6 +5,12 @@ export enum FinancialOptionsEnum {
 }
 
 
+export enum PreQualifierEnum {
+    MORTGAGE = 'Mortgage',
+    INSTALLMENT= 'Installment',
+}
+
+
 export enum PropertyFeatureEnum {
     AIRCONDITION = 'Air Condition',
     PARKING_SPACE = 'Parking Space',

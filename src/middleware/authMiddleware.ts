@@ -20,6 +20,7 @@ const authenticate = (req: AuthRequest, res, next,) => {
     const secret = process.env.SECRET_TOKEN!;
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
+    
     next();
   } catch (error) {
     res.status(StatusCodes.FORBIDDEN).json({
