@@ -118,6 +118,7 @@ export class PropertyRepository implements IPropertyRepository {
       const offset = (filters.page_number - 1) * filters.result_per_page;
       query = query.limit(filters.result_per_page).offset(offset);
     }
+    
   
     const r = await query;
 
