@@ -128,7 +128,7 @@ export class PropertyRepository implements IPropertyRepository {
   
    
     return new SeekPaginationResult<Properties>({
-      result: results, 
+      result: results,  
       page: filters?.page_number || 1,
       result_per_page: filters?.result_per_page || results.length,
     });
