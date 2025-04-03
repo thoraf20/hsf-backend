@@ -50,7 +50,7 @@ export default {
     let text = `Verify you account`
     let html = templates.ResetPassword.replace(`{{otp}}`, otp).replace(
       `{{Date}}`,
-      new Date().toUTCString(),
+      new Date().toUTCString(), 
     )
 
     try {

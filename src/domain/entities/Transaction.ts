@@ -4,7 +4,7 @@ import { TransactionEnum } from "@domain/enums/transactionEnum";
 export class Transaction {
     id? : string;
     status: TransactionEnum;
-    property_id: string;
+    property_id?: string;
     transaction_id : string;
     transaction_type: string;
     remark?: string;
