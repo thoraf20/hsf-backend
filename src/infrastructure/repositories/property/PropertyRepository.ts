@@ -124,6 +124,8 @@ export class PropertyRepository implements IPropertyRepository {
 
     const results = r.map((item) => {
       const isWhitelisted = item.is_whitelisted
+        ? item.is_whitelisted === 't' || item.is_whitelisted === true
+        : false;
       return { ...item, is_whitelisted: isWhitelisted };
     });
   
