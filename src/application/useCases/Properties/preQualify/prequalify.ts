@@ -5,16 +5,13 @@ import { preQualify } from '@entities/prequalify/prequalify'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { generateRandomSixNumbers } from '@shared/utils/helpers'
-import { PropertyBaseUtils } from '@use-cases/utils'
 import { StatusCodes } from 'http-status-codes'
 
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
   private readonly cache = new RedisClient()
-  private readonly utilsProperty = new  PropertyBaseUtils(new PropertyRepository())
   constructor(prequalify: IPreQualify) {
     this.prequalify = prequalify
   }
@@ -27,15 +24,12 @@ export class preQualifyService {
     }
 }
 public async storePreQualify(
-  input: Partial<preQualify >,
+  input: Partial<preQualify>,
   user_id: string,
 ): Promise<preQualify> {
   console.log(user_id);
 
-  await Promise.all([
-    this.checkExistingPreQualify(user_id),
-    this.utilsProperty.findIfPropertyExist(input.property_id),
-  ]);
+   await this.checkExistingPreQualify(user_id)
 
 
 let paymentCalculator: any
@@ -86,7 +80,6 @@ let paymentCalculator: any
       }),
       this.prequalify.storePreQualifyStatus({
         personal_information_id: personalInfo.personal_information_id,
-        property_id: input.property_id,
         loaner_id: user_id,
       }),
     ]);

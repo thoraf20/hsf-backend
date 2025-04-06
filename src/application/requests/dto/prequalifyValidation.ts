@@ -32,7 +32,6 @@ export const preQualifySchema = z
     preferred_developer: z.string().optional(),
     property_name: z.string().min(1, "Property name is required"),
     preferred_lender: z.string().optional(),
-    property_id: z.string().nonempty(),
   })
   .superRefine((data, ctx) => {
     if (data.type.includes(PreQualifierEnum.INSTALLMENT)) {
@@ -40,7 +39,7 @@ export const preQualifySchema = z
         "est_money_payment",
         "house_price",
         "interest_rate",
-        "terms",
+        "terms", 
         "repayment_type",
       ];
 

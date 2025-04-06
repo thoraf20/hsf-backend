@@ -10,11 +10,13 @@ import {
     validateRequest,
   } from '../index.t'
 import { purchasePropertySchema } from '@validators/purchaseValidation'
+import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 const propertyPurchaseRoutes = Router()
 
 const propertyRepository = new PropertyRepository()
 const propertyPurchaseRepository = new PropertyPurchaseRepository()
-const propertyPurchaseService = new PropertyPurchase(propertyPurchaseRepository, propertyRepository)
+const preQualifieRepository = new PrequalifyRepository
+const propertyPurchaseService = new PropertyPurchase(propertyPurchaseRepository, propertyRepository, preQualifieRepository)
 const purchasePropertyController = new PurchasePropertyController(propertyPurchaseService)
 
 propertyPurchaseRoutes.post('/request-for-offer-letter', validateRequest(purchasePropertySchema), requireRoles(Role.HOME_BUYER), asyncMiddleware(async( req, res) => {

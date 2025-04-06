@@ -14,18 +14,17 @@ export async function up(knex: Knex): Promise<void> {
     table.string('offer_letter_status').defaultTo('Pending')
     table.timestamps(true, true)
     table
-      .uuid('property_id')
-      .notNullable()
-      .references('id')
-      .inTable('properties')
-      .onDelete('CASCADE')
-      .onUpdate('CASCADE')
-
-    table
       .uuid('user_id')
       .notNullable()
       .references('id')
       .inTable('users')
+      .onDelete('CASCADE')
+      .onUpdate('CASCADE')
+      table
+      .uuid('property_id')
+      .notNullable()
+      .references('id')
+      .inTable('properties')
       .onDelete('CASCADE')
       .onUpdate('CASCADE')
   })

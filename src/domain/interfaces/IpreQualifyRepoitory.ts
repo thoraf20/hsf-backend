@@ -10,6 +10,5 @@ export interface IPreQualify {
   getPreQualifyRequestByUser(user_id: string) : Promise<preQualify[]>
   getPreQualifyRequest() : Promise<preQualify[]>
   getPreQualifyRequestById(id: string) :Promise<preQualify>
-
-
+  getSuccessfulPrequalifyRequestByUser(user_id: string): Promise<preQualify>
 }

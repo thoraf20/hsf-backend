@@ -26,4 +26,17 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .andWhere('offer_letter_status', '=', 'Approved')
       .first()
   }
+
+  public async getOfferLetterById(offer_letter_id: string): Promise<OfferLetter> {
+    return await db(this.tablename).where('offer_letter_id', offer_letter_id).first()
+  }
+
+  public async updateOfferLetterStatus(
+    offer_letter_id: string,
+    input: Partial<OfferLetter>,
+  ): Promise<void> {
+    await db(this.tablename)
+      .update(input)
+      .where('offer_letter_id', offer_letter_id)
+  }
 }

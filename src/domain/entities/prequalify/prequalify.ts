@@ -54,7 +54,6 @@ export class prequalifyStatus {
     status_id?: string;
     status?: preQualifyStatus;
     personal_information_id: string;
-    property_id: string
     loaner_id: string
     verification?: boolean
     created_at?: Date;

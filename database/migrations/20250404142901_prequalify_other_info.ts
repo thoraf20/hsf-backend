@@ -18,10 +18,10 @@ export async function up(knex: Knex): Promise<void> {
         table.string('preferred_lender').notNullable();
         table.string('rsa').notNullable();
         table.timestamps(true, true);
-        table.uuid('property_id')
+        table.uuid('personal_information_id')
             .notNullable()
-            .references('id')
-            .inTable('properties')
+            .references('personal_information_id')
+            .inTable('prequalify_personal_information')
             .onDelete('CASCADE')
             .onUpdate('CASCADE');
     });

@@ -1,7 +1,9 @@
 
+import { FinancialOptionsEnum } from '@domain/enums/propertyEnum';
 import { z } from 'zod';
 
 export const purchasePropertySchema = z.object({
-    property_id: z.string().nonempty()
+    property_id: z.string().nonempty(),
+    purchase_type: z.nativeEnum(FinancialOptionsEnum)
 })
 
