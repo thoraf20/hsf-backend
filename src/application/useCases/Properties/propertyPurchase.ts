@@ -1,4 +1,4 @@
-import { FinancialOptionsEnum } from '@domain/enums/propertyEnum'
+import { OfferLetterStatusEnum } from '@domain/enums/propertyEnum'
 import { OfferLetter } from '@entities/PropertyPurchase'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
@@ -57,7 +57,7 @@ export class PropertyPurchase {
   ): Promise<OfferLetter> {
     await this.checkoutDuplicate(input.property_id, user_id);
   
-    const isOutright = input.purchase_type === FinancialOptionsEnum.OUTRIGHT;
+    const isOutright = input.purchase_type === OfferLetterStatusEnum.OUTRIGHT;
   
     if (!isOutright) {
       const preQualified = await this.preQualifieRepository.findIfApplyForLoanAlready(user_id);

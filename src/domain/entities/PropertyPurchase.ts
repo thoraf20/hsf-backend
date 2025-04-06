@@ -1,4 +1,4 @@
-import { FinancialOptionsEnum } from "@domain/enums/propertyEnum";
+import {OfferLetterStatusEnum } from "@domain/enums/propertyEnum";
 
 export class OfferLetter {
     offer_letter_id?: string;
@@ -6,7 +6,7 @@ export class OfferLetter {
     offer_letter_requested?: boolean;
     offer_letter_approved?: boolean;
     offer_letter_downloaded?: boolean;
-    purchase_type: FinancialOptionsEnum;
+    purchase_type: OfferLetterStatusEnum;
     closed?: string;
     offer_letter_status?: string;
     property_id: string

@@ -11,6 +11,10 @@ export enum PreQualifierEnum {
 }
 
 
+export enum OfferLetterStatusEnum {
+    OUTRIGHT = 'Outright Purchase',
+    INSTALLMENT= 'Installment',
+}
 export enum PropertyFeatureEnum {
     AIRCONDITION = 'Air Condition',
     PARKING_SPACE = 'Parking Space',
