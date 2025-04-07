@@ -7,5 +7,5 @@ export interface IPurchaseProperty {
     getOfferLetterById(offer_letter_id: string): Promise<OfferLetter>
     updateOfferLetterStatus(offer_letter_id: string, input: Partial<OfferLetter>): Promise<void>
     requestForPropertyClosing(property_id: string, user_id: string): Promise<PropertyClosing>
-    confirmPropertyEscrowMeeting(e): Promise<void>
+    confirmPropertyEscrowMeeting(id: string, user_id: string): Promise<void>
 }

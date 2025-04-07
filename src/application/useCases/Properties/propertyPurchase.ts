@@ -1,6 +1,6 @@
 import { OfferLetterStatusEnum } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
-import { OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+import { OfferLetter } from '@entities/PropertyPurchase'
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
 // import { IPaymentRespository } from '@interfaces/IpaymentRepository'
@@ -63,26 +63,29 @@ export class PropertyPurchase {
 
   public async purchaseProperty(input: any, request_type: string, user_id: string) {
     if(request_type === 'Offer Letter') {
-     return  await this.requestForOfferLetter(input.purchase_type, user_id)
-    } else if(request_type === 'Property Closing') {
+      await this.requestForOfferLetter(input.purchase_type, user_id)
+    }
+     if(request_type === 'Property Closing') {
       return await this.requestForPropertyClosing(input.property_id, user_id)
     }
   }
 
   
+  public async confirnEscrowAttendanc (): Promise<void> {
 
-  public async requestForPropertyClosing(property_id: string, user_id: string):Promise<PropertyClosing> {
+  }
+  public async requestForPropertyClosing(property_id: string, user_id: string):Promise<boolean> {
     await this.utilsProperty.findIfPropertyExist(property_id)
-    const propertyClosing = await this.purchaseRepository.requestForPropertyClosing(
+    await this.purchaseRepository.requestForPropertyClosing(
       property_id,
       user_id,
     )
-    return propertyClosing
+    return true
   }
   public async requestForOfferLetter(
     input: OfferLetter,
     user_id: string,
-  ): Promise<OfferLetter> {
+  ): Promise<boolean> {
     await this.checkoutDuplicate(input.property_id, user_id)
 
     const isOutright = input.purchase_type === OfferLetterStatusEnum.OUTRIGHT 
@@ -109,14 +112,14 @@ export class PropertyPurchase {
       }
     }
 
-    const offerLetter = await this.purchaseRepository.requestForOfferLetter({
+  await this.purchaseRepository.requestForOfferLetter({
       property_id: input.property_id,
       user_id,
       offer_letter_requested: true,
       purchase_type: input.purchase_type,
     })
 
-    return offerLetter
+    return true
   }
 
   public async changeOfferLetterStatus(

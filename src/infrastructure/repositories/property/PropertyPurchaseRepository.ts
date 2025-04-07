@@ -9,8 +9,8 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     return new OfferLetter(offerLetter) ? offerLetter : null
   }
 
-  public async requestForPropertyClosing( ): Promise<PropertyClosing> {
-    const [propertyClosing] = await db('property_closing').insert({}).returning('*')
+  public async requestForPropertyClosing(property_id: string, user_id: string): Promise<PropertyClosing> {
+    const [propertyClosing] = await db('property_closing').insert({property_id, user_id}).returning('*')
     return new PropertyClosing(propertyClosing) ? propertyClosing : null
 
   }
@@ -44,7 +44,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .update(input)
       .where('offer_letter_id', offer_letter_id)
   }
-  public async confirmPropertyEscrowMeeting(escrow_id: string): Promise<void> {
-    await db('escrow_information').update({confirm_attendance:  true}).where('escrow_id', escrow_id)
+  public async confirmPropertyEscrowMeeting(escrow_id: string, user_id: string): Promise<void> {
+    await db('escrow_information').update({confirm_attendance:  true}).where('escrow_id', escrow_id).andWhere('user_id', user_id)
   }
 }
