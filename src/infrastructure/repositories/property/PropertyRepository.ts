@@ -8,7 +8,7 @@ import {
   SortDateBy,
 } from '@shared/types/repoTypes'
 import {
-  SeekPaginationOption, 
+  SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
@@ -85,29 +85,29 @@ export class PropertyRepository implements IPropertyRepository {
 
   async getAllProperties(
     filters?: PropertyFilters,
-    userRole: string = "guest",
-    userId?: string
+    userRole: string = 'guest',
+    userId?: string,
   ): Promise<SeekPaginationResult<Properties>> {
-    const page = filters?.page_number ?? 1;
-    const perPage = filters?.result_per_page ?? 10;
-    const offset = (page - 1) * perPage;
-  
+    const page = filters?.page_number ?? 1
+    const perPage = filters?.result_per_page ?? 10
+    const offset = (page - 1) * perPage
+
     let baseQuery = db('properties')
       .where({ is_live: true })
-      .join('users', 'users.id', '=', 'properties.user_id');
-  
-    baseQuery = this.useFilter(baseQuery, filters);
-  
-    const totalRecordsQuery = baseQuery.clone().count('* as count').first();
-    const [{ count: total }] = await Promise.all([totalRecordsQuery]);
-  
+      .join('users', 'users.id', '=', 'properties.user_id')
+
+    baseQuery = this.useFilter(baseQuery, filters)
+
+    const totalRecordsQuery = baseQuery.clone().count('* as count').first()
+    const [{ count: total }] = await Promise.all([totalRecordsQuery])
+
     let dataQuery = baseQuery
       .clone()
       .select('properties.*')
       .orderBy('properties.id', 'desc')
       .limit(perPage)
-      .offset(offset);
-  
+      .offset(offset)
+
     if (userId) {
       dataQuery = dataQuery.select(
         db.raw(
@@ -116,24 +116,25 @@ export class PropertyRepository implements IPropertyRepository {
             WHERE property_watchlist.property_id = properties.id 
             AND property_watchlist.user_id = ?
           )) AS is_whitelisted`,
-          [userId]
-        )
-      );
+          [userId],
+        ),
+      )
     }
-  
+
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-      dataQuery = dataQuery.select(db.raw("NULL as documents"));
+      dataQuery = dataQuery.select(db.raw('NULL as documents'))
     }
-  
-    const rawResult = await dataQuery;
-  
-    const result = rawResult.map(item => ({
+
+    const rawResult = await dataQuery
+
+    const result = rawResult.map((item) => ({
       ...item,
-      is_whitelisted: item.is_whitelisted === true || item.is_whitelisted === 't',
-    }));
-  
-    const totalPages = Math.ceil(Number(total) / perPage);
-  
+      is_whitelisted:
+        item.is_whitelisted === true || item.is_whitelisted === 't',
+    }))
+
+    const totalPages = Math.ceil(Number(total) / perPage)
+
     return new SeekPaginationResult<Properties>({
       result,
       result_per_page: perPage,
@@ -142,28 +143,55 @@ export class PropertyRepository implements IPropertyRepository {
       total_pages: totalPages,
       next_page: page < totalPages ? page + 1 : null,
       prev_page: page > 1 ? page - 1 : null,
-    });
+    })
   }
-  
-  
 
-  async findPropertyById(id: string, userRole?: string): Promise<Properties | null> {
+  async findPropertyById(id: string, userRole?: string): Promise<any> {
     let query = db('properties')
-    .select('properties.*')
-    .where({ is_live: true })
-    .andWhere('properties.id', id)
-    .first()
-    .orderBy('properties.id', 'desc');
-
-  query = query
-    .join('users', 'users.id', '=', 'properties.user_id')
-    .modify((qb) => {
-      if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-        qb.select(db.raw("NULL as documents")); 
-      }
-    });
-    return  query
+      .select([
+        'properties.*',
+        'offer_letter.offer_letter_status',
+        'offer_letter.offer_letter_requested',
+        'offer_letter.offer_letter_approved',
+        'offer_letter.offer_letter_downloaded',
+        'offer_letter.closed as offer_letter_closed',
+  
+        'prequalify_status.status as prequalify_status',
+        'prequalify_status.verification as prequalify_verification',
+  
+        'property_closing.closing_status',
+  
+        db.raw('COALESCE(json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), \'[]\') as payments')
+      ])
+      .where('properties.id', id)
+      .andWhere('properties.is_live', true)
+      .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
+      .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
+      .leftJoin('payments', 'payments.property_id', 'properties.id')
+      .leftJoin('users', 'users.id', 'properties.user_id')
+      .leftJoin('prequalify_personal_information', 'prequalify_personal_information.loaner_id', 'users.id')
+      .leftJoin('prequalify_status', 'prequalify_status.personal_information_id', 'prequalify_personal_information.personal_information_id')
+      .groupBy(
+        'properties.id',
+        'offer_letter.offer_letter_status',
+        'offer_letter.offer_letter_requested',
+        'offer_letter.offer_letter_approved',
+        'offer_letter.offer_letter_downloaded',
+        'offer_letter.closed',
+        'prequalify_status.status',
+        'prequalify_status.verification',
+        'property_closing.closing_status'
+      )
+      .orderBy('properties.id', 'desc');
+  
+    if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
+      query.select(db.raw('NULL as documents'));
+    }
+  
+    const result = await query.first();
+    return result ?? null;
   }
+  
 
   async updateProperty(
     id: string,
@@ -277,9 +305,10 @@ export class PropertyRepository implements IPropertyRepository {
     const properties = await db('property_watchlist')
       .where('property_watchlist.user_id', user_id)
       .join('properties', 'property_watchlist.property_id', 'properties.id')
-      .select('properties.id', 
-        'properties.property_name', 
-        'properties.property_price', 
+      .select(
+        'properties.id',
+        'properties.property_name',
+        'properties.property_price',
         'properties.property_images',
         'properties.property_type',
         'properties.property_description',
@@ -302,7 +331,7 @@ export class PropertyRepository implements IPropertyRepository {
         'properties.postal_code',
         'properties.created_at',
         'properties.updated_at',
-        'properties.deleted_at'
+        'properties.deleted_at',
       )
 
     return properties.map((property) => new Properties(property))
@@ -338,25 +367,29 @@ export class PropertyRepository implements IPropertyRepository {
     return properties
   }
 
+  async getAllPropertiesTobeApproved(
+    filters?: PropertyFilters,
+  ): Promise<SeekPaginationResult<Properties>> {
+    const page = filters?.page_number ?? 1
+    const perPage = filters?.result_per_page ?? 10
+    const offset = (page - 1) * perPage
 
-  async getAllPropertiesTobeApproved(filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>> {
-    const page = filters?.page_number ?? 1;
-    const perPage = filters?.result_per_page ?? 10;
-    const offset = (page - 1) * perPage;
-  
-    let baseQuery = db('properties').orderBy('properties.id', 'desc');
-    baseQuery = this.useFilter(baseQuery, filters);
-  
-    const totalQuery = baseQuery.clone().count('* as count').first();
-    const [{ count: total }] = await Promise.all([totalQuery]);
-  
- 
-    const paginatedQuery = baseQuery.clone().select('properties.*').limit(perPage).offset(offset);
-    const results = await paginatedQuery;
-  
-    const properties = results.map((item) => new Properties(item));
-    const totalPages = Math.ceil(Number(total) / perPage);
-  
+    let baseQuery = db('properties').orderBy('properties.id', 'desc')
+    baseQuery = this.useFilter(baseQuery, filters)
+
+    const totalQuery = baseQuery.clone().count('* as count').first()
+    const [{ count: total }] = await Promise.all([totalQuery])
+
+    const paginatedQuery = baseQuery
+      .clone()
+      .select('properties.*')
+      .limit(perPage)
+      .offset(offset)
+    const results = await paginatedQuery
+
+    const properties = results.map((item) => new Properties(item))
+    const totalPages = Math.ceil(Number(total) / perPage)
+
     return new SeekPaginationResult<Properties>({
       result: properties,
       page,
@@ -365,8 +398,6 @@ export class PropertyRepository implements IPropertyRepository {
       total_pages: totalPages,
       next_page: page < totalPages ? page + 1 : null,
       prev_page: page > 1 ? page - 1 : null,
-    });
+    })
   }
-  
-  
 }

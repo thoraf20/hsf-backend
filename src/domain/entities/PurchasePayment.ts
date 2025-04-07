@@ -2,10 +2,14 @@ export class PaymentEntity {
     payment_id?: string;
     payment_type?: string;
     payment_status?: string;
-    amount?: number;
+    amount?: string;
     transaction_id?: string;
     property_id?: string;
+    payment_method?: string;
     user_id?: string;
+    outstanding_amount?: string;
+    down_payment?: string;
+    total_closing?: string;
     updated_at?: Date;
     created_at?: Date;
     constructor(data: Partial<PaymentEntity>) {

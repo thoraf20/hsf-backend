@@ -18,7 +18,7 @@ const controller = new MangagePropertyController(service)
 managePropertyRoute.get(
   '/property/fetch',
   requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
-  asyncMiddleware(async (req, res) => {
+  asyncMiddleware(async (req, res) => { 
     const property = await controller.GetAllPropertiesToBeApproved()
     res.status(property.statusCode).json(property)
   }),

@@ -10,6 +10,11 @@ export enum PreQualifierEnum {
     INSTALLMENT= 'Installment',
 }
 
+export enum PurchaseEnum {
+    OfferLetter = "Offer Letter",
+    PROPERTY_CLOSSING = "Property Closing",
+    ESCROW_ATTENDANCE = "Escrow Attendance"
+}
 
 export enum OfferLetterStatusEnum {
     OUTRIGHT = 'Outright Purchase',
