@@ -277,7 +277,33 @@ export class PropertyRepository implements IPropertyRepository {
     const properties = await db('property_watchlist')
       .where('property_watchlist.user_id', user_id)
       .join('properties', 'property_watchlist.property_id', 'properties.id')
-      .select('properties.*')
+      .select('properties.id', 
+        'properties.property_name', 
+        'properties.property_price', 
+        'properties.property_images',
+        'properties.property_type',
+        'properties.property_description',
+        'properties.property_feature',
+        'properties.financial_types',
+        'properties.landmark',
+        'properties.property_condition',
+        'properties.numbers_of_bedroom',
+        'properties.numbers_of_bathroom',
+        'properties.is_live',
+        'properties.is_sold',
+        'properties.user_id as developer_id',
+        'properties.property_size',
+        'properties.street_address',
+        'properties.city',
+        'properties.state',
+        'properties.unit_number',
+        'properties.landmark',
+        'properties.payment_duration',
+        'properties.postal_code',
+        'properties.created_at',
+        'properties.updated_at',
+        'properties.deleted_at'
+      )
 
     return properties.map((property) => new Properties(property))
   }

@@ -1,4 +1,4 @@
-import { OfferLetter } from '@entities/PropertyPurchase'
+import { OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 
@@ -9,6 +9,11 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     return new OfferLetter(offerLetter) ? offerLetter : null
   }
 
+  public async requestForPropertyClosing( ): Promise<PropertyClosing> {
+    const [propertyClosing] = await db('property_closing').insert({}).returning('*')
+    return new PropertyClosing(propertyClosing) ? propertyClosing : null
+
+  }
   public async checkIfRequestForOfferLetter(
     property_id: string,
     user_id: string,
@@ -38,5 +43,8 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     await db(this.tablename)
       .update(input)
       .where('offer_letter_id', offer_letter_id)
+  }
+  public async confirmPropertyEscrowMeeting(escrow_id: string): Promise<void> {
+    await db('escrow_information').update({confirm_attendance:  true}).where('escrow_id', escrow_id)
   }
 }

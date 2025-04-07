@@ -5,7 +5,7 @@ import { preQualify } from '@entities/prequalify/prequalify'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { generateRandomSixNumbers } from '@shared/utils/helpers'
+import { generateRandomSixNumbers, generateReferenceNumber } from '@shared/utils/helpers'
 import { StatusCodes } from 'http-status-codes'
 
 
@@ -81,6 +81,7 @@ let paymentCalculator: any
       this.prequalify.storePreQualifyStatus({
         personal_information_id: personalInfo.personal_information_id,
         loaner_id: user_id,
+        reference_id: generateReferenceNumber()
       }),
     ]);
 

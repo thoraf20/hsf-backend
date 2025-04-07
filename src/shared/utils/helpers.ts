@@ -13,3 +13,9 @@ export function generateTransactionId(): string {
     const randomString = Math.random().toString(36).substring(2, 10);
     return `TX-${timestamp}-${randomString.toUpperCase()}`;
 }
+
+export function generateReferenceNumber(): string {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `REF-${timestamp}-${randomString}`;
+}

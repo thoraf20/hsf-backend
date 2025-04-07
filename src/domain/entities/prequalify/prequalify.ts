@@ -56,6 +56,7 @@ export class prequalifyStatus {
     personal_information_id: string;
     loaner_id: string
     verification?: boolean
+    reference_id?: string
     created_at?: Date;
     updated_at?: Date;
       constructor(data: Partial<prequalifyStatus>) {
@@ -74,7 +75,7 @@ export class payment_calculator {
   type?: string;
   repayment_type: string;
   est_money_payment: string;
-  personal_information_id: string
+  personal_information_id: string;
   constructor(data: Partial<payment_calculator>) {
     Object.assign(this, {
       ...data,

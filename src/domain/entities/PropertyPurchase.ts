@@ -9,6 +9,7 @@ export class OfferLetter {
     purchase_type: OfferLetterStatusEnum;
     closed?: string;
     offer_letter_status?: string;
+    reference_id?: string;
     property_id: string
     user_id: string
     updated_at?: Date
@@ -21,3 +22,20 @@ export class OfferLetter {
         });
     }
 }
+
+
+export class PropertyClosing {
+    property_closing_id?: string;
+    closing_status?: string;
+    property_id: string
+    user_id: string
+    updated_at?: Date
+    deleted_at?: Date
+    constructor(data: Partial<PropertyClosing>) {
+        Object.assign(this, {
+            created_at: new Date(),
+            updated_at: new Date(),
+            ...data
+        });
+    }
+} 

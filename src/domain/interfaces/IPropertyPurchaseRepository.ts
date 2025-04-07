@@ -1,4 +1,4 @@
-import { OfferLetter } from "@entities/PropertyPurchase";
+import { OfferLetter, PropertyClosing } from "@entities/PropertyPurchase";
 
 export interface IPurchaseProperty {
     requestForOfferLetter(input : OfferLetter) : Promise<OfferLetter>
@@ -6,4 +6,6 @@ export interface IPurchaseProperty {
     checkIfRequestForOfferLetterIsApproved(property_id: string): Promise<OfferLetter>
     getOfferLetterById(offer_letter_id: string): Promise<OfferLetter>
     updateOfferLetterStatus(offer_letter_id: string, input: Partial<OfferLetter>): Promise<void>
+    requestForPropertyClosing(property_id: string, user_id: string): Promise<PropertyClosing>
+    confirmPropertyEscrowMeeting(e): Promise<void>
 }
