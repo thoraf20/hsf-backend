@@ -34,16 +34,21 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   }
 
   public async getOfferLetterById(offer_letter_id: string): Promise<OfferLetter> {
-    return await db(this.tablename).where('offer_letter_id', offer_letter_id).first()
+    return await db(this.tablename)
+    .join('users', 'offer_letter.user_id', 'users.id')
+    .select('offer_letter.*', 'users.first_name', 'users.last_name', 'users.email')
+    .where('offer_letter_id', offer_letter_id)
+    .first()
   }
 
   public async updateOfferLetterStatus(
     offer_letter_id: string,
     input: Partial<OfferLetter>,
-  ): Promise<void> {
+  ): Promise<OfferLetter> {
     await db(this.tablename)
-      .update(input)
+      .update({...input, offer_letter_approved: true})
       .where('offer_letter_id', offer_letter_id)
+      return await this.getOfferLetterById(offer_letter_id)
   }
   public async confirmPropertyEscrowMeeting(escrow_id: string, user_id: string): Promise<void> {
     await db('escrow_information').update({confirm_attendance:  true}).where('escrow_id', escrow_id).andWhere('user_id', user_id)
@@ -61,12 +66,22 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       return offerLetter
   }
 
-  public async getOfferLetter(): Promise<OfferLetter[]> { // Developer is suppose  to send the offer letter
-    const offerLetter = await db('offer_letter')
-      .join('users', 'offer_letter.user_id', 'users.id')
-      .select('offer_letter.*', 'users.first_name', 'users.last_name', 'users.email');
+  public async getOfferLetter(userId: string): Promise<OfferLetter[]> { // Developer is suppose  to send the offer letter
+    const offerLetter =await db('offer_letter')
+    .join('properties', 'offer_letter.property_id', 'properties.id')
+    .join('users', 'offer_letter.user_id', 'users.id') // optional, if you want user info
+    .select(
+      'offer_letter.*',
+      'properties.property_name',
+      'properties.id as property_id',
+      'users.first_name',
+      'users.last_name',
+      'users.email'
+    )
+    .where('properties.user_id', userId)
+    .andWhere('offer_letter.offer_letter_requested', true);
       
-    return offerLetter;
+    return offerLetter ?? [];
   }
   
   public async setEscrowAttendance(input: EscrowInformation): Promise<EscrowInformation> {
@@ -75,6 +90,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   }
 
   public async approvePrequalifyRequest(input: Record<string, any>, user_id: string): Promise<void> {
-      await db('prequalify_status').update(input).where('loaner_id', user_id)
+     await db('prequalify_status').update({status: input.status}).where('loaner_id', user_id)
+    
   }
 }

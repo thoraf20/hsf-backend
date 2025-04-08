@@ -156,15 +156,19 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed as offer_letter_closed',
   
-        'prequalify_status.status as prequalify_status',
-        'prequalify_status.verification as prequalify_verification',
+        db.raw(`COALESCE(prequalify_status.status) as prequalify_status`),
+        db.raw(`COALESCE(prequalify_status.verification) as prequalify_verification`),
   
         'property_closing.closing_status',
   
-        db.raw(`COALESCE(json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), '[]') as payments`),
-  
         db.raw(`COALESCE(
-          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
+          json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
+          '[]'
+        ) as payments`),
+  
+        // Escrow info as single object
+        db.raw(`COALESCE(
+          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
           '[]'
         ) as escrow_info`)
       ])
@@ -173,16 +177,10 @@ export class PropertyRepository implements IPropertyRepository {
       .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
       .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
       .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin('users', 'users.id', 'properties.user_id') 
+      .leftJoin('users', 'users.id', 'properties.user_id')
       .leftJoin('prequalify_personal_information', 'prequalify_personal_information.loaner_id', 'users.id')
       .leftJoin('prequalify_status', 'prequalify_status.personal_information_id', 'prequalify_personal_information.personal_information_id')
-      
-
-      .leftJoin({ escrow: 'escrow_information' }, function () {
-        this.on('escrow.property_id', '=', 'properties.id')
-            .andOn('escrow.property_buyer_id', '=', 'users.id');
-      })
-  
+      .leftJoin({ escrow: 'escrow_information' }, 'escrow.property_id', 'properties.id')
       .groupBy(
         'properties.id',
         'offer_letter.offer_letter_status',
@@ -192,10 +190,12 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.closed',
         'prequalify_status.status',
         'prequalify_status.verification',
-        'property_closing.closing_status'
+        'property_closing.closing_status',
+        'escrow.escrow_id' // needed for row_to_json grouping
       )
       .orderBy('properties.id', 'desc');
   
+    // Hide documents for non-privileged roles
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
       query.select(db.raw('NULL as documents'));
     }
@@ -203,6 +203,7 @@ export class PropertyRepository implements IPropertyRepository {
     const result = await query.first();
     return result ?? null;
   }
+  
   
   
 

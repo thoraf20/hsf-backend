@@ -142,6 +142,7 @@ export class AuthService {
     }
 
     const otp = generateRandomSixNumbers()
+    console.log(otp)
     const key = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.PASSWORD_RESET }
     await this.client.setKey(key, details, 600)

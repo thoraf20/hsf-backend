@@ -31,8 +31,8 @@ export class PurchasePropertyController {
             offerLetter
         )
     }
-    public async getOfferLetter (): Promise<ApiResponse<any>> {
-        const offerLetter = await this.service.getAllOfferLetter()
+    public async getOfferLetter (user_id: string): Promise<ApiResponse<any>> {
+        const offerLetter = await this.service.getAllOfferLetter(user_id)
         return createResponse(
             StatusCodes.OK,
             'Success',

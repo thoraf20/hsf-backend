@@ -173,8 +173,8 @@ export class PropertyPurchase {
       return offerLetter
   }
 
-  public async getAllOfferLetter(): Promise<OfferLetter[]>  {
-      const offerLetter = await this.purchaseRepository.getOfferLetter()
+  public async getAllOfferLetter(user_id: string): Promise<OfferLetter[]>  {
+      const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
       return offerLetter
   }
 

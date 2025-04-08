@@ -70,7 +70,7 @@ export class manageProperty {
 
         public async changeOfferLetterStatus(
           input: Partial<OfferLetter>
-        ): Promise<void> {
+        ): Promise<OfferLetter> {
           const offerLetter = await this.purchaseRepository.getOfferLetterById(
             input.offer_letter_id,
           )
@@ -81,7 +81,7 @@ export class manageProperty {
             )
           }
       
-          await this.purchaseRepository.updateOfferLetterStatus(
+       return   await this.purchaseRepository.updateOfferLetterStatus(
             input.offer_letter_id,
             { ...input },
           )

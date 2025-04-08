@@ -55,14 +55,15 @@ propertyPurchaseRoutes.get(
 
 propertyPurchaseRoutes.get(
   '/offer-letter/all',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles(Role.DEVELOPER),
   asyncMiddleware(async (req, res) => {
-    const offerLetter = await purchasePropertyController.getOfferLetter()
+    const {user} = req
+    const offerLetter = await purchasePropertyController.getOfferLetter(user.id)
     res.status(offerLetter.statusCode).json(offerLetter)
   }),
 )
 
-propertyPurchaseRoutes.post(
+propertyPurchaseRoutes.get(
   '/single/offer-letter/:offer_letter_id',
   asyncMiddleware(async (req, res) => {
     const {params } = req

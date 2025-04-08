@@ -47,7 +47,7 @@ export const confirmPropertyPurchase = z.object({
 
 export const approvePrequalifyRequestSchema = z.object({
   status : z.nativeEnum(propertyApprovalStatus),
-  offer_letter_id: z.string().nonempty()
+  user_id: z.string().nonempty()
 })
 
 export const changeOfferLetterStatusSchema = z.object({

@@ -46,7 +46,8 @@ export class MangagePropertyController {
    await this.managePropertyService.confirmPropertyPurchase(input)
     return createResponse(
       StatusCodes.OK,
-      'Success'
+      'Success',
+      {}
     )
   }
 
@@ -54,14 +55,17 @@ export class MangagePropertyController {
     await this.managePropertyService.approvePrequalifyRequest(input)
      return createResponse(
        StatusCodes.OK,
-       'Success'
+       'Success',
+       {}
      )
    }
   async changeOfferLetterStatus (input: Record<string, any>): Promise<ApiResponse<any>> {
-    await this.managePropertyService.changeOfferLetterStatus(input)
+    const offer_letter =  await this.managePropertyService.changeOfferLetterStatus(input)
      return createResponse(
        StatusCodes.OK,
-       'Success'
+       'Success',
+       offer_letter
      )
    }
 }
+ 

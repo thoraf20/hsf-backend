@@ -57,7 +57,7 @@ managePropertyRoute.put(
 )
 managePropertyRoute.put(
   '/property/grant-offer-letter',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles(Role.DEVELOPER),
   validateRequest(changeOfferLetterStatusSchema),
   asyncMiddleware(async (req, res) => {
     const {body} = req
