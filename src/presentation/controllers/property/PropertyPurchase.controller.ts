@@ -15,4 +15,28 @@ export class PurchasePropertyController {
             offerLetter
         )
     }
+    public async getOfferLetterByUserId (user_id: string): Promise<ApiResponse<any>> {
+        const offerLetter = await this.service.getAllOfferLetterByUserId(user_id)
+        return createResponse(
+            StatusCodes.OK,
+            'Success',
+            offerLetter
+        )
+    }
+    public async getOfferLetterById (offer_letter_id: string): Promise<ApiResponse<any>> {
+        const offerLetter = await this.service.getOfferLetterById(offer_letter_id)
+        return createResponse(
+            StatusCodes.OK,
+            'Success',
+            offerLetter
+        )
+    }
+    public async getOfferLetter (): Promise<ApiResponse<any>> {
+        const offerLetter = await this.service.getAllOfferLetter()
+        return createResponse(
+            StatusCodes.OK,
+            'Success',
+            offerLetter
+        )
+    }
 }

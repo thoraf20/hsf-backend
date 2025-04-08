@@ -9,17 +9,59 @@ import {
   validateRequest,
 } from '../index.t'
 import { UpdatePropertyStatus } from '@application/requests/dto/propertyValidator'
+import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
+import { approvePrequalifyRequestSchema, changeOfferLetterStatusSchema, confirmPropertyPurchase, SetEscrowMeetingSchema } from '@validators/adminValidator'
 
 const managePropertyRoute: Router = Router()
-
-const service = new manageProperty(new PropertyRepository())
+const purchasrRepo = new PropertyPurchaseRepository()
+const service = new manageProperty(new PropertyRepository(), purchasrRepo)
 const controller = new MangagePropertyController(service)
 
 managePropertyRoute.get(
   '/property/fetch',
   requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
-  asyncMiddleware(async (req, res) => { 
+  asyncMiddleware(async (req, res) => {
     const property = await controller.GetAllPropertiesToBeApproved()
+    res.status(property.statusCode).json(property)
+  }),
+)
+managePropertyRoute.post(
+  '/property/set-escrow',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(SetEscrowMeetingSchema),
+  asyncMiddleware(async (req, res) => {
+    const {user, body} = req
+    const property = await controller.setEscrowAttendance(body, user.id)
+    res.status(property.statusCode).json(property)
+  }),
+)
+managePropertyRoute.put(
+  '/property/confirm-purchase',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(confirmPropertyPurchase),
+  asyncMiddleware(async (req, res) => {
+    const {body} = req
+    const property = await controller.confirmPropertyPurchase(body)
+    res.status(property.statusCode).json(property)
+  }),
+)
+managePropertyRoute.put(
+  '/property/approve-prequalifier',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(approvePrequalifyRequestSchema),
+  asyncMiddleware(async (req, res) => {
+    const {body} = req
+    const property = await controller.approvePrequalifyRequest(body)
+    res.status(property.statusCode).json(property)
+  }),
+)
+managePropertyRoute.put(
+  '/property/grant-offer-letter',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(changeOfferLetterStatusSchema),
+  asyncMiddleware(async (req, res) => {
+    const {body} = req
+    const property = await controller.changeOfferLetterStatus(body)
     res.status(property.statusCode).json(property)
   }),
 )

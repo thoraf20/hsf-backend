@@ -21,7 +21,7 @@ export interface IPropertyRepository {
   
   deleteProperty(id: string): Promise<boolean>
   
-  addWatchlistProperty(property_id: string, user_id: string): Promise<boolean>
+  addWatchlistProperty(property_id: string, user_id: string): Promise<Record<string, any>>
   
   getWatchlistProperty(user_id: string): Promise<Properties[]>
   

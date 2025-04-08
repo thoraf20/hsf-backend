@@ -98,7 +98,7 @@ export class PropertyService {
   public async addWatchlistProperty(
     property_id: string,
     user_id: string,
-  ): Promise<boolean> {
+  ): Promise<Record<string, any>> {
     await Promise.all([
       this.utilsProperty.findIfPropertyExist(property_id),
       this.utilsProperty.findIfWatchListIsAdded(property_id, user_id),

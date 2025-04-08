@@ -5,6 +5,7 @@ import {
 import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
 import { StatusCodes } from 'http-status-codes'
 import { manageProperty } from '@application/useCases/Admin/ManageProperty'
+import { EscrowInformation } from '@entities/PurchasePayment'
 
 export class MangagePropertyController {
   constructor(private readonly managePropertyService: manageProperty) {}
@@ -33,4 +34,34 @@ export class MangagePropertyController {
       properties,
     )
   }
+  async setEscrowAttendance(input: EscrowInformation, agent_id: string): Promise<ApiResponse<any>> {
+    const escrow = await this.managePropertyService.setEscrowAttendance(input, agent_id)
+    return createResponse(
+      StatusCodes.OK,
+      'Success',
+      escrow,
+    )
+  }
+  async confirmPropertyPurchase(input: Record<string, any>): Promise<ApiResponse<any>> {
+   await this.managePropertyService.confirmPropertyPurchase(input)
+    return createResponse(
+      StatusCodes.OK,
+      'Success'
+    )
+  }
+
+  async approvePrequalifyRequest (input: Record<string, any>): Promise<ApiResponse<any>> {
+    await this.managePropertyService.approvePrequalifyRequest(input)
+     return createResponse(
+       StatusCodes.OK,
+       'Success'
+     )
+   }
+  async changeOfferLetterStatus (input: Record<string, any>): Promise<ApiResponse<any>> {
+    await this.managePropertyService.changeOfferLetterStatus(input)
+     return createResponse(
+       StatusCodes.OK,
+       'Success'
+     )
+   }
 }

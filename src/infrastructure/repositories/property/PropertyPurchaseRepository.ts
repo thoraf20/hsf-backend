@@ -1,4 +1,5 @@
 import { OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+import { EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 
@@ -46,5 +47,34 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   }
   public async confirmPropertyEscrowMeeting(escrow_id: string, user_id: string): Promise<void> {
     await db('escrow_information').update({confirm_attendance:  true}).where('escrow_id', escrow_id).andWhere('user_id', user_id)
+  }
+
+  public async confirmPropertyPurchase(input: Record<string, any>, user_id: string): Promise<void> {
+      await db('payments').update(input).where(user_id).andWhere('property_id', input.property_id)
+  }
+  public async getAllOfferLetterByUserId(user_id: string): Promise<Partial<OfferLetter[]>> {
+    console.log(user_id)
+      const offerLetter = await db('offer_letter')
+      .join('users', 'offer_letter.user_id', 'users.id')
+      .select('offer_letter.*', 'users.first_name', 'users.last_name', 'users.email')
+      .where('users.id', user_id)
+      return offerLetter
+  }
+
+  public async getOfferLetter(): Promise<OfferLetter[]> { // Developer is suppose  to send the offer letter
+    const offerLetter = await db('offer_letter')
+      .join('users', 'offer_letter.user_id', 'users.id')
+      .select('offer_letter.*', 'users.first_name', 'users.last_name', 'users.email');
+      
+    return offerLetter;
+  }
+  
+  public async setEscrowAttendance(input: EscrowInformation): Promise<EscrowInformation> {
+         const [escrow] = await db('escrow_information').insert(input).returning('*')
+         return new EscrowInformation(escrow) ? escrow : null
+  }
+
+  public async approvePrequalifyRequest(input: Record<string, any>, user_id: string): Promise<void> {
+      await db('prequalify_status').update(input).where('loaner_id', user_id)
   }
 }

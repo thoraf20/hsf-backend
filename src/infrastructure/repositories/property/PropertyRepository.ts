@@ -161,16 +161,28 @@ export class PropertyRepository implements IPropertyRepository {
   
         'property_closing.closing_status',
   
-        db.raw('COALESCE(json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), \'[]\') as payments')
+        db.raw(`COALESCE(json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), '[]') as payments`),
+  
+        db.raw(`COALESCE(
+          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
+          '[]'
+        ) as escrow_info`)
       ])
       .where('properties.id', id)
       .andWhere('properties.is_live', true)
       .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
       .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
       .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin('users', 'users.id', 'properties.user_id')
+      .leftJoin('users', 'users.id', 'properties.user_id') 
       .leftJoin('prequalify_personal_information', 'prequalify_personal_information.loaner_id', 'users.id')
       .leftJoin('prequalify_status', 'prequalify_status.personal_information_id', 'prequalify_personal_information.personal_information_id')
+      
+
+      .leftJoin({ escrow: 'escrow_information' }, function () {
+        this.on('escrow.property_id', '=', 'properties.id')
+            .andOn('escrow.property_buyer_id', '=', 'users.id');
+      })
+  
       .groupBy(
         'properties.id',
         'offer_letter.offer_letter_status',
@@ -191,6 +203,7 @@ export class PropertyRepository implements IPropertyRepository {
     const result = await query.first();
     return result ?? null;
   }
+  
   
 
   async updateProperty(
@@ -294,11 +307,11 @@ export class PropertyRepository implements IPropertyRepository {
   async addWatchlistProperty(
     property_id: string,
     user_id: string,
-  ): Promise<boolean> {
+  ): Promise<Record<string, any>> {
     const [watchlist] = await db('property_watchlist')
       .insert({ property_id, user_id })
       .returning('*')
-    return watchlist ? true : false
+    return watchlist
   }
 
   async getWatchlistProperty(user_id: string): Promise<Properties[]> {
@@ -400,4 +413,6 @@ export class PropertyRepository implements IPropertyRepository {
       prev_page: page > 1 ? page - 1 : null,
     })
   }
+
+
 }

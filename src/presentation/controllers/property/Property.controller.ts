@@ -74,11 +74,11 @@ export class PropertyController {
     property_id: string,
     user_id: string,
   ): Promise<ApiResponse<any>> {
-    await this.propertyService.addWatchlistProperty(property_id, user_id)
+   const watchList = await this.propertyService.addWatchlistProperty(property_id, user_id)
     return createResponse(
       StatusCodes.OK,
       'Property added to watchlist successfully',
-      {},
+      watchList,
     )
   }
 

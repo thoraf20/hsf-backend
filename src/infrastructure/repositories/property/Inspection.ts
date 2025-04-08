@@ -16,6 +16,7 @@ export class InspectionRepository implements IInspectionRepository {
         updated_at: new Date(),
       })
       .returning('*')
+      console.log(newInspection)
     return new Inspection(newInspection)
   }
 

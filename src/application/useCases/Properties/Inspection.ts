@@ -9,8 +9,8 @@ import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { ITransaction } from '@domain/interfaces/ITransactionRepository'
 import { TransactionEnum } from '@domain/enums/transactionEnum'
 import { generateTransactionId } from '@shared/utils/helpers'
-import { PaymentEnum } from '@domain/enums/PaymentEnum'
 import { SeekPaginationResult } from '@shared/types/paginate'
+import { PaymentEnum } from '@domain/enums/PaymentEnum'
 
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
@@ -39,19 +39,6 @@ export class InspectionService {
       input.property_id,
       user_id,
     )
-
-    // Validate payment_type
-    if (
-      !input.payment_type ||
-      !Object.values(PaymentEnum).includes(input.payment_type)
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        `Payment type is required and must be either ${Object.values(PaymentEnum).join(' or ')}`,
-      )
-    }
-
-    // Validate payment for VIDEO_CHAT inspections
     if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {
       if (!input.amount || !input.payment_type) {
         throw new ApplicationCustomError(
@@ -67,7 +54,7 @@ export class InspectionService {
       const transaction_id = generateTransactionId()
 
       const [paymentResponse] = await Promise.all([
-        this.payment.makePayment(input.payment_type, {
+        this.payment.makePayment(PaymentEnum.PAYSTACK, {
           amount: Number(input.amount),
           email: input.email,
           metaData: { user_id, transaction_id },

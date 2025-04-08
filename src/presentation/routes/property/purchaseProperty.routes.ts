@@ -41,5 +41,36 @@ propertyPurchaseRoutes.post(
     res.status(offerLetter.statusCode).json(offerLetter)
   }),
 )
+propertyPurchaseRoutes.get(
+  '/homebuyer/offer-letter',
+  requireRoles(Role.HOME_BUYER),
+  asyncMiddleware(async (req, res) => {
+    const { user } = req
+    const offerLetter = await purchasePropertyController.getOfferLetterByUserId(
+      user.id
+    )
+    res.status(offerLetter.statusCode).json(offerLetter)
+  }),
+)
+
+propertyPurchaseRoutes.get(
+  '/offer-letter/all',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  asyncMiddleware(async (req, res) => {
+    const offerLetter = await purchasePropertyController.getOfferLetter()
+    res.status(offerLetter.statusCode).json(offerLetter)
+  }),
+)
+
+propertyPurchaseRoutes.post(
+  '/single/offer-letter/:offer_letter_id',
+  asyncMiddleware(async (req, res) => {
+    const {params } = req
+    const offerLetter = await purchasePropertyController.getOfferLetterById(
+      params.offer_letter_id 
+    )
+    res.status(offerLetter.statusCode).json(offerLetter)
+  }),
+)
 
 export default propertyPurchaseRoutes

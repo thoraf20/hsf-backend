@@ -162,33 +162,20 @@ export class PropertyPurchase {
     return offer_letter
   }
 
-  public async changeOfferLetterStatus(
-    input: OfferLetter,
-    user_id: string,
-  ): Promise<void> {
-    const offerLetter = await this.purchaseRepository.getOfferLetterById(
-      input.offer_letter_id,
-    )
-    if (!offerLetter) {
-      throw new ApplicationCustomError(
-        StatusCodes.NOT_FOUND,
-        'Offer letter not found',
-      )
-    }
 
-    const preQualified =
-      await this.preQualifieRepository.findIfApplyForLoanAlready(user_id)
-    if (!preQualified) {
-      throw new ApplicationCustomError(
-        StatusCodes.NOT_FOUND,
-        'You must apply for a loan before changing the offer letter status',
-      )
-    }
+  public async getOfferLetterById(offer_letter_id: string): Promise<OfferLetter> {
+      const offer_letter = await this.purchaseRepository.getOfferLetterById(offer_letter_id)
+      return offer_letter
+  }
 
-    await this.purchaseRepository.updateOfferLetterStatus(
-      input.offer_letter_id,
-      { ...input },
-    )
+  public async getAllOfferLetterByUserId(user_id: string): Promise<OfferLetter[]>  {
+      const offerLetter = await this.purchaseRepository.getAllOfferLetterByUserId(user_id)
+      return offerLetter
+  }
+
+  public async getAllOfferLetter(): Promise<OfferLetter[]>  {
+      const offerLetter = await this.purchaseRepository.getOfferLetter()
+      return offerLetter
   }
 
   // public async makePayment(
@@ -271,4 +258,6 @@ export class PropertyPurchase {
   //     transactionData = paymentProviders
   //   }
   // }
+
+
 }
