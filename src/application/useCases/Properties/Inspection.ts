@@ -40,7 +40,7 @@ export class InspectionService {
       user_id,
     )
     if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {
-      if (!input.amount || !input.payment_type) {
+      if (!input.payment_type) {
         throw new ApplicationCustomError(
           StatusCodes.BAD_REQUEST,
           `Payment is required for ${InspectionMeetingType.VIDEO_CHAT}`,
@@ -55,7 +55,7 @@ export class InspectionService {
 
       const [paymentResponse] = await Promise.all([
         this.payment.makePayment(PaymentEnum.PAYSTACK, {
-          amount: Number(input.amount),
+          amount: Number(1000),
           email: input.email,
           metaData: { user_id, transaction_id },
         }),
