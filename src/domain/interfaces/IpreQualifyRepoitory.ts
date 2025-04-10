@@ -1,4 +1,4 @@
-import { employmentInformation,  payment_calculator, personalinformation, preQualify, prequalifyStatus } from "@entities/prequalify/prequalify";
+import { Eligibility, employmentInformation,  payment_calculator, personalinformation, preQualify, prequalifyStatus } from "@entities/prequalify/prequalify";
 
 export interface IPreQualify {
   storePersonaInfo (input: personalinformation): Promise<personalinformation>
@@ -11,4 +11,7 @@ export interface IPreQualify {
   getPreQualifyRequest() : Promise<preQualify[]>
   getPreQualifyRequestById(id: string) :Promise<preQualify>
   getSuccessfulPrequalifyRequestByUser(user_id: string): Promise<preQualify>
+  addEligibility(input: Eligibility): Promise<Eligibility>
+  findEligiblity(property_id: string, user_id: string): Promise<Eligibility>
+  IsHomeBuyerEligible (property_id: string, user_id: string) :  Promise<Eligibility>
 }

@@ -136,18 +136,19 @@ export class PropertyPurchase {
       if (!preQualified) {
         throw new ApplicationCustomError(
           StatusCodes.NOT_FOUND,
-          'You must pre-qualify for a loan before requesting an offer letter',
+          'Send request to be prequalified',
         )
       }
 
-      const approvedPreQualify =
-        await this.preQualifieRepository.getSuccessfulPrequalifyRequestByUser(
+      const eligible =
+        await this.preQualifieRepository.IsHomeBuyerEligible(
+          property_id,
           user_id,
         )
-      if (!approvedPreQualify) {
+      if (!eligible) {
         throw new ApplicationCustomError(
           StatusCodes.BAD_REQUEST,
-          'Your pre-qualification request has not been approved',
+          'You are not eligible to purchase this property',
         )
       }
     }

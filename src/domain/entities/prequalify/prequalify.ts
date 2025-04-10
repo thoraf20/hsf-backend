@@ -22,7 +22,22 @@ export class personalinformation {
       }
 }
 
-
+export class Eligibility {
+  eligibility_id?: string;
+  eligiblity_status?: string;
+  is_eligible?: boolean; 
+  property_id?: string;
+  prequalify_status_id?: string;
+  user_id?: string;
+  created_at?: Date;
+  updated_at?: Date;
+    constructor(data: Partial<personalinformation>) {
+      Object.assign(this, {
+        ...data,
+      })
+    }
+  
+}
 export class employmentInformation {
     employment_information_id?: string 
     employment_confirmation?: 'Yes' | 'No'
@@ -59,6 +74,7 @@ export class prequalifyStatus {
     reference_id?: string
     created_at?: Date;
     updated_at?: Date;
+    is_prequalify_requested: boolean
       constructor(data: Partial<prequalifyStatus>) {
         Object.assign(this, {
           ...data,
@@ -84,4 +100,4 @@ export class payment_calculator {
 }
 
 
-export type preQualify = personalinformation  & employmentInformation & prequalifyStatus & payment_calculator
+export type preQualify = personalinformation  & employmentInformation & prequalifyStatus & payment_calculator &  Eligibility

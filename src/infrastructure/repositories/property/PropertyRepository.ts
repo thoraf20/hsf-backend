@@ -156,7 +156,7 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed as offer_letter_closed',
   
-        db.raw(`COALESCE(prequalify_status.status) as prequalify_status`),
+        db.raw(`COALESCE(prequalify_status.is_prequalify_requested) as is_prequalify_requested`),
         db.raw(`COALESCE(prequalify_status.verification) as prequalify_verification`),
   
         'property_closing.closing_status',
@@ -188,7 +188,7 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_approved',
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed',
-        'prequalify_status.status',
+        'prequalify_status.is_prequalify_requested',
         'prequalify_status.verification',
         'property_closing.closing_status',
         'escrow.escrow_id' // needed for row_to_json grouping

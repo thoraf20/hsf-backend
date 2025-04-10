@@ -66,4 +66,22 @@ export default {
       )
     }
   },
+  changeEmail(email: string, link: string) {
+    let subject = `Email Change Request`
+    let text = `Verification to change email`
+    let html = templates.emailChange.replace(`{{verificationLink}}`, link)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      // Log only the error message to avoid circular structure issues
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

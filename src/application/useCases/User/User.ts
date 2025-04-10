@@ -6,7 +6,9 @@ import { resetPassword } from '@shared/types/userType'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { RedisClient } from '@infrastructure/cache/redisClient'
-import { generateRandomSixNumbers } from '@shared/utils/helpers'
+import emailTemplates from '@infrastructure/email/template/constant'
+import { v4 as uuidv4 } from 'uuid';
+
 
 
 export class UserService {
@@ -48,51 +50,57 @@ export class UserService {
       )
     }
 
-    if (input.email) {
-      if (!input.password) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'Password is required for email update',
-        )
-      }
-      const validPassword = await this.userRepository.comparedPassword(
-        input.password,
-        user.password,
-      )
-      if (!validPassword) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'Password is incorrect',
-        )
-      }
-      const token = generateRandomSixNumbers()
-      console.log(token)
-      const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
-      const details = {
-        id,
-        token,
-        type: OtpEnum.EMAIL_UPADTE,
-        newEmail: input.email,
-      }
-      await this.client.setKey(key, details, 60)
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'A verification email has been sent. Please verify your new email before updating.',
-      )
-    }
+  if (input.email) {
+  if (!input.password) {
+    throw new ApplicationCustomError(
+      StatusCodes.BAD_REQUEST,
+      'Password is required for email update',
+    )
+  }
 
-    await this.userRepository.update(id, input)
+  const validPassword = await this.userRepository.comparedPassword(
+    input.password,
+    user.password,
+  )
+  if (!validPassword) {
+    throw new ApplicationCustomError(
+      StatusCodes.BAD_REQUEST,
+      'Password is incorrect',
+    )
+  }
+
+  const token = uuidv4(); 
+  const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`;
+  const details = {
+    id,
+    token,
+    type: OtpEnum.EMAIL_UPADTE,
+    newEmail: input.email,
+  };
+
+  await this.client.setKey(key, details, 60 * 10); 
+
+  const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`;
+  console.log(verificationLink)
+  emailTemplates.changeEmail(input.email, verificationLink);
+console.log(verificationLink)
+  throw new ApplicationCustomError(
+    StatusCodes.BAD_REQUEST,
+    'A verification email has been sent. Please click the link to confirm the update.',
+  );
+}
+
     
   }
 
-  public async verifyUpdate(otp: string): Promise<void> {
-    const key = `${CacheEnumKeys.EMAIL_CHANGE}-${otp}`
+  public async verifyUpdate(token: string): Promise<void> {
+    const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
     const data = await this.client.getKey(key)
-
+ 
     if (!data)
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
-        'Invalid or expired otp',
+        'Invalid or expired token', 
       )
     console.log(data)
     if (data.type === OtpEnum.EMAIL_UPADTE) {

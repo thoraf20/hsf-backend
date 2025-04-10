@@ -192,5 +192,78 @@ ResetPassword : `<!DOCTYPE html>
         Need help? <a href="{{SUPPORT_LINK}}">Contact Support</a></p>
     </div>
 </body>
-</html>`
+</html>`,
+
+emailChange : `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Email Change Verification</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: #f4f4f7;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      color: #333;
+      font-size: 22px;
+    }
+    .message {
+      font-size: 16px;
+      color: #555;
+      line-height: 1.6;
+    }
+    .button {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 12px 24px;
+      background-color: #4f46e5;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      text-align: center;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Confirm Your New Email</h1>
+    </div>
+    <div class="message">
+      <p>Hi there,</p>
+      <p>We received a request to change your email address. To confirm this change, please click the button below:</p>
+
+      <a href="{{verificationLink}}" class="button">Verify New Email</a>
+
+      <p>If you didn’t request this change, you can safely ignore this email.</p>
+      <p>Thanks,<br>The Team</p>
+    </div>
+    <div class="footer">
+      © {{year}} YourCompany. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+`
 }

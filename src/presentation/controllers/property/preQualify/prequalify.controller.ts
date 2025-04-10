@@ -12,7 +12,7 @@ export class preQualifyController {
         const preQualifier = await this.service.storePreQualify(input, user_id)
         return createResponse(
             StatusCodes.CREATED,
-            `Prequalifier was created successfully`,
+            `Success`,
             preQualifier
         )
     }

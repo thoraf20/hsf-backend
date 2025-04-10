@@ -6,7 +6,7 @@ import { UserRepository } from '@infrastructure/repositories/user/UserRepository
 import {
   updatePasswordSchema,
   updateProfileSchema,
-  verifyOtpSchema,
+  verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
 const userRoutes: Router = Router()
 
@@ -34,16 +34,16 @@ userRoutes.get(
 
 userRoutes.post(
   '/verify-update',
-  validateRequest(verifyOtpSchema),
+  validateRequest(verifyTokenSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
-    const userUpdate = await userController.verifyUpdate(body.otp)
+    const userUpdate = await userController.verifyUpdate(body.token)
     res.status(userUpdate.statusCode).json(userUpdate)
   }),
 )
 
 userRoutes.put(
-  '/reset-password',
+  '/change-password',
   validateRequest(updatePasswordSchema),
   asyncMiddleware(async (req, res) => {
     const { body, user } = req
@@ -51,7 +51,7 @@ userRoutes.put(
     res.status(updatePassword.statusCode).json(updatePassword)
   }),
 )
-
+ 
 userRoutes.put(
   '/enable-mfa',
   asyncMiddleware(async (req, res) => {

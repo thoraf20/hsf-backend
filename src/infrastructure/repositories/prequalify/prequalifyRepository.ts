@@ -1,4 +1,4 @@
-import { employmentInformation,  payment_calculator, personalinformation, preQualify, prequalifyStatus } from "@entities/prequalify/prequalify";
+import { Eligibility, employmentInformation,  payment_calculator, personalinformation, preQualify, prequalifyStatus } from "@entities/prequalify/prequalify";
 import db from "@infrastructure/database/knex";
 import { IPreQualify } from "@interfaces/IpreQualifyRepoitory";
 
@@ -26,13 +26,27 @@ export class PrequalifyRepository implements IPreQualify {
 
 
       public async findIfApplyForLoanAlready(loaner_id: string): Promise<any> {
-        return await db('prequalify_status').where('loaner_id', loaner_id).whereIn('status', ["Pending", "Declined"]).first()
+        return await db('prequalify_status').where('loaner_id', loaner_id).where('is_prequalify_requested', true).first()
       }
 
       public async getSuccessfulPrequalifyRequestByUser(loaner_id: string): Promise<any> { 
-        return await db('prequalify_status').where('loaner_id', loaner_id).where('status', 'Approved').first()
+        return await db('prequalify_status').where('loaner_id', loaner_id).where('is_prequalify_requested', true).first()
       }
 
+      public async addEligibility(input: Eligibility): Promise<Eligibility> {
+          const [eligiblity] = await db('eligibility').insert(input).returning("*")
+          return new Eligibility(eligiblity) ? eligiblity : null
+      }
+
+      public async IsHomeBuyerEligible(property_id: string, user_id: string): Promise<Eligibility> {
+        const eligible = await db('eligibility').select('*').where('property_id', property_id).andWhere('user_id', user_id).andWhere('is_eligible', true).first()
+        return new Eligibility(eligible) ? eligible : null
+      }
+
+      public async findEligiblity(property_id: string, user_id: string): Promise<Eligibility> {
+          const eligible = await db('eligibility').select('*').where('property_id', property_id).andWhere('user_id', user_id).first()
+          return new Eligibility(eligible) ? eligible : null
+      }
 
       public async updatePrequalifyStatus(loaner_id: string, input: Partial<preQualify>): Promise<void> {
              await db('prequalify_status').update(input).where('loaner_id', loaner_id)
