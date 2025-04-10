@@ -357,7 +357,7 @@ export class PropertyRepository implements IPropertyRepository {
       const [{ count: total }] = await Promise.all([totalRecordsQuery])
   
     // Query to get the properties in the watchlist with pagination
-    const propertiesQuery = db('property_watchlist')
+    const propertiesQuery = db('propecorty_watchlist')
       .where('property_watchlist.user_id', user_id)
       .join('properties', 'property_watchlist.property_id', 'properties.id')
       .select(

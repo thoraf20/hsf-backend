@@ -82,8 +82,8 @@ export class PropertyController {
     )
   }
 
-  async getWatchlistProperty(user_id: string): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getWatchlistProperty(user_id)
+  async getWatchlistProperty(user_id: string, filters: PropertyFilters,): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getWatchlistProperty(user_id, filters)
     return createResponse(
       StatusCodes.OK,
       'Watchlist fetched successfully',

@@ -111,8 +111,9 @@ export class PropertyService {
 
   public async getWatchlistProperty(
     user_id: string,
+    filters: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    return await this.propertyRepository.getWatchlistProperty(user_id)
+    return await this.propertyRepository.getWatchlistProperty(user_id, filters)
   }
 
   public async removePropertyWatchList(

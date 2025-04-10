@@ -61,10 +61,10 @@ propertyRoute.get(
   requireRoles(Role.HOME_BUYER),
   // limiter,
   asyncMiddleware(async (req, res) => {
-    const { user } = req
+    const { user, query } = req
     console.log(user)
     console.log(user)
-    const properties = await controller.getWatchlistProperty(user.id)
+    const properties = await controller.getWatchlistProperty(user.id, query)
     res.status(properties.statusCode).json(properties)
   }),
 )
