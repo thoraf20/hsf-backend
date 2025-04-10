@@ -42,8 +42,8 @@ export class PropertyController {
     )
   }
 
-  async getPropertyById(id: string, userRole: string): Promise<ApiResponse<any>> {
-    const property = await this.propertyService.getPropertyById(id, userRole)
+  async getPropertyById(id: string, user_id: string, userRole: string): Promise<ApiResponse<any>> {
+    const property = await this.propertyService.getPropertyById(id, user_id, userRole)
     return createResponse(
       StatusCodes.OK,
       'Property fetched successfully',

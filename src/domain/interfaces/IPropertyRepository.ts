@@ -5,7 +5,7 @@ import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
 
-  findPropertyById(id: string, userRole?: string ): Promise<Properties | null>
+  findPropertyById(id: string, user_id?: string, userRole?: string ): Promise<Properties | null>
 
   findPropertiesByUserId(user_id: string, filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>>
   
@@ -23,7 +23,7 @@ export interface IPropertyRepository {
   
   addWatchlistProperty(property_id: string, user_id: string): Promise<Record<string, any>>
   
-  getWatchlistProperty(user_id: string): Promise<Properties[]>
+  getWatchlistProperty(user_id: string, filters?: PropertyFilters): Promise<SeekPaginationResult<Properties>>
   
   getIfWatchListPropertyIsAdded (property_id: string, user_id: string): Promise<Properties | null>
   

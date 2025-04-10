@@ -146,8 +146,10 @@ export class PropertyRepository implements IPropertyRepository {
     })
   }
 
-  async findPropertyById(id: string, userRole?: string): Promise<any> {
-    let query = db('properties')
+
+  async findPropertyById(id: string, user_id?: string, userRole?: string): Promise<any> {
+    // Main property query with joined related info
+    const propertyQuery = db('properties')
       .select([
         'properties.*',
         'offer_letter.offer_letter_status',
@@ -155,31 +157,29 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_approved',
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed as offer_letter_closed',
-  
-        db.raw(`COALESCE(prequalify_status.is_prequalify_requested) as is_prequalify_requested`),
-        db.raw(`COALESCE(prequalify_status.verification) as prequalify_verification`),
-  
         'property_closing.closing_status',
   
-        db.raw(`COALESCE(
-          json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
-          '[]'
-        ) as payments`),
+        // Payments array
+        db.raw(`
+          COALESCE(
+            json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
+            '[]'
+          ) AS payments
+        `),
   
-        // Escrow info as single object
-        db.raw(`COALESCE(
-          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
-          '[]'
-        ) as escrow_info`)
+        // Escrow info array
+        db.raw(`
+          COALESCE(
+            json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
+            '[]'
+          ) AS escrow_info
+        `)
       ])
       .where('properties.id', id)
       .andWhere('properties.is_live', true)
       .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
       .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
       .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin('users', 'users.id', 'properties.user_id')
-      .leftJoin('prequalify_personal_information', 'prequalify_personal_information.loaner_id', 'users.id')
-      .leftJoin('prequalify_status', 'prequalify_status.personal_information_id', 'prequalify_personal_information.personal_information_id')
       .leftJoin({ escrow: 'escrow_information' }, 'escrow.property_id', 'properties.id')
       .groupBy(
         'properties.id',
@@ -188,21 +188,44 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_approved',
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed',
-        'prequalify_status.is_prequalify_requested',
-        'prequalify_status.verification',
-        'property_closing.closing_status',
-        'escrow.escrow_id' // needed for row_to_json grouping
+        'property_closing.closing_status'
       )
       .orderBy('properties.id', 'desc');
   
-    // Hide documents for non-privileged roles
+    // Hide documents if not admin
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-      query.select(db.raw('NULL as documents'));
+      propertyQuery.select(db.raw('NULL AS documents'));
     }
   
-    const result = await query.first();
-    return result ?? null;
+    // Eligibility/prequalify query
+    const eligibilityQuery = db('prequalify_status')
+      .leftJoin('eligibility', 'prequalify_status.status_id', 'eligibility.prequalify_status_id')
+      .leftJoin('properties', 'eligibility.property_id', 'properties.id')
+      .where('properties.id', id)
+      .andWhere('eligibility.user_id', user_id)
+      .select(
+        'prequalify_status.is_prequalify_requested',
+        'eligibility.is_eligible',
+        'eligibility.eligiblity_status',
+        'eligibility.eligibility_id'
+      )
+      .first();
+  
+    const [propertyData, eligibilityData] = await Promise.all([
+      propertyQuery.first(),
+      eligibilityQuery
+    ]);
+  
+    // Return property data and individual eligibility fields or null if not available
+    return {
+      ...propertyData,
+      is_prequalify_requested: eligibilityData ? eligibilityData.is_prequalify_requested : null,
+      is_eligible: eligibilityData ? eligibilityData.is_eligible : null,
+      eligiblity_status: eligibilityData ? eligibilityData.eligiblity_status : null,
+      eligibility_id: eligibilityData ? eligibilityData.eligibility_id : null,
+    };
   }
+  
   
   
   
@@ -315,8 +338,26 @@ export class PropertyRepository implements IPropertyRepository {
     return watchlist
   }
 
-  async getWatchlistProperty(user_id: string): Promise<Properties[]> {
-    const properties = await db('property_watchlist')
+  async getWatchlistProperty(
+    user_id: string,
+    filters?: PropertyFilters,
+  ): Promise<SeekPaginationResult<Properties>> {
+    const page = filters?.page_number ?? 1
+    const perPage = filters?.result_per_page ?? 10
+    const offset = (page - 1) * perPage
+  
+    // Query to get the total count of properties in the watchlist
+    const totalRecordsQuery = db('property_watchlist')
+      .where('property_watchlist.user_id', user_id)
+      .join('properties', 'property_watchlist.property_id', 'properties.id')
+      .count('* as count')
+      .first()
+  
+    
+      const [{ count: total }] = await Promise.all([totalRecordsQuery])
+  
+    // Query to get the properties in the watchlist with pagination
+    const propertiesQuery = db('property_watchlist')
       .where('property_watchlist.user_id', user_id)
       .join('properties', 'property_watchlist.property_id', 'properties.id')
       .select(
@@ -347,10 +388,27 @@ export class PropertyRepository implements IPropertyRepository {
         'properties.updated_at',
         'properties.deleted_at',
       )
-
-    return properties.map((property) => new Properties(property))
+      .limit(perPage)
+      .offset(offset)
+  
+    // Fetch the properties
+    const rawResult = await propertiesQuery
+  
+    const result = rawResult.map((property) => new Properties(property))
+  
+    const totalPages = Math.ceil(Number(total) / perPage)
+  
+    return new SeekPaginationResult<Properties>({
+      result,
+      result_per_page: perPage,
+      page,
+      total_records: Number(total),
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    })
   }
-
+  
   async getIfWatchListPropertyIsAdded(
     property_id: string,
     user_id: string,

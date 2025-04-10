@@ -43,9 +43,10 @@ export class PropertyBaseUtils {
     this.propertyRepository = propertyRepository
   }
 
-  public async findIfPropertyExist(id: string, userRole?: string ): Promise<Properties> {
+  public async findIfPropertyExist(id: string, user_id?: string, userRole?: string ): Promise<Properties> {
     const properties = (await this.propertyRepository.findPropertyById(
       id,
+      user_id,
       userRole,
     )) as Properties
     if (!properties) {

@@ -33,8 +33,8 @@ export class PropertyService {
     return fetchProperties
   }
 
-  public async getPropertyById(id: string, userRole: string ): Promise<Properties> {
-    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id, userRole)
+  public async getPropertyById(id: string, user_id: string,  userRole: string ): Promise<Properties> {
+    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id, user_id, userRole)
     return fetchProperty
   }
 
@@ -111,7 +111,7 @@ export class PropertyService {
 
   public async getWatchlistProperty(
     user_id: string,
-  ): Promise<Array<Properties>> {
+  ): Promise<SeekPaginationResult<Properties>> {
     return await this.propertyRepository.getWatchlistProperty(user_id)
   }
 
