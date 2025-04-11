@@ -81,11 +81,9 @@ export class UserService {
   await this.client.setKey(key, details, 60 * 10); 
 
   const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`;
-  console.log(verificationLink)
   emailTemplates.changeEmail(input.email, verificationLink);
-console.log(verificationLink)
   throw new ApplicationCustomError(
-    StatusCodes.BAD_REQUEST,
+    StatusCodes.OK,
     'A verification email has been sent. Please click the link to confirm the update.',
   );
 }
