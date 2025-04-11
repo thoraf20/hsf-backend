@@ -148,7 +148,6 @@ export class PropertyRepository implements IPropertyRepository {
 
 
   async findPropertyById(id: string, user_id?: string, userRole?: string): Promise<any> {
-    // Main property query with joined related info
     const propertyQuery = db('properties')
       .select([
         'properties.*',
@@ -159,7 +158,6 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.closed as offer_letter_closed',
         'property_closing.closing_status',
   
-        // Payments array
         db.raw(`
           COALESCE(
             json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
@@ -167,7 +165,7 @@ export class PropertyRepository implements IPropertyRepository {
           ) AS payments
         `),
   
-        // Escrow info array
+
         db.raw(`
           COALESCE(
             json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
@@ -192,39 +190,38 @@ export class PropertyRepository implements IPropertyRepository {
       )
       .orderBy('properties.id', 'desc');
   
-    // Hide documents if not admin
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
       propertyQuery.select(db.raw('NULL AS documents'));
     }
-  
-    // Eligibility/prequalify query
-    const eligibilityQuery = db('prequalify_status')
-      .leftJoin('eligibility', 'prequalify_status.status_id', 'eligibility.prequalify_status_id')
-      .leftJoin('properties', 'eligibility.property_id', 'properties.id')
-      .where('properties.id', id)
-      .andWhere('eligibility.user_id', user_id)
-      .select(
-        'prequalify_status.is_prequalify_requested',
-        'eligibility.is_eligible',
-        'eligibility.eligiblity_status',
-        'eligibility.eligibility_id'
-      )
-      .first();
+    const eligibilityQuery = user_id
+      ? db('prequalify_status')
+          .leftJoin('eligibility', 'prequalify_status.status_id', 'eligibility.prequalify_status_id')
+          .leftJoin('properties', 'eligibility.property_id', 'properties.id')
+          .where('properties.id', id)
+          .andWhere('eligibility.user_id', user_id)
+          .select(
+            'prequalify_status.is_prequalify_requested',
+            'eligibility.is_eligible',
+            'eligibility.eligiblity_status',
+            'eligibility.eligibility_id'
+          )
+          .first()
+      : null;
   
     const [propertyData, eligibilityData] = await Promise.all([
       propertyQuery.first(),
       eligibilityQuery
     ]);
   
-    // Return property data and individual eligibility fields or null if not available
     return {
       ...propertyData,
-      is_prequalify_requested: eligibilityData ? eligibilityData.is_prequalify_requested : null,
-      is_eligible: eligibilityData ? eligibilityData.is_eligible : null,
-      eligiblity_status: eligibilityData ? eligibilityData.eligiblity_status : null,
-      eligibility_id: eligibilityData ? eligibilityData.eligibility_id : null,
+      is_prequalify_requested: eligibilityData?.is_prequalify_requested ?? null,
+      is_eligible: eligibilityData?.is_eligible ?? null,
+      eligiblity_status: eligibilityData?.eligiblity_status ?? null,
+      eligibility_id: eligibilityData?.eligibility_id ?? null
     };
   }
+  
   
   
   
