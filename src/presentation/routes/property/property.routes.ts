@@ -147,4 +147,10 @@ propertyRoute.post(
   }),
 )
 
+propertyRoute.get('/application/all', authenticate, requireRoles(Role.HOME_BUYER), asyncMiddleware(async (req, res) => {
+        const {user, query} = req 
+        const property = await controller.propertyApplication(user.id, query)
+        res.status(property.statusCode).json(property)
+
+}))
 export default propertyRoute

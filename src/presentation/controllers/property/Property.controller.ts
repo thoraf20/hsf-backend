@@ -102,4 +102,13 @@ export class PropertyController {
       {},
     )
   }
+
+  async propertyApplication (user_id:  string, filter: PropertyFilters): Promise<ApiResponse<any>> {
+      const application = await this.propertyService.propertyApplication(user_id, filter)
+       return createResponse(
+        StatusCodes.OK,
+        'Success',
+        application
+       )
+  }
 }

@@ -36,7 +36,8 @@ export class preQualifyService {
       return await this.prequalify.addEligibility({
         prequalify_status_id: existingPrequalifyStatusApplied.status_id,
         user_id,
-        property_id: input.property_id
+        property_id: input.property_id,
+        financial_eligibility_type: input.type
       });
     }
   

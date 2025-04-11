@@ -11,7 +11,7 @@
     "build": "tsc && tsc-alias",
     "migrate:dev": "knex migrate:latest --env development --knexfile=database/knexfile.ts",
     "migrate:prod": "knex migrate:latest --env production --knexfile=database/knexfile.ts",
-    "make": "knex migrate:make eligibility_table -x ts --knexfile=database/knexfile.ts",
+    "make": "knex migrate:make update_eligibility_table -x ts --knexfile=database/knexfile.ts",
     "make:seed": "knex seed:make roles_and_permissions -x ts --knexfile=database/knexfile.ts",
     "seed:run": " knex seed:run  ts --knexfile=database/knexfile.ts"
   },

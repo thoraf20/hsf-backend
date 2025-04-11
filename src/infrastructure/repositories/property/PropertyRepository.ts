@@ -473,5 +473,151 @@ export class PropertyRepository implements IPropertyRepository {
     })
   }
 
+  public async propertyApplications(
+    user_id: string,
+    filters?: PropertyFilters
+  ): Promise<SeekPaginationResult<any>> {
+    const page = filters?.page_number ?? 1;
+    const perPage = filters?.result_per_page ?? 10;
+    const offset = (page - 1) * perPage;
+  
+    const baseQuery = db('properties')
+      .leftJoin('eligibility', function () {
+        this.on('eligibility.property_id', '=', 'properties.id')
+          .andOn('eligibility.user_id', '=', db.raw('?', [user_id]));
+      })
+      .leftJoin('prequalify_status', 'eligibility.prequalify_status_id', 'prequalify_status.status_id')
+      .leftJoin('payments', function () {
+        this.on('payments.property_id', '=', 'properties.id')
+          .andOn('payments.user_id', '=', db.raw('?', [user_id]));
+      })
+      .leftJoin('offer_letter', 'properties.id', 'offer_letter.property_id')
+      .leftJoin('users', 'eligibility.user_id', 'users.id')
+      .where(function () {
+        this.where('eligibility.user_id', user_id)
+          .orWhere('offer_letter.user_id', user_id);
+      })
+      .orderBy('properties.created_at', 'desc');
+  
+    // Get total count without order by
+const [{ count: total }] = await baseQuery.clone().clearOrder().count('* as count');
 
-}
+  
+    // Apply pagination
+    const paginatedResults = await baseQuery
+      .clone()
+      .select(
+        'properties.id',
+        'properties.property_name',
+        'properties.property_price',
+        'properties.property_images',
+        'properties.property_type',
+        'properties.property_description',
+        'properties.property_feature',
+        'properties.financial_types',
+        'properties.landmark',
+        'properties.property_condition',
+        'properties.numbers_of_bedroom',
+        'properties.numbers_of_bathroom',
+        'properties.is_live',
+        'properties.is_sold',
+        'properties.user_id as developer_id',
+        'properties.property_size',
+        'properties.street_address',
+        'properties.city',
+        'properties.state',
+        'properties.unit_number',
+        'properties.landmark',
+        'properties.payment_duration',
+        'properties.postal_code',
+        'properties.created_at',
+        'properties.updated_at',
+        'properties.deleted_at',
+        'eligibility.eligibility_id',
+        'eligibility.eligiblity_status',
+        'eligibility.is_eligible',
+        'eligibility.financial_eligibility_type',
+        'prequalify_status.is_prequalify_requested',
+        'prequalify_status.verification',
+        'payments.payment_status',
+        'payments.payment_type',
+        'payments.amount',
+        'payments.transaction_id',
+        'offer_letter.offer_letter_id',
+        'offer_letter.purchase_type as financial_application_type',
+        'users.first_name',
+        'users.last_name',
+        'users.email'
+      )
+      .limit(perPage)
+      .offset(offset);
+  
+    // Format results
+    const cleanApplications = paginatedResults.map((app) => {
+      const {
+        eligibility_id,
+        eligiblity_status,
+        is_eligible,
+        financial_eligibility_type,
+        offer_letter_id,
+        financial_application_type,
+        payment_status,
+        payment_type,
+        amount,
+        transaction_id,
+        first_name,
+        last_name,
+        email,
+        ...propertyData
+      } = app;
+  
+      return {
+        ...propertyData,
+        ...(eligibility_id && {
+          eligibility: {
+            eligibility_id,
+            eligiblity_status,
+            is_eligible,
+            financial_eligibility_type
+          }
+        }),
+        ...(offer_letter_id && {
+          offer_letter: {
+            offer_letter_id,
+            financial_application_type
+          }
+        }),
+        ...(payment_status && {
+          payment: {
+            payment_status,
+            payment_type,
+            amount,
+            transaction_id
+          }
+        }),
+        ...(first_name && {
+          user: {
+            first_name,
+            last_name,
+            email
+          }
+        })
+      };
+    });
+  
+    const totalPages = Math.ceil(Number(total) / perPage);
+  
+    return new SeekPaginationResult<any>({
+      result: cleanApplications,
+      page,
+      result_per_page: perPage,
+      total_records: Number(total),
+      total_pages: totalPages,
+      next_page: page < totalPages ? page + 1 : null,
+      prev_page: page > 1 ? page - 1 : null,
+    });
+  }
+    
+  
+  
+} 

@@ -123,4 +123,8 @@ export class PropertyService {
     await this.utilsProperty.findIfPropertyExist(property_id)
     return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
+
+  public async propertyApplication (user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> {
+      return await this.propertyRepository.propertyApplications(user_id, filters)
+  }  
 }

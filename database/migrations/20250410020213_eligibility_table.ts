@@ -14,7 +14,7 @@ export async function up(knex: Knex): Promise<void> {
          .onDelete('CASCADE')
          .onUpdate('CASCADE');
          table
-         .uuid('property_id')
+         .uuid('property_id') 
          .notNullable()
          .references('id')
          .inTable('properties')

@@ -34,4 +34,6 @@ export interface IPropertyRepository {
   getAllPropertiesTobeApproved(filters?: Record<string, any>): Promise<SeekPaginationResult<Properties>>
   
   getAllUserPropertyCount(user_id: string): Promise<PropertyCount>
+
+  propertyApplications(user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> 
 }

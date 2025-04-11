@@ -28,6 +28,8 @@ export class Eligibility {
   is_eligible?: boolean; 
   property_id?: string;
   prequalify_status_id?: string;
+  type?: string;
+  financial_eligibility_type?: string
   user_id?: string;
   created_at?: Date;
   updated_at?: Date;

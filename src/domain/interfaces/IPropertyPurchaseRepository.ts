@@ -14,4 +14,5 @@ export interface IPurchaseProperty {
     setEscrowAttendance(input: EscrowInformation): Promise<EscrowInformation>
     confirmPropertyPurchase(input: Record<string, any>, user_id: string): Promise<void>
     approvePrequalifyRequest(input: Record<string, any>, user_id: string): Promise<void> 
+    
 }
