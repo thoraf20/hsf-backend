@@ -17,7 +17,6 @@ export default {
       sendMailInWorker(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
-      // Log only the error message to avoid circular structure issues
       logger.error(`Unable to send email: ${error.message}`)
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,
@@ -36,7 +35,6 @@ export default {
       sendMailInWorker(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
-      // Log only the error message to avoid circular structure issues
       logger.error(`Unable to send email: ${error.message}`)
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,
@@ -58,7 +56,6 @@ export default {
       sendMailInWorker(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
-      // Log only the error message to avoid circular structure issues
       logger.error(`Unable to send email: ${error.message}`)
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,
@@ -76,7 +73,93 @@ export default {
       sendMailInWorker(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
-      // Log only the error message to avoid circular structure issues
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  sendScheduleInspectionEmail(email:  string, full_name: string, inspection_date: string, inspection_time: string, inspection_meeting_type: string, meeting_platform: string, meet_link?: string) {
+    let subject = `Inspection`
+    let text = `Your Inspection request has been sent successfully`
+    let html = templates.InspectionForVideoCallEmail.replace(`{{full_name}}`, full_name)
+    .replace(`{{inspection_date}}`, inspection_date)
+    .replace(`{{inspection_time}}`, inspection_time)
+    .replace(`{{inspection_meeting_type}}`,inspection_meeting_type)
+    .replace(`{{meeting_platform}}`, meeting_platform)
+    .replace(`{{meet_link}}`, meet_link)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  sendScheduleInspectionInpersonEmail(email:  string, full_name: string, inspection_date: string, inspection_time: string, inspection_meeting_type: string) {
+    let subject = `Inspection`
+    let text = `Your Inspection request has been sent successfully`
+    let html = templates.InspectionForInpersonCallEmail.replace(`{{full_name}}`, full_name)
+    .replace(`{{inspection_date}}`, inspection_date)
+    .replace(`{{inspection_time}}`, inspection_time)
+    .replace(`{{inspection_meeting_type}}`,inspection_meeting_type)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  PrequalifierEmailVerification(email: string, full_name: string, otp: string) {
+    let subject = `Prequalifier Request`
+    let text = `Verify your email`
+    let html = templates.prequalifierVerificationCode.replace(`{{otp}}`, otp)
+    .replace(
+      `{{Date}}`,
+      new Date().toUTCString()
+    
+    )
+    .replace(`{{full_name}}`, full_name)
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  PrequalifierSuccess(email: string, name: string, reference_id: string) {
+    let subject = `Prequalifier Submitted`
+    let text = `Prequalifier submitted successfully`
+    let html = templates.SuccessfulPrequalifier.replace(`{{reference_id}}`, reference_id).replace(
+      `{{Date}}`,
+      new Date().toUTCString()
+    )
+    .replace(`{{name}}`, name)
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,

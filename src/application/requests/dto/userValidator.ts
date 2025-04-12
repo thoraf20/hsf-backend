@@ -52,8 +52,8 @@ export const ResetPasswordOtpSchema = z.object({
 
 
 export const loginSchema = z.object({ 
-  identifier: z.string(),
-  password: z.string().min(8, "Password must be at least 8 characters long")
+  identifier: z.string().nonempty(),
+  password: z.string().nonempty()
 });
 
 export const verifyMfaSchema = z.object({

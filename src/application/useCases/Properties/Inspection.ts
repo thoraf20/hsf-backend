@@ -11,7 +11,7 @@ import { TransactionEnum } from '@domain/enums/transactionEnum'
 import { generateTransactionId } from '@shared/utils/helpers'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { PaymentEnum } from '@domain/enums/PaymentEnum'
-
+import emailTemplates from '@infrastructure/email/template/constant'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private utilsInspection: InspectionBaseUtils
@@ -71,7 +71,6 @@ export class InspectionService {
       transactionData = paymentResponse
     }
 
-    // Exclude `amount` before saving to DB
     const { amount, payment_type, ...inspectionData } = input
 
     const scheduledInspection = await this.inspectionRepository.createInpection(
@@ -81,7 +80,25 @@ export class InspectionService {
         user_id,
       },
     )
-
+    if(input.meet_link && input.meeting_platform) {
+      emailTemplates.sendScheduleInspectionEmail(
+        input.email,
+        input.full_name,
+        input.inspection_date,
+        input.inspection_time,
+        input.inspection_meeting_type,
+        input.meeting_platform,
+        input.meet_link 
+      );
+    }
+    emailTemplates.sendScheduleInspectionInpersonEmail(
+      input.email,
+      input.full_name,
+      input.inspection_date,
+      input.inspection_time,
+      input.inspection_meeting_type
+    );
+    
     return { ...scheduledInspection, transactionData }
   }
 

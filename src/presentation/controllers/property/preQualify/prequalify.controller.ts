@@ -9,21 +9,21 @@ export class preQualifyController {
     constructor (private readonly service: preQualifyService) {}
 
     public async preQualifierController (input: preQualify, user_id: string) :Promise<ApiResponse<any>> {
-        const preQualifier = await this.service.storePreQualify(input, user_id)
+        await this.service.storePreQualify(input, user_id)
         return createResponse(
             StatusCodes.CREATED,
-            `Success`,
-            preQualifier
+            `A verification code is been sent to your email, please verify before you continue`,
+            {}
         )
     }
 
     public async verification (input: Record<string, any>) :Promise<ApiResponse<any>>
     {
-         await this.service.verification(input)
+       const prequalification =  await this.service.verification(input)
         return createResponse(
             StatusCodes.OK,
-            `Verification was complete`,
-            {}
+            `Success`,
+            prequalification
         )
     }
     public async getPrequalifierByUserId  (user_id:string) :Promise<ApiResponse<any>>

@@ -265,5 +265,258 @@ emailChange : `<!DOCTYPE html>
   </div>
 </body>
 </html>
+`,
+InspectionForVideoCallEmail: `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Property Inspection Confirmation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f8f8;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #0a5ebf;
+      }
+      p {
+        line-height: 1.6;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 13px;
+        color: #777;
+        text-align: center;
+      }
+      .button {
+        background-color: #0a5ebf;
+        color: white;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        display: inline-block;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Inspection Confirmed ✅</h2>
+      <p>Hi {{full_name}},</p>
+      <p>Thank you for scheduling an inspection for one of our properties.</p>
+
+      <p><strong>Inspection Details:</strong></p>
+      <ul>
+        <li><strong>Date:</strong> {{inspection_date}}</li>
+        <li><strong>Time:</strong> {{inspection_time}}</li>
+        <li><strong>Meeting Type:</strong> {{inspection_meeting_type}}</li>
+        <li><strong>Platform:</strong> {{meeting_platform}}</li>
+        <li><strong>Meeting Link:</strong> <a href="{{meet_link}}">{{meet_link}}</a></li>
+      </ul>
+
+      <p>Our team looks forward to assisting you with your property viewing and answering any questions you may have.</p>
+
+      <a class="button" href="{{meet_link}}" target="_blank">Join Meeting</a>
+
+      <div class="footer">
+        <p>If you have any questions, feel free to reply to this email.</p>
+        <p>© {{year}} Your Company Name</p>
+      </div>
+    </div>
+  </body>
+</html>
+`,
+InspectionForInpersonCallEmail: `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Property Inspection Confirmation</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f8f8f8;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #ffffff;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      }
+      h2 {
+        color: #0a5ebf;
+      }
+      p {
+        line-height: 1.6;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 13px;
+        color: #777;
+        text-align: center;
+      }
+      .button {
+        background-color: #0a5ebf;
+        color: white;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        display: inline-block;
+        margin-top: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Inspection Confirmed ✅</h2>
+      <p>Hi {{full_name}},</p>
+      <p>Thank you for scheduling an inspection for one of our properties.</p>
+
+      <p><strong>Inspection Details:</strong></p>
+      <ul>
+        <li><strong>Date:</strong> {{inspection_date}}</li>
+        <li><strong>Time:</strong> {{inspection_time}}</li>
+        <li><strong>Meeting Type:</strong> {{inspection_meeting_type}}</li>
+      </ul>
+
+      <p>Our team looks forward to assisting you with your property viewing and answering any questions you may have.</p>
+
+      <div class="footer">
+        <p>If you have any questions, feel free to reply to this email.</p>
+        <p>© {{year}} Your Company Name</p>
+      </div>
+    </div>
+  </body>
+</html>
+`,
+
+prequalifierVerificationCode : `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Verification</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    .otp {
+      font-size: 24px;
+      font-weight: bold;
+      color: #0052cc;
+      margin: 20px 0;
+      text-align: center;
+      letter-spacing: 5px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #888;
+      text-align: center;
+    }
+    .btn {
+      display: inline-block;
+      background-color: #0052cc;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 6px;
+      text-decoration: none;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Verify Your Email</h2>
+    <p>Hello {{full_name}},</p>
+    <p>Thank you for beginning your prequalification process. Please use the OTP below to verify your email:</p>
+    <div class="otp">{{otp}}</div>
+    <p>This code will expire in 10 minutes.</p>
+    <p>If you didn’t request this, please ignore this message. {{Date}}</p>
+    <div class="footer">© {{year}} YourCompany. All rights reserved .</div>
+  </div>
+</body>
+</html>
+
+`,
+SuccessfulPrequalifier: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Prequalification Complete</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f2f5;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #28a745;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #28a745;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .footer {
+      margin-top: 40px;
+      font-size: 12px;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>🎉 Prequalification Complete!</h2>
+    <p>Hi {{name}},</p>
+    <p>Congratulations! Your prequalification request has been successfully submitted and verified. {{Date}}</p>
+    <p>Your reference number is: <strong>{{reference_id}}</strong></p>
+    <p>We’ll be in touch with the next steps shortly. You can also log into your account to check the status.</p>
+    <div class="footer">© {{year}} YourCompany. All rights reserved.</div>
+  </div>
+</body>
+</html>
+
 `
 }
