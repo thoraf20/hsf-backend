@@ -1,3 +1,5 @@
+
+
 export default  {
      VerificationEmail : `<!DOCTYPE html>
 <html>
@@ -518,5 +520,118 @@ SuccessfulPrequalifier: `
 </body>
 </html>
 
+`,
+sharePropertyTemplate : `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Shared Property</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f6f6f6;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 30px auto;
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.08);
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .property-image {
+      width: 100%;
+      height: auto;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .property-details {
+      padding: 15px 0;
+    }
+    .property-details h2 {
+      margin: 0;
+      font-size: 22px;
+      color: #2c3e50;
+    }
+    .property-details p {
+      margin: 5px 0;
+      font-size: 14px;
+    }
+    .message-box {
+      background: #f1f1f1;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 20px;
+      font-style: italic;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 30px;
+      color: #888;
+    }
+  .property-images img {
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+    .btn {
+      display: inline-block;
+      background: #007BFF;
+      color: #fff;
+      padding: 10px 18px;
+      text-decoration: none;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🏠 A Property Has Been Shared With You</h1>
+      <p>From: <strong>{{sender_email}}</strong></p>
+    </div>
+
+    <div class="property-images">
+  {{property_images}}
+</div>
+
+ 
+    <div class="property-details">
+      <h2>{{property_name}}</h2>
+      <p><strong>Address:</strong> {{street_address}}, {{city}}, {{state}}, {{postal_code}}</p>
+      <p><strong>Price:</strong>{{property_price}}</p>
+      <p><strong>Type:</strong> {{property_type}}</p>
+      <p><strong>Size:</strong> {{property_size}}</p>
+      <p><strong>Bedrooms:</strong> {{numbers_of_bedroom}} | <strong>Bathrooms:</strong> {{numbers_of_bathroom}}</p>
+    </div>
+
+    <div class="message-box">
+      <strong>Message from {{sender_email}}:</strong>
+      <p>{{message}}</p>
+    </div>
+
+ 
+    <div style="text-align: center;">
+      <a href="{{property_link}}" class="btn">View Property</a>
+    </div>
+
+    <div class="footer">
+      <p>You're receiving this email because someone shared a property with you.</p>
+    </div>
+  </div>
+</body>
+</html>
 `
 }

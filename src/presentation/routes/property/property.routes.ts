@@ -11,6 +11,7 @@ import {
 } from '../index.t'
 import {
   PropertySchema,
+  sharePropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
 import { optionalAuth } from '@middleware/authMiddleware'
@@ -153,4 +154,19 @@ propertyRoute.get('/application/all', authenticate, requireRoles(Role.HOME_BUYER
         res.status(property.statusCode).json(property)
 
 }))
+
+propertyRoute.post('/share', authenticate, validateRequest(sharePropertySchema), asyncMiddleware(async (req, res) => {
+  const {body, user} = req 
+  const property = await controller.propertyShare(body, user.id)
+  res.status(property.statusCode).json(property)
+
+}))
+propertyRoute.get('/view/:property_id', authenticate, asyncMiddleware(async (req, res) => {
+  const {params, user} = req 
+  console.log(user.id)
+  const property = await controller.viewProperty(params.property_id, user.id)
+  res.status(property.statusCode).json(property)
+
+}))
 export default propertyRoute
+ 

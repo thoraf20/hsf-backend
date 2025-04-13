@@ -28,19 +28,39 @@ export class Properties {
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date
-  
+
   constructor(data: Partial<Properties>) {
     let complete_data = {
-      documents :
-      typeof data.documents === 'string'
-        ? JSON.stringify(data.documents)
-        : Array.isArray(data.documents)
-          ? data.documents
-          : [],
-          ...data, 
+      documents:
+        typeof data.documents === 'string'
+          ? JSON.stringify(data.documents)
+          : Array.isArray(data.documents)
+            ? data.documents
+            : [],
+      ...data,
     }
     if (data) {
-      Object.assign(this, complete_data);
+      Object.assign(this, complete_data)
     }
+  }
+}
+
+export class shareProperty {
+  recipient_email: string
+  sender_email: string
+  property_id: string
+  message?: string
+  shareable_link?: string; 
+  user_id: string
+  updated_at?: Date
+  deleted_at?: Date
+
+
+  constructor(data: Partial<shareProperty>) {
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
   }
 }
