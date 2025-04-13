@@ -1,9 +1,9 @@
 import { PropertyFilters } from '@shared/types/repoTypes'
-import { Properties } from '@domain/entities/Property'
+import { Properties, shareProperty } from '@domain/entities/Property'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { SeekPaginationResult } from '@shared/types/paginate'
-
+import emailTemplates from '@infrastructure/email/template/constant'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -127,4 +127,88 @@ export class PropertyService {
   public async propertyApplication (user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> {
       return await this.propertyRepository.propertyApplications(user_id, filters)
   }  
+
+  public async shareProperty(input: shareProperty, user_id: string): Promise<void> {
+    const property = await this.utilsProperty.findIfPropertyExist(input.property_id);
+    const shared = await this.propertyRepository.findSharedProperty(input.property_id, user_id);
+
+    if (shared) {
+      this.sharedEmailProperty(
+        input.recipient_email,
+        input.sender_email,
+        input.message,
+        {
+          property_images: property.property_images,
+          property_name: property.property_name,
+          street_address: property.street_address,
+          city: property.city,
+          state: property.state,
+          property_price: property.property_price,
+          property_type: property.property_type,
+          postal_code: property.postal_code,
+          property_size: property.property_size,
+          numbers_of_bedroom: property.numbers_of_bedroom,
+          numbers_of_bathroom: property.numbers_of_bathroom,
+        },
+        input.shareable_link
+      );
+      return; 
+    }
+  
+
+    await this.propertyRepository.shareProperty({
+      message: input.message,
+      property_id: input.property_id,
+      sender_email: input.sender_email,
+      recipient_email: input.recipient_email,
+      user_id,
+    });
+  
+
+  
+   this.sharedEmailProperty(
+      input.recipient_email,
+      input.sender_email,
+      input.message,
+      {
+        property_images: property.property_images,
+        property_name: property.property_name,
+        street_address: property.street_address,
+        city: property.city,
+        state: property.state,
+        property_price: property.property_price,
+        property_type: property.property_type,
+        postal_code: property.postal_code,
+        property_size: property.property_size,
+        numbers_of_bedroom: property.numbers_of_bedroom,
+        numbers_of_bathroom: property.numbers_of_bathroom,
+      },
+      input.shareable_link
+    );
+  }
+  
+  public sharedEmailProperty(
+    recipient_email: string,
+    sender_email: string,
+    message: string,
+    input: Partial<Properties>,
+    shareable_link?: string
+  ) {
+    return emailTemplates.sharePropertyEmail(
+      recipient_email,
+      sender_email,
+      message || '',
+      shareable_link || '',
+      input
+    );
+  }
+  
+
+  public async viewProperty(property_id: string, user_id: string): Promise<void | boolean> {
+      const checkIfViewsIsRecorded = await this.propertyRepository.findIfUserAlreadyViewProperty(property_id, user_id)
+      if(checkIfViewsIsRecorded) {
+         return false
+      }
+      await this.propertyRepository.viewProperty({property_id, user_id})
+  }
 }

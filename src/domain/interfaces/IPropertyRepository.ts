@@ -1,4 +1,4 @@
-import { Properties } from '@domain/entities/Property'
+import { Properties, shareProperty } from '@domain/entities/Property'
 import { SeekPaginationOption, SeekPaginationResult } from '@shared/types/paginate'
 import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
 
@@ -35,5 +35,13 @@ export interface IPropertyRepository {
   
   getAllUserPropertyCount(user_id: string): Promise<PropertyCount>
 
+  viewProperty(input: Record<string, any>) : Promise<void>
+
+  findIfUserAlreadyViewProperty(property_id: string, user_id: string) :Promise<Record<string, null>>
+
+  shareProperty(input: shareProperty): Promise<void>
+
   propertyApplications(user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> 
+
+  findSharedProperty (property_id: string, user_id: string): Promise<shareProperty>
 }

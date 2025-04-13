@@ -1,6 +1,6 @@
 import { ApiResponse, createResponse } from '@presentation/response/responseType'
 import { PropertyService } from '@application/useCases/Properties/Property'
-import { Properties } from '@domain/entities/Property'
+import { Properties, shareProperty } from '@domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
 import { PropertyFilters } from '@shared/types/repoTypes'
 
@@ -111,4 +111,22 @@ export class PropertyController {
         application
        )
   }
+
+  async propertyShare(input: shareProperty, user_id: string): Promise<ApiResponse<any>> {
+      await this.propertyService.shareProperty(input, user_id)
+      return createResponse(
+        StatusCodes.OK, 
+        'Share property was successful',
+        {}
+      )
+  }
+
+  async viewProperty(property_id: string, user_id: string): Promise<ApiResponse<any>> {
+    await this.propertyService.viewProperty(property_id, user_id)
+    return createResponse(
+      StatusCodes.OK, 
+      'Success',
+      {}
+    )
+}
 }

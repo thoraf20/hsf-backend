@@ -1,6 +1,6 @@
 import db from '@infrastructure/database/knex'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
-import { Properties } from '@domain/entities/Property'
+import { Properties, shareProperty } from '@domain/entities/Property'
 import {
   PropertyCount,
   PropertyFilters,
@@ -187,46 +187,58 @@ export class PropertyRepository implements IPropertyRepository {
 
   async findPropertyById(id: string, user_id?: string, userRole?: string): Promise<any> {
     const propertyQuery = db('properties')
-      .select([
-        'properties.*',
-        'offer_letter.offer_letter_status',
-        'offer_letter.offer_letter_requested',
-        'offer_letter.offer_letter_approved',
-        'offer_letter.offer_letter_downloaded',
-        'offer_letter.closed as offer_letter_closed',
-        'property_closing.closing_status',
+    .select([
+      'properties.*',
+      'offer_letter.offer_letter_status',
+      'offer_letter.offer_letter_requested',
+      'offer_letter.offer_letter_approved',
+      'offer_letter.offer_letter_downloaded',
+      'offer_letter.closed as offer_letter_closed',
+      'property_closing.closing_status',
   
-        db.raw(`
-          COALESCE(
-            json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
-            '[]'
-          ) AS payments
-        `),
+      db.raw(`
+        COALESCE(
+          json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL), 
+          '[]'
+        ) AS payments
+      `),
   
-
-        db.raw(`
-          COALESCE(
-            json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
-            '[]'
-          ) AS escrow_info
-        `)
-      ])
-      .where('properties.id', id)
-      .andWhere('properties.is_live', true)
-      .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
-      .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
-      .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin({ escrow: 'escrow_information' }, 'escrow.property_id', 'properties.id')
-      .groupBy(
-        'properties.id',
-        'offer_letter.offer_letter_status',
-        'offer_letter.offer_letter_requested',
-        'offer_letter.offer_letter_approved',
-        'offer_letter.offer_letter_downloaded',
-        'offer_letter.closed',
-        'property_closing.closing_status'
-      )
-      .orderBy('properties.id', 'desc');
+      db.raw(`
+        COALESCE(
+          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL), 
+          '[]'
+        ) AS escrow_info
+      `),
+  
+      db.raw(`DATE_PART('day', NOW() - properties.created_at) AS days_posted`),
+      db.raw(`(
+        SELECT COUNT(*) 
+        FROM views 
+        WHERE views.property_id = properties.id
+      ) AS view_count`),
+      db.raw(`(
+        SELECT COUNT(*) 
+        FROM shares 
+        WHERE shares.property_id = properties.id
+      ) AS share_count`)
+    ])
+    .where('properties.id', id)
+    .andWhere('properties.is_live', true)
+    .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
+    .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
+    .leftJoin('payments', 'payments.property_id', 'properties.id')
+    .leftJoin({ escrow: 'escrow_information' }, 'escrow.property_id', 'properties.id')
+    .groupBy(
+      'properties.id',
+      'offer_letter.offer_letter_status',
+      'offer_letter.offer_letter_requested',
+      'offer_letter.offer_letter_approved',
+      'offer_letter.offer_letter_downloaded',
+      'offer_letter.closed',
+      'property_closing.closing_status'
+    )
+    .orderBy('properties.id', 'desc');
+  
   
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
       propertyQuery.select(db.raw('NULL AS documents'));
@@ -653,6 +665,20 @@ const [{ count: total }] = await baseQuery.clone().clearOrder().count('* as coun
     });
   }
     
+  public async shareProperty(input: shareProperty): Promise<void> {
+      await db('shares').insert(input).returning('*')
+  }
+
+  public async viewProperty(input: Record<string, any>): Promise<void> {
+    console.log(input)
+      await db('views').insert(input).returning('*')
+  }
   
-  
+  public async findIfUserAlreadyViewProperty(property_id: string, user_id: string): Promise<Record<string, null>> {
+        return await db('views').where('property_id', property_id).andWhere('user_id', user_id).first()
+  }
+
+  public async findSharedProperty(property_id: string, user_id: string): Promise<shareProperty> {
+      return await db('shares').select('*').where('property_id', property_id).andWhere('user_id', user_id).first()
+  }
 } 
