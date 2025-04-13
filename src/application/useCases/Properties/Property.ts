@@ -29,8 +29,8 @@ export class PropertyService {
   }
 
   public async getAllProperties(filter?: PropertyFilters,  userRole?: string, userId?: string): Promise<SeekPaginationResult<Properties>> {
-    const fetchProperties = await this.propertyRepository.getAllProperties(filter, userRole, userId)
-    return fetchProperties
+      const fetchProperties = await this.propertyRepository.getAllProperties(filter, userRole, userId)    
+      return fetchProperties
   }
 
   public async getPropertyById(id: string, user_id: string,  userRole: string ): Promise<Properties> {

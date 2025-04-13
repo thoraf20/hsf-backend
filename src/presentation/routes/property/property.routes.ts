@@ -38,7 +38,7 @@ propertyRoute.get(
   optionalAuth,
   asyncMiddleware(async (req, res) => {
     const {query, user} = req as any
-    console.log(user)
+    console.log(query)
     const properties = await controller.getAllProperties(query, user.role, user.id) 
     res.status(properties.statusCode).json(properties)
   }),

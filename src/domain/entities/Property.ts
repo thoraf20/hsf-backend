@@ -10,7 +10,7 @@ export class Properties {
   numbers_of_bedroom: number
   numbers_of_bathroom: number
   property_condition: string
-  financial_types: any
+  financial_types: string[]
   property_feature: string[]
   property_images: string[]
   documents: any

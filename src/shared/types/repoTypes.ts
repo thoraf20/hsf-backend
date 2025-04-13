@@ -1,7 +1,7 @@
 import { SeekPaginationOption } from "./paginate";
 
 export enum SortDateBy {
-    RecentlyAdded = "rescently_added",
+    RecentlyAdded = "recently_added",
     LastUpdated = "last_updated",
     Earliest = "earliest",
 } 
@@ -12,17 +12,26 @@ export enum propertyStatusFilter {
     Available = "available"
 }
 
+export enum SearchType {
+    INCLUSIVE = 'inclusive',
+    EXCLUSIVE = 'exclusive'
+}
+
 export type PropertyFilters = Partial<{
-    sortBy: SortDateBy
+    search_type: SearchType;
+    sort_by: SortDateBy
+    search: string;
+    location: string;
     property_type: string;
-    property_status: propertyStatusFilter;
-    bedrooms: string;
-    bathrooms: string;
-    financing_type: string; // "Outright,mortgage,installment" or "select_all"
-    property_features: string; // "ac,cctv"
+    bedrooms: string; // convert to numerical
+    bathrooms: string; // convert to numerical
+    
     min_price: string;
     max_price: string;
-    city: string;
+    financing_type: string; // "Outright,mortgage,installment" or "select_all"
+    
+    property_status: propertyStatusFilter;
+    property_features: string; // "ac,cctv"
 } & SeekPaginationOption  >;
 
 export type PropertyCount = { total: number, pending: number, totalViewed: number};
