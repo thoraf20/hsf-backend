@@ -755,7 +755,6 @@ export class PropertyRepository implements IPropertyRepository {
   }
 
   public async updateEscrowMeeting (property_id: string, user_id: string): Promise<void |   any> {
-    console.log(property_id, user_id)
    return await db('escrow_status').update({is_escrow_set: true, escrow_status: 'meeting set'}).where('property_id', property_id).andWhere('user_id', user_id)
   }
 }
