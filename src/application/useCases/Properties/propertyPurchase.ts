@@ -1,6 +1,7 @@
 import { OfferLetterStatusEnum } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
-import { OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+import { EscrowInformationStatus, OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { IPaymentRespository } from '@interfaces/IpaymentRepository'
@@ -31,10 +32,11 @@ export class PropertyPurchase {
     this.preQualifieRepository = preQualifieRepository
     this.paymentRepository = paymentRepository
   }
+  
 
   public async checkoutDuplicate(property_id: string, user_id: string) {
     console.log(property_id)
-    await this.utilsProperty.findIfPropertyExist(property_id)
+    await this.utilsProperty.getIfPropertyExist(property_id)
     const [alreadyApprovedAndSoldOut, PendingRequest] = await Promise.all([
       this.purchaseRepository.checkIfRequestForOfferLetterIsApproved(
         property_id,
@@ -44,6 +46,7 @@ export class PropertyPurchase {
         user_id,
       ),
     ])
+
 
     if (alreadyApprovedAndSoldOut) {
       throw new ApplicationCustomError(
@@ -60,6 +63,15 @@ export class PropertyPurchase {
     }
   }
 
+    public async checkIfPropertyClosingExist (property_id: string, user_id: string) {
+        const Closing = await this.purchaseRepository.checkIfPropertyClosingIsRequested(property_id, user_id)
+        if(Closing) {
+          throw new ApplicationCustomError(StatusCodes.CONFLICT, `Your property purchase is still ${Closing.closing_status}`)
+        }
+        
+    } 
+
+
   public async purchaseProperty(input: any, user_id: string) {
     if (input.request_type === 'Offer Letter') {
       return await this.requestForOfferLetter(
@@ -69,6 +81,10 @@ export class PropertyPurchase {
       )
     }
     if (input.request_type === 'Property Closing') {
+      await this.checkIfPropertyClosingExist(input.property_id, user_id)
+      await this.escrowStatus({
+          property_id: input.property_id,
+      }, user_id)
       return await this.requestForPropertyClosing(input.property_id, user_id)
     }
 
@@ -114,13 +130,17 @@ export class PropertyPurchase {
     property_id: string,
     user_id: string,
   ): Promise<PropertyClosing> {
-    await this.utilsProperty.findIfPropertyExist(property_id)
+    await this.utilsProperty.getIfPropertyExist(property_id)
     const Closing = await this.purchaseRepository.requestForPropertyClosing(
       property_id,
       user_id,
     )
     return Closing
   }
+
+  public async escrowStatus(input: EscrowInformationStatus, user_id: string) : Promise<EscrowInformationStatus> {
+      return await this.purchaseRepository.createEscrowStatus({...input, user_id})
+  } 
   public async requestForOfferLetter(
     property_id: string,
     purchase_type: OfferLetterStatusEnum,
@@ -166,6 +186,9 @@ export class PropertyPurchase {
 
   public async getOfferLetterById(offer_letter_id: string): Promise<OfferLetter> {
       const offer_letter = await this.purchaseRepository.getOfferLetterById(offer_letter_id)
+      if(!offer_letter) {
+        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `offer letter is not found`)
+      }
       return offer_letter
   }
 

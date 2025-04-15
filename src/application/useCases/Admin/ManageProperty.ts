@@ -26,7 +26,7 @@ export class manageProperty {
         property_id: string,
         status: propertyApprovalStatus,
       ): Promise<{ is_live: boolean }> {
-        await this.utilsProperty.findIfPropertyExist(property_id)
+        await this.utilsProperty.getIfPropertyExist(property_id)
         const newPropertyStatus = status === propertyApprovalStatus.APPROVED
         let is_live : boolean
         if(status === propertyApprovalStatus.APPROVED) {
@@ -56,12 +56,19 @@ export class manageProperty {
 
     
       public async setEscrowAttendance(input: EscrowInformation, agent_id: string): Promise<EscrowInformation> {
-         const escrow = await this.purchaseRepository.setEscrowAttendance({...input, agent_id})
+       const [ escrow ] = await Promise.all([
+          this.purchaseRepository.setEscrowAttendance({...input, agent_id}),
+          this.propertyRepository.updateEscrowMeeting(input.property_id, input.property_buyer_id)
+        ])
+         
          return escrow
       } 
     
       public async confirmPropertyPurchase(input: Record<string, any>): Promise<void>{
-           await this.purchaseRepository.confirmPropertyPurchase(input.property_id, input.user_id)
+           await Promise.all([
+            this.utilsProperty.getIfPropertyExist(input.property_id),
+            this.purchaseRepository.confirmPropertyPurchase(input.property_id, input.user_id),
+           ])
       }
     
       public async approvePrequalifyRequest(input: Record<string, any>): Promise<void>  {

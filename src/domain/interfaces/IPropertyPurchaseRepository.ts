@@ -1,4 +1,4 @@
-import { OfferLetter, PropertyClosing } from "@entities/PropertyPurchase";
+import { EscrowInformationStatus, OfferLetter, PropertyClosing } from "@entities/PropertyPurchase";
 import { EscrowInformation } from "@entities/PurchasePayment";
 
 export interface IPurchaseProperty {
@@ -14,5 +14,7 @@ export interface IPurchaseProperty {
     setEscrowAttendance(input: EscrowInformation): Promise<EscrowInformation>
     confirmPropertyPurchase(input: Record<string, any>, user_id: string): Promise<void>
     approvePrequalifyRequest(input: Record<string, any>, user_id: string): Promise<void> 
+    createEscrowStatus(input: EscrowInformationStatus): Promise<EscrowInformationStatus>
+    checkIfPropertyClosingIsRequested(property_id: string, user_id:  string): Promise<PropertyClosing>
     
 }

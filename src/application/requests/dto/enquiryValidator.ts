@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 export const enquirySchema = z.object({
   property_id: z.string().nonempty(),
-  name: z.string().min(2).max(100),
+  full_name: z.string().min(2).max(100),
   phone: z.string().min(10).max(15),
   email: z.string().email(),
   message: z.string().nonempty(),

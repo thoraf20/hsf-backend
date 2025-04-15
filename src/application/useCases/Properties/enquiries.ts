@@ -31,7 +31,6 @@ export class EnquiryService {
     let enquiry = new Enquires({
       property_id: property.id,
       developer_id: developer_id,
-      customer_id: user_id,
     })
     let enquiryMsg = new EnquiryMsg({
       owner_id: user_id,

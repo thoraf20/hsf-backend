@@ -71,7 +71,7 @@ export class PropertyService {
     input: Partial<Properties>,
   ): Promise<Properties> {
     await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
-    const existingProperty = await this.utilsProperty.findIfPropertyExist(id)
+    const existingProperty = await this.utilsProperty.getIfPropertyExist(id)
 
     if (input.property_name) {
       await this.utilsProperty.findIfPropertyExistByName(input.property_name)
@@ -98,7 +98,7 @@ export class PropertyService {
 
   public async deleteProperty(id: string, user_id: string): Promise<boolean> {
     await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
-    await this.utilsProperty.findIfPropertyExist(id)
+    await this.utilsProperty.getIfPropertyExist(id)
     return this.propertyRepository.deleteProperty(id)
   }
 
@@ -107,7 +107,7 @@ export class PropertyService {
     user_id: string,
   ): Promise<boolean> {
     await this.utilsProperty.findIfPropertyBelongsToUser(id, user_id)
-    await this.utilsProperty.findIfPropertyExist(id)
+    await this.utilsProperty.getIfPropertyExist(id)
     return await this.propertyRepository.softDeleteProperty(id)
   }
 
@@ -116,7 +116,7 @@ export class PropertyService {
     user_id: string,
   ): Promise<Record<string, any>> {
     await Promise.all([
-      this.utilsProperty.findIfPropertyExist(property_id),
+      this.utilsProperty.getIfPropertyExist(property_id),
       this.utilsProperty.findIfWatchListIsAdded(property_id, user_id),
     ])
     return await this.propertyRepository.addWatchlistProperty(
@@ -136,7 +136,7 @@ export class PropertyService {
     property_id: string,
     user_id: string,
   ): Promise<boolean> {
-    await this.utilsProperty.findIfPropertyExist(property_id)
+    await this.utilsProperty.getIfPropertyExist(property_id)
     return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
 
@@ -151,14 +151,15 @@ export class PropertyService {
     input: shareProperty,
     user_id: string,
   ): Promise<void> {
-    const property = await this.utilsProperty.findIfPropertyExist(
-      input.property_id,
+    const property = await this.utilsProperty.getIfPropertyExist(
+      input.property_id
     )
+
     const shared = await this.propertyRepository.findSharedProperty(
       input.property_id,
       user_id,
     )
-
+   
     if (shared) {
       this.sharedEmailProperty(
         input.recipient_email,
@@ -228,6 +229,8 @@ export class PropertyService {
     property_id: string,
     user_id: string,
   ): Promise<void | boolean> {
+
+    await this.utilsProperty.getIfPropertyExist(property_id)
     const checkIfViewsIsRecorded =
       await this.propertyRepository.findIfUserAlreadyViewProperty(
         property_id,

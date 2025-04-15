@@ -39,3 +39,21 @@ export class PropertyClosing {
         });
     }
 } 
+
+export class EscrowInformationStatus {
+    escrow_status_id?: string;
+    escrow_status?: string;
+    is_escrow_set?: boolean;
+    property_id?: string
+    escrow_information_id?: string;
+    user_id?: string
+    created_at?: Date;
+    updated_at?: Date;
+    constructor(data: Partial<EscrowInformationStatus>) {
+        Object.assign(this, {
+            created_at: new Date(),
+            updated_at: new Date(),
+            ...data
+        });
+    }
+}

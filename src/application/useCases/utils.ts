@@ -43,6 +43,7 @@ export class PropertyBaseUtils {
     this.propertyRepository = propertyRepository
   }
 
+
   public async findIfPropertyExist(id: string, user_id?: string, userRole?: string ): Promise<Properties> {
     const properties = (await this.propertyRepository.findPropertyById(
       id,
@@ -58,6 +59,16 @@ export class PropertyBaseUtils {
     return properties
   }
 
+  public async  getIfPropertyExist (property_id: string) {
+    const properties = await this.propertyRepository.getPropertyById(property_id)
+    if (!properties) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Property does not exist',
+      )
+    }
+    return properties
+  }
   public async findIfPropertyExistByName(
     property_name: string,
   ): Promise<Properties> {
@@ -182,7 +193,7 @@ export class EnquiryBaseUtils {
       )
     }
 
-    if (enquiry.customer_id != user_id && enquiry.developer_id != user_id)
+    if (enquiry.messages[0].email != user_id && enquiry.developer_id != user_id)
       return enquiry
   }
 

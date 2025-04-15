@@ -13,4 +13,7 @@ export class paymentRepository implements  IPaymentRespository{
         const [invoice] = await db('invoices').insert(data).returning('*');
         return new invoices(invoice) ? invoice : null;
     }
+
+
+
 } 

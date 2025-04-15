@@ -60,4 +60,5 @@ export class EscrowInformation{
     }
 }
 
+
 export type paymentPurchase = PaymentEntity & invoices 

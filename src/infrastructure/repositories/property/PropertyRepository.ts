@@ -223,49 +223,45 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed as offer_letter_closed',
         'property_closing.closing_status',
-
+  
         db.raw(`
-        COALESCE(
-          json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL),
-          '[]'
-        ) AS payments
-      `),
+          COALESCE(
+            json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL),
+            '[]'
+          ) AS payments
+        `),
+  
         db.raw('row_to_json(property_closing) as property_closing'),
+  
         db.raw(`
-        COALESCE(
-          json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
-          '[]'
-        ) AS escrow_info
-      `),
-
+          COALESCE(
+            json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
+            '[]'
+          ) AS escrow_info
+        `),
+  
         db.raw(
           `DATE_PART('day', NOW() - properties.created_at) AS days_posted`,
         ),
+  
         db.raw(`(
-        SELECT COUNT(*)
-        FROM views
-        WHERE views.property_id = properties.id
-      ) AS view_count`),
+          SELECT COUNT(*)
+          FROM views
+          WHERE views.property_id = properties.id
+        ) AS view_count`),
+  
         db.raw(`(
-        SELECT COUNT(*)
-        FROM shares
-        WHERE shares.property_id = properties.id
-      ) AS share_count`),
+          SELECT COUNT(*)
+          FROM shares
+          WHERE shares.property_id = properties.id
+        ) AS share_count`)
       ])
       .where('properties.id', id)
       .andWhere('properties.is_live', true)
       .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
-      .leftJoin(
-        'property_closing',
-        'property_closing.property_id',
-        'properties.id',
-      )
+      .leftJoin('property_closing', 'property_closing.property_id', 'properties.id')
       .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin(
-        { escrow: 'escrow_information' },
-        'escrow.property_id',
-        'properties.id',
-      )
+      .leftJoin({ escrow: 'escrow_information' }, 'escrow.property_id', 'properties.id')
       .groupBy(
         'properties.id',
         'offer_letter.purchase_type',
@@ -276,20 +272,19 @@ export class PropertyRepository implements IPropertyRepository {
         'offer_letter.offer_letter_doc',
         'offer_letter.offer_letter_downloaded',
         'offer_letter.closed',
-        'property_closing.closing_status',
+        'property_closing.closing_status'
       )
-      .orderBy('properties.id', 'desc')
-
+      .orderBy('properties.id', 'desc');
+  
+    // Hide sensitive documents if user isn't privileged
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-      propertyQuery.select(db.raw('NULL AS documents'))
+      propertyQuery.select(db.raw('NULL AS documents'));
     }
+  
+    // Query for user eligibility
     const eligibilityQuery = user_id
       ? db('prequalify_status')
-          .leftJoin(
-            'eligibility',
-            'prequalify_status.status_id',
-            'eligibility.prequalify_status_id',
-          )
+          .leftJoin('eligibility', 'prequalify_status.status_id', 'eligibility.prequalify_status_id')
           .leftJoin('properties', 'eligibility.property_id', 'properties.id')
           .where('properties.id', id)
           .andWhere('eligibility.user_id', user_id)
@@ -297,24 +292,32 @@ export class PropertyRepository implements IPropertyRepository {
             'prequalify_status.is_prequalify_requested',
             'eligibility.is_eligible',
             'eligibility.eligiblity_status',
-            'eligibility.eligibility_id',
+            'eligibility.eligibility_id'
           )
           .first()
-      : null
-
-    const [propertyData, eligibilityData] = await Promise.all([
+      : null;
+  
+    const escrowStatusQuery = db('escrow_status')
+      .select('escrow_status', 'is_escrow_set', 'escrow_status_id')
+      .where('property_id', id)
+      .first();
+  
+    const [propertyData, eligibilityData, escrowStatus] = await Promise.all([
       propertyQuery.first(),
       eligibilityQuery,
-    ])
-
+      escrowStatusQuery,
+    ]);
+  
     return {
       ...propertyData,
       is_prequalify_requested: eligibilityData?.is_prequalify_requested ?? null,
       is_eligible: eligibilityData?.is_eligible ?? null,
       eligiblity_status: eligibilityData?.eligiblity_status ?? null,
       eligibility_id: eligibilityData?.eligibility_id ?? null,
-    }
+      escrow_status: escrowStatus ?? null,
+    };
   }
+  
 
   async updateProperty(
     id: string,
@@ -745,5 +748,14 @@ export class PropertyRepository implements IPropertyRepository {
       .where('property_id', property_id)
       .andWhere('user_id', user_id)
       .first()
+  }
+
+  async getPropertyById(property_id: string): Promise<Properties> {
+         return await db('properties').select('*').where('id', property_id).first()
+  }
+
+  public async updateEscrowMeeting (property_id: string, user_id: string): Promise<void |   any> {
+    console.log(property_id, user_id)
+   return await db('escrow_status').update({is_escrow_set: true, escrow_status: 'meeting set'}).where('property_id', property_id).andWhere('user_id', user_id)
   }
 }

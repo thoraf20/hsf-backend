@@ -83,7 +83,7 @@ export class ManageDeveloper {
         break
       case 'enquiry':
         const enquiry = await this.enquiryRepository.getEnquiry(lead_id)
-        user_id = enquiry.customer_id
+        // user_id = enquiry.customer_id
         property_id = enquiry.property_id;
         leadInfo = enquiry;
         break

@@ -44,4 +44,8 @@ export interface IPropertyRepository {
   propertyApplications(user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> 
 
   findSharedProperty (property_id: string, user_id: string): Promise<shareProperty>
+
+  getPropertyById (property_id: string): Promise<Properties>
+
+ updateEscrowMeeting (property_id: string, user_id: string): Promise<void>
 }
