@@ -20,143 +20,177 @@ export class preQualifyService {
   }
 
   public async checkExistingPreQualify(loaner_id: string) {
-    return await this.prequalify.findIfApplyForLoanAlready(loaner_id);
+    return await this.prequalify.findIfApplyForLoanAlready(loaner_id)
   }
-  
-  public async addEligiblity(input: Eligibility, user_id: string): Promise<Eligibility> {
-    const [existingPrequalifyStatusApplied, requestedForEligiblity] = await Promise.all([
-      this.checkExistingPreQualify(user_id),
-      this.prequalify.findEligiblity(input.property_id, user_id),
-    ]);
-  
+
+  public async addEligiblity(
+    input: Eligibility,
+    user_id: string,
+  ): Promise<Eligibility> {
+    const [existingPrequalifyStatusApplied, requestedForEligiblity] =
+      await Promise.all([
+        this.checkExistingPreQualify(user_id),
+        this.prequalify.findEligiblity(input.property_id, user_id),
+      ])
+
     if (requestedForEligiblity) {
-      throw new ApplicationCustomError(StatusCodes.CONFLICT, 'Checking if you are eligible to purchase this property');
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Checking if you are eligible to purchase this property',
+      )
     }
-  
+
     if (existingPrequalifyStatusApplied) {
       return await this.prequalify.addEligibility({
         prequalify_status_id: existingPrequalifyStatusApplied.status_id,
         user_id,
         property_id: input.property_id,
-        financial_eligibility_type: input.type
-      });
+        financial_eligibility_type: input.type,
+      })
     }
-  
   }
-  
-  public async storePreQualify(input: Partial<preQualify>, user_id: string): Promise<void | Eligibility> {
 
+  public async storePreQualify(
+    input: Partial<preQualify>,
+    user_id: string,
+  ): Promise<void | Eligibility> {
     if (input.property_id) {
-      return await this.addEligiblity(input, user_id);
+      return await this.addEligiblity(input, user_id)
     }
-  
+
     const [duplicateEmail, checkDuplicatePhone] = await Promise.all([
       this.prequalify.checkDuplicateEmail(input.email),
       this.prequalify.checkDuplicatePhone(input.phone_number),
-    ]);
-  
+    ])
+
     if (duplicateEmail) {
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Email is already on our record`);
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Email is already on our record`,
+      )
     }
-  
+
     if (checkDuplicatePhone) {
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Phone is already on our record`);
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Phone is already on our record`,
+      )
     }
-  
-    const checkSucessfullPreQualifier = await this.prequalify.getSuccessfulPrequalifyRequestByUser(user_id);
+
+    const checkSucessfullPreQualifier =
+      await this.prequalify.getSuccessfulPrequalifyRequestByUser(user_id)
     if (checkSucessfullPreQualifier) {
-      throw new ApplicationCustomError(StatusCodes.CONFLICT, 'You have already applied for prequalification. Check if you are eligible to purchase a property.');
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'You have already applied for prequalification. Check if you are eligible to purchase a property.',
+      )
     }
-  
-    const otp = generateRandomSixNumbers();
-    const key = `${CacheEnumKeys.preQualify_VERIFICATION}-${otp}`;
-    const details = { otp, type: OtpEnum.PREQUALIFY, user_id, input };
-    await this.cache.setKey(key, details, 600); 
-    emailTemplates.PrequalifierEmailVerification(input.email, `${input.first_name} ${input.last_name}`, otp.toString())
-    
-  
-  }
-  
 
-  public async verification(input: Record<string, any>): Promise<Eligibility & preQualify> {
-    const key = `${CacheEnumKeys.preQualify_VERIFICATION}-${input.otp}`;
-  const details = await this.cache.getKey(key);
-
-  if (!details) {
-    throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, 'Invalid or expired OTP.');
+    const otp = generateRandomSixNumbers()
+    const key = `${CacheEnumKeys.preQualify_VERIFICATION}-${otp}`
+    const details = { otp, type: OtpEnum.PREQUALIFY, user_id, input }
+    await this.cache.setKey(key, details, 600)
+    emailTemplates.PrequalifierEmailVerification(
+      input.email,
+      `${input.first_name} ${input.last_name}`,
+      otp.toString(),
+    )
   }
 
-  const { user_id, type, input: cachedInput } = typeof details === 'string' ? JSON.parse(details) : details;
+  public async verification(
+    input: Record<string, any>,
+  ): Promise<Eligibility & preQualify> {
+    const key = `${CacheEnumKeys.preQualify_VERIFICATION}-${input.otp}`
+    const details = await this.cache.getKey(key)
 
-  if (type !== OtpEnum.PREQUALIFY) {
-    await this.cache.deleteKey(key);
-    throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, 'Invalid OTP type.');
-  }
+    if (!details) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid or expired OTP.',
+      )
+    }
 
-  const personalInfo = await this.prequalify.storePersonaInfo({
-    first_name: cachedInput.first_name,
-    last_name: cachedInput.last_name,
-    email: cachedInput.email,
-    phone_number: cachedInput.phone_number,
-    gender: cachedInput.gender,
-    marital_status: cachedInput.marital_status,
-    house_number: cachedInput.house_number,
-    street_address: cachedInput.street_address,
-    state: cachedInput.state,
-    city: cachedInput.city,
-    loaner_id: user_id,
-  });
+    const {
+      user_id,
+      type,
+      input: cachedInput,
+    } = typeof details === 'string' ? JSON.parse(details) : details
 
-  let paymentCalculator: any;
-  if (cachedInput.type === PreQualifierEnum.INSTALLMENT) {
-    paymentCalculator = await this.prequalify.storePaymentCalculator({
-      house_price: cachedInput.house_price,
-      interest_rate: cachedInput.interest_rate,
-      terms: cachedInput.terms,
-      repayment_type: cachedInput.repayment_type,
-      est_money_payment: cachedInput.est_money_payment,
-      personal_information_id: personalInfo.personal_information_id,
-    });
-  }
+    if (type !== OtpEnum.PREQUALIFY) {
+      await this.cache.deleteKey(key)
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid OTP type.',
+      )
+    }
 
-  const [employmentInfo, preQualifyStatus] = await Promise.all([
-    this.prequalify.storeEmploymentInfo({
-      employment_confirmation: cachedInput.employment_confirmation,
-      employment_position: cachedInput.employment_position,
-      employer_address: cachedInput.employer_address,
-      employer_state: cachedInput.employer_state,
-      net_income: cachedInput.net_income,
-      industry_type: cachedInput.industry_type,
-      employment_type: cachedInput.employment_type,
-      existing_loan_obligation: cachedInput.existing_loan_obligation,
-      rsa: cachedInput.industry_type,
-      years_to_retirement: cachedInput.years_to_retirement,
-      personal_information_id: personalInfo.personal_information_id,
-      preferred_developer: cachedInput.preferred_developer,
-      property_name: cachedInput.property_name,
-      preferred_lender: cachedInput.preferred_lender,
-    }),
-    this.prequalify.storePreQualifyStatus({
-      personal_information_id: personalInfo.personal_information_id,
+    const personalInfo = await this.prequalify.storePersonaInfo({
+      first_name: cachedInput.first_name,
+      last_name: cachedInput.last_name,
+      email: cachedInput.email,
+      phone_number: cachedInput.phone_number,
+      gender: cachedInput.gender,
+      marital_status: cachedInput.marital_status,
+      house_number: cachedInput.house_number,
+      street_address: cachedInput.street_address,
+      state: cachedInput.state,
+      city: cachedInput.city,
       loaner_id: user_id,
-      reference_id: generateReferenceNumber(),
-      is_prequalify_requested: true,
-      verification: true
-    }),
-  ]);
-  emailTemplates.PrequalifierSuccess(cachedInput.email, `${cachedInput.first_name} ${cachedInput.last_name}`, preQualifyStatus.reference_id)
-  await this.cache.deleteKey(key);
- 
-  return {
-    ...personalInfo,
-    ...employmentInfo,
-    ...preQualifyStatus,
-    ...paymentCalculator,
-  };
+    })
 
+    let paymentCalculator: any
+    if (cachedInput.type === PreQualifierEnum.INSTALLMENT) {
+      paymentCalculator = await this.prequalify.storePaymentCalculator({
+        house_price: cachedInput.house_price,
+        interest_rate: cachedInput.interest_rate,
+        terms: cachedInput.terms,
+        repayment_type: cachedInput.repayment_type,
+        est_money_payment: cachedInput.est_money_payment,
+        personal_information_id: personalInfo.personal_information_id,
+      })
+    }
+
+    const [employmentInfo, preQualifyStatus] = await Promise.all([
+      this.prequalify.storeEmploymentInfo({
+        employment_confirmation: cachedInput.employment_confirmation,
+        employment_position: cachedInput.employment_position,
+        employer_address: cachedInput.employer_address,
+        employer_state: cachedInput.employer_state,
+        net_income: cachedInput.net_income,
+        industry_type: cachedInput.industry_type,
+        employment_type: cachedInput.employment_type,
+        existing_loan_obligation: cachedInput.existing_loan_obligation,
+        rsa: cachedInput.industry_type,
+        years_to_retirement: cachedInput.years_to_retirement,
+        personal_information_id: personalInfo.personal_information_id,
+        preferred_developer: cachedInput.preferred_developer,
+        property_name: cachedInput.property_name,
+        preferred_lender: cachedInput.preferred_lender,
+      }),
+      this.prequalify.storePreQualifyStatus({
+        personal_information_id: personalInfo.personal_information_id,
+        loaner_id: user_id,
+        reference_id: generateReferenceNumber(),
+        is_prequalify_requested: true,
+        verification: true,
+      }),
+    ])
+    emailTemplates.PrequalifierSuccess(
+      cachedInput.email,
+      `${cachedInput.first_name} ${cachedInput.last_name}`,
+      preQualifyStatus.reference_id,
+    )
+    await this.cache.deleteKey(key)
+
+    return {
+      ...personalInfo,
+      ...employmentInfo,
+      ...preQualifyStatus,
+      ...paymentCalculator,
+    }
   }
 
-  public async getPrequalifierByUserId(user_id: string): Promise<preQualify[]> {
+  public async getPrequalifierByUserId(user_id: string): Promise<preQualify> {
     return await this.prequalify.getPreQualifyRequestByUser(user_id)
   }
 

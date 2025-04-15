@@ -12,8 +12,8 @@ import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
 
-// import { Admin } from '../application/useCases/Admin'
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
+// import { Admin } from '@use-cases/Admin/Admin'
 const app: Application = express()
 
 app.use(cors())
@@ -39,27 +39,25 @@ app.use(speedLimiter)
 app.use(morgan('combined'))
 app.use(morgan('dev'))
 
-// const userRepo = new UserRepository
+// const userRepo = new UserRepository()
 // const create_admin = new Admin(userRepo)
 
 // create_admin.createAdmin({
-//   first_name: "Super",
-//   last_name: "Admin",
-//   email : process.env.ADMIN_EMAIL,
+//   first_name: 'Super',
+//   last_name: 'Admin',
+//   email: process.env.ADMIN_EMAIL,
 //   phone_number: process.env.ADMIN_PHONE,
 //   password: process.env.ADMIN_PASS,
-//   is_email_verified:  true
+//   is_email_verified: true,
 // })
 
 app.get('/', (req: Request, res: Response) => {
-  res
-    .status(200)
-    .json({
-      message: '✅ Sever is ready and ok',
-      ip: `Application was connected  from ${req.ip}`,
-      url: req.originalUrl,
-      statusCode: StatusCodes.OK,
-    })
+  res.status(200).json({
+    message: '✅ Sever is ready and ok',
+    ip: `Application was connected  from ${req.ip}`,
+    url: req.originalUrl,
+    statusCode: StatusCodes.OK,
+  })
 })
 app.use('/api/v1', IndexRouters)
 app.all('*', (req: Request, res: Response) => {

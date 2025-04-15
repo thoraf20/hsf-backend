@@ -105,15 +105,13 @@ export const UpdatePropertyStatus = z.object({
   status: z.nativeEnum(propertyApprovalStatus),
 })
 
-
 export const sharePropertySchema = z.object({
-  message:  z.string().optional(),
+  message: z.string().optional(),
   property_id: z.string().nonempty(),
-  sender_email: z.string().email("Invalid email format"),
-  recipient_email: z.string().email("Invalid email format"),
-  shareable_link: z.string()
+  sender_email: z.string().email('Invalid email format'),
+  recipient_email: z.string().email('Invalid email format'),
 })
 
 export const viewPropertySchema = z.object({
-  property_id: z.string().nonempty()
+  property_id: z.string().nonempty(),
 })

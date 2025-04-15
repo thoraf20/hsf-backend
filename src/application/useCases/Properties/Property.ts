@@ -28,13 +28,29 @@ export class PropertyService {
     return { ...address }
   }
 
-  public async getAllProperties(filter?: PropertyFilters,  userRole?: string, userId?: string): Promise<SeekPaginationResult<Properties>> {
-      const fetchProperties = await this.propertyRepository.getAllProperties(filter, userRole, userId)    
-      return fetchProperties
+  public async getAllProperties(
+    filter?: PropertyFilters,
+    userRole?: string,
+    userId?: string,
+  ): Promise<SeekPaginationResult<Properties>> {
+    const fetchProperties = await this.propertyRepository.getAllProperties(
+      filter,
+      userRole,
+      userId,
+    )
+    return fetchProperties
   }
 
-  public async getPropertyById(id: string, user_id: string,  userRole: string ): Promise<Properties> {
-    const fetchProperty = await this.utilsProperty.findIfPropertyExist(id, user_id, userRole)
+  public async getPropertyById(
+    id: string,
+    user_id: string,
+    userRole: string,
+  ): Promise<Properties> {
+    const fetchProperty = await this.utilsProperty.findIfPropertyExist(
+      id,
+      user_id,
+      userRole,
+    )
     return fetchProperty
   }
 
@@ -124,13 +140,24 @@ export class PropertyService {
     return await this.propertyRepository.removeWatchList(property_id, user_id)
   }
 
-  public async propertyApplication (user_id: string, filters: PropertyFilters): Promise<SeekPaginationResult<any>> {
-      return await this.propertyRepository.propertyApplications(user_id, filters)
-  }  
+  public async propertyApplication(
+    user_id: string,
+    filters: PropertyFilters,
+  ): Promise<SeekPaginationResult<any>> {
+    return await this.propertyRepository.propertyApplications(user_id, filters)
+  }
 
-  public async shareProperty(input: shareProperty, user_id: string): Promise<void> {
-    const property = await this.utilsProperty.findIfPropertyExist(input.property_id);
-    const shared = await this.propertyRepository.findSharedProperty(input.property_id, user_id);
+  public async shareProperty(
+    input: shareProperty,
+    user_id: string,
+  ): Promise<void> {
+    const property = await this.utilsProperty.findIfPropertyExist(
+      input.property_id,
+    )
+    const shared = await this.propertyRepository.findSharedProperty(
+      input.property_id,
+      user_id,
+    )
 
     if (shared) {
       this.sharedEmailProperty(
@@ -150,11 +177,9 @@ export class PropertyService {
           numbers_of_bedroom: property.numbers_of_bedroom,
           numbers_of_bathroom: property.numbers_of_bathroom,
         },
-        input.shareable_link
-      );
-      return; 
+      )
+      return
     }
-  
 
     await this.propertyRepository.shareProperty({
       message: input.message,
@@ -162,11 +187,9 @@ export class PropertyService {
       sender_email: input.sender_email,
       recipient_email: input.recipient_email,
       user_id,
-    });
-  
+    })
 
-  
-   this.sharedEmailProperty(
+    this.sharedEmailProperty(
       input.recipient_email,
       input.sender_email,
       input.message,
@@ -183,32 +206,36 @@ export class PropertyService {
         numbers_of_bedroom: property.numbers_of_bedroom,
         numbers_of_bathroom: property.numbers_of_bathroom,
       },
-      input.shareable_link
-    );
+    )
   }
-  
+
   public sharedEmailProperty(
     recipient_email: string,
     sender_email: string,
     message: string,
     input: Partial<Properties>,
-    shareable_link?: string
   ) {
     return emailTemplates.sharePropertyEmail(
       recipient_email,
       sender_email,
       message || '',
-      shareable_link || '',
-      input
-    );
+      '',
+      input,
+    )
   }
-  
 
-  public async viewProperty(property_id: string, user_id: string): Promise<void | boolean> {
-      const checkIfViewsIsRecorded = await this.propertyRepository.findIfUserAlreadyViewProperty(property_id, user_id)
-      if(checkIfViewsIsRecorded) {
-         return false
-      }
-      await this.propertyRepository.viewProperty({property_id, user_id})
+  public async viewProperty(
+    property_id: string,
+    user_id: string,
+  ): Promise<void | boolean> {
+    const checkIfViewsIsRecorded =
+      await this.propertyRepository.findIfUserAlreadyViewProperty(
+        property_id,
+        user_id,
+      )
+    if (checkIfViewsIsRecorded) {
+      return false
+    }
+    await this.propertyRepository.viewProperty({ property_id, user_id })
   }
 }
