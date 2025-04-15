@@ -73,6 +73,7 @@ export class PropertyPurchase {
 
 
   public async purchaseProperty(input: any, user_id: string) {
+    await this.utilsProperty.getIfPropertyExist(input.property_id)
     if (input.request_type === 'Offer Letter') {
       return await this.requestForOfferLetter(
         input.property_id,
@@ -130,13 +131,14 @@ export class PropertyPurchase {
     property_id: string,
     user_id: string,
   ): Promise<PropertyClosing> {
-    await this.utilsProperty.getIfPropertyExist(property_id)
     const Closing = await this.purchaseRepository.requestForPropertyClosing(
       property_id,
       user_id,
     )
     return Closing
   }
+
+ 
 
   public async escrowStatus(input: EscrowInformationStatus, user_id: string) : Promise<EscrowInformationStatus> {
       return await this.purchaseRepository.createEscrowStatus({...input, user_id})

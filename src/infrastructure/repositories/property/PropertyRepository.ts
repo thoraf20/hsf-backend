@@ -17,6 +17,7 @@ import {
 import { Knex } from 'knex'
 import omit from '@shared/utils/omit'
 
+
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
     const [newProperty] = await db('properties').insert(property).returning('*')
@@ -750,6 +751,9 @@ export class PropertyRepository implements IPropertyRepository {
       .first()
   }
 
+  async UpdatepropertyClosingRequest (input: Record<string, any>): Promise<void> {
+       await db('property_closing').update({closing_status: "Approved"}).where('property_id', input.property_id).andWhere('user_id', input.user_id)
+  }
   async getPropertyById(property_id: string): Promise<Properties> {
          return await db('properties').select('*').where('id', property_id).first()
   }

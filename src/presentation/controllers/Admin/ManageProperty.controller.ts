@@ -67,5 +67,13 @@ export class MangagePropertyController {
        offer_letter
      )
    }
+   async approvePropertyClosing (input: Record<string, any>): Promise<ApiResponse<any>> {
+    await this.managePropertyService.approvePropertyClosing(input)
+     return createResponse(
+       StatusCodes.OK,
+       'Success',
+       {}
+     )
+   }
 }
  

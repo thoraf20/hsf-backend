@@ -115,3 +115,7 @@ export const sharePropertySchema = z.object({
 export const viewPropertySchema = z.object({
   property_id: z.string().nonempty(),
 })
+export const approvePropertyClosingSchema = z.object({
+  property_id: z.string().nonempty(),
+  user_id: z.string().nonempty(),
+})

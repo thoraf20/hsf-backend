@@ -8,7 +8,7 @@ import {
   Role,
   validateRequest,
 } from '../index.t'
-import { UpdatePropertyStatus } from '@application/requests/dto/propertyValidator'
+import { approvePropertyClosingSchema, UpdatePropertyStatus } from '@application/requests/dto/propertyValidator'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import { approvePrequalifyRequestSchema, changeOfferLetterStatusSchema, confirmPropertyPurchase, SetEscrowMeetingSchema } from '@validators/adminValidator'
 
@@ -62,6 +62,16 @@ managePropertyRoute.put(
   asyncMiddleware(async (req, res) => {
     const {body} = req
     const property = await controller.changeOfferLetterStatus(body)
+    res.status(property.statusCode).json(property)
+  }),
+)
+managePropertyRoute.put(
+  '/property/closing',
+  requireRoles([Role.ADMIN, Role.SUPER_ADMIN]),
+  validateRequest(approvePropertyClosingSchema),
+  asyncMiddleware(async (req, res) => {
+    const {body} = req
+    const property = await controller.approvePropertyClosing(body)
     res.status(property.statusCode).json(property)
   }),
 )

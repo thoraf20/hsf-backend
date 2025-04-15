@@ -30,7 +30,7 @@ export interface IPropertyRepository {
   removeWatchList (property_id: string, user_id: string): Promise<boolean>
   
   ApproveOrDisApproveProperties(property_id: string, input: Record<string, any>): Promise<void | number>
-  
+
   getAllPropertiesTobeApproved(filters?: Record<string, any>): Promise<SeekPaginationResult<Properties>>
   
   getAllUserPropertyCount(user_id: string): Promise<PropertyCount>
@@ -48,4 +48,6 @@ export interface IPropertyRepository {
   getPropertyById (property_id: string): Promise<Properties>
 
  updateEscrowMeeting (property_id: string, user_id: string): Promise<void>
+
+ UpdatepropertyClosingRequest (input: Record<string, any>): Promise<void>
 }

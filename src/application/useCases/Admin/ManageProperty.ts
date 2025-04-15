@@ -70,6 +70,13 @@ export class manageProperty {
             this.purchaseRepository.confirmPropertyPurchase(input.property_id, input.user_id),
            ])
       }
+
+      public async approvePropertyClosing (input: Record<string, any>): Promise<void> {
+        await Promise.all([
+          this.utilsProperty.getIfPropertyExist(input.property_id),
+          this.propertyRepository.UpdatepropertyClosingRequest(input),
+         ])
+      }
     
       public async approvePrequalifyRequest(input: Record<string, any>): Promise<void>  {
          await this.purchaseRepository.approvePrequalifyRequest(input, input.user_id)
