@@ -1,6 +1,10 @@
 import { OfferLetterStatusEnum } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
-import { EscrowInformationStatus, OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+import {
+  EscrowInformationStatus,
+  OfferLetter,
+  PropertyClosing,
+} from '@entities/PropertyPurchase'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
@@ -9,7 +13,8 @@ import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { generateTransactionId } from '@shared/utils/helpers'
+import { ApplicationError } from '@shared/utils/error'
+// import { generateTransactionId } from '@shared/utils/helpers'
 import { PropertyBaseUtils } from '@use-cases/utils'
 import { StatusCodes } from 'http-status-codes'
 
@@ -17,7 +22,7 @@ export class PropertyPurchase {
   private propertyRepository: IPropertyRepository
   private purchaseRepository: IPurchaseProperty
   private readonly preQualifieRepository: IPreQualify
-  private readonly paymentRepository: IPaymentRespository
+  // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
   // private payment = new PaymentService(new PaymentProcessorFactory())
   constructor(
@@ -30,9 +35,8 @@ export class PropertyPurchase {
     this.purchaseRepository = purchaseRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
     this.preQualifieRepository = preQualifieRepository
-    this.paymentRepository = paymentRepository
+    // this.paymentRepository = paymentRepository
   }
-  
 
   public async checkoutDuplicate(property_id: string, user_id: string) {
     console.log(property_id)
@@ -46,7 +50,6 @@ export class PropertyPurchase {
         user_id,
       ),
     ])
-
 
     if (alreadyApprovedAndSoldOut) {
       throw new ApplicationCustomError(
@@ -63,14 +66,22 @@ export class PropertyPurchase {
     }
   }
 
-    public async checkIfPropertyClosingExist (property_id: string, user_id: string) {
-        const Closing = await this.purchaseRepository.checkIfPropertyClosingIsRequested(property_id, user_id)
-        if(Closing) {
-          throw new ApplicationCustomError(StatusCodes.CONFLICT, `Your property purchase is still ${Closing.closing_status}`)
-        }
-        
-    } 
-
+  public async checkIfPropertyClosingExist(
+    property_id: string,
+    user_id: string,
+  ) {
+    const Closing =
+      await this.purchaseRepository.checkIfPropertyClosingIsRequested(
+        property_id,
+        user_id,
+      )
+    if (Closing) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `Your property purchase is still ${Closing.closing_status}`,
+      )
+    }
+  }
 
   public async purchaseProperty(input: any, user_id: string) {
     await this.utilsProperty.getIfPropertyExist(input.property_id)
@@ -83,48 +94,45 @@ export class PropertyPurchase {
     }
     if (input.request_type === 'Property Closing') {
       await this.checkIfPropertyClosingExist(input.property_id, user_id)
-      await this.escrowStatus({
-          property_id: input.property_id,
-      }, user_id)
       return await this.requestForPropertyClosing(input.property_id, user_id)
     }
 
+    console.log({ input, user_id })
     if (input.request_type === 'Escrow Attendance') {
-      await this.confirnEscrowAttendanc(input.property_id, user_id)
-      const property = await this.propertyRepository.findPropertyById(
-        input.property_id,
-      )
-      const down_payment = (60 % Number(property.property_price)) * 100
-      const outstanding_amount =
-        Number(property.property_price) - Number(down_payment)
-      const payment = await this.paymentRepository.createPayment({
-        payment_type: input.purchase_type,
-        payment_method: 'Bank',
-        payment_status: 'Pending',
-        amount: property.property_price,
-        transaction_id: generateTransactionId(),
-        total_closing: property.property_price,
-        down_payment: down_payment.toString(),
-        outstanding_amount: outstanding_amount.toString(),
-      })
-      const invoices = await this.paymentRepository.createInvoice({
-        payment_id: payment.payment_id,
-      })
-  
-      return { payment, invoices }
-    }
+      if (!input.escrow_id) {
+        throw new ApplicationError(
+          'escrow_status_id is required',
+          StatusCodes.BAD_REQUEST,
+        )
+      }
 
-   
+      await this.confirnEscrowAttendanc(input.escrow_id)
+      // const property = await this.propertyRepository.findPropertyById(
+      //   input.property_id,
+      // )
+      // const down_payment = (60 % Number(property.property_price)) * 100
+      // const outstanding_amount =
+      //   Number(property.property_price) - Number(down_payment)
+      // const payment = await this.paymentRepository.createPayment({
+      //   payment_type: input.purchase_type,
+      //   payment_method: 'Bank',
+      //   payment_status: 'Pending',
+      //   amount: property.property_price,
+      //   transaction_id: generateTransactionId(),
+      //   total_closing: property.property_price,
+      //   down_payment: down_payment.toString(),
+      //   outstanding_amount: outstanding_amount.toString(),
+      // })
+      // const invoices = await this.paymentRepository.createInvoice({
+      //   payment_id: payment.payment_id,
+      // })
+
+      // return { payment, invoices }
+    }
   }
 
-  public async confirnEscrowAttendanc(
-    property_id: string,
-    user_id: string,
-  ): Promise<any> {
-    await this.purchaseRepository.confirmPropertyEscrowMeeting(
-      property_id,
-      user_id,
-    )
+  public async confirnEscrowAttendanc(escrowId: string): Promise<any> {
+    await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId)
   }
 
   public async requestForPropertyClosing(
@@ -138,11 +146,15 @@ export class PropertyPurchase {
     return Closing
   }
 
- 
-
-  public async escrowStatus(input: EscrowInformationStatus, user_id: string) : Promise<EscrowInformationStatus> {
-      return await this.purchaseRepository.createEscrowStatus({...input, user_id})
-  } 
+  public async escrowStatus(
+    input: EscrowInformationStatus,
+    user_id: string,
+  ): Promise<EscrowInformationStatus> {
+    return await this.purchaseRepository.createEscrowStatus({
+      ...input,
+      user_id,
+    })
+  }
   public async requestForOfferLetter(
     property_id: string,
     purchase_type: OfferLetterStatusEnum,
@@ -162,11 +174,10 @@ export class PropertyPurchase {
         )
       }
 
-      const eligible =
-        await this.preQualifieRepository.IsHomeBuyerEligible(
-          property_id,
-          user_id,
-        )
+      const eligible = await this.preQualifieRepository.IsHomeBuyerEligible(
+        property_id,
+        user_id,
+      )
       if (!eligible) {
         throw new ApplicationCustomError(
           StatusCodes.BAD_REQUEST,
@@ -185,23 +196,31 @@ export class PropertyPurchase {
     return offer_letter
   }
 
-
-  public async getOfferLetterById(offer_letter_id: string): Promise<OfferLetter> {
-      const offer_letter = await this.purchaseRepository.getOfferLetterById(offer_letter_id)
-      if(!offer_letter) {
-        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `offer letter is not found`)
-      }
-      return offer_letter
+  public async getOfferLetterById(
+    offer_letter_id: string,
+  ): Promise<OfferLetter> {
+    const offer_letter =
+      await this.purchaseRepository.getOfferLetterById(offer_letter_id)
+    if (!offer_letter) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `offer letter is not found`,
+      )
+    }
+    return offer_letter
   }
 
-  public async getAllOfferLetterByUserId(user_id: string): Promise<OfferLetter[]>  {
-      const offerLetter = await this.purchaseRepository.getAllOfferLetterByUserId(user_id)
-      return offerLetter
+  public async getAllOfferLetterByUserId(
+    user_id: string,
+  ): Promise<OfferLetter[]> {
+    const offerLetter =
+      await this.purchaseRepository.getAllOfferLetterByUserId(user_id)
+    return offerLetter
   }
 
-  public async getAllOfferLetter(user_id: string): Promise<OfferLetter[]>  {
-      const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
-      return offerLetter
+  public async getAllOfferLetter(user_id: string): Promise<OfferLetter[]> {
+    const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
+    return offerLetter
   }
 
   // public async makePayment(
@@ -284,6 +303,4 @@ export class PropertyPurchase {
   //     transactionData = paymentProviders
   //   }
   // }
-
-
 }

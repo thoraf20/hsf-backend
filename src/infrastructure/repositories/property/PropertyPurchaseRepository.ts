@@ -1,4 +1,9 @@
-import { EscrowInformationStatus, OfferLetter, PropertyClosing } from '@entities/PropertyPurchase'
+import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
+import {
+  EscrowInformationStatus,
+  OfferLetter,
+  PropertyClosing,
+} from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
@@ -19,10 +24,16 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .returning('*')
     return new PropertyClosing(propertyClosing) ? propertyClosing : null
   }
-async checkIfPropertyClosingIsRequested(property_id: string, user_id: string): Promise<PropertyClosing> {
-     return await db('property_closing').select("*").where('property_id', property_id).andWhere('user_id', user_id).first()
-}
-
+  async checkIfPropertyClosingIsRequested(
+    property_id: string,
+    user_id: string,
+  ): Promise<PropertyClosing> {
+    return await db('property_closing')
+      .select('*')
+      .where('property_id', property_id)
+      .andWhere('user_id', user_id)
+      .first()
+  }
 
   public async checkIfRequestForOfferLetter(
     property_id: string,
@@ -66,14 +77,12 @@ async checkIfPropertyClosingIsRequested(property_id: string, user_id: string): P
       .where('offer_letter_id', offer_letter_id)
     return await this.getOfferLetterById(offer_letter_id)
   }
-  public async confirmPropertyEscrowMeeting(
-    escrow_id: string,
-    user_id: string,
-  ): Promise<void> {
-    await db('escrow_information')
+  public async confirmPropertyEscrowMeeting(escrowId: string): Promise<void> {
+    const result = await db('escrow_information')
       .update({ confirm_attendance: true })
-      .where('escrow_id', escrow_id)
-      .andWhere('user_id', user_id)
+      .where('escrow_id', escrowId)
+      .returning('*')
+    console.log({ result })
   }
 
   public async confirmPropertyPurchase(
@@ -136,8 +145,12 @@ async checkIfPropertyClosingIsRequested(property_id: string, user_id: string): P
       .where('loaner_id', user_id)
   }
 
-  public async createEscrowStatus (input: EscrowInformationStatus): Promise<EscrowInformationStatus> {
-    const [escrowStatus] = await db('escrow_status').insert(input).returning("*")
+  public async createEscrowStatus(
+    input: EscrowInformationStatus,
+  ): Promise<EscrowInformationStatus> {
+    const [escrowStatus] = await db('escrow_status')
+      .insert({ ...input, status: EscrowMeetingStatus.AWAITING })
+      .returning('*')
     return new EscrowInformationStatus(escrowStatus) ? escrowStatus : null
-}
+  }
 }
