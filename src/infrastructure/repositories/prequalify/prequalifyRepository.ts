@@ -130,6 +130,7 @@ export class PrequalifyRepository implements IPreQualify {
       )
       .where('ps.loaner_id', user_id)
       .select('ps.*', 'ppi.*', 'info.*')
+      .first()
     return prequalify
   }
 

@@ -38,7 +38,7 @@ preQualifierRoutes.post(
   }),
 )
 preQualifierRoutes.get(
-  '/home-buyer/fetct-all',
+  '/home-buyer/single/fetch',
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
     const { user } = req
