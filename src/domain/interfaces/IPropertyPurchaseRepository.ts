@@ -6,7 +6,7 @@ import {
 import { EscrowInformation } from '@entities/PurchasePayment'
 
 export interface IPurchaseProperty {
-  requestForOfferLetter(input: OfferLetter): Promise<OfferLetter>
+  requestForOfferLetter(input: OfferLetter): Promise<OfferLetter | any>
   checkIfRequestForOfferLetter(
     property_id: string,
     user_id: string,

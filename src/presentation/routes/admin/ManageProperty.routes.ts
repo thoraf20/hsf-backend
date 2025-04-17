@@ -19,10 +19,12 @@ import {
   confirmPropertyPurchase,
   SetEscrowMeetingSchema,
 } from '@validators/adminValidator'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 
 const managePropertyRoute: Router = Router()
+const application = new ApplicationRepository()
 const purchasrRepo = new PropertyPurchaseRepository()
-const service = new manageProperty(new PropertyRepository(), purchasrRepo)
+const service = new manageProperty(new PropertyRepository(), purchasrRepo, application)
 const controller = new MangagePropertyController(service, purchasrRepo)
 
 managePropertyRoute.get(

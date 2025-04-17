@@ -11,12 +11,18 @@ import {
   generateReferenceNumber,
 } from '@shared/utils/helpers'
 import { StatusCodes } from 'http-status-codes'
+import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
+  private applicationRepository: IApplicationRespository
   private readonly cache = new RedisClient()
-  constructor(prequalify: IPreQualify) {
+  constructor(
+    prequalify: IPreQualify,
+    applicationRepository: IApplicationRespository,
+  ) {
     this.prequalify = prequalify
+    this.applicationRepository = applicationRepository
   }
 
   public async checkExistingPreQualify(loaner_id: string) {
@@ -41,12 +47,34 @@ export class preQualifyService {
     }
 
     if (existingPrequalifyStatusApplied) {
-      return await this.prequalify.addEligibility({
+      const eligibility = await this.prequalify.addEligibility({
         prequalify_status_id: existingPrequalifyStatusApplied.status_id,
         user_id,
         property_id: input.property_id,
         financial_eligibility_type: input.type,
       })
+      const application =
+        await this.applicationRepository.getIfApplicationIsRecorded(
+          input.property_id,
+          user_id,
+        )
+      if (application) {
+        await this.applicationRepository.updateApplication({
+          property_id: input.property_id,
+          eligibility_id: eligibility.eligibility_id,
+          user_id,
+          prequalifier_id: eligibility.prequalify_status_id,
+        })
+      } else {
+        await this.applicationRepository.createApplication({
+          application_type: input.type,
+          property_id: input.property_id,
+          eligibility_id: eligibility.eligibility_id,
+          user_id,
+          prequalifier_id: eligibility.prequalify_status_id,
+        })
+      }
+      return eligibility
     }
   }
 
@@ -54,7 +82,6 @@ export class preQualifyService {
     input: Partial<preQualify>,
     user_id: string,
   ): Promise<void | Eligibility> {
-    console.log({ input })
     const [duplicateEmail, checkDuplicatePhone] = await Promise.all([
       this.prequalify.checkDuplicateEmail(input.email),
       this.prequalify.checkDuplicatePhone(input.phone_number),

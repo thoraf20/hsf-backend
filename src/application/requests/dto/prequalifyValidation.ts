@@ -14,13 +14,13 @@ export const preQualifySchema = z.object({
     .string()
     .min(10, 'Phone number must be at least 10 digits')
     .optional(),
-  gender: z.enum(['Male', 'Female', 'Other']),
+  gender: z.enum(['Male', 'Female', 'Other']).optional(),
   marital_status: z.string().min(1, 'Marital status is required').optional(),
   house_number: z.string().optional(),
   street_address: z.string().min(1, 'Street address is required').optional(),
   state: z.string().min(1, 'State is required').optional(),
   city: z.string().min(1, 'City is required').optional(),
-  employment_confirmation: z.enum(['Yes', 'No']),
+  employment_confirmation: z.enum(['Yes', 'No']).optional(),
   employment_position: z
     .string()
     .min(1, 'Employment position is required')

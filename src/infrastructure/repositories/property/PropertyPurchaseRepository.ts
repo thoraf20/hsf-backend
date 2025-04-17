@@ -10,7 +10,7 @@ import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
   private readonly tablename: string = 'offer_letter'
-  public async requestForOfferLetter(input: OfferLetter): Promise<OfferLetter> {
+  public async requestForOfferLetter(input: OfferLetter): Promise<OfferLetter | any> {
     const [offerLetter] = await db(this.tablename).insert(input).returning('*')
     return new OfferLetter(offerLetter) ? offerLetter : null
   }
