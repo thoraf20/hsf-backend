@@ -15,10 +15,12 @@ import {
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
 import { optionalAuth } from '@middleware/authMiddleware'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 // import { limiter } from '@middleware/security'
 
 const propertyRoute: Router = Router()
-const service = new PropertyService(new PropertyRepository())
+const application = new ApplicationRepository()
+const service = new PropertyService(new PropertyRepository(), application)
 const controller = new PropertyController(service)
 
 propertyRoute.post(
@@ -151,6 +153,12 @@ propertyRoute.post(
 propertyRoute.get('/application/all', authenticate, requireRoles(Role.HOME_BUYER), asyncMiddleware(async (req, res) => {
         const {user, query} = req 
         const property = await controller.propertyApplication(user.id, query)
+        res.status(property.statusCode).json(property)
+
+}))
+propertyRoute.get('/application/:application_id', authenticate, requireRoles(Role.HOME_BUYER), asyncMiddleware(async (req, res) => {
+        const {params} = req 
+        const property = await controller.getApplicationById(params.application_id)
         res.status(property.statusCode).json(property)
 
 }))

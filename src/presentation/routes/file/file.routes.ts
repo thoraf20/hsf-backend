@@ -3,7 +3,7 @@ import { FileController } from '@controllers/File.controller'
 import { FileRepository } from '@infrastructure/services/file.system.service'
 // import { S3Service } from '@infrastructure/services/s3.service'
 import { File, fileMiddleware, FileSize } from '@providers/fileupload'
-import { Router } from 'express'
+import { Router, Request, Response } from 'express'
 import path from 'path'
 import { ulid } from 'ulid'
 
@@ -29,7 +29,7 @@ router
       { fieldName: 'file' },
       { limits: { fieldSize: FileSize.MB * 10 } },
     ),
-    async (req, res) => {
+    async (req: Request | any, res: Response) => {
       const multerFile = req.file!
       const ext = multerFile.mimetype.split('/').pop()!
 

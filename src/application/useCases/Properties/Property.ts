@@ -4,11 +4,16 @@ import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import emailTemplates from '@infrastructure/email/template/constant'
+import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { ApplicationCustomError } from '@middleware/errors/customError'
+import { StatusCodes } from 'http-status-codes'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
-  constructor(propertyRepository: IPropertyRepository) {
+  private readonly applicationRepository: IApplicationRespository
+  constructor(propertyRepository: IPropertyRepository, applicationRepository: IApplicationRespository) {
     this.propertyRepository = propertyRepository
+    this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
@@ -144,7 +149,7 @@ export class PropertyService {
     user_id: string,
     filters: PropertyFilters,
   ): Promise<SeekPaginationResult<any>> {
-    return await this.propertyRepository.propertyApplications(user_id, filters)
+    return await this.applicationRepository.getAllUserApplication(user_id, filters)
   }
 
   public async shareProperty(
@@ -240,5 +245,15 @@ export class PropertyService {
       return false
     }
     await this.propertyRepository.viewProperty({ property_id, user_id })
+  }
+
+
+  async getApplicationById (application_id: string): Promise<Properties> {
+    const application = await this.applicationRepository.getApplicationById(application_id)
+    if(!application) {
+        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `Unable to get application`)
+    }
+
+    return await this.applicationRepository.getApplicationById(application_id)
   }
 }

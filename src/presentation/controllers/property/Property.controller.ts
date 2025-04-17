@@ -129,4 +129,12 @@ export class PropertyController {
       {}
     )
 }
+  async getApplicationById (application_id: string) {
+    const application = await this.propertyService.getApplicationById(application_id)
+    return createResponse(
+      StatusCodes.OK, 
+      'Success',
+      application
+    )
+}
 }

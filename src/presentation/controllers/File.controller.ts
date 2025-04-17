@@ -11,3 +11,4 @@ export class FileController {
     return createResponse(StatusCodes.OK, 'Success', uploadedFile[0])
   }
 }
+ 
