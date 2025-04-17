@@ -4,7 +4,6 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.alterTable('application', (table) => {
     table
     .uuid('offer_letter_id') 
-    .notNullable()
     .references('offer_letter_id')
     .inTable('offer_letter')
     .onDelete('CASCADE')
