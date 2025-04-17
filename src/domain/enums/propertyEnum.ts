@@ -18,6 +18,7 @@ export enum PurchaseEnum {
 export enum OfferLetterStatusEnum {
   OUTRIGHT = 'Outright Purchase',
   INSTALLMENT = 'Installment',
+  Mortgage = 'Mortgage',
 }
 export enum PropertyFeatureEnum {
   AIRCONDITION = 'Air Condition',

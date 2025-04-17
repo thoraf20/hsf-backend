@@ -173,17 +173,6 @@ export class PropertyPurchase {
           'Send request to be prequalified',
         )
       }
-
-      const eligible = await this.preQualifieRepository.IsHomeBuyerEligible(
-        property_id,
-        user_id,
-      )
-      if (!eligible) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'You are not eligible to purchase this property',
-        )
-      }
     }
 
     const offer_letter = await this.purchaseRepository.requestForOfferLetter({

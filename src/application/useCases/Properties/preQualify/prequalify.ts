@@ -54,10 +54,7 @@ export class preQualifyService {
     input: Partial<preQualify>,
     user_id: string,
   ): Promise<void | Eligibility> {
-    if (input.property_id) {
-      return await this.addEligiblity(input, user_id)
-    }
-
+    console.log({ input })
     const [duplicateEmail, checkDuplicatePhone] = await Promise.all([
       this.prequalify.checkDuplicateEmail(input.email),
       this.prequalify.checkDuplicatePhone(input.phone_number),
