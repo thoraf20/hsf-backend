@@ -21,3 +21,19 @@ export class Transaction {
     }
 
 }
+
+export class MortagePayment {
+    mortage_payment_status_id?: boolean;
+    pay_due_deligence?: boolean;
+    pay_brokage_fee?: boolean;
+    pay_management_fee?: boolean;
+    created_at?: Date
+    updated_at?: Date
+    constructor(data: Partial<Transaction>) {
+        Object.assign(this, {
+            created_at: new Date(),
+            updated_at: new Date(),
+            ...data
+        });
+    }
+}

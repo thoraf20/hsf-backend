@@ -1,4 +1,4 @@
-import { OfferLetterStatusEnum } from '@domain/enums/propertyEnum'
+import { OfferLetterStatusEnum, PurchaseEnum } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
 import {
   EscrowInformationStatus,
@@ -90,28 +90,29 @@ export class PropertyPurchase {
 
   public async purchaseProperty(input: any, user_id: string) {
     await this.utilsProperty.getIfPropertyExist(input.property_id)
-    if (input.request_type === 'Offer Letter') {
+    if (input.request_type === PurchaseEnum.OfferLetter) {
       return await this.requestForOfferLetter(
         input.property_id,
         input.purchase_type,
         user_id,
       )
     }
-    if (input.request_type === 'Property Closing') {
+    if (input.request_type === PurchaseEnum.PROPERTY_CLOSSING) {
       await this.checkIfPropertyClosingExist(input.property_id, user_id)
       return await this.requestForPropertyClosing(input.property_id, user_id)
     }
 
-    if (input.request_type === 'Escrow Attendance') {
+    if (input.request_type === PurchaseEnum.ESCROW_ATTENDANCE) {
       if (!input.escrow_id) {
         throw new ApplicationError(
           'escrow_status_id is required',
           StatusCodes.BAD_REQUEST,
         )
       }
-
       await this.confirnEscrowAttendanc(input.escrow_id)
     }
+
+
   }
 
   public async confirnEscrowAttendanc(escrowId: string): Promise<any> {
@@ -151,7 +152,7 @@ export class PropertyPurchase {
   ): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
 
-    const isOutright = purchase_type === OfferLetterStatusEnum.OUTRIGHT
+    const isOutright = purchase_type === OfferLetterStatusEnum.OUTRIGHT || OfferLetterStatusEnum.Mortgage
 
     if (!isOutright) {
       const preQualified =
@@ -159,7 +160,7 @@ export class PropertyPurchase {
       if (!preQualified) {
         throw new ApplicationCustomError(
           StatusCodes.NOT_FOUND,
-          'Send request to be prequalified',
+          preQualified ? 'You have to be prequalify before proceeding' : 'Your prequalification is still under review',
         )
       }
     }
@@ -218,84 +219,5 @@ export class PropertyPurchase {
     return offerLetter
   }
 
-  // public async makePayment(
-  //   input: Payment,
-  //   paymentType: string,
-  //   user_id: string,
-  //   property_id: string,
-  // ): Promise<void> {
-  //   let transactionData = {}
-
-  //   const transaction_id = generateTransactionId()
-  //   if (paymentType === 'Pay-Due-Deligence') {
-  //     const payment = await this.paymentRepository.createPayment({
-  //       payment_type: paymentType,
-  //       property_id,
-  //       user_id,
-  //       payment_status: 'pending',
-  //       amount: input.amount,
-  //       transaction_id,
-  //     })
-  //     this.paymentRepository.createInvoice({
-  //       tax: 0,
-  //       payment_id: payment.payment_id,
-  //     })
-  //     const paymentProviders = await this.payment.makePayment(
-  //       input.paymentMethod,
-  //       {
-  //         amount: input.amount,
-  //         email: input.email,
-  //         metaData: { paymentType, user_id, transaction_id },
-  //       },
-  //     )
-
-  //     transactionData = paymentProviders
-  //   } else if (paymentType === 'Brokrage Plan') {
-  //     const payment = await this.paymentRepository.createPayment({
-  //       payment_type: paymentType,
-  //       property_id,
-  //       user_id,
-  //       payment_status: 'pending',
-  //       amount: input.amount,
-  //       transaction_id,
-  //     })
-  //     this.paymentRepository.createInvoice({
-  //       tax: 0,
-  //       payment_id: payment.payment_id,
-  //     })
-  //     const paymentProviders = await this.payment.makePayment(
-  //       input.paymentMethod,
-  //       {
-  //         amount: input.amount,
-  //         email: input.email,
-  //         metaData: { paymentType, user_id, transaction_id },
-  //       },
-  //     )
-
-  //     transactionData = paymentProviders
-  //   } else if (paymentType === 'Management Fee') {
-  //     const payment = await this.paymentRepository.createPayment({
-  //       payment_type: paymentType,
-  //       property_id,
-  //       user_id,
-  //       payment_status: 'pending',
-  //       amount: input.amount,
-  //       transaction_id,
-  //     })
-  //     this.paymentRepository.createInvoice({
-  //       tax: 0,
-  //       payment_id: payment.payment_id,
-  //     })
-  //     const paymentProviders = await this.payment.makePayment(
-  //       input.paymentMethod,
-  //       {
-  //         amount: input.amount,
-  //         email: input.email,
-  //         metaData: { paymentType, user_id, transaction_id },
-  //       },
-  //     )
-
-  //     transactionData = paymentProviders
-  //   }
-  // }
+  
 }

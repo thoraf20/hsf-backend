@@ -5,3 +5,10 @@ export enum PaymentEnum {
       PAYSTACK = 'PAYSTACK',
       FLUTTERWARE = 'FLUTTERWARE'
 }
+
+
+export enum PaymentType {
+      DUE_DELIGENT = "PAYMENT_FOR_DUE_DELIGENT",
+      BROKER_FEE = "PAYMENT_FOR_BROKER_FEE",
+      MANAGEMENT_FEE = "PAYMENT_FOR_DUE_DELIGENT",
+}

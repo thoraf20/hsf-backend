@@ -13,6 +13,10 @@ export enum PurchaseEnum {
   OfferLetter = 'Offer Letter',
   PROPERTY_CLOSSING = 'Property Closing',
   ESCROW_ATTENDANCE = 'Escrow Attendance',
+  DUE_DELIGENT = "PAYMENT_FOR_DUE_DELIGENT",
+  BROKER_FEE = "PAYMENT_FOR_BROKER_FEE",
+  MANAGEMENT_FEE = "PAYMENT_FOR_DUE_DELIGENT",
+  ACCEPT_DIP = "Accept Dip"
 }
 
 export enum OfferLetterStatusEnum {
