@@ -12,17 +12,20 @@ import {
 import { purchasePropertySchema } from '@validators/purchaseValidation'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 import { paymentRepository } from '@repositories/property/purchasePayment'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 const propertyPurchaseRoutes = Router()
 
 const propertyRepository = new PropertyRepository()
 const propertyPurchaseRepository = new PropertyPurchaseRepository()
 const preQualifieRepository = new PrequalifyRepository()
 const payment = new paymentRepository()
+const application = new ApplicationRepository()
 const propertyPurchaseService = new PropertyPurchase(
   propertyPurchaseRepository,
   propertyRepository,
   preQualifieRepository,
   payment,
+  application
 )
 const purchasePropertyController = new PurchasePropertyController(
   propertyPurchaseService,

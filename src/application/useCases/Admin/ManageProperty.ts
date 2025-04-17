@@ -11,17 +11,22 @@ import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { EscrowInformation } from '@entities/PurchasePayment'
+import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 
 export class manageProperty {
   private readonly propertyRepository: IPropertyRepository
   private readonly purchaseRepository: IPurchaseProperty
   private readonly utilsProperty: PropertyBaseUtils
+  private  applicationRepository: IApplicationRespository
   constructor(
     propertyRepository: IPropertyRepository,
     purchaseRepository: IPurchaseProperty,
+    applicationRepository: IApplicationRespository,
+    
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
+    this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
@@ -69,6 +74,7 @@ export class manageProperty {
         EscrowMeetingStatus.CONFIRMED,
       ),
     ])
+    await this.applicationRepository.updateApplication({property_id: input.property_id, property_closing_id: escrow.escrow_id, user_id: input.property_buyer_id})
 
     return escrow
   }

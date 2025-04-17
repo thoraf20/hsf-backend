@@ -5,6 +5,7 @@ import {
   OfferLetter,
   PropertyClosing,
 } from '@entities/PropertyPurchase'
+import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
@@ -21,6 +22,7 @@ import { StatusCodes } from 'http-status-codes'
 export class PropertyPurchase {
   private propertyRepository: IPropertyRepository
   private purchaseRepository: IPurchaseProperty
+  private  applicationRepository: IApplicationRespository
   private readonly preQualifieRepository: IPreQualify
   // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
@@ -30,11 +32,14 @@ export class PropertyPurchase {
     propertyRepository: IPropertyRepository,
     preQualifieRepository: IPreQualify,
     paymentRepository: IPaymentRespository,
+    applicationRepository: IApplicationRespository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
+    this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
     this.preQualifieRepository = preQualifieRepository
+
     // this.paymentRepository = paymentRepository
   }
 
@@ -107,27 +112,6 @@ export class PropertyPurchase {
       }
 
       await this.confirnEscrowAttendanc(input.escrow_id)
-      // const property = await this.propertyRepository.findPropertyById(
-      //   input.property_id,
-      // )
-      // const down_payment = (60 % Number(property.property_price)) * 100
-      // const outstanding_amount =
-      //   Number(property.property_price) - Number(down_payment)
-      // const payment = await this.paymentRepository.createPayment({
-      //   payment_type: input.purchase_type,
-      //   payment_method: 'Bank',
-      //   payment_status: 'Pending',
-      //   amount: property.property_price,
-      //   transaction_id: generateTransactionId(),
-      //   total_closing: property.property_price,
-      //   down_payment: down_payment.toString(),
-      //   outstanding_amount: outstanding_amount.toString(),
-      // })
-      // const invoices = await this.paymentRepository.createInvoice({
-      //   payment_id: payment.payment_id,
-      // })
-
-      // return { payment, invoices }
     }
   }
 
@@ -143,6 +127,7 @@ export class PropertyPurchase {
       property_id,
       user_id,
     )
+    await this.applicationRepository.updateApplication({property_id, property_closing_id: Closing.property_closing_id, user_id})
     return Closing
   }
 
@@ -150,10 +135,11 @@ export class PropertyPurchase {
     input: EscrowInformationStatus,
     user_id: string,
   ): Promise<EscrowInformationStatus> {
-    return await this.purchaseRepository.createEscrowStatus({
+ const status = await this.purchaseRepository.createEscrowStatus({
       ...input,
       user_id,
     })
+    return status
   }
   public async requestForOfferLetter(
     property_id: string,
@@ -192,7 +178,11 @@ export class PropertyPurchase {
       offer_letter_requested: true,
       purchase_type: purchase_type,
     })
-
+    const application = await this.applicationRepository.getIfApplicationIsRecorded(property_id, user_id)
+    if(application) {
+      await this.applicationRepository.updateApplication({ property_id, offer_letter_id: offer_letter.offer_letter_id, user_id})
+     } 
+     await this.applicationRepository.createApplication({application_type: purchase_type, property_id, offer_letter_id: offer_letter.offer_letter_id, user_id})
     return offer_letter
   }
 

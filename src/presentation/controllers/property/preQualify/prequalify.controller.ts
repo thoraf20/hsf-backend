@@ -12,7 +12,7 @@ export class preQualifyController {
         await this.service.storePreQualify(input, user_id)
         return createResponse(
             StatusCodes.CREATED,
-            `A verification code is been sent to your email, please verify before you continue`,
+            `success`,
             {}
         )
     }

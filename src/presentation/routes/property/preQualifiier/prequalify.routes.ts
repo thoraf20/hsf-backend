@@ -10,10 +10,12 @@ import {
 } from '@presentation/routes/index.t'
 import { preQualifySchema } from '@validators/prequalifyValidation'
 import { verifyOtpSchema } from '@validators/userValidator'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 
 const preQualifierRoutes: Router = Router()
 
-const service = new preQualifyService(new PrequalifyRepository())
+const application = new ApplicationRepository()
+const service = new preQualifyService(new PrequalifyRepository(), application)
 const controller = new preQualifyController(service)
 
 preQualifierRoutes.post(
