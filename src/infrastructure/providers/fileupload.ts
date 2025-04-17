@@ -4,6 +4,14 @@ import { StatusCodes } from 'http-status-codes'
 import multer from 'multer'
 import path from 'path'
 
+export interface File {
+  name: string
+  size: number
+  type: string
+  extension: string
+  content: Buffer
+}
+
 export enum FileSize {
   BYTE = 1,
   KB = 1_024 * BYTE,

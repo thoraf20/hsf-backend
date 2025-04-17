@@ -22,7 +22,7 @@ import { StatusCodes } from 'http-status-codes'
 export class PropertyPurchase {
   private propertyRepository: IPropertyRepository
   private purchaseRepository: IPurchaseProperty
-  private  applicationRepository: IApplicationRespository
+  private applicationRepository: IApplicationRespository
   private readonly preQualifieRepository: IPreQualify
   // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
@@ -102,7 +102,6 @@ export class PropertyPurchase {
       return await this.requestForPropertyClosing(input.property_id, user_id)
     }
 
-    console.log({ input, user_id })
     if (input.request_type === 'Escrow Attendance') {
       if (!input.escrow_id) {
         throw new ApplicationError(
@@ -127,7 +126,11 @@ export class PropertyPurchase {
       property_id,
       user_id,
     )
-    await this.applicationRepository.updateApplication({property_id, property_closing_id: Closing.property_closing_id, user_id})
+    await this.applicationRepository.updateApplication({
+      property_id,
+      property_closing_id: Closing.property_closing_id,
+      user_id,
+    })
     return Closing
   }
 
@@ -135,7 +138,7 @@ export class PropertyPurchase {
     input: EscrowInformationStatus,
     user_id: string,
   ): Promise<EscrowInformationStatus> {
- const status = await this.purchaseRepository.createEscrowStatus({
+    const status = await this.purchaseRepository.createEscrowStatus({
       ...input,
       user_id,
     })
@@ -167,11 +170,24 @@ export class PropertyPurchase {
       offer_letter_requested: true,
       purchase_type: purchase_type,
     })
-    const application = await this.applicationRepository.getIfApplicationIsRecorded(property_id, user_id)
-    if(application) {
-      await this.applicationRepository.updateApplication({ property_id, offer_letter_id: offer_letter.offer_letter_id, user_id})
-     } 
-     await this.applicationRepository.createApplication({application_type: purchase_type, property_id, offer_letter_id: offer_letter.offer_letter_id, user_id})
+    const application =
+      await this.applicationRepository.getIfApplicationIsRecorded(
+        property_id,
+        user_id,
+      )
+    if (application) {
+      await this.applicationRepository.updateApplication({
+        property_id,
+        offer_letter_id: offer_letter.offer_letter_id,
+        user_id,
+      })
+    }
+    await this.applicationRepository.createApplication({
+      application_type: purchase_type,
+      property_id,
+      offer_letter_id: offer_letter.offer_letter_id,
+      user_id,
+    })
     return offer_letter
   }
 

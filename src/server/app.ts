@@ -11,6 +11,7 @@ import IndexRouters from '../presentation/routes/index'
 import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
+import path from 'path'
 
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 // import { Admin } from '@use-cases/Admin/Admin'
@@ -59,6 +60,10 @@ app.get('/', (req: Request, res: Response) => {
     statusCode: StatusCodes.OK,
   })
 })
+
+const uploadDir = path.join(process.cwd(), 'uploads') // Adjust path as needed
+
+app.use('/uploads', express.static(uploadDir))
 app.use('/api/v1', IndexRouters)
 app.all('*', (req: Request, res: Response) => {
   res.status(StatusCodes.NOT_FOUND).json({

@@ -21,6 +21,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
+    "@oslojs/otp": "^1.1.0",
     "@sendgrid/mail": "^8.1.4",
     "@types/hpp": "^0.2.6",
     "@types/multer": "^1.4.12",
@@ -46,6 +47,7 @@
     "new-hrf-api": "file:",
     "pg": "^8.14.1",
     "rate-limit-redis": "^4.2.0",
+    "ulid": "^3.0.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0",

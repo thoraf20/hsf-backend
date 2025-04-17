@@ -7,9 +7,7 @@ import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import emailTemplates from '@infrastructure/email/template/constant'
-import { v4 as uuidv4 } from 'uuid';
-
-
+import { v4 as uuidv4 } from 'uuid'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -18,14 +16,13 @@ export class UserService {
     this.userRepository = userRepository
   }
 
-  public async getUserProfile (user: string) : Promise<User> {
-      const users = await this.userRepository.findById(user)
-      delete users.password
-      return users
+  public async getUserProfile(user: string): Promise<User> {
+    const users = await this.userRepository.findById(user)
+    delete users.password
+    return users
   }
 
   public async update(input: User, id: string): Promise<void> {
-
     const user = await this.userRepository.findById(id)
     const [existedEmail, existedPhone] = await Promise.all([
       input.email
@@ -50,57 +47,54 @@ export class UserService {
       )
     }
 
-  if (input.email) {
-  if (!input.password) {
-    throw new ApplicationCustomError(
-      StatusCodes.BAD_REQUEST,
-      'Password is required for email update',
-    )
-  }
+    if (input.email) {
+      if (!input.password) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          'Password is required for email update',
+        )
+      }
 
-  const validPassword = await this.userRepository.comparedPassword(
-    input.password,
-    user.password,
-  )
-  if (!validPassword) {
-    throw new ApplicationCustomError(
-      StatusCodes.BAD_REQUEST,
-      'Password is incorrect',
-    )
-  }
+      const validPassword = await this.userRepository.comparedPassword(
+        input.password,
+        user.password,
+      )
+      if (!validPassword) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          'Password is incorrect',
+        )
+      }
 
-  const token = uuidv4(); 
-  const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`;
-  const details = {
-    id,
-    token,
-    type: OtpEnum.EMAIL_UPADTE,
-    newEmail: input.email,
-  };
+      const token = uuidv4()
+      const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
+      const details = {
+        id,
+        token,
+        type: OtpEnum.EMAIL_UPADTE,
+        newEmail: input.email,
+      }
 
-  await this.client.setKey(key, details, 60 * 10); 
+      await this.client.setKey(key, details, 60 * 10)
 
-  const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`;
-  emailTemplates.changeEmail(input.email, verificationLink);
-  throw new ApplicationCustomError(
-    StatusCodes.OK,
-    'A verification email has been sent. Please click the link to confirm the update.',
-  );
-}
-
-    
+      const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`
+      emailTemplates.changeEmail(input.email, verificationLink)
+      throw new ApplicationCustomError(
+        StatusCodes.OK,
+        'A verification email has been sent. Please click the link to confirm the update.',
+      )
+    }
   }
 
   public async verifyUpdate(token: string): Promise<void> {
     const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
     const data = await this.client.getKey(key)
- 
+
     if (!data)
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
-        'Invalid or expired token', 
+        'Invalid or expired token',
       )
-    console.log(data)
     if (data.type === OtpEnum.EMAIL_UPADTE) {
       await this.userRepository.update(data.id, { email: data.newEmail })
     }

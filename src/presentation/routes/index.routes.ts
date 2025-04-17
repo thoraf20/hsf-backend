@@ -12,6 +12,7 @@ import enquiryRoutes from '@routes/property/enquiry.routes'
 import developerRoutes from '@routes/developer/developer.routes'
 import preQualifierRoutes from '@routes/property/preQualifiier/prequalify.routes'
 import propertyPurchaseRoutes from './property/purchaseProperty.routes'
+import fileRoutes from './file/file.routes'
 
 const routes: Router = Router()
 
@@ -26,5 +27,6 @@ routes.use('/manage', authenticate, limiter, managePropertyRoute)
 routes.use('/user', authenticate, limiter, userRoutes)
 routes.use('/auth', authRoutes)
 routes.use('/webhook', webhook)
+routes.use('/file', fileRoutes)
 
 export default routes

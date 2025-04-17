@@ -1,4 +1,4 @@
-import { FileUpload, UploadedFile } from '@providers/fileupload'
+import { File, FileUpload, UploadedFile } from '@providers/fileupload'
 import {
   PutObjectCommand,
   PutObjectCommandInput,
@@ -53,7 +53,7 @@ export class S3Service implements FileUpload {
       const params: PutObjectCommandInput = {
         Bucket: this.bucketName,
         Key: file.name,
-        Body: Buffer.from(await file.arrayBuffer()),
+        Body: file.content,
         ContentLength: file.size,
         ContentType: file.type,
         ContentEncoding: 'binary',
