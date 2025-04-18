@@ -3,7 +3,7 @@ import { PartialInstantiable } from '@shared/types/partials'
 export class Payment extends PartialInstantiable<Payment> {
     id?: string;
     userId?: string;
-    amount: number;
+    amount?: number | string;
     email: string;
     currency?: string;
     paymentType?: string;

@@ -6,6 +6,7 @@ import {
   PropertyClosing,
 } from '@entities/PropertyPurchase'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { IMortageRespository } from '@interfaces/IMortageRespository'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
@@ -15,6 +16,7 @@ import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { ApplicationError } from '@shared/utils/error'
+import { generateTransactionId } from '@shared/utils/helpers'
 // import { generateTransactionId } from '@shared/utils/helpers'
 import { PropertyBaseUtils } from '@use-cases/utils'
 import { StatusCodes } from 'http-status-codes'
@@ -24,6 +26,7 @@ export class PropertyPurchase {
   private purchaseRepository: IPurchaseProperty
   private applicationRepository: IApplicationRespository
   private readonly preQualifieRepository: IPreQualify
+  private readonly mortgageRespository: IMortageRespository
   // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
   // private payment = new PaymentService(new PaymentProcessorFactory())
@@ -33,6 +36,7 @@ export class PropertyPurchase {
     preQualifieRepository: IPreQualify,
     paymentRepository: IPaymentRespository,
     applicationRepository: IApplicationRespository,
+    morgageRepository: IMortageRespository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
@@ -90,6 +94,7 @@ export class PropertyPurchase {
 
   public async purchaseProperty(input: any, user_id: string) {
     await this.utilsProperty.getIfPropertyExist(input.property_id)
+    const transaction_id = generateTransactionId()
     if (input.request_type === PurchaseEnum.OfferLetter) {
       return await this.requestForOfferLetter(
         input.property_id,
@@ -112,7 +117,102 @@ export class PropertyPurchase {
       await this.confirnEscrowAttendanc(input.escrow_id)
     }
 
+    if (input.request_type === PurchaseEnum.ACCEPT_DIP) {
+      if (!input.dip_status) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          `dip_status is required`,
+        )
+      }
+      const dip = await this.mortgageRespository.acceptDip({
+        dip_status: input.dip_status,
+        property_id: input.property_id,
+        user_id,
+      })
+      await this.applicationRepository.createApplication({
+        application_type: input.purchase_type,
+        property_id: input.property_id,
+        dip_id: dip.dip_id,
+        user_id,
+      })
+    }
 
+    if (
+      input.request_type === PurchaseEnum.DUE_DELIGENT ||
+      input.request_type === PurchaseEnum.BROKER_FEE ||
+      input.purchase_type === PurchaseEnum.MANAGEMENT_FEE
+    ) {
+      if (!input.email) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          `email is required`,
+        )
+      }
+      const metaData = {
+        paymentType: input.request_type,
+        user_id,
+        transaction_id,
+      }
+      return await this.mortgageRespository.payForMortageProcess(
+        { email: input.email },
+        metaData,
+        input.request_type,
+        user_id,
+        transaction_id,
+        input.property_id,
+      )
+    }
+
+    if (input.request_type === PurchaseEnum.DOCUMENT_UPLOAD) {
+      if (!input.documents) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          `documents is required`,
+        )
+      }
+      const mortage = await this.mortgageRespository.uploadDocument({
+        documents: JSON.stringify(input.documents),
+        user_id,
+        property_id: input.property_id,
+      })
+      await this.applicationRepository.updateApplication({
+        property_id: input.property_id,
+        document_upload_id: mortage.document_upload_id,
+        user_id,
+      })
+    }
+    if (input.request_type === PurchaseEnum.PRECEDENT_DOC) {
+      if (!input.documents) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          `documents is required`,
+        )
+      }
+      const mortage = await this.mortgageRespository.uploadPrecedentDocument({
+        precedent_documents: JSON.stringify(input.documents),
+        user_id,
+        property_id: input.property_id,
+      })
+      await this.applicationRepository.updateApplication({
+        property_id: input.property_id,
+        document_upload_id: mortage.precedent_document_upload_id,
+        user_id,
+      })
+    }
+    if (input.request_type === PurchaseEnum.ACCEPT_LOAN) {
+      if(!input.loan_acceptance_status) {
+          throw new ApplicationCustomError(
+            StatusCodes.BAD_REQUEST,
+            `loan_acceptance_status is required`,
+          )
+      }
+      const findLoan = await this.mortgageRespository.getLoanOfferById(input.property_id, user_id)
+      if(!findLoan) {
+        throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `You have not been offered loan`)
+      }
+
+      await this.mortgageRespository.updateLoanOffer(input.loan_acceptance_status, input.property_id, user_id)
+    }
   }
 
   public async confirnEscrowAttendanc(escrowId: string): Promise<any> {
@@ -152,7 +252,9 @@ export class PropertyPurchase {
   ): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
 
-    const isOutright = purchase_type === OfferLetterStatusEnum.OUTRIGHT || OfferLetterStatusEnum.Mortgage
+    const isOutright =
+      purchase_type === OfferLetterStatusEnum.OUTRIGHT ||
+      OfferLetterStatusEnum.Mortgage
 
     if (!isOutright) {
       const preQualified =
@@ -160,7 +262,9 @@ export class PropertyPurchase {
       if (!preQualified) {
         throw new ApplicationCustomError(
           StatusCodes.NOT_FOUND,
-          preQualified ? 'You have to be prequalify before proceeding' : 'Your prequalification is still under review',
+          preQualified
+            ? 'You have to be prequalify before proceeding'
+            : 'Your prequalification is still under review',
         )
       }
     }
@@ -218,6 +322,4 @@ export class PropertyPurchase {
     const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
     return offerLetter
   }
-
-  
 }
