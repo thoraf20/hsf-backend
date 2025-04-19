@@ -212,6 +212,11 @@ export class ApplicationRepository implements IApplicationRespository {
       .leftJoin('prequalify_status as ps', 'a.prequalifier_id', 'ps.status_id')
       .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
+      .leftJoin('document_upload as du', 'a.document_upload_id', 'du.document_upload_id')
+      .leftJoin('precedent_document_upload as pdu', 'a.precedent_document_upload_id', 'pdu.precedent_document_upload_id')
+      .leftJoin('replayment_plan as rp', 'a.payment_date_id', 'rp.payment_date_id')
+      .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
+      .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
       .select(
         'a.application_id',
         'a.application_type',
@@ -220,7 +225,12 @@ export class ApplicationRepository implements IApplicationRespository {
         'pc.closing_status',
         'ps.*',
         'el.*',
-        'ol.*'
+        'ol.*',
+        'du.*',
+        'pdu.*',
+        'rp.*',
+        'dp.*',
+        'lo.*',
       )
       .where('a.application_id', application_id)
       .first()

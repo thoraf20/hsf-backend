@@ -15,7 +15,7 @@ export enum PurchaseEnum {
   ESCROW_ATTENDANCE = 'Escrow Attendance',
   DUE_DELIGENT = "PAYMENT_FOR_DUE_DELIGENT",
   BROKER_FEE = "PAYMENT_FOR_BROKER_FEE",
-  MANAGEMENT_FEE = "PAYMENT_FOR_DUE_DELIGENT",
+  MANAGEMENT_FEE = "PAYMENT_FOR_MANAGEMENT_FEE",
   ACCEPT_DIP = "Accept Dip",
   DOCUMENT_UPLOAD = "Document Upload",
   PRECEDENT_DOC = "Precendent Upload",
@@ -74,3 +74,5 @@ export enum LoanOfferStatus {
   ACCEPTED = "Accepted",
   DECLINED = "Declined"
 }
+
+

@@ -17,144 +17,108 @@ import { ApplicationRepository } from './ApplicationRespository'
 import { LoanOfferStatus } from '@domain/enums/propertyEnum'
 
 export class MortageRepository implements IMortageRespository {
-  private payment = new PaymentService(new PaymentProcessorFactory())
-  private application = new ApplicationRepository()
-  private transactions = new TransactionRepository()
+  private paymentService = new PaymentService(new PaymentProcessorFactory())
+  private applicationRepo = new ApplicationRepository()
+  private transactionRepo = new TransactionRepository()
+
   async acceptDip(input: DIP): Promise<DIP> {
     const [dip] = await db('dip').insert(input).returning('*')
-    return new DIP(dip) ? dip : null
+    return dip ?? null
   }
 
-  async savePaymentStatus(
-    property_id: string,
-    user_id: string,
-  ): Promise<MortagePayment> {
-    const [PaymentStatus] = await db('mortage_payment_status')
+  async savePaymentStatus(property_id: string, user_id: string): Promise<MortagePayment> {
+    const [status] = await db('mortage_payment_status')
       .insert({ property_id, user_id })
       .returning('*')
-    return new MortagePayment(PaymentStatus) ? PaymentStatus : null
+    return status ?? null
   }
 
-  async getPaymentStatusByIds(
-    property_id: string,
-    user_id: string,
-  ): Promise<MortagePayment> {
+  async getPaymentStatusByIds(property_id: string, user_id: string): Promise<MortagePayment> {
     return await db('mortage_payment_status')
-      .select('*')
-      .where('property_id', property_id)
-      .andWhere('user_id', user_id)
+      .where({ property_id, user_id })
       .first()
   }
 
   async uploadDocument(input: uploadDocument): Promise<uploadDocument> {
-    const [documents] = await db('document_upload').insert(input).returning('*')
-    return new uploadDocument(documents) ? documents : null
+    const [doc] = await db('document_upload').insert(input).returning('*')
+    return doc ?? null
   }
 
-  async uploadPrecedentDocument(
-    input: uploadPrecedentDocument,
-  ): Promise<uploadPrecedentDocument> {
-    const [documents] = await db('precedent_document_upload')
-      .insert(input)
-      .returning('*')
-    return new uploadDocument(documents) ? documents : null
+  async uploadPrecedentDocument(input: uploadPrecedentDocument): Promise<uploadPrecedentDocument> {
+    const [doc] = await db('precedent_document_upload').insert(input).returning('*')
+    return doc ?? null
   }
 
-  async getLoanOfferById(
-    property_id: string,
-    user_id: string,
-  ): Promise<LoanOffer> {
-    const [loan] = await db('loan_offer')
+  async getLoanOfferById(property_id: string, user_id: string): Promise<LoanOffer> {
+    const [offer] = await db('loan_offer')
+      .where({ property_id, user_id })
       .select('*')
-      .where('property_id', property_id)
-      .andWhere('user_id', user_id)
-    return new LoanOffer(loan) ? loan : null
+    return offer ?? null
   }
-  async updateLoanOffer(
-    input: LoanOffer,
-    property_id: string,
-    user_id: string,
-  ): Promise<void> {
-    if (input.loan_acceptance_status === LoanOfferStatus.ACCEPTED) {
-      await db('loan_offer')
-        .update({
-          loan_acceptance_status: input.loan_acceptance_status,
-          accepted: true,
-        })
-        .where('property_id', property_id)
-        .andWhere('user_id', user_id)
-    } else 
-    await db('loan_offer')
-    .update({
+
+  async updateLoanOffer(input: LoanOffer, property_id: string, user_id: string): Promise<void> {
+    const updateData: Partial<LoanOffer> = {
       loan_acceptance_status: input.loan_acceptance_status,
-    })
-    .where('property_id', property_id)
-    .andWhere('user_id', user_id)
+    }
+
+    if (input.loan_acceptance_status === LoanOfferStatus.ACCEPTED) {
+      updateData.accepted = true
+    }
+
+    await db('loan_offer')
+      .update(updateData)
+      .where({ property_id, user_id })
   }
+
   async payForMortageProcess(
     payment: Payment,
     metaData: Record<string, any>,
     paymentType: string,
     user_id: string,
     transaction_id: string,
-    property_id: string,
+    property_id: string
   ): Promise<Payment | boolean> {
-    let paymentTransaction: {}
+    // Exit early if payment status already exists
+    const existingStatus = await this.getPaymentStatusByIds(property_id, user_id)
+    if (existingStatus) return false
 
-    if (paymentType == PaymentType.DUE_DELIGENT) {
-      paymentTransaction = await this.payment.makePayment(
-        PaymentEnum.PAYSTACK,
-        {
-          amount: '100000',
-          email: payment.email,
-          metaData,
-        },
-      )
+    // Only make payment for known types
+    const validPaymentTypes = [
+      PaymentType.DUE_DILIGENT,
+      PaymentType.BROKER_FEE,
+      PaymentType.MANAGEMENT_FEE
+    ]
+
+    if (!validPaymentTypes.includes(paymentType as PaymentType)) {
+      throw new Error(`Invalid payment type: ${paymentType}`)
     }
 
-    if (paymentType == PaymentType.BROKER_FEE) {
-      paymentTransaction = await this.payment.makePayment(
-        PaymentEnum.PAYSTACK,
-        {
-          amount: '50000',
-          email: payment.email,
-          metaData,
-        },
-      )
-    }
+    // Process payment
+    const paymentTransaction = await this.paymentService.makePayment(PaymentEnum.PAYSTACK, {
+      amount: payment.amount,
+      email: payment.email,
+      metaData
+    })
 
-    if (paymentType == PaymentType.MANAGEMENT_FEE) {
-      paymentTransaction = await this.payment.makePayment(
-        PaymentEnum.PAYSTACK,
-        {
-          amount: '5000000',
-          email: payment.email,
-          metaData,
-        },
-      )
-    }
+    // Save payment status
+    const savedStatus = await this.savePaymentStatus(property_id, user_id)
 
-    const findIfSaveExit = await this.getPaymentStatusByIds(
+    // Link to application
+    await this.applicationRepo.updateApplication({
       property_id,
       user_id,
-    )
-    if (findIfSaveExit) {
-      return false
-    } else {
-      const paymentSaved = await this.savePaymentStatus(property_id, user_id)
-      await this.application.updateApplication({
-        property_id,
-        mortage_payment_status_id: paymentSaved.mortage_payment_status_id,
-        user_id,
-      })
-    }
-    await this.transactions.saveTransaction({
-      user_id,
-      transaction_type: payment.paymentType,
-      amount: payment.amount.toString(),
-      status: TransactionEnum.PENDING,
-      transaction_id,
+      mortage_payment_status_id: savedStatus.mortage_payment_status_id
     })
+
+    // Record transaction
+    await this.transactionRepo.saveTransaction({
+      user_id,
+      transaction_type: paymentType,
+      amount: payment.amount as number,
+      status: TransactionEnum.PENDING,
+      transaction_id
+    })
+
     return new Payment(paymentTransaction)
   }
 }

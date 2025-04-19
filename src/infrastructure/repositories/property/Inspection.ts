@@ -6,20 +6,25 @@ import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate'
+import { Knex } from 'knex'
 
 export class InspectionRepository implements IInspectionRepository {
-  async createInpection(inspection: Inspection): Promise<Inspection> {
-    const [newInspection] = await db('inspection')
+  async createInpection(
+    inspection: Inspection,
+    trx?: Knex.Transaction
+  ): Promise<Inspection> {
+    const query = trx || db
+    const [newInspection] = await query('inspection')
       .insert({
         ...inspection,
         created_at: new Date(),
         updated_at: new Date(),
       })
       .returning('*')
-      console.log(newInspection)
+  
     return new Inspection(newInspection)
   }
-
+  
   async getAlreadySchedulesInspection(
     property_id: string,
     user_id: string,

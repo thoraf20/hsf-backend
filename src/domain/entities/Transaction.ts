@@ -8,7 +8,7 @@ export class Transaction {
     transaction_id : string;
     transaction_type: string;
     remark?: string;
-    amount: string;
+    amount: number;
     user_id: string;
     created_at?: Date
     updated_at?: Date

@@ -1,4 +1,4 @@
-import { OfferLetterStatusEnum, PurchaseEnum } from '@domain/enums/propertyEnum'
+import { FinancialOptionsEnum, OfferLetterStatusEnum, PurchaseEnum } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
 import {
   EscrowInformationStatus,
@@ -15,7 +15,6 @@ import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { ApplicationError } from '@shared/utils/error'
 import { generateTransactionId } from '@shared/utils/helpers'
 // import { generateTransactionId } from '@shared/utils/helpers'
 import { PropertyBaseUtils } from '@use-cases/utils'
@@ -36,12 +35,13 @@ export class PropertyPurchase {
     preQualifieRepository: IPreQualify,
     paymentRepository: IPaymentRespository,
     applicationRepository: IApplicationRespository,
-    morgageRepository: IMortageRespository,
+    mortgageRepository: IMortageRespository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
     this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
+    this.mortgageRespository = mortgageRepository
     this.preQualifieRepository = preQualifieRepository
 
     // this.paymentRepository = paymentRepository
@@ -93,129 +93,97 @@ export class PropertyPurchase {
   }
 
   public async purchaseProperty(input: any, user_id: string) {
-    await this.utilsProperty.getIfPropertyExist(input.property_id)
-    const transaction_id = generateTransactionId()
-    if (input.request_type === PurchaseEnum.OfferLetter) {
-      return await this.requestForOfferLetter(
-        input.property_id,
-        input.purchase_type,
-        user_id,
-      )
+    const { property_id, purchase_type, request_type, email, documents, dip_status, escrow_id, loan_acceptance_status } = input;
+  
+    await this.utilsProperty.getIfPropertyExist(property_id);
+    const transaction_id = generateTransactionId();
+    if (purchase_type === FinancialOptionsEnum.OUTRIGHT || purchase_type === FinancialOptionsEnum.INSTALLMENT) {
+      switch (request_type) {
+        case PurchaseEnum.OfferLetter:
+          return await this.requestForOfferLetter(property_id, purchase_type, user_id);
+  
+        case PurchaseEnum.PROPERTY_CLOSSING:
+          await this.checkIfPropertyClosingExist(property_id, user_id);
+          return await this.requestForPropertyClosing(property_id, user_id);
+  
+        case PurchaseEnum.ESCROW_ATTENDANCE:
+          return await this.confirmEscrowAttendanc(escrow_id);
+  
+        default:
+          return;
+      }
     }
-    if (input.request_type === PurchaseEnum.PROPERTY_CLOSSING) {
-      await this.checkIfPropertyClosingExist(input.property_id, user_id)
-      return await this.requestForPropertyClosing(input.property_id, user_id)
-    }
-
-    if (input.request_type === PurchaseEnum.ESCROW_ATTENDANCE) {
-      if (!input.escrow_id) {
-        throw new ApplicationError(
-          'escrow_status_id is required',
-          StatusCodes.BAD_REQUEST,
-        )
+  
+    // MORTGAGE flow
+    if (purchase_type === FinancialOptionsEnum.MORTGAGE) {
+      switch (request_type) {
+        case PurchaseEnum.ACCEPT_DIP:
+          const dip = await this.mortgageRespository.acceptDip({ dip_status, property_id, user_id });
+          await this.applicationRepository.updateApplication({
+            property_id,
+            document_upload_id: dip.dip_id,
+            user_id,
+          });
+          return dip;
+  
+        case PurchaseEnum.DUE_DELIGENT:
+        case PurchaseEnum.BROKER_FEE:
+        case PurchaseEnum.MANAGEMENT_FEE:
+          const metaData = { paymentType: request_type, user_id, transaction_id };
+          return await this.mortgageRespository.payForMortageProcess(
+            {amount: "100000", email },
+            metaData,
+            request_type,
+            user_id,
+            transaction_id,
+            property_id
+          );
+  
+        case PurchaseEnum.DOCUMENT_UPLOAD:
+          const documentUpload = await this.mortgageRespository.uploadDocument({
+            documents: JSON.stringify(documents),
+            user_id,
+            property_id,
+            document_type: input.request_type
+          });
+          await this.applicationRepository.updateApplication({
+            property_id,
+            document_upload_id: documentUpload.document_upload_id,
+            user_id,
+            
+          });
+          return documentUpload;
+  
+        case PurchaseEnum.PRECEDENT_DOC:
+          const precedentUpload = await this.mortgageRespository.uploadPrecedentDocument({
+            precedent_documents: JSON.stringify(documents),
+            user_id,
+            property_id,
+            precedent_document_type: input.request_type
+          });
+          await this.applicationRepository.updateApplication({
+            property_id,
+            document_upload_id: precedentUpload.precedent_document_upload_id,
+            user_id,
+          });
+          return precedentUpload;
+  
+        case PurchaseEnum.ACCEPT_LOAN:
+          const loanOffer = await this.mortgageRespository.getLoanOfferById(property_id, user_id);
+          if (!loanOffer) {
+            throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `You have not been offered loan`);
+          }
+          await this.mortgageRespository.updateLoanOffer(loan_acceptance_status, property_id, user_id);
+          return;
+  
+        default:
+          return;
       }
-      await this.confirnEscrowAttendanc(input.escrow_id)
-    }
-
-    if (input.request_type === PurchaseEnum.ACCEPT_DIP) {
-      if (!input.dip_status) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          `dip_status is required`,
-        )
-      }
-      const dip = await this.mortgageRespository.acceptDip({
-        dip_status: input.dip_status,
-        property_id: input.property_id,
-        user_id,
-      })
-      await this.applicationRepository.createApplication({
-        application_type: input.purchase_type,
-        property_id: input.property_id,
-        dip_id: dip.dip_id,
-        user_id,
-      })
-    }
-
-    if (
-      input.request_type === PurchaseEnum.DUE_DELIGENT ||
-      input.request_type === PurchaseEnum.BROKER_FEE ||
-      input.purchase_type === PurchaseEnum.MANAGEMENT_FEE
-    ) {
-      if (!input.email) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          `email is required`,
-        )
-      }
-      const metaData = {
-        paymentType: input.request_type,
-        user_id,
-        transaction_id,
-      }
-      return await this.mortgageRespository.payForMortageProcess(
-        { email: input.email },
-        metaData,
-        input.request_type,
-        user_id,
-        transaction_id,
-        input.property_id,
-      )
-    }
-
-    if (input.request_type === PurchaseEnum.DOCUMENT_UPLOAD) {
-      if (!input.documents) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          `documents is required`,
-        )
-      }
-      const mortage = await this.mortgageRespository.uploadDocument({
-        documents: JSON.stringify(input.documents),
-        user_id,
-        property_id: input.property_id,
-      })
-      await this.applicationRepository.updateApplication({
-        property_id: input.property_id,
-        document_upload_id: mortage.document_upload_id,
-        user_id,
-      })
-    }
-    if (input.request_type === PurchaseEnum.PRECEDENT_DOC) {
-      if (!input.documents) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          `documents is required`,
-        )
-      }
-      const mortage = await this.mortgageRespository.uploadPrecedentDocument({
-        precedent_documents: JSON.stringify(input.documents),
-        user_id,
-        property_id: input.property_id,
-      })
-      await this.applicationRepository.updateApplication({
-        property_id: input.property_id,
-        document_upload_id: mortage.precedent_document_upload_id,
-        user_id,
-      })
-    }
-    if (input.request_type === PurchaseEnum.ACCEPT_LOAN) {
-      if(!input.loan_acceptance_status) {
-          throw new ApplicationCustomError(
-            StatusCodes.BAD_REQUEST,
-            `loan_acceptance_status is required`,
-          )
-      }
-      const findLoan = await this.mortgageRespository.getLoanOfferById(input.property_id, user_id)
-      if(!findLoan) {
-        throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `You have not been offered loan`)
-      }
-
-      await this.mortgageRespository.updateLoanOffer(input.loan_acceptance_status, input.property_id, user_id)
     }
   }
+  
 
-  public async confirnEscrowAttendanc(escrowId: string): Promise<any> {
+  public async confirmEscrowAttendanc(escrowId: string): Promise<any> {
     await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId)
   }
 
@@ -322,4 +290,6 @@ export class PropertyPurchase {
     const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
     return offerLetter
   }
+
+  
 }

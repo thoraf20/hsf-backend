@@ -19,3 +19,15 @@ export function generateReferenceNumber(): string {
     const randomString = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `REF-${timestamp}-${randomString}`;
 }
+
+export async function syncToCalendar(details: {
+    platform: string,
+    meeting_link: string,
+    date: string,
+    time: string,
+    user_id: string,
+  }) {
+    // TODO: Integrate with Google Calendar, Zoom, Outlook etc.
+    console.log(`Syncing meeting to ${details.platform} calendar for user ${details.user_id}`)
+  }
+  
