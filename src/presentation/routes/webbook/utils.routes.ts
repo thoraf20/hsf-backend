@@ -12,6 +12,7 @@ const app:Application = express()
 app.use(express.json())
 WebhookRouter.post('/paystack', asyncMiddleware(async (req: Request, res: Response) => {
   const secret = process.env.PAYSTACK_SECRET_KEY
+  console.log("Heyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
   const hash = crypto
     .createHmac('sha512', secret!)
     .update(req.body) // use rawBody, not req.body
