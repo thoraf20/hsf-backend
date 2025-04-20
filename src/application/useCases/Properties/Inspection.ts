@@ -65,7 +65,7 @@ export class InspectionService {
           }),
           this.transaction.saveTransaction({
             user_id,
-            transaction_type: 'Inspection',
+            transaction_type: PaymentType.INSPECTION,
             amount: 1000,
             status: TransactionEnum.PENDING,
             transaction_id,

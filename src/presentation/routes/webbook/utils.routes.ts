@@ -8,7 +8,7 @@ import { asyncMiddleware } from '@routes/index.t'
 const WebhookRouter: Router = Router()
 
 
-WebhookRouter.post('/webhook/paystack', asyncMiddleware(async (req, res) => {
+WebhookRouter.post('/paystack', asyncMiddleware(async (req, res) => {
     const secret = process.env.PAYSTACK_SECRET
   
     const hash = crypto
@@ -64,6 +64,9 @@ WebhookRouter.post('/webhook/paystack', asyncMiddleware(async (req, res) => {
             if (!inspection_id) {
               return res.status(400).json({ message: 'Missing inspection ID in metadata' })
             }
+            await db('inspection')
+            .where({ id: inspection_id, user_id })
+            .update({ inspection_fee_paid: TransactionEnum.SUCCESSFULL })
             break
           default:
             break
