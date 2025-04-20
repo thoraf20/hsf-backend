@@ -85,3 +85,5 @@ WebhookRouter.post('/paystack', express.raw({ type: 'application/json' }), async
     return res.status(500).json({ message: 'Server error' })
   }
 }))
+
+export default WebhookRouter
