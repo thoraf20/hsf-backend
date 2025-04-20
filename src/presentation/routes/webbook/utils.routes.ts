@@ -6,10 +6,10 @@ import { PaymentType } from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 
 const WebhookRouter: Router = Router()
-
+console.log(process.env.PAYSTACK_SECRET)
 
 WebhookRouter.post('/paystack', asyncMiddleware(async (req, res) => {
-    const secret = process.env.PAYSTACK_SECRET
+    const secret = process.env.PAYSTACK_SECRET_KEY
   
     const hash = crypto
       .createHmac('sha512', secret!)
