@@ -1,4 +1,4 @@
-import  { Router } from 'express'
+import  { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 import db from '@infrastructure/database/knex'
 import { TransactionEnum } from '@domain/enums/transactionEnum'
@@ -8,9 +8,9 @@ import { asyncMiddleware } from '@routes/index.t'
 const WebhookRouter: Router = Router()
 console.log(process.env.PAYSTACK_SECRET)
 
-WebhookRouter.post('/paystack', asyncMiddleware(async (req, res) => {
+WebhookRouter.post('/paystack', asyncMiddleware(async (req: Request, res: Response) => {
     const secret = process.env.PAYSTACK_SECRET_KEY
-  
+     console.log(req.body)
     const hash = crypto
       .createHmac('sha512', secret!)
       .update(req.body)
