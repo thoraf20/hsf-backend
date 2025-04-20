@@ -1,4 +1,4 @@
-import express, { Router, Request, Response, Application } from 'express'
+import  { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 // import db from '@infrastructure/database/knex'
 // import { TransactionEnum } from '@domain/enums/transactionEnum'
