@@ -1,19 +1,20 @@
-import express, { Router, Request, Response } from 'express'
+import express, { Router, Request, Response, Application } from 'express'
 import crypto from 'crypto'
 // import db from '@infrastructure/database/knex'
 // import { TransactionEnum } from '@domain/enums/transactionEnum'
 // import { PaymentType } from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 
+
 const WebhookRouter: Router = Router()
+const app:Application = express()
 
-// Parse raw body for this specific route
-WebhookRouter.post('/paystack', express.raw({ type: 'application/json' }), asyncMiddleware(async (req: Request, res: Response) => {
+app.use(express.json())
+WebhookRouter.post('/paystack', asyncMiddleware(async (req: Request, res: Response) => {
   const secret = process.env.PAYSTACK_SECRET_KEY
-
   const hash = crypto
     .createHmac('sha512', secret!)
-    .update(req.body)
+    .update(req.body) // use rawBody, not req.body
     .digest('hex')
 
     console.log(hash)
