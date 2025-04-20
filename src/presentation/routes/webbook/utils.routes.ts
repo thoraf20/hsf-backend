@@ -16,6 +16,8 @@ WebhookRouter.post('/paystack', express.raw({ type: 'application/json' }), async
     .update(req.body)
     .digest('hex')
 
+    console.log(hash)
+
   const signature = req.headers['x-paystack-signature']
 
   if (hash !== signature) {
@@ -23,8 +25,8 @@ WebhookRouter.post('/paystack', express.raw({ type: 'application/json' }), async
   }
 
   try {
-    const event = JSON.parse(req.body)
-   console.log(event)
+  //   const event = JSON.parse(req.body)
+  //  console.log(event)
   //   if (event.event === 'charge.success') {
   //     const metadata = event.data.metadata
   //     const transaction_id = metadata?.transaction_id
