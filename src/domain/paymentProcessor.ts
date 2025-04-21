@@ -29,9 +29,9 @@ export class PaystackProcessor implements PaymentProcessor {
       const response = await axiosInstance.post("/transaction/initialize", requestBody);
       if (response.data.status) {
         return response.data.data
-      }
+      }  
 
-   
+    console.log(requestBody)
 
       throw new Error("Payment initialization failed");
     } catch (error) {
