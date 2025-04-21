@@ -5,18 +5,14 @@ import crypto from 'crypto'
 // import { PaymentType } from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 
-import bodyParser from 'body-parser'
 const WebhookRouter: Router = Router()
 
 
 
-WebhookRouter.post('/paystack',  bodyParser.raw({ type: 'application/json' }), asyncMiddleware(async (req: Request, res: Response) => {
+WebhookRouter.post('/paystack',  asyncMiddleware(async (req: Request, res: Response) => {
   const secret = process.env.PAYSTACK_SECRET_KEY!
 
-  const hash = crypto
-    .createHmac('sha512', secret)
-    .update(req.body) 
-    .digest('hex')
+  const hash =  crypto.createHmac('sha512', secret).update(JSON.stringify(req.body)).digest('hex');
     console.log(hash)
 
   const signature = req.headers['x-paystack-signature']
