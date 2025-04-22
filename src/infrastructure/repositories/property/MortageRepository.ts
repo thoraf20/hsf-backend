@@ -26,14 +26,20 @@ export class MortageRepository implements IMortageRespository {
     return dip ?? null
   }
 
-  async savePaymentStatus(property_id: string, user_id: string): Promise<MortagePayment> {
+  async savePaymentStatus(
+    property_id: string,
+    user_id: string,
+  ): Promise<MortagePayment> {
     const [status] = await db('mortage_payment_status')
       .insert({ property_id, user_id })
       .returning('*')
     return status ?? null
   }
 
-  async getPaymentStatusByIds(property_id: string, user_id: string): Promise<MortagePayment> {
+  async getPaymentStatusByIds(
+    property_id: string,
+    user_id: string,
+  ): Promise<MortagePayment> {
     return await db('mortage_payment_status')
       .where({ property_id, user_id })
       .first()
@@ -44,19 +50,30 @@ export class MortageRepository implements IMortageRespository {
     return doc ?? null
   }
 
-  async uploadPrecedentDocument(input: uploadPrecedentDocument): Promise<uploadPrecedentDocument> {
-    const [doc] = await db('precedent_document_upload').insert(input).returning('*')
+  async uploadPrecedentDocument(
+    input: uploadPrecedentDocument,
+  ): Promise<uploadPrecedentDocument> {
+    const [doc] = await db('precedent_document_upload')
+      .insert(input)
+      .returning('*')
     return doc ?? null
   }
 
-  async getLoanOfferById(property_id: string, user_id: string): Promise<LoanOffer> {
+  async getLoanOfferById(
+    property_id: string,
+    user_id: string,
+  ): Promise<LoanOffer> {
     const [offer] = await db('loan_offer')
       .where({ property_id, user_id })
       .select('*')
     return offer ?? null
   }
 
-  async updateLoanOffer(input: LoanOffer, property_id: string, user_id: string): Promise<void> {
+  async updateLoanOffer(
+    input: LoanOffer,
+    property_id: string,
+    user_id: string,
+  ): Promise<void> {
     const updateData: Partial<LoanOffer> = {
       loan_acceptance_status: input.loan_acceptance_status,
     }
@@ -65,9 +82,7 @@ export class MortageRepository implements IMortageRespository {
       updateData.accepted = true
     }
 
-    await db('loan_offer')
-      .update(updateData)
-      .where({ property_id, user_id })
+    await db('loan_offer').update(updateData).where({ property_id, user_id })
   }
 
   async payForMortageProcess(
@@ -76,17 +91,20 @@ export class MortageRepository implements IMortageRespository {
     paymentType: string,
     user_id: string,
     transaction_id: string,
-    property_id: string
+    property_id: string,
   ): Promise<Payment | boolean> {
     // Exit early if payment status already exists
-    const existingStatus = await this.getPaymentStatusByIds(property_id, user_id)
+    const existingStatus = await this.getPaymentStatusByIds(
+      property_id,
+      user_id,
+    )
     if (existingStatus) return false
 
     // Only make payment for known types
     const validPaymentTypes = [
       PaymentType.DUE_DILIGENT,
       PaymentType.BROKER_FEE,
-      PaymentType.MANAGEMENT_FEE
+      PaymentType.MANAGEMENT_FEE,
     ]
 
     if (!validPaymentTypes.includes(paymentType as PaymentType)) {
@@ -94,11 +112,14 @@ export class MortageRepository implements IMortageRespository {
     }
 
     // Process payment
-    const paymentTransaction = await this.paymentService.makePayment(PaymentEnum.PAYSTACK, {
-      amount: payment.amount,
-      email: payment.email,
-      metaData
-    })
+    const paymentTransaction = await this.paymentService.makePayment(
+      PaymentEnum.PAYSTACK,
+      {
+        amount: payment.amount,
+        email: payment.email,
+        metaData,
+      },
+    )
 
     // Save payment status
     const savedStatus = await this.savePaymentStatus(property_id, user_id)
@@ -107,7 +128,7 @@ export class MortageRepository implements IMortageRespository {
     await this.applicationRepo.updateApplication({
       property_id,
       user_id,
-      mortage_payment_status_id: savedStatus.mortage_payment_status_id
+      mortage_payment_status_id: savedStatus.mortage_payment_status_id,
     })
 
     // Record transaction
@@ -116,9 +137,9 @@ export class MortageRepository implements IMortageRespository {
       transaction_type: paymentType,
       amount: payment.amount as number,
       status: TransactionEnum.PENDING,
-      transaction_id
+      transaction_id,
     })
 
-    return new Payment(paymentTransaction)
+    return new Payment(paymentTransaction as any)
   }
 }

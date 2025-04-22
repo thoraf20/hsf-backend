@@ -43,9 +43,9 @@ export class PropertyRepository implements IPropertyRepository {
     const add = createUnion(filters.search_type)
 
     // do not remove this
-    q = q.and.whereRaw(
-      `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
-    )
+    // q = q.and.whereRaw(
+    //   `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
+    // )
     if (filters.sort_by) {
       switch (filters.sort_by) {
         case SortDateBy.RecentlyAdded:
@@ -134,9 +134,9 @@ export class PropertyRepository implements IPropertyRepository {
         `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
       )
     }
-    q = q.or.whereRaw(
-      ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
-    )
+    // q = q.or.whereRaw(
+    //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
+    // )
 
     return q
   }
@@ -187,6 +187,8 @@ export class PropertyRepository implements IPropertyRepository {
       dataQuery = dataQuery.select(db.raw('NULL as documents'))
     }
 
+    console.log({ sql: dataQuery.toSQL() })
+
     const rawResult = await dataQuery
 
     const result = rawResult.map((item) => ({
@@ -234,6 +236,7 @@ export class PropertyRepository implements IPropertyRepository {
 
         db.raw('row_to_json(property_closing) as property_closing'),
 
+        db.raw('row_to_json(inspection) as inspection'),
         db.raw(`
           COALESCE(
             json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
@@ -271,8 +274,14 @@ export class PropertyRepository implements IPropertyRepository {
         'escrow.property_id',
         'properties.id',
       )
+      .leftJoin('inspection', (qb) =>
+        qb
+          .on('inspection.property_id', 'properties.id')
+          .andOn('inspection.user_id', db.raw('?', [user_id])),
+      )
       .groupBy(
         'properties.id',
+        'inspection.*',
         'offer_letter.purchase_type',
         'property_closing.*',
         'offer_letter.offer_letter_status',
@@ -289,6 +298,8 @@ export class PropertyRepository implements IPropertyRepository {
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
       propertyQuery.select(db.raw('NULL AS documents'))
     }
+
+    console.log({ sql: propertyQuery.toSQL() })
 
     // Query for user eligibility
     const eligibilityQuery = user_id
