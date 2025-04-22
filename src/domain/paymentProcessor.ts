@@ -11,17 +11,13 @@ const axiosInstance = axios.create({
     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
     'Content-Type': 'application/json',
   },
-  httpsAgent: new https.Agent({ keepAlive: true }), // Enable keep-alive
-})
+  httpsAgent: new https.Agent({ keepAlive: true }),
+}) // Enable keep-alive
 
 export class PaystackProcessor implements PaymentProcessor {
   constructor(public input: Payment) {}
 
-  async createProcess(input: Payment): Promise<{
-    authorization_url: string
-    access_code: string
-    reference: string
-  }> {
+  async createProcess(input: Payment): Promise<any> {
     try {
       const requestBody = {
         ...input,

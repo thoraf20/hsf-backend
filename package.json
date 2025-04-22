@@ -7,8 +7,8 @@
     "format": "prettier --write \"src/**/*.{ts,js}\"",
     "test": "jest --config jest.config.js",
     "start": "node dist/index.js",
-    "dev": "npx nodemon --watch src -e ts --exec \"npm run build && node dist/index.js\"",
-    "build": "tsc && tsc-alias",
+    "dev": "ts-node-dev --respawn --transpile-only --require tsconfig-paths/register src/index.ts",
+    "build": "swc src -d dist && tsc-alias",
     "migrate:dev": "knex migrate:latest --env development --knexfile=database/knexfile.ts",
     "migrate:prod": "knex migrate:latest --env production --knexfile=database/knexfile.ts",
     "make": "knex migrate:make  update_loan -x ts --knexfile=database/knexfile.ts",
@@ -55,6 +55,8 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@swc/cli": "^0.7.3",
+    "@swc/core": "^1.11.21",
     "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^3.0.0",
     "@types/cors": "^2.8.17",
@@ -67,7 +69,9 @@
     "nodemon": "^3.1.9",
     "prettier": "^3.5.3",
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "tsc-alias": "^1.8.13",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.2"
   }
 }

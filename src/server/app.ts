@@ -12,13 +12,14 @@ import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
 import path from 'path'
+import http from 'http'
 
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 // import { Admin } from '@use-cases/Admin/Admin'
 const app: Application = express()
 
 app.use(cors())
-
+const server = http.createServer(app)
 app.use(express.json({ limit: '10kb' })) // Max 10KB JSON payload
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
 
@@ -76,7 +77,7 @@ setupSecurity(app)
 app.use(ErrorHandler)
 
 const PORT = process.env.PORT || 3000
-
-app.listen(PORT, () => {
-  console.log('Server is running on port http://localhost:' + PORT)
+server.listen(PORT, () => {
+  console.log(`Server is running on port http://localhost:${PORT} at ${new Date}`)
 })
+ 

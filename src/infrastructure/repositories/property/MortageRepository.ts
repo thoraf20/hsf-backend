@@ -87,7 +87,7 @@ export class MortageRepository implements IMortageRespository {
 
   async payForMortageProcess(
     payment: Payment,
-    metaData: Record<string, any>,
+    metadata: Record<string, any>,
     paymentType: string,
     user_id: string,
     transaction_id: string,
@@ -111,13 +111,12 @@ export class MortageRepository implements IMortageRespository {
       throw new Error(`Invalid payment type: ${paymentType}`)
     }
 
-    // Process payment
     const paymentTransaction = await this.paymentService.makePayment(
       PaymentEnum.PAYSTACK,
       {
         amount: payment.amount,
         email: payment.email,
-        metaData,
+        metadata,
       },
     )
 

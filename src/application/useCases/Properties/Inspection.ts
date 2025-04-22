@@ -61,7 +61,7 @@ export class InspectionService {
           this.payment.makePayment(PaymentEnum.PAYSTACK, {
             amount: 1000,
             email: input.email,
-            metaData: { user_id, transaction_id, paymentType: PaymentType.INSPECTION},
+            metadata: { user_id, transaction_id, paymentType: PaymentType.INSPECTION},
           }),
           this.transaction.saveTransaction({
             user_id,
