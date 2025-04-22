@@ -187,8 +187,6 @@ export class PropertyRepository implements IPropertyRepository {
       dataQuery = dataQuery.select(db.raw('NULL as documents'))
     }
 
-    console.log({ sql: dataQuery.toSQL() })
-
     const rawResult = await dataQuery
 
     const result = rawResult.map((item) => ({
@@ -215,7 +213,7 @@ export class PropertyRepository implements IPropertyRepository {
     user_id?: string,
     userRole?: string,
   ): Promise<any> {
-    const propertyQuery = db('properties')
+    let propertyQuery = db('properties')
       .select([
         'properties.*',
         'offer_letter.offer_letter_status',
@@ -299,6 +297,19 @@ export class PropertyRepository implements IPropertyRepository {
       propertyQuery.select(db.raw('NULL AS documents'))
     }
 
+    if (user_id) {
+      propertyQuery = propertyQuery.select(
+        db.raw(
+          `(SELECT EXISTS (
+              SELECT 1 FROM property_watchlist
+              WHERE property_watchlist.property_id = properties.id
+              AND property_watchlist.user_id = ?
+            )) AS is_whitelisted`,
+          [user_id],
+        ),
+      )
+    }
+
     console.log({ sql: propertyQuery.toSQL() })
 
     // Query for user eligibility
@@ -326,11 +337,18 @@ export class PropertyRepository implements IPropertyRepository {
       .where('property_id', id)
       .first()
 
-    const [propertyData, eligibilityData, escrowStatus] = await Promise.all([
+    let [propertyData, eligibilityData, escrowStatus] = await Promise.all([
       propertyQuery.first(),
       eligibilityQuery,
       escrowStatusQuery,
     ])
+
+    propertyData = {
+      ...propertyData,
+      is_whitelisted:
+        propertyData.is_whitelisted === true ||
+        propertyData.is_whitelisted === 't',
+    }
 
     return {
       ...propertyData,
