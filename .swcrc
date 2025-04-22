@@ -1,15 +1,15 @@
-// .swcrc
 {
-    "jsc": {
-      "parser": {
-        "syntax": "typescript",
-        "tsx": false
-      },
-      "target": "es2020"
+  "jsc": {
+    "parser": {
+      "syntax": "typescript"
     },
-    "module": {
-      "type": "commonjs"
-    },
-    "sourceMaps": true
-  }
-  
+    "target": "es2022"
+  },
+  "module": {
+    "type": "commonjs"
+  },
+  "sourceMaps": true,
+  "outDir": "dist",
+  "root": "./src",
+  "baseUrl": "."
+}

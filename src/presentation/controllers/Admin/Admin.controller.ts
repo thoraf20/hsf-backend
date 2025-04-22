@@ -2,12 +2,12 @@ import {
   ApiResponse,
   createResponse,
 } from '@presentation/response/responseType'
-import { Admin } from '@use-cases/Super Admin/agent'
+import { Agents } from '@use-cases/Super Admin/agent'
 import { User } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 
 export class AdminController {
-  constructor(private readonly adminService: Admin) {}
+  constructor(private readonly adminService: Agents) {}
 
   public async inviteAgents(input: User): Promise<ApiResponse<any>> {
     const user = await this.adminService.inviteAgents(input)

@@ -17,6 +17,7 @@ export class Developer extends User{
     documents: any[]
     created_at?: Date
     updated_at?: Date
+    developers_profile_id?: string
     constructor(data: Partial<Developer>) {
         super(data); 
         Object.assign(this, {

@@ -49,7 +49,8 @@ export class Agents {
       await this.existingUsers.beforeCreatePhone(input.phone_number),
       this.developer.findIfCompanyEmailExist(input.company_email),
     ])
-    const password = await this.userRepository.hashedPassword(input.password)
+    const defaultPassword = generateDefaultPassword()
+    const password = await this.userRepository.hashedPassword(defaultPassword)
     const findRole = await this.userRepository.getRoleByName(Role.DEVELOPER)
     let user = await this.userRepository.create(
       new User({ ...input, password, is_default_password: true, role_id: findRole.id }),
@@ -67,12 +68,16 @@ export class Agents {
         specialization: input.specialization,
         region_of_operation: input.region_of_operation,
         company_image: input.company_image,
-        documents: input.documents
+        documents: input.documents,
+        developers_profile_id: user.id
        }),
     )
-   
-    console.log(`Developer with id ${user.id} has been created`)
-    return user
+    const otp = generateRandomSixNumbers()
+    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
+    const details = { id: user.id, otp, type: OtpEnum.DEVELOPER_EMAIL_VERIFICATION, password}
+    await this.client.setKey(key, details, 60)
+    user = await this.userRepository.findById(user.id)
+    return { ...user, ...developer }
     
   }
 
