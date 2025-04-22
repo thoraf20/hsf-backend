@@ -13,11 +13,11 @@ const axiosInstance = axios.create({
   },
   httpsAgent: new https.Agent({ keepAlive: true }), // Enable keep-alive
 });
-
+ 
 export class PaystackProcessor implements PaymentProcessor {
   constructor(public input: Payment) {}
 
-  async createProcess(input: Payment): Promise<any> {
+  async createProcess(input: Payment): Promise<any> { 
     try {
       const requestBody = {
         ...input,
