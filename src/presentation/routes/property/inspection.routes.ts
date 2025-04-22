@@ -16,6 +16,7 @@ const service = new InspectionService(
   new InspectionRepository(),
   new TransactionRepository(),
 )
+
 const inspectionController = new InspectionController(service)
 
 inspectionRoutes.post(

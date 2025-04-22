@@ -40,9 +40,13 @@ propertyRoute.get(
   '/all',
   optionalAuth,
   asyncMiddleware(async (req, res) => {
-    const {query, user} = req as any
+    const { query, user } = req as any
     console.log(query)
-    const properties = await controller.getAllProperties(query, user.role, user.id) 
+    const properties = await controller.getAllProperties(
+      query,
+      user.role,
+      user.id,
+    )
     res.status(properties.statusCode).json(properties)
   }),
 )
@@ -77,8 +81,12 @@ propertyRoute.get(
   // limiter,
   optionalAuth,
   asyncMiddleware(async (req, res) => {
-    const { params, user} = req as any
-    const property = await controller.getPropertyById(params.id, user.id, user.role)
+    const { params, user } = req as any
+    const property = await controller.getPropertyById(
+      params.id,
+      user.id,
+      user.role,
+    )
     res.status(property.statusCode).json(property)
   }),
 )
@@ -150,31 +158,45 @@ propertyRoute.post(
   }),
 )
 
-propertyRoute.get('/application/all', authenticate, requireRoles(Role.HOME_BUYER), asyncMiddleware(async (req, res) => {
-        const {user, query} = req 
-        const property = await controller.propertyApplication(user.id, query)
-        res.status(property.statusCode).json(property)
+propertyRoute.get(
+  '/application/all',
+  authenticate,
+  requireRoles(Role.HOME_BUYER),
+  asyncMiddleware(async (req, res) => {
+    const { user, query } = req
+    const property = await controller.propertyApplication(user.id, query)
+    res.status(property.statusCode).json(property)
+  }),
+)
+propertyRoute.get(
+  '/application/:application_id',
+  authenticate,
+  requireRoles(Role.HOME_BUYER),
+  asyncMiddleware(async (req, res) => {
+    const { params } = req
+    const property = await controller.getApplicationById(params.application_id)
+    res.status(property.statusCode).json(property)
+  }),
+)
 
-}))
-propertyRoute.get('/application/:application_id', authenticate, requireRoles(Role.HOME_BUYER), asyncMiddleware(async (req, res) => {
-        const {params} = req 
-        const property = await controller.getApplicationById(params.application_id)
-        res.status(property.statusCode).json(property)
-
-}))
-
-propertyRoute.post('/share', authenticate, validateRequest(sharePropertySchema), asyncMiddleware(async (req, res) => {
-  const {body, user} = req 
-  const property = await controller.propertyShare(body, user.id)
-  res.status(property.statusCode).json(property)
-
-}))
-propertyRoute.get('/view/:property_id', authenticate, asyncMiddleware(async (req, res) => {
-  const {params, user} = req 
-  console.log(user.id)
-  const property = await controller.viewProperty(params.property_id, user.id)
-  res.status(property.statusCode).json(property)
-
-}))
+propertyRoute.post(
+  '/share',
+  authenticate,
+  validateRequest(sharePropertySchema),
+  asyncMiddleware(async (req, res) => {
+    const { body, user } = req
+    const property = await controller.propertyShare(body, user.id)
+    res.status(property.statusCode).json(property)
+  }),
+)
+propertyRoute.get(
+  '/view/:property_id',
+  authenticate,
+  asyncMiddleware(async (req, res) => {
+    const { params, user } = req
+    console.log(user.id)
+    const property = await controller.viewProperty(params.property_id, user.id)
+    res.status(property.statusCode).json(property)
+  }),
+)
 export default propertyRoute
- 

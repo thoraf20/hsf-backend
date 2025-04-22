@@ -6,7 +6,7 @@ export class PaymentService {
     private readonly paymentProcessorFactory: PaymentProcessorFactory,
   ) {}
 
-  async makePayment(type: string, input: Payment): Promise<Payment> {
+  async makePayment(type: string, input: Payment) {
     const processor = await this.paymentProcessorFactory.createPaymentProcessor(
       type,
       input,

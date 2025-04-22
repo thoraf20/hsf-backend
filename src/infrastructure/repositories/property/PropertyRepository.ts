@@ -43,9 +43,9 @@ export class PropertyRepository implements IPropertyRepository {
     const add = createUnion(filters.search_type)
 
     // do not remove this
-    q = q.and.whereRaw(
-      `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
-    )
+    // q = q.and.whereRaw(
+    //   `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
+    // )
     if (filters.sort_by) {
       switch (filters.sort_by) {
         case SortDateBy.RecentlyAdded:
@@ -134,9 +134,9 @@ export class PropertyRepository implements IPropertyRepository {
         `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
       )
     }
-    q = q.or.whereRaw(
-      ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
-    )
+    // q = q.or.whereRaw(
+    //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
+    // )
 
     return q
   }
@@ -213,7 +213,7 @@ export class PropertyRepository implements IPropertyRepository {
     user_id?: string,
     userRole?: string,
   ): Promise<any> {
-    const propertyQuery = db('properties')
+    let propertyQuery = db('properties')
       .select([
         'properties.*',
         'offer_letter.offer_letter_status',
@@ -234,6 +234,7 @@ export class PropertyRepository implements IPropertyRepository {
 
         db.raw('row_to_json(property_closing) as property_closing'),
 
+        db.raw('row_to_json(inspection) as inspection'),
         db.raw(`
           COALESCE(
             json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
@@ -271,8 +272,14 @@ export class PropertyRepository implements IPropertyRepository {
         'escrow.property_id',
         'properties.id',
       )
+      .leftJoin('inspection', (qb) =>
+        qb
+          .on('inspection.property_id', 'properties.id')
+          .andOn('inspection.user_id', db.raw('?', [user_id])),
+      )
       .groupBy(
         'properties.id',
+        'inspection.*',
         'offer_letter.purchase_type',
         'property_closing.*',
         'offer_letter.offer_letter_status',
@@ -289,6 +296,21 @@ export class PropertyRepository implements IPropertyRepository {
     if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
       propertyQuery.select(db.raw('NULL AS documents'))
     }
+
+    if (user_id) {
+      propertyQuery = propertyQuery.select(
+        db.raw(
+          `(SELECT EXISTS (
+              SELECT 1 FROM property_watchlist
+              WHERE property_watchlist.property_id = properties.id
+              AND property_watchlist.user_id = ?
+            )) AS is_whitelisted`,
+          [user_id],
+        ),
+      )
+    }
+
+    console.log({ sql: propertyQuery.toSQL() })
 
     // Query for user eligibility
     const eligibilityQuery = user_id
@@ -315,11 +337,18 @@ export class PropertyRepository implements IPropertyRepository {
       .where('property_id', id)
       .first()
 
-    const [propertyData, eligibilityData, escrowStatus] = await Promise.all([
+    let [propertyData, eligibilityData, escrowStatus] = await Promise.all([
       propertyQuery.first(),
       eligibilityQuery,
       escrowStatusQuery,
     ])
+
+    propertyData = {
+      ...propertyData,
+      is_whitelisted:
+        propertyData.is_whitelisted === true ||
+        propertyData.is_whitelisted === 't',
+    }
 
     return {
       ...propertyData,

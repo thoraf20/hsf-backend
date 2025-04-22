@@ -40,48 +40,60 @@ export class InspectionService {
       input.property_id,
       user_id,
     )
-  
-    const isVideoChat = input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT
-  
+
+    const isVideoChat =
+      input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT
+
     if (isVideoChat && !input.payment_type) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         `Payment is required for ${InspectionMeetingType.VIDEO_CHAT}`,
       )
     }
-  
+
     const trx = await db.transaction()
     let transactionData = {} as any
-  
+
+
     try {
       const transaction_id = generateTransactionId()
-  
+
       if (isVideoChat) {
-        const [paymentResponse] = await Promise.all([
+        const paymentResponse = await
           this.payment.makePayment(PaymentEnum.PAYSTACK, {
             amount: 1000,
-            email: input.email,
-            metadata: { user_id, transaction_id, paymentType: PaymentType.INSPECTION},
-          }),
+            email: input.email, 
+            metadata: {
+              user_id,
+              transaction_id,
+              paymentType: PaymentType.INSPECTION,
+            },
+          })
+        
           this.transaction.saveTransaction({
             user_id,
             transaction_type: PaymentType.INSPECTION,
             amount: 1000,
-            reference: transactionData.reference,
+            property_id: input.property_id,
+            reference: paymentResponse.reference,
             status: TransactionEnum.PENDING,
             transaction_id,
           }),
-        ])
+      
         transactionData = paymentResponse
       }
-  
+
       const { amount, payment_type, ...inspectionData } = input
-  
-      const scheduledInspection = await this.inspectionRepository.createInpection({
-        ...inspectionData,
-        meet_link: input.meet_link || '',
-        user_id,
-      }, trx)
+
+      const scheduledInspection =
+        await this.inspectionRepository.createInpection(
+          {
+            ...inspectionData,
+            meet_link: input.meet_link || '',
+            user_id,
+          },
+          trx,
+        )
 
       if (isVideoChat && input.meet_link && input.meeting_platform) {
         await syncToCalendar({
@@ -93,18 +105,21 @@ export class InspectionService {
         })
       }
       await this.sendEmailsWithRetry(input)
-  
+
       await trx.commit()
-  
+
       return { ...scheduledInspection, transactionData }
-  
     } catch (error) {
       await trx.rollback()
       throw error
     }
   }
-  
-  private async sendEmailsWithRetry(input: Inspection, retries = 3, delay = 1000): Promise<void> {
+
+  private async sendEmailsWithRetry(
+    input: Inspection,
+    retries = 3,
+    delay = 1000,
+  ): Promise<void> {
     for (let attempt = 1; attempt <= retries; attempt++) {
       try {
         if (input.meet_link && input.meeting_platform) {
@@ -115,25 +130,24 @@ export class InspectionService {
             input.inspection_time,
             input.inspection_meeting_type,
             input.meeting_platform,
-            input.meet_link
+            input.meet_link,
           )
         }
-  
-         emailTemplates.sendScheduleInspectionInpersonEmail(
+
+        emailTemplates.sendScheduleInspectionInpersonEmail(
           input.email,
           input.full_name,
           input.inspection_date,
           input.inspection_time,
-          input.inspection_meeting_type
+          input.inspection_meeting_type,
         )
-        return 
+        return
       } catch (err) {
         if (attempt === retries) throw err
-        await new Promise(res => setTimeout(res, delay * attempt)) // exponential backoff
+        await new Promise((res) => setTimeout(res, delay * attempt)) // exponential backoff
       }
     }
   }
-  
 
   public async getInspectionSchedule(user_id: string): Promise<Inspection[]> {
     const Inspection =

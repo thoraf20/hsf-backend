@@ -8,7 +8,7 @@ import { Email } from '../domain/entities/Email';
 
 const sendMailInWorker = (mailOptions: Email): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(path.resolve(__dirname, 'worker.js'));
+    const worker = new Worker(path.resolve(__dirname, 'worker.ts'));
 
     worker.postMessage(mailOptions);
 
