@@ -1,5 +1,5 @@
 import { PropertyRepository } from '@infrastructure/repositories/property/PropertyRepository'
-import { manageProperty } from '@application/useCases/Admin/ManageProperty'
+import { manageProperty } from '@use-cases/Super Admin/ManageProperty'
 import { Router } from 'express'
 import { MangagePropertyController } from '@presentation/controllers/Admin/ManageProperty.controller'
 import {
@@ -24,7 +24,11 @@ import { ApplicationRepository } from '@repositories/property/ApplicationResposi
 const managePropertyRoute: Router = Router()
 const application = new ApplicationRepository()
 const purchasrRepo = new PropertyPurchaseRepository()
-const service = new manageProperty(new PropertyRepository(), purchasrRepo, application)
+const service = new manageProperty(
+  new PropertyRepository(),
+  purchasrRepo,
+  application,
+)
 const controller = new MangagePropertyController(service, purchasrRepo)
 
 managePropertyRoute.get(
