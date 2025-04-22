@@ -11,7 +11,10 @@ export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
   private readonly applicationRepository: IApplicationRespository
-  constructor(propertyRepository: IPropertyRepository, applicationRepository: IApplicationRespository) {
+  constructor(
+    propertyRepository: IPropertyRepository,
+    applicationRepository: IApplicationRespository,
+  ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
@@ -149,7 +152,10 @@ export class PropertyService {
     user_id: string,
     filters: PropertyFilters,
   ): Promise<SeekPaginationResult<any>> {
-    return await this.applicationRepository.getAllUserApplication(user_id, filters)
+    return await this.applicationRepository.getAllUserApplication(
+      user_id,
+      filters,
+    )
   }
 
   public async shareProperty(
@@ -157,14 +163,14 @@ export class PropertyService {
     user_id: string,
   ): Promise<void> {
     const property = await this.utilsProperty.getIfPropertyExist(
-      input.property_id
+      input.property_id,
     )
 
     const shared = await this.propertyRepository.findSharedProperty(
       input.property_id,
       user_id,
     )
-   
+
     if (shared) {
       this.sharedEmailProperty(
         input.recipient_email,
@@ -234,7 +240,6 @@ export class PropertyService {
     property_id: string,
     user_id: string,
   ): Promise<void | boolean> {
-
     await this.utilsProperty.getIfPropertyExist(property_id)
     const checkIfViewsIsRecorded =
       await this.propertyRepository.findIfUserAlreadyViewProperty(
@@ -247,11 +252,14 @@ export class PropertyService {
     await this.propertyRepository.viewProperty({ property_id, user_id })
   }
 
-
-  async getApplicationById (application_id: string): Promise<Properties> {
-    const application = await this.applicationRepository.getApplicationById(application_id)
-    if(!application) {
-        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `Unable to get application`)
+  async getApplicationById(application_id: string): Promise<Properties> {
+    const application =
+      await this.applicationRepository.getApplicationById(application_id)
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Unable to get application`,
+      )
     }
 
     return await this.applicationRepository.getApplicationById(application_id)
