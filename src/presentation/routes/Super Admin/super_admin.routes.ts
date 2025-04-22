@@ -8,11 +8,12 @@ import {
 } from '../index.t'
 import { AgentsSchema } from '@application/requests/dto/adminValidator'
 import { AdminController } from '@controllers/Admin/Admin.controller'
-import { Admin } from '@application/useCases/Admin/Admin'
+import { Agents } from '@use-cases/Super Admin/agent'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 
 const adminRoute: Router = Router()
 
-const service = new Admin(new UserRepository())
+const service = new Agents(new UserRepository(), new DeveloperRespository())
 const controller = new AdminController(service)
 
 adminRoute.post(

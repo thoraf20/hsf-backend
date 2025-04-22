@@ -1,7 +1,7 @@
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { User } from '@domain/entities/User'
 import { RedisClient } from '@infrastructure/cache/redisClient'
-import { ExistingUsers } from '../utils'
+import { DeveloperUtils, ExistingUsers } from '../utils'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import {
@@ -11,14 +11,20 @@ import {
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { Role } from '@domain/enums/rolesEmun'
+import { Developer, DevelopeReg } from '@entities/Developer'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 
-export class Admin {
+export class Agents {
   private userRepository: IUserRepository
+  private readonly developerRepository: IDeveloperRepository
   private readonly client = new RedisClient()
   private readonly existingUsers: ExistingUsers
-  constructor(userRepository: IUserRepository) {
+  private readonly developer: DeveloperUtils
+  constructor(userRepository: IUserRepository, developerRepository: IDeveloperRepository) {
     this.userRepository = userRepository
+    this.developerRepository = developerRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
+    this.developer = new DeveloperUtils(this.developerRepository)
   }
 
   public async createAdmin(input: User): Promise<User> {
@@ -33,9 +39,44 @@ export class Admin {
     return user
   }
 
-  public async createDevelopers () {
+  public async createDevelopers (input: DevelopeReg):Promise<DevelopeReg> {
+    await Promise.all([ 
+      this.developer.findIfCompanyNameExist(input.company_name),
+      this.developer.findIfCompanyRegistrationNumberExist(
+        input.company_registration_number,
+      ),
+      await this.existingUsers.beforeCreateEmail(input.email),
+      await this.existingUsers.beforeCreatePhone(input.phone_number),
+      this.developer.findIfCompanyEmailExist(input.company_email),
+    ])
+    const password = await this.userRepository.hashedPassword(input.password)
+    const findRole = await this.userRepository.getRoleByName(Role.DEVELOPER)
+    let user = await this.userRepository.create(
+      new User({ ...input, password, is_default_password: true, role_id: findRole.id }),
+    )
+    const developer = await this.userRepository.create(
+      new Developer({
+        company_email: input.company_email,
+        company_name: input.company_name,
+        company_registration_number: input.company_registration_number,
+        office_address: input.office_address,
+        state: input.state,
+        city: input.city,
+        developer_role: input.developer_role,
+        years_in_business: input.years_in_business,
+        specialization: input.specialization,
+        region_of_operation: input.region_of_operation,
+        company_image: input.company_image,
+        documents: input.documents
+       }),
+    )
+   
+    console.log(`Developer with id ${user.id} has been created`)
+    return user
     
   }
+
+
   public async inviteAgents(input: User): Promise<User> {
     await this.existingUsers.beforeCreateEmail(input.email)
     await this.existingUsers.beforeCreatePhone(input.phone_number)

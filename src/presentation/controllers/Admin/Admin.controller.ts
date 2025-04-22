@@ -1,5 +1,8 @@
-import { ApiResponse, createResponse } from '@presentation/response/responseType'
-import { Admin } from '@application/useCases/Admin/Admin'
+import {
+  ApiResponse,
+  createResponse,
+} from '@presentation/response/responseType'
+import { Admin } from '@use-cases/Super Admin/agent'
 import { User } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 

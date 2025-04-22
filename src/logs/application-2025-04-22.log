@@ -3,3 +3,28 @@
 2025-04-22 15:50:37 [INFO]: Connected to Redis. Ping response: PONG
 2025-04-22 15:50:44 [INFO]: Connected to Redis. Ping response: PONG
 2025-04-22 15:51:11 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 15:52:09 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:08:15 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:17:43 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:18:05 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:18:58 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:19:02 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:49:37 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:50:04 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:50:30 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:50:35 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:52:05 [INFO]: Redis: Key "password_reset-190561" set successfully.
+2025-04-22 18:52:05 [INFO]: Email was sent successfully
+2025-04-22 18:52:05 [ERROR]: Error: Cannot find module 'C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\workers\worker.js'
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1225:15)
+    at Function.Module._resolveFilename (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\tsconfig-paths\src\register.ts:115:36)
+    at Function._load (node:internal/modules/cjs/loader:1051:27)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:173:12)
+    at MessagePort.<anonymous> (node:internal/main/worker_thread:188:26)
+    at MessagePort.[nodejs.internal.kHybridDispatch] (node:internal/event_target:831:20)
+    at MessagePort.<anonymous> (node:internal/per_context/messageport:23:28)
+2025-04-22 18:53:52 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:54:02 [INFO]: Redis: Key "password_reset-245685" set successfully.
+2025-04-22 18:54:02 [INFO]: Email was sent successfully
+2025-04-22 18:54:41 [INFO]: Connected to Redis. Ping response: PONG
+2025-04-22 18:54:50 [INFO]: Connected to Redis. Ping response: PONG

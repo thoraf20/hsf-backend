@@ -7,6 +7,7 @@ import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
 import { Inspection } from '@domain/entities/Inspection'
 import { IEnquiresRepository } from '@interfaces/IEnquiresRepository'
 import { Enquiry } from '@entities/Enquires'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 
 export class ExistingUsers {
   private userRepository: IUserRepository
@@ -35,6 +36,52 @@ export class ExistingUsers {
     }
   }
 }
+
+export class DeveloperUtils { 
+  private developerRepository: IDeveloperRepository
+
+  constructor(developerRepository: IDeveloperRepository) {
+    this.developerRepository = developerRepository
+  }
+
+  public async findIfCompanyNameExist(company_name: string): Promise<void> {
+    const company = await this.developerRepository.getCompanyName(company_name)
+
+    if (company) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Company name already exist',
+      )
+    }
+  }
+  public async findIfCompanyRegistrationNumberExist(
+    company_registration_number: string,
+  ): Promise<void> {
+    const company = await this.developerRepository.getCompanyRegistrationNumber(
+      company_registration_number,
+    )
+
+    if (company) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Company registration number already exist',
+      )
+    }
+  }
+  public async findIfCompanyEmailExist(company_email: string): Promise<void> {
+    const company = await this.developerRepository.getCompanyEmail(company_email)
+
+    if (company) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Company email already exist',
+      )
+    }
+  }
+  
+}
+
+
 
 export class PropertyBaseUtils {
   private propertyRepository: IPropertyRepository
@@ -108,7 +155,7 @@ export class PropertyBaseUtils {
     return properties
   }
 
-  find 
+
 
   public async findIfWatchListIsAdded(
     property_id: string,
