@@ -33,6 +33,9 @@ export class Admin {
     return user
   }
 
+  public async createDevelopers () {
+    
+  }
   public async inviteAgents(input: User): Promise<User> {
     await this.existingUsers.beforeCreateEmail(input.email)
     await this.existingUsers.beforeCreatePhone(input.phone_number)
