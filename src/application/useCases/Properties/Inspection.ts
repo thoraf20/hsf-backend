@@ -51,7 +51,7 @@ export class InspectionService {
     }
   
     const trx = await db.transaction()
-    let transactionData = {}
+    let transactionData = {} as any
   
     try {
       const transaction_id = generateTransactionId()
@@ -67,6 +67,7 @@ export class InspectionService {
             user_id,
             transaction_type: PaymentType.INSPECTION,
             amount: 1000,
+            reference: transactionData.reference,
             status: TransactionEnum.PENDING,
             transaction_id,
           }),

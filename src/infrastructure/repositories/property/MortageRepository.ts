@@ -114,6 +114,8 @@ export class MortageRepository implements IMortageRespository {
     await this.transactionRepo.saveTransaction({
       user_id,
       transaction_type: paymentType,
+      property_id,
+      reference : paymentTransaction.reference,
       amount: payment.amount as number,
       status: TransactionEnum.PENDING,
       transaction_id

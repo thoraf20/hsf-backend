@@ -9,6 +9,7 @@ export class Payment extends PartialInstantiable<Payment> {
     paymentType?: string;
     paymentMethod?: string;
     user_id?: string;
+    reference?: string;
     transaction_id?: string;
     status?: "pending" | "success" | "failed";
     metadata?: Record<string, any>
