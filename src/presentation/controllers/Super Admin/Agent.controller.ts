@@ -6,7 +6,7 @@ import { Agents } from '@use-cases/Super Admin/agent'
 import { User } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 
-export class AdminController {
+export class AgentsController {
   constructor(private readonly adminService: Agents) {}
 
   public async inviteAgents(input: User): Promise<ApiResponse<any>> {
@@ -18,3 +18,4 @@ export class AdminController {
     )
   }
 }
+

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import webhook from './webbook/utils.routes'
 import propertyRoute from '@routes/property/property.routes'
 import inspectionRoutes from '@routes/property/inspection.routes'
-import adminRoute from '@routes/Super Admin/super_admin.routes'
+import agentsRoute from '@routes/Super Admin/super_admin.routes'
 import userRoutes from '@routes/userRoutes/user.routes'
 import { authenticate } from '@routes/index.t'
 import authRoutes from '@routes/authRoutes/auth.routes'
@@ -22,7 +22,7 @@ routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoute)
 routes.use('/purchase-property', authenticate, limiter, propertyPurchaseRoutes)
 routes.use('/inspection', authenticate, limiter, inspectionRoutes)
-routes.use('/admin', authenticate, limiter, adminRoute)
+routes.use('/agents', authenticate, limiter, agentsRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)
 routes.use('/user', authenticate, limiter, userRoutes)
 routes.use('/auth', authRoutes)
