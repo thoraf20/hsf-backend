@@ -6,9 +6,18 @@ import { ApplicationCustomError } from '../middleware/errors/customError';
 import { StatusCodes } from 'http-status-codes';
 import { Email } from '../domain/entities/Email';
 
+const useScript = 'js' 
+let workerScript : any;
+if(useScript === 'js') {
+   workerScript = path.resolve(__dirname, 'worker.js')  
+} else if(useScript === 'ts') {
+    workerScript = path.resolve(__dirname, 'worker.ts')  
+  } else {
+    throw new Error('Invalid script type. Use "js" or "ts".')
+  }
 const sendMailInWorker = (mailOptions: Email): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const worker = new Worker(path.resolve(__dirname, 'worker.ts'));
+    const worker = new Worker(workerScript);
 
     worker.postMessage(mailOptions);
 
