@@ -73,8 +73,10 @@ export class Agents {
        }),
     )
     const otp = generateRandomSixNumbers()
+    const encryptedOtp = await this.userRepository.hashedPassword(otp.toString())
+
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
-    const details = { id: user.id, otp, type: OtpEnum.DEVELOPER_EMAIL_VERIFICATION, password}
+    const details = { id: user.id, otp: encryptedOtp, type: OtpEnum.DEVELOPER_EMAIL_VERIFICATION, password}
     await this.client.setKey(key, details, 60)
     user = await this.userRepository.findById(user.id)
     return { ...user, ...developer }

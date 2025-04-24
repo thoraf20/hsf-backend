@@ -7,16 +7,16 @@ import {
   validateRequest,
 } from '../index.t'
 import { AgentsSchema } from '@application/requests/dto/adminValidator'
-import { AdminController } from '@controllers/Admin/Admin.controller'
+import { AgentsController } from '@controllers/Super Admin/Agent.controller'
 import { Agents } from '@use-cases/Super Admin/agent'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 
-const adminRoute: Router = Router()
+const agentsRoute: Router = Router()
 
 const service = new Agents(new UserRepository(), new DeveloperRespository())
-const controller = new AdminController(service)
+const controller = new AgentsController(service)
 
-adminRoute.post(
+agentsRoute.post(
   '/invite',
   requireRoles(Role.SUPER_ADMIN),
   validateRequest(AgentsSchema),
@@ -27,4 +27,4 @@ adminRoute.post(
   }),
 )
 
-export default adminRoute
+export default agentsRoute

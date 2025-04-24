@@ -1,7 +1,7 @@
 import { PropertyRepository } from '@infrastructure/repositories/property/PropertyRepository'
 import { manageProperty } from '@use-cases/Super Admin/ManageProperty'
 import { Router } from 'express'
-import { MangagePropertyController } from '@presentation/controllers/Admin/ManageProperty.controller'
+import { MangagePropertyController } from '@controllers/Super Admin/ManageProperty.controller'
 import {
   asyncMiddleware,
   requireRoles,
