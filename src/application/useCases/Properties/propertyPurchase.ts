@@ -1,4 +1,8 @@
-import { FinancialOptionsEnum, OfferLetterStatusEnum, PurchaseEnum } from '@domain/enums/propertyEnum'
+import {
+  FinancialOptionsEnum,
+  OfferLetterStatusEnum,
+  PurchaseEnum,
+} from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
 import {
   EscrowInformationStatus,
@@ -48,7 +52,6 @@ export class PropertyPurchase {
   }
 
   public async checkoutDuplicate(property_id: string, user_id: string) {
-    console.log(property_id)
     await this.utilsProperty.getIfPropertyExist(property_id)
     const [alreadyApprovedAndSoldOut, PendingRequest] = await Promise.all([
       this.purchaseRepository.checkIfRequestForOfferLetterIsApproved(
@@ -93,95 +96,128 @@ export class PropertyPurchase {
   }
 
   public async purchaseProperty(input: any, user_id: string) {
-    const { property_id, purchase_type, request_type, email, documents, dip_status, escrow_id, loan_acceptance_status } = input;
-  
-    await this.utilsProperty.getIfPropertyExist(property_id);
-    const transaction_id = generateTransactionId();
-    if (purchase_type === FinancialOptionsEnum.OUTRIGHT || purchase_type === FinancialOptionsEnum.INSTALLMENT) {
+    const {
+      property_id,
+      purchase_type,
+      request_type,
+      email,
+      documents,
+      dip_status,
+      escrow_id,
+      loan_acceptance_status,
+    } = input
+
+    await this.utilsProperty.getIfPropertyExist(property_id)
+    const transaction_id = generateTransactionId()
+    if (
+      purchase_type === FinancialOptionsEnum.OUTRIGHT ||
+      purchase_type === FinancialOptionsEnum.INSTALLMENT
+    ) {
       switch (request_type) {
         case PurchaseEnum.OfferLetter:
-          return await this.requestForOfferLetter(property_id, purchase_type, user_id);
-  
+          return await this.requestForOfferLetter(
+            property_id,
+            purchase_type,
+            user_id,
+          )
+
         case PurchaseEnum.PROPERTY_CLOSSING:
-          await this.checkIfPropertyClosingExist(property_id, user_id);
-          return await this.requestForPropertyClosing(property_id, user_id);
-  
+          await this.checkIfPropertyClosingExist(property_id, user_id)
+          return await this.requestForPropertyClosing(property_id, user_id)
+
         case PurchaseEnum.ESCROW_ATTENDANCE:
-          return await this.confirmEscrowAttendanc(escrow_id);
-  
+          return await this.confirmEscrowAttendanc(escrow_id)
+
         default:
-          return;
+          return
       }
     }
-  
+
     // MORTGAGE flow
     if (purchase_type === FinancialOptionsEnum.MORTGAGE) {
       switch (request_type) {
         case PurchaseEnum.ACCEPT_DIP:
-          const dip = await this.mortgageRespository.acceptDip({ dip_status, property_id, user_id });
+          const dip = await this.mortgageRespository.acceptDip({
+            dip_status,
+            property_id,
+            user_id,
+          })
           await this.applicationRepository.updateApplication({
             property_id,
             document_upload_id: dip.dip_id,
             user_id,
-          });
-          return dip;
-  
+          })
+          return dip
+
         case PurchaseEnum.DUE_DELIGENT:
         case PurchaseEnum.BROKER_FEE:
         case PurchaseEnum.MANAGEMENT_FEE:
-          const metaData = { paymentType: request_type, user_id, transaction_id };
+          const metaData = {
+            paymentType: request_type,
+            user_id,
+            transaction_id,
+          }
           return await this.mortgageRespository.payForMortageProcess(
-            {amount: "100000", email },
+            { amount: '100000', email },
             metaData,
             request_type,
             user_id,
             transaction_id,
-            property_id
-          );
-  
+            property_id,
+          )
+
         case PurchaseEnum.DOCUMENT_UPLOAD:
           const documentUpload = await this.mortgageRespository.uploadDocument({
             documents: JSON.stringify(documents),
             user_id,
             property_id,
-            document_type: input.request_type
-          });
+            document_type: input.request_type,
+          })
           await this.applicationRepository.updateApplication({
             property_id,
             document_upload_id: documentUpload.document_upload_id,
             user_id,
-            
-          });
-          return documentUpload;
-  
+          })
+          return documentUpload
+
         case PurchaseEnum.PRECEDENT_DOC:
-          const precedentUpload = await this.mortgageRespository.uploadPrecedentDocument({
-            precedent_documents: JSON.stringify(documents),
-            user_id,
-            property_id,
-            precedent_document_type: input.request_type
-          });
+          const precedentUpload =
+            await this.mortgageRespository.uploadPrecedentDocument({
+              precedent_documents: JSON.stringify(documents),
+              user_id,
+              property_id,
+              precedent_document_type: input.request_type,
+            })
           await this.applicationRepository.updateApplication({
             property_id,
             document_upload_id: precedentUpload.precedent_document_upload_id,
             user_id,
-          });
-          return precedentUpload;
-  
+          })
+          return precedentUpload
+
         case PurchaseEnum.ACCEPT_LOAN:
-          const loanOffer = await this.mortgageRespository.getLoanOfferById(property_id, user_id);
+          const loanOffer = await this.mortgageRespository.getLoanOfferById(
+            property_id,
+            user_id,
+          )
           if (!loanOffer) {
-            throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `You have not been offered loan`);
+            throw new ApplicationCustomError(
+              StatusCodes.BAD_REQUEST,
+              `You have not been offered loan`,
+            )
           }
-          await this.mortgageRespository.updateLoanOffer(loan_acceptance_status, property_id, user_id);
-          return;
-  
+          await this.mortgageRespository.updateLoanOffer(
+            loan_acceptance_status,
+            property_id,
+            user_id,
+          )
+          return
+
         default:
-          return;
+          return
       }
     }
   }
-  
 
   public async confirmEscrowAttendanc(escrowId: string): Promise<any> {
     await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId)
@@ -290,6 +326,4 @@ export class PropertyPurchase {
     const offerLetter = await this.purchaseRepository.getOfferLetter(user_id)
     return offerLetter
   }
-
-  
 }

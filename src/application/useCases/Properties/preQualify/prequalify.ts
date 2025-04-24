@@ -58,6 +58,7 @@ export class preQualifyService {
           input.property_id,
           user_id,
         )
+
       if (application) {
         await this.applicationRepository.updateApplication({
           property_id: input.property_id,

@@ -4,18 +4,16 @@ import { Transaction } from '@entities/Transaction'
 import redis from '@infrastructure/cache/redisClient'
 
 export class SseService {
-  async createStream(res: any, transactionId: string) {
+  async createStream(res: any, transaction: Transaction) {
     res.setHeader('Content-Type', 'text/event-stream')
     res.setHeader('Cache-Control', 'no-cache')
     res.setHeader('Connection', 'keep-alive')
-    res.setHeader('Access-Control-Allow-Origin', '*') // Adjust for production
+    res.setHeader('X-Accel-Buffering', 'no')
 
     //Create new redis subscriber client
     const redisSubscriber = redis.duplicate()
-    await redisSubscriber.connect()
-
     // Subscribe to the Redis channel
-    await redisSubscriber.subscribe(transactionId)
+    await redisSubscriber.subscribe(transaction.id)
 
     redisSubscriber.on('message', (channel, message) => {
       const data: Transaction = JSON.parse(message)
@@ -26,10 +24,12 @@ export class SseService {
       ) {
         res.write(`data: ${message}\n\n`)
         res.end()
-        redisSubscriber.unsubscribe(transactionId)
+        redisSubscriber.unsubscribe(data.id)
         redisSubscriber.quit()
       }
     })
+
+    res.write(`data: ${JSON.stringify(transaction)}\n\n`)
 
     return redisSubscriber
   }

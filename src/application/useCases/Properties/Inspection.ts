@@ -54,37 +54,8 @@ export class InspectionService {
     const trx = await db.transaction()
     let transactionData = {} as any
 
-
+    const { amount, payment_type, ...inspectionData } = input
     try {
-      const transaction_id = generateTransactionId()
-
-      if (isVideoChat) {
-        const paymentResponse = await
-          this.payment.makePayment(PaymentEnum.PAYSTACK, {
-            amount: 1000,
-            email: input.email, 
-            metadata: {
-              user_id,
-              transaction_id,
-              paymentType: PaymentType.INSPECTION,
-            },
-          })
-        
-          this.transaction.saveTransaction({
-            user_id,
-            transaction_type: PaymentType.INSPECTION,
-            amount: 1000,
-            property_id: input.property_id,
-            reference: paymentResponse.reference,
-            status: TransactionEnum.PENDING,
-            transaction_id,
-          }),
-      
-        transactionData = paymentResponse
-      }
-
-      const { amount, payment_type, ...inspectionData } = input
-
       const scheduledInspection =
         await this.inspectionRepository.createInpection(
           {
@@ -94,6 +65,34 @@ export class InspectionService {
           },
           trx,
         )
+      const transaction_id = generateTransactionId()
+
+      if (isVideoChat) {
+        const paymentResponse = await this.payment.makePayment(
+          PaymentEnum.PAYSTACK,
+          {
+            amount: 1000,
+            email: input.email,
+            metadata: {
+              user_id,
+              inspection_id: scheduledInspection.id,
+              transaction_id,
+              paymentType: PaymentType.INSPECTION,
+            },
+          },
+        )
+
+        this.transaction.saveTransaction({
+          user_id,
+          transaction_type: PaymentType.INSPECTION,
+          amount: 1000,
+          property_id: input.property_id,
+          reference: paymentResponse.reference,
+          status: TransactionEnum.PENDING,
+          transaction_id,
+        }),
+          (transactionData = paymentResponse)
+      }
 
       if (isVideoChat && input.meet_link && input.meeting_platform) {
         await syncToCalendar({
@@ -107,8 +106,7 @@ export class InspectionService {
       await this.sendEmailsWithRetry(input)
 
       await trx.commit()
-
-      return { ...scheduledInspection, transactionData }
+      return { ...scheduledInspection, ...(isVideoChat && { transactionData }) }
     } catch (error) {
       await trx.rollback()
       throw error
@@ -163,9 +161,9 @@ export class InspectionService {
     return Inspection
   }
 
-  public async getInspectionById(property_id: string): Promise<Inspection> {
+  public async getInspectionById(schedule_id: string): Promise<Inspection> {
     const inspection =
-      await this.inspectionRepository.getScheduleInspectionById(property_id)
+      await this.inspectionRepository.getScheduleInspectionById(schedule_id)
     return inspection
   }
 }

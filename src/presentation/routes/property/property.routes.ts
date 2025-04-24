@@ -41,7 +41,6 @@ propertyRoute.get(
   optionalAuth,
   asyncMiddleware(async (req, res) => {
     const { query, user } = req as any
-    console.log(query)
     const properties = await controller.getAllProperties(
       query,
       user.role,
@@ -69,8 +68,7 @@ propertyRoute.get(
   // limiter,
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
-    console.log(user)
-    console.log(user)
+
     const properties = await controller.getWatchlistProperty(user.id, query)
     res.status(properties.statusCode).json(properties)
   }),
@@ -194,7 +192,6 @@ propertyRoute.get(
   authenticate,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req
-    console.log(user.id)
     const property = await controller.viewProperty(params.property_id, user.id)
     res.status(property.statusCode).json(property)
   }),

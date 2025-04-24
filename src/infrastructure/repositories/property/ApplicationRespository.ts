@@ -22,8 +22,6 @@ export class ApplicationRepository implements IApplicationRespository {
 
     if (filters == null || Object.keys(filters).length < 1) return q
 
-    console.log(filters)
-
     const createUnion = (searchType: SearchType) =>
       searchType === SearchType.EXCLUSIVE
         ? (q: Knex.QueryBuilder<any, any[]>) => q.and
@@ -181,9 +179,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'p.created_at',
         'p.updated_at',
         'p.deleted_at',
-        db.raw(
-          `DATE_PART('day', NOW() - a.created_at) AS days_Applied`,
-        ),
+        db.raw(`DATE_PART('day', NOW() - a.created_at) AS days_Applied`),
       )
       .limit(perPage)
       .offset(offset)
@@ -206,15 +202,39 @@ export class ApplicationRepository implements IApplicationRespository {
   async getApplicationById(application_id: string): Promise<Properties> {
     const result = await db('application as a')
       .leftJoin('properties as p', 'a.property_id', 'p.id')
-      .leftJoin('escrow_status as es', 'a.escrow_status_id', 'es.escrow_status_id')
-      .leftJoin('escrow_information as ei', 'a.escrow_information_id', 'ei.escrow_id')
-      .leftJoin('property_closing as pc', 'a.property_closing_id', 'pc.property_closing_id')
+      .leftJoin(
+        'escrow_status as es',
+        'a.escrow_status_id',
+        'es.escrow_status_id',
+      )
+      .leftJoin(
+        'escrow_information as ei',
+        'a.escrow_information_id',
+        'ei.escrow_id',
+      )
+      .leftJoin(
+        'property_closing as pc',
+        'a.property_closing_id',
+        'pc.property_closing_id',
+      )
       .leftJoin('prequalify_status as ps', 'a.prequalifier_id', 'ps.status_id')
       .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
-      .leftJoin('document_upload as du', 'a.document_upload_id', 'du.document_upload_id')
-      .leftJoin('precedent_document_upload as pdu', 'a.precedent_document_upload_id', 'pdu.precedent_document_upload_id')
-      .leftJoin('replayment_plan as rp', 'a.payment_date_id', 'rp.payment_date_id')
+      .leftJoin(
+        'document_upload as du',
+        'a.document_upload_id',
+        'du.document_upload_id',
+      )
+      .leftJoin(
+        'precedent_document_upload as pdu',
+        'a.precedent_document_upload_id',
+        'pdu.precedent_document_upload_id',
+      )
+      .leftJoin(
+        'replayment_plan as rp',
+        'a.payment_date_id',
+        'rp.payment_date_id',
+      )
       .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
       .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
       .select(
@@ -234,10 +254,9 @@ export class ApplicationRepository implements IApplicationRespository {
       )
       .where('a.application_id', application_id)
       .first()
-  
+
     return result
   }
-  
 
   async updateApplication(input: Application): Promise<void> {
     await db('application')
