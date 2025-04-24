@@ -56,24 +56,24 @@ export class preQualifyService {
     input: Partial<preQualify>,
     user_id: string,
   ): Promise<void | Eligibility> {
-    const [duplicateEmail, checkDuplicatePhone] = await Promise.all([
-      this.prequalify.checkDuplicateEmail(input.email),
-      this.prequalify.checkDuplicatePhone(input.phone_number),
-    ])
+    // const [duplicateEmail, checkDuplicatePhone] = await Promise.all([
+    //   this.prequalify.checkDuplicateEmail(input.email),
+    //   this.prequalify.checkDuplicatePhone(input.phone_number),
+    // ])
 
-    if (duplicateEmail) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        `Email is already on our record`,
-      )
-    }
+    // if (duplicateEmail) {
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.BAD_REQUEST,
+    //     `Email is already on our record`,
+    //   )
+    // }
 
-    if (checkDuplicatePhone) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        `Phone is already on our record`,
-      )
-    }
+    // if (checkDuplicatePhone) {
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.BAD_REQUEST,
+    //     `Phone is already on our record`,
+    //   )
+    // }
 
     const checkSucessfullPreQualifier =
       await this.prequalify.getSuccessfulPrequalifyRequestByUser(user_id)

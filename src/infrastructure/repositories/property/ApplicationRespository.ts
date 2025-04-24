@@ -257,7 +257,7 @@ export class ApplicationRepository implements IApplicationRespository {
     return result
   }
 
-  async updateApplication(input: Application): Promise<void> {
+  async updateApplication(input: Partial<Application>): Promise<void> {
     await db('application')
       .update(input)
       .where('application_id', input.application_id)

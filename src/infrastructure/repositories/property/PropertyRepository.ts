@@ -132,6 +132,10 @@ export class PropertyRepository implements IPropertyRepository {
         `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
       )
     }
+
+    if (filters.location) {
+      q = add(q).whereRaw(`${tablename}state ILIKE '%${filters.location}%'`)
+    }
     // q = q.or.whereRaw(
     //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
     // )

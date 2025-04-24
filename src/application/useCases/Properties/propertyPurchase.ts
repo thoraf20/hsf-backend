@@ -1,7 +1,5 @@
-import { preQualifyStatus } from '@domain/enums/prequalifyEnum'
 import {
   ApplicationStatus,
-  FinancialOptionsEnum,
   OfferLetterStatusEnum,
   PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
