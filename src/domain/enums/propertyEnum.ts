@@ -9,17 +9,18 @@ export enum PreQualifierEnum {
   INSTALLMENT = 'Installment',
 }
 
-export enum PurchaseEnum {
+export enum PropertyRequestTypeEnum {
   OfferLetter = 'Offer Letter',
   PROPERTY_CLOSSING = 'Property Closing',
+  ELIGIBILITY_CHECK = 'Eligibility Check',
   ESCROW_ATTENDANCE = 'Escrow Attendance',
-  DUE_DELIGENT = "PAYMENT_FOR_DUE_DELIGENT",
-  BROKER_FEE = "PAYMENT_FOR_BROKER_FEE",
-  MANAGEMENT_FEE = "PAYMENT_FOR_MANAGEMENT_FEE",
-  ACCEPT_DIP = "Accept Dip",
-  DOCUMENT_UPLOAD = "Document Upload",
-  PRECEDENT_DOC = "Precendent Upload",
-  ACCEPT_LOAN = "Accept Loan"
+  DUE_DELIGENT = 'PAYMENT_FOR_DUE_DELIGENT',
+  BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
+  MANAGEMENT_FEE = 'PAYMENT_FOR_MANAGEMENT_FEE',
+  ACCEPT_DIP = 'Accept Dip',
+  DOCUMENT_UPLOAD = 'Document Upload',
+  PRECEDENT_DOC = 'Precendent Upload',
+  ACCEPT_LOAN = 'Accept Loan',
 }
 
 export enum OfferLetterStatusEnum {
@@ -69,10 +70,26 @@ export enum EscrowMeetingStatus {
   DECLINED = 'Declined',
 }
 
-
 export enum LoanOfferStatus {
-  ACCEPTED = "Accepted",
-  DECLINED = "Declined"
+  ACCEPTED = 'Accepted',
+  DECLINED = 'Declined',
 }
 
+export enum InspectionStatus {
+  PENDING = 'Pending',
+  COMPLETED = 'Completed',
+  CANCELED = 'Canceled',
+}
 
+export enum DIPStatus {
+  DECLINED = 'Declined',
+  ACCEPTED = 'Accepted',
+  REJECTED = 'Rejected',
+}
+
+export enum ApplicationStatus {
+  PENDING = 'Pending',
+  PROCESSING = 'Processing',
+  COMPLETED = 'Completed',
+  REJECTED = 'Rejected',
+}

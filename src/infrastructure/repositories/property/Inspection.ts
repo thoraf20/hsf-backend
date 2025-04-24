@@ -11,7 +11,7 @@ import { Knex } from 'knex'
 export class InspectionRepository implements IInspectionRepository {
   async createInpection(
     inspection: Inspection,
-    trx?: Knex.Transaction
+    trx?: Knex.Transaction,
   ): Promise<Inspection> {
     const query = trx || db
     const [newInspection] = await query('inspection')
@@ -21,10 +21,10 @@ export class InspectionRepository implements IInspectionRepository {
         updated_at: new Date(),
       })
       .returning('*')
-  
+
     return new Inspection(newInspection)
   }
-  
+
   async getAlreadySchedulesInspection(
     property_id: string,
     user_id: string,
@@ -134,8 +134,8 @@ export class InspectionRepository implements IInspectionRepository {
 
   async getScheduleInspectionById(
     inspection_id: string,
-  ): Promise<Inspection & Properties> {
-    const inspection = await db('inspection')
+  ): Promise<(Inspection & Properties) | null> {
+    const inspection = await db<Inspection>('inspection')
       .select(
         'inspection.id as inspection_id',
         'inspection.user_id as home_buyer_id',

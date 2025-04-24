@@ -129,9 +129,10 @@ export class PrequalifyRepository implements IPreQualify {
         'info.personal_information_id',
       )
       .where('ps.loaner_id', user_id)
-      .andWhere('is_approved', true)
+      // .andWhere('is_approved', true)
       .select('ps.*', 'ppi.*', 'info.*')
       .first()
+
     return prequalify
   }
 

@@ -33,8 +33,6 @@ export class PropertyRepository implements IPropertyRepository {
 
     if (filters == null || Object.keys(filters).length < 1) return q
 
-    console.log(filters)
-
     const createUnion = (searchType: SearchType) =>
       searchType === SearchType.EXCLUSIVE
         ? (q: Knex.QueryBuilder<any, any[]>) => q.and
@@ -272,10 +270,16 @@ export class PropertyRepository implements IPropertyRepository {
         'escrow.property_id',
         'properties.id',
       )
+      .leftJoin('application', (qb) => {
+        qb.on('application.property_id', 'properties.id').andOnVal(
+          'application.user_id',
+          user_id ?? null,
+        )
+      })
       .leftJoin('inspection', (qb) =>
         qb
           .on('inspection.property_id', 'properties.id')
-          .andOn('inspection.user_id', db.raw('?', [user_id])),
+          .andOnVal('inspection.user_id', user_id ?? null),
       )
       .groupBy(
         'properties.id',
@@ -309,8 +313,6 @@ export class PropertyRepository implements IPropertyRepository {
         ),
       )
     }
-
-    console.log({ sql: propertyQuery.toSQL() })
 
     // Query for user eligibility
     const eligibilityQuery = user_id
@@ -766,7 +768,6 @@ export class PropertyRepository implements IPropertyRepository {
   }
 
   public async viewProperty(input: Record<string, any>): Promise<void> {
-    console.log(input)
     await db('views').insert(input).returning('*')
   }
 

@@ -23,7 +23,6 @@ export class AuthService {
     this.existingUsers = new ExistingUsers(this.userRepository)
   }
 
-
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {
     await this.existingUsers.beforeCreateEmail(input.email)
     const otp = generateRandomSixNumbers()
@@ -53,7 +52,7 @@ export class AuthService {
     }
 
     const email = regDetails.email
-    delete input.tempId 
+    delete input.tempId
 
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
@@ -72,12 +71,12 @@ export class AuthService {
     return user
   }
 
-
-
   async verifyAccount(otp: string): Promise<any> {
     const emailKey = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const passwordKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${otp}`
-    const details = await this.client.getKey(emailKey) || await this.client.getKey(passwordKey)
+    const details =
+      (await this.client.getKey(emailKey)) ||
+      (await this.client.getKey(passwordKey))
     await this.client.checkAndClearCache(emailKey)
     await this.client.checkAndClearCache(passwordKey)
     if (!details) {
@@ -86,30 +85,30 @@ export class AuthService {
         'Invalid or expired OTP.',
       )
     }
-    
+
     const { email, type, id } =
       typeof details === 'string' ? JSON.parse(details) : details
-    
+
     const tempId = uuidv4()
-    
+
     if (type === OtpEnum.EMAIL_VERIFICATION) {
       const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
       await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
     }
-    
+
     if (type === OtpEnum.PASSWORD_RESET) {
       const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${tempId}`
       console.log(id)
       await this.client.setKey(tempKey, { id, is_email_verified: true }, 600)
     }
-    
+
     await this.client.deleteKey(emailKey)
     await this.client.deleteKey(passwordKey)
-    
+
     return { tempId }
   }
 
-  async resendOtp(email: string): Promise<void |  any> {
+  async resendOtp(email: string): Promise<void | any> {
     const user = await this.userRepository.findByEmail(email)
 
     if (!user) {
@@ -164,7 +163,6 @@ export class AuthService {
     }
 
     const { id } = regDetails
-    console.log(regDetails)
 
     const user = await this.userRepository.findById(id)
 
@@ -188,7 +186,7 @@ export class AuthService {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
     )) as any
- 
+
     if (!user) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
@@ -199,7 +197,6 @@ export class AuthService {
     const lockKey = `${CacheEnumKeys.LOGIN_ATTEMPT_LOCK}-${user.id}`
     await this.client.checkAndClearCache(lockKey)
     const isLocked = await this.client.getKey(lockKey)
- 
 
     if (isLocked) {
       throw new ApplicationCustomError(
@@ -215,9 +212,8 @@ export class AuthService {
 
     if (!isValid) {
       const failedLoginAttempts = (user.failed_login_attempts || 0) + 1
-      console.log(user)
       if (failedLoginAttempts >= 3) {
-        await this.client.setKey(lockKey, true, 600);
+        await this.client.setKey(lockKey, true, 600)
         // Lock account for 10 mins
         await this.userRepository.update(user.id, {
           failed_login_attempts: failedLoginAttempts,
@@ -240,14 +236,12 @@ export class AuthService {
     }
 
     if (user.failed_login_attempts > 0) {
-      await this.userRepository.update(user.id, { failed_login_attempts: 0 })   
+      await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
-
 
     // Generate token
 
     user = await this.userRepository.findById(user.id)
-    console.log(user.role)
     const token = await this.hashData.accessCode(user.user_id, user.role)
     await this.client.deleteKey(lockKey)
     delete user.password

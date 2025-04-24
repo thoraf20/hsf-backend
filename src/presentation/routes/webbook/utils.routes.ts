@@ -21,7 +21,6 @@ WebhookRouter.post(
       .createHmac('sha512', secret)
       .update(JSON.stringify(req.body))
       .digest('hex')
-    console.log(hash)
 
     const signature = req.headers['x-paystack-signature']
 
@@ -50,9 +49,12 @@ WebhookRouter.post(
 
         const { user_id, transaction_type, property_id } = transaction
 
-        await db('transactions')
+        const [updatedTransaction] = await db('transactions')
           .where({ transaction_id })
           .update({ status: TransactionEnum.SUCCESSFULL })
+          .returning('*')
+
+        sse.publishStatus(updatedTransaction)
 
         const updateFields: Record<string, boolean> = {}
 
@@ -68,15 +70,14 @@ WebhookRouter.post(
             break
           case PaymentType.INSPECTION:
             const inspection_id = metadata?.inspection_id
-            console.log(metadata)
             if (!inspection_id) {
               return res
                 .status(400)
                 .json({ message: 'Missing inspection ID in metadata' })
             }
             await db('inspection')
+              .update({ inspection_fee_paid: true })
               .where({ id: inspection_id, user_id })
-              .update({ inspection_fee_paid: TransactionEnum.SUCCESSFULL })
             break
           default:
             break
@@ -111,14 +112,19 @@ WebhookRouter.get(
     }
 
     const transaction = await db<Transaction>('transactions')
-      .where({ transaction_id: reference as string })
+      .where({ reference: reference as string })
       .first()
 
     if (!transaction) {
-      return createResponse(StatusCodes.NOT_FOUND, 'Transaction not found')
+      const response = createResponse(
+        StatusCodes.NOT_FOUND,
+        'Transaction not found',
+      )
+      res.status(response.statusCode).json(response)
+      return
     }
 
-    const subscriber = await sse.createStream(res, transaction.id)
+    const subscriber = await sse.createStream(res, transaction)
 
     res.on('end', () => {
       sse.closeStream(subscriber, transaction.id)

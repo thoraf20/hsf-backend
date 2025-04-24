@@ -10,7 +10,9 @@ import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
   private readonly tablename: string = 'offer_letter'
-  public async requestForOfferLetter(input: OfferLetter): Promise<OfferLetter | any> {
+  public async requestForOfferLetter(
+    input: OfferLetter,
+  ): Promise<OfferLetter | any> {
     const [offerLetter] = await db(this.tablename).insert(input).returning('*')
     return new OfferLetter(offerLetter) ? offerLetter : null
   }
@@ -82,7 +84,6 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .update({ confirm_attendance: true })
       .where('escrow_id', escrowId)
       .returning('*')
-    console.log({ result })
   }
 
   public async confirmPropertyPurchase(
@@ -97,7 +98,6 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   public async getAllOfferLetterByUserId(
     user_id: string,
   ): Promise<Partial<OfferLetter[]>> {
-    console.log(user_id)
     const offerLetter = await db('offer_letter')
       .join('users', 'offer_letter.user_id', 'users.id')
       .select(
