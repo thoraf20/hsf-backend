@@ -134,8 +134,8 @@ export class InspectionRepository implements IInspectionRepository {
 
   async getScheduleInspectionById(
     inspection_id: string,
-  ): Promise<Inspection & Properties> {
-    const inspection = await db('inspection')
+  ): Promise<(Inspection & Properties) | null> {
+    const inspection = await db<Inspection>('inspection')
       .select(
         'inspection.id as inspection_id',
         'inspection.user_id as home_buyer_id',

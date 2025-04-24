@@ -29,10 +29,10 @@ export class ApplicationRepository implements IApplicationRespository {
 
     const add = createUnion(filters.search_type)
 
-    // do not remove this
-    q = q.and.whereRaw(
-      `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
-    )
+    // // do not remove this
+    // q = q.and.whereRaw(
+    //   `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
+    // )
     if (filters.sort_by) {
       switch (filters.sort_by) {
         case SortDateBy.RecentlyAdded:
@@ -121,9 +121,9 @@ export class ApplicationRepository implements IApplicationRespository {
         `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
       )
     }
-    q = q.or.whereRaw(
-      ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
-    )
+    // q = q.or.whereRaw(
+    //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
+    // )
 
     return q
   }
@@ -183,7 +183,6 @@ export class ApplicationRepository implements IApplicationRespository {
       )
       .limit(perPage)
       .offset(offset)
-
       .where('a.user_id', user_id)
 
     const totalPages = Math.ceil(Number(total) / perPage)
@@ -261,7 +260,7 @@ export class ApplicationRepository implements IApplicationRespository {
   async updateApplication(input: Application): Promise<void> {
     await db('application')
       .update(input)
-      .where('property_id', input.property_id)
+      .where('application_id', input.application_id)
       .andWhere('user_id', input.user_id)
   }
 

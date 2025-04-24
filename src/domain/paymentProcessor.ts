@@ -29,7 +29,6 @@ export class PaystackProcessor implements PaymentProcessor {
         '/transaction/initialize',
         requestBody,
       )
-      console.log({ response: response.data.data })
       if (response.data.status) {
         return response.data.data
       }

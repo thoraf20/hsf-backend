@@ -14,6 +14,7 @@ import { PrequalifyRepository } from '@repositories/prequalify/prequalifyReposit
 import { paymentRepository } from '@repositories/property/purchasePayment'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { MortageRepository } from '@repositories/property/MortageRepository'
+import { InspectionRepository } from '@repositories/property/Inspection'
 const propertyPurchaseRoutes = Router()
 
 const propertyRepository = new PropertyRepository()
@@ -21,14 +22,16 @@ const propertyPurchaseRepository = new PropertyPurchaseRepository()
 const preQualifieRepository = new PrequalifyRepository()
 const payment = new paymentRepository()
 const application = new ApplicationRepository()
-const mortageRepository  = new MortageRepository()
- const propertyPurchaseService = new PropertyPurchase(
+const mortageRepository = new MortageRepository()
+const inspectionRepository = new InspectionRepository()
+const propertyPurchaseService = new PropertyPurchase(
   propertyPurchaseRepository,
   propertyRepository,
   preQualifieRepository,
   payment,
   application,
-  mortageRepository
+  mortageRepository,
+  inspectionRepository,
 )
 const purchasePropertyController = new PurchasePropertyController(
   propertyPurchaseService,
@@ -53,7 +56,7 @@ propertyPurchaseRoutes.get(
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const offerLetter = await purchasePropertyController.getOfferLetterByUserId(
-      user.id
+      user.id,
     )
     res.status(offerLetter.statusCode).json(offerLetter)
   }),
@@ -63,7 +66,7 @@ propertyPurchaseRoutes.get(
   '/offer-letter/all',
   requireRoles(Role.DEVELOPER),
   asyncMiddleware(async (req, res) => {
-    const {user} = req
+    const { user } = req
     const offerLetter = await purchasePropertyController.getOfferLetter(user.id)
     res.status(offerLetter.statusCode).json(offerLetter)
   }),
@@ -72,9 +75,9 @@ propertyPurchaseRoutes.get(
 propertyPurchaseRoutes.get(
   '/single/offer-letter/:offer_letter_id',
   asyncMiddleware(async (req, res) => {
-    const {params } = req
+    const { params } = req
     const offerLetter = await purchasePropertyController.getOfferLetterById(
-      params.offer_letter_id 
+      params.offer_letter_id,
     )
     res.status(offerLetter.statusCode).json(offerLetter)
   }),

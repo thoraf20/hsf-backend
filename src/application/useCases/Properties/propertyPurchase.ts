@@ -1,7 +1,9 @@
+import { preQualifyStatus } from '@domain/enums/prequalifyEnum'
 import {
+  ApplicationStatus,
   FinancialOptionsEnum,
   OfferLetterStatusEnum,
-  PurchaseEnum,
+  PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
 // import { Payment } from '@entities/Payment'
 import {
@@ -10,6 +12,7 @@ import {
   PropertyClosing,
 } from '@entities/PropertyPurchase'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { IInspectionRepository } from '@interfaces/IInspectionRepository'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
@@ -19,9 +22,11 @@ import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
+import { ErrorCode } from '@shared/utils/error'
 import { generateTransactionId } from '@shared/utils/helpers'
 // import { generateTransactionId } from '@shared/utils/helpers'
 import { PropertyBaseUtils } from '@use-cases/utils'
+import { PurchasePropertyInput } from '@validators/purchaseValidation'
 import { StatusCodes } from 'http-status-codes'
 
 export class PropertyPurchase {
@@ -30,6 +35,7 @@ export class PropertyPurchase {
   private applicationRepository: IApplicationRespository
   private readonly preQualifieRepository: IPreQualify
   private readonly mortgageRespository: IMortageRespository
+  private readonly inspectionRespository: IInspectionRepository
   // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
   // private payment = new PaymentService(new PaymentProcessorFactory())
@@ -40,10 +46,12 @@ export class PropertyPurchase {
     paymentRepository: IPaymentRespository,
     applicationRepository: IApplicationRespository,
     mortgageRepository: IMortageRespository,
+    inspectionRespository: IInspectionRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
     this.applicationRepository = applicationRepository
+    this.inspectionRespository = inspectionRespository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
     this.mortgageRespository = mortgageRepository
     this.preQualifieRepository = preQualifieRepository
@@ -95,7 +103,10 @@ export class PropertyPurchase {
     }
   }
 
-  public async purchaseProperty(input: any, user_id: string) {
+  public async purchaseProperty(
+    input: PurchasePropertyInput,
+    user_id: string,
+  ): Promise<any> {
     const {
       property_id,
       purchase_type,
@@ -108,24 +119,93 @@ export class PropertyPurchase {
     } = input
 
     await this.utilsProperty.getIfPropertyExist(property_id)
-    const transaction_id = generateTransactionId()
+    //application start process for morgage and installment
+
+    const inspection =
+      await this.inspectionRespository.getAlreadySchedulesInspection(
+        property_id,
+        user_id,
+      )
+
+    if (!inspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are required to perform inspection before proceeding with the purchase',
+        null,
+        ErrorCode.REQUIRED_INSPECTION,
+      )
+    }
+
+    if (request_type === PropertyRequestTypeEnum.ELIGIBILITY_CHECK) {
+      if (
+        !(
+          purchase_type === OfferLetterStatusEnum.INSTALLMENT ||
+          purchase_type === OfferLetterStatusEnum.Mortgage
+        )
+      ) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'eligibility application not available for the selected purchase type',
+          null,
+        )
+      }
+
+      return this.applyEligibleCheck({
+        property_id,
+        purchase_type,
+        user_id,
+        inspection_id: inspection.id,
+      })
+    }
+
+    const application =
+      await this.applicationRepository.getIfApplicationIsRecorded(
+        property_id,
+        user_id,
+      )
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
     if (
-      purchase_type === FinancialOptionsEnum.OUTRIGHT ||
-      purchase_type === FinancialOptionsEnum.INSTALLMENT
+      !(
+        application.status === ApplicationStatus.PENDING ||
+        application.status === ApplicationStatus.PROCESSING
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Application is not in pending or processing status',
+      )
+    }
+
+    if (
+      purchase_type === OfferLetterStatusEnum.OUTRIGHT ||
+      purchase_type === OfferLetterStatusEnum.INSTALLMENT
     ) {
       switch (request_type) {
-        case PurchaseEnum.OfferLetter:
-          return await this.requestForOfferLetter(
+        case PropertyRequestTypeEnum.OfferLetter:
+          return await this.requestForOfferLetter({
             property_id,
             purchase_type,
             user_id,
+            application_id: application.application_id,
+            inspection_id: inspection.id,
+          })
+
+        case PropertyRequestTypeEnum.PROPERTY_CLOSSING:
+          await this.checkIfPropertyClosingExist(property_id, user_id)
+          return await this.requestForPropertyClosing(
+            property_id,
+            user_id,
+            application.application_id,
           )
 
-        case PurchaseEnum.PROPERTY_CLOSSING:
-          await this.checkIfPropertyClosingExist(property_id, user_id)
-          return await this.requestForPropertyClosing(property_id, user_id)
-
-        case PurchaseEnum.ESCROW_ATTENDANCE:
+        case PropertyRequestTypeEnum.ESCROW_ATTENDANCE:
           return await this.confirmEscrowAttendanc(escrow_id)
 
         default:
@@ -134,9 +214,9 @@ export class PropertyPurchase {
     }
 
     // MORTGAGE flow
-    if (purchase_type === FinancialOptionsEnum.MORTGAGE) {
+    if (purchase_type === OfferLetterStatusEnum.Mortgage) {
       switch (request_type) {
-        case PurchaseEnum.ACCEPT_DIP:
+        case PropertyRequestTypeEnum.ACCEPT_DIP:
           const dip = await this.mortgageRespository.acceptDip({
             dip_status,
             property_id,
@@ -149,9 +229,11 @@ export class PropertyPurchase {
           })
           return dip
 
-        case PurchaseEnum.DUE_DELIGENT:
-        case PurchaseEnum.BROKER_FEE:
-        case PurchaseEnum.MANAGEMENT_FEE:
+        case PropertyRequestTypeEnum.DUE_DELIGENT:
+        case PropertyRequestTypeEnum.BROKER_FEE:
+        case PropertyRequestTypeEnum.MANAGEMENT_FEE:
+          const transaction_id = generateTransactionId()
+
           const metaData = {
             paymentType: request_type,
             user_id,
@@ -166,7 +248,7 @@ export class PropertyPurchase {
             property_id,
           )
 
-        case PurchaseEnum.DOCUMENT_UPLOAD:
+        case PropertyRequestTypeEnum.DOCUMENT_UPLOAD:
           const documentUpload = await this.mortgageRespository.uploadDocument({
             documents: JSON.stringify(documents),
             user_id,
@@ -180,7 +262,7 @@ export class PropertyPurchase {
           })
           return documentUpload
 
-        case PurchaseEnum.PRECEDENT_DOC:
+        case PropertyRequestTypeEnum.PRECEDENT_DOC:
           const precedentUpload =
             await this.mortgageRespository.uploadPrecedentDocument({
               precedent_documents: JSON.stringify(documents),
@@ -195,7 +277,7 @@ export class PropertyPurchase {
           })
           return precedentUpload
 
-        case PurchaseEnum.ACCEPT_LOAN:
+        case PropertyRequestTypeEnum.ACCEPT_LOAN:
           const loanOffer = await this.mortgageRespository.getLoanOfferById(
             property_id,
             user_id,
@@ -207,7 +289,7 @@ export class PropertyPurchase {
             )
           }
           await this.mortgageRespository.updateLoanOffer(
-            loan_acceptance_status,
+            { loan_acceptance_status },
             property_id,
             user_id,
           )
@@ -226,12 +308,14 @@ export class PropertyPurchase {
   public async requestForPropertyClosing(
     property_id: string,
     user_id: string,
+    application_id: string,
   ): Promise<PropertyClosing> {
     const Closing = await this.purchaseRepository.requestForPropertyClosing(
       property_id,
       user_id,
     )
     await this.applicationRepository.updateApplication({
+      application_id,
       property_id,
       property_closing_id: Closing.property_closing_id,
       user_id,
@@ -249,11 +333,96 @@ export class PropertyPurchase {
     })
     return status
   }
-  public async requestForOfferLetter(
-    property_id: string,
-    purchase_type: OfferLetterStatusEnum,
-    user_id: string,
-  ): Promise<OfferLetter> {
+
+  public async applyEligibleCheck({
+    property_id,
+    purchase_type,
+    user_id,
+    inspection_id,
+  }: {
+    property_id: string
+    purchase_type: OfferLetterStatusEnum
+
+    user_id: string
+    inspection_id: string
+  }) {
+    const preQualify =
+      await this.preQualifieRepository.getPreQualifyRequestByUser(user_id)
+
+    if (!preQualify) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You have to be prequalify before proceeding',
+        null,
+        ErrorCode.MISSING_PREQUALIFIER,
+      )
+    }
+
+    let application =
+      await this.applicationRepository.getIfApplicationIsRecorded(
+        property_id,
+        user_id,
+      )
+
+    if (application) {
+      if (
+        application.status === ApplicationStatus.PENDING ||
+        application.status === ApplicationStatus.PROCESSING
+      ) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You have an active application ongoing',
+        )
+      }
+
+      if (application.status === ApplicationStatus.COMPLETED) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Your application has been completed',
+        )
+      }
+
+      if (application.status === ApplicationStatus.REJECTED) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Your application has been rejected',
+        )
+      }
+    }
+
+    const eligible = await this.preQualifieRepository.addEligibility({
+      prequalify_status_id: preQualify.status_id,
+      property_id,
+      user_id,
+      financial_eligibility_type: purchase_type,
+    })
+
+    application = await this.applicationRepository.createApplication({
+      status: ApplicationStatus.PENDING,
+      property_id,
+      user_id,
+      inspection_id,
+      eligibility_id: eligible.eligibility_id,
+      application_type: purchase_type,
+      prequalifier_id: preQualify.prequalify_status_id,
+    })
+
+    return application
+  }
+
+  public async requestForOfferLetter({
+    property_id,
+    purchase_type,
+    user_id,
+    application_id,
+    inspection_id,
+  }: {
+    property_id: string
+    purchase_type: OfferLetterStatusEnum
+    user_id: string
+    application_id?: string
+    inspection_id?: string
+  }): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
 
     const isOutright =
@@ -279,24 +448,25 @@ export class PropertyPurchase {
       offer_letter_requested: true,
       purchase_type: purchase_type,
     })
-    const application =
-      await this.applicationRepository.getIfApplicationIsRecorded(
+
+    if (!application_id) {
+      await this.applicationRepository.createApplication({
+        status: ApplicationStatus.PENDING,
         property_id,
+        offer_letter_id: offer_letter.offer_letter_id,
         user_id,
-      )
-    if (application) {
+        application_type: purchase_type,
+        inspection_id,
+      })
+    } else {
       await this.applicationRepository.updateApplication({
+        application_id: application_id,
         property_id,
         offer_letter_id: offer_letter.offer_letter_id,
         user_id,
       })
     }
-    await this.applicationRepository.createApplication({
-      application_type: purchase_type,
-      property_id,
-      offer_letter_id: offer_letter.offer_letter_id,
-      user_id,
-    })
+
     return offer_letter
   }
 

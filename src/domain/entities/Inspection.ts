@@ -2,10 +2,11 @@ import { PaymentEnum } from '@domain/enums/PaymentEnum'
 import {
   FinancialOptionsEnum,
   InspectionMeetingType,
+  InspectionStatus,
   MeetingPlatform,
 } from '@domain/enums/propertyEnum'
 
-export class Inspection{
+export class Inspection {
   id?: string
   purchase_plan_type: FinancialOptionsEnum
   property_id: string
@@ -17,6 +18,7 @@ export class Inspection{
   meeting_platform?: MeetingPlatform
   inspection_meeting_type: InspectionMeetingType
   inspection_fee_paid: boolean
+  inspection_status: InspectionStatus
   meet_link?: string
   amount?: string
   user_id: string

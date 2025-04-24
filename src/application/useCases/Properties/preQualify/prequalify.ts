@@ -11,18 +11,12 @@ import {
   generateReferenceNumber,
 } from '@shared/utils/helpers'
 import { StatusCodes } from 'http-status-codes'
-import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
-  private applicationRepository: IApplicationRespository
   private readonly cache = new RedisClient()
-  constructor(
-    prequalify: IPreQualify,
-    applicationRepository: IApplicationRespository,
-  ) {
+  constructor(prequalify: IPreQualify) {
     this.prequalify = prequalify
-    this.applicationRepository = applicationRepository
   }
 
   public async checkExistingPreQualify(loaner_id: string) {
@@ -51,30 +45,9 @@ export class preQualifyService {
         prequalify_status_id: existingPrequalifyStatusApplied.status_id,
         user_id,
         property_id: input.property_id,
-        financial_eligibility_type: input.type,
+        financial_eligibility_type: input.financial_eligibility_type,
       })
-      const application =
-        await this.applicationRepository.getIfApplicationIsRecorded(
-          input.property_id,
-          user_id,
-        )
 
-      if (application) {
-        await this.applicationRepository.updateApplication({
-          property_id: input.property_id,
-          eligibility_id: eligibility.eligibility_id,
-          user_id,
-          prequalifier_id: eligibility.prequalify_status_id,
-        })
-      } else {
-        await this.applicationRepository.createApplication({
-          application_type: input.type,
-          property_id: input.property_id,
-          eligibility_id: eligibility.eligibility_id,
-          user_id,
-          prequalifier_id: eligibility.prequalify_status_id,
-        })
-      }
       return eligibility
     }
   }

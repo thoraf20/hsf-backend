@@ -14,7 +14,11 @@ export async function up(knex: Knex): Promise<void> {
     table
       .string('meeting_platform')
       .checkIn(['WhatsApp', 'Google Meet', 'Zoom', 'Teams', 'FaceTime'])
-    // table.string('inspection_meeting_type').checkIn(['In Person', 'Video Chat']).notNullable();
+
+    table
+      .string('inspection_meeting_type')
+      .checkIn(['In Person', 'Video Chat'])
+      .notNullable()
 
     table.boolean('inspection_fee_paid').defaultTo(false)
     table.string('meet_link')

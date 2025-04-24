@@ -270,6 +270,12 @@ export class PropertyRepository implements IPropertyRepository {
         'escrow.property_id',
         'properties.id',
       )
+      .leftJoin('application', (qb) => {
+        qb.on('application.property_id', 'properties.id').andOnVal(
+          'application.user_id',
+          user_id ?? null,
+        )
+      })
       .leftJoin('inspection', (qb) =>
         qb
           .on('inspection.property_id', 'properties.id')

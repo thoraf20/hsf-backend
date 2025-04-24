@@ -1,4 +1,7 @@
-import { ApiResponse, createResponse } from '@presentation/response/responseType'
+import {
+  ApiResponse,
+  createResponse,
+} from '@presentation/response/responseType'
 import { PropertyService } from '@application/useCases/Properties/Property'
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
@@ -18,8 +21,16 @@ export class PropertyController {
       property,
     )
   }
-  public async getAllProperties(PropertyFilters: PropertyFilters, userRole: string, userId?: string): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getAllProperties(PropertyFilters, userRole, userId)
+  public async getAllProperties(
+    PropertyFilters: PropertyFilters,
+    userRole: string,
+    userId?: string,
+  ): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getAllProperties(
+      PropertyFilters,
+      userRole,
+      userId,
+    )
     return createResponse(
       StatusCodes.OK,
       'Properties fetched successfully',
@@ -42,8 +53,16 @@ export class PropertyController {
     )
   }
 
-  async getPropertyById(id: string, user_id: string, userRole: string): Promise<ApiResponse<any>> {
-    const property = await this.propertyService.getPropertyById(id, user_id, userRole)
+  async getPropertyById(
+    id: string,
+    user_id: string,
+    userRole: string,
+  ): Promise<ApiResponse<any>> {
+    const property = await this.propertyService.getPropertyById(
+      id,
+      user_id,
+      userRole,
+    )
     return createResponse(
       StatusCodes.OK,
       'Property fetched successfully',
@@ -74,7 +93,10 @@ export class PropertyController {
     property_id: string,
     user_id: string,
   ): Promise<ApiResponse<any>> {
-   const watchList = await this.propertyService.addWatchlistProperty(property_id, user_id)
+    const watchList = await this.propertyService.addWatchlistProperty(
+      property_id,
+      user_id,
+    )
     return createResponse(
       StatusCodes.OK,
       'Property added to watchlist successfully',
@@ -82,8 +104,14 @@ export class PropertyController {
     )
   }
 
-  async getWatchlistProperty(user_id: string, filters: PropertyFilters,): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getWatchlistProperty(user_id, filters)
+  async getWatchlistProperty(
+    user_id: string,
+    filters: PropertyFilters,
+  ): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getWatchlistProperty(
+      user_id,
+      filters,
+    )
     return createResponse(
       StatusCodes.OK,
       'Watchlist fetched successfully',
@@ -103,38 +131,35 @@ export class PropertyController {
     )
   }
 
-  async propertyApplication (user_id:  string, filter: PropertyFilters): Promise<ApiResponse<any>> {
-      const application = await this.propertyService.propertyApplication(user_id, filter)
-       return createResponse(
-        StatusCodes.OK,
-        'Success',
-        application
-       )
+  async propertyApplication(
+    user_id: string,
+    filter: PropertyFilters,
+  ): Promise<ApiResponse<any>> {
+    const application = await this.propertyService.propertyApplication(
+      user_id,
+      filter,
+    )
+    return createResponse(StatusCodes.OK, 'Success', application)
   }
 
-  async propertyShare(input: shareProperty, user_id: string): Promise<ApiResponse<any>> {
-      await this.propertyService.shareProperty(input, user_id)
-      return createResponse(
-        StatusCodes.OK, 
-        'Share property was successful',
-        {}
-      )
+  async propertyShare(
+    input: shareProperty,
+    user_id: string,
+  ): Promise<ApiResponse<any>> {
+    await this.propertyService.shareProperty(input, user_id)
+    return createResponse(StatusCodes.OK, 'Share property was successful', {})
   }
 
-  async viewProperty(property_id: string, user_id: string): Promise<ApiResponse<any>> {
+  async viewProperty(
+    property_id: string,
+    user_id: string,
+  ): Promise<ApiResponse<any>> {
     await this.propertyService.viewProperty(property_id, user_id)
-    return createResponse(
-      StatusCodes.OK, 
-      'Success',
-      {}
-    )
-}
-  async getApplicationById (application_id: string) {
-    const application = await this.propertyService.getApplicationById(application_id)
-    return createResponse(
-      StatusCodes.OK, 
-      'Success',
-      application
-    )
-}
+    return createResponse(StatusCodes.OK, 'Success', {})
+  }
+  async getApplicationById(application_id: string) {
+    const application =
+      await this.propertyService.getApplicationById(application_id)
+    return createResponse(StatusCodes.OK, 'Success', application)
+  }
 }
