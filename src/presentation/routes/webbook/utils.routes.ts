@@ -30,7 +30,6 @@ WebhookRouter.post(
 
     try {
       const event = req.body
-      console.log('Received event:', event)
       if (event.event === 'charge.success') {
         const metadata = event.data.metadata
         const transaction_id = metadata?.transaction_id
