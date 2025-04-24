@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {
   MeetingPlatform,
   InspectionMeetingType,
-  FinancialOptionsEnum,
+  // FinancialOptionsEnum,
 } from '@domain/enums/propertyEnum'
 // import { DateTime } from 'luxon';
 

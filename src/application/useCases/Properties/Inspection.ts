@@ -103,7 +103,7 @@ export class InspectionService {
           user_id,
         })
       }
-      // await this.sendEmailsWithRetry(input)
+      await this.sendEmailsWithRetry(input)
 
       await trx.commit()
       return { ...scheduledInspection, ...(isVideoChat && { transactionData }) }
