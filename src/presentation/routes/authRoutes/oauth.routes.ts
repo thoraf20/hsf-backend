@@ -105,7 +105,7 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       }
 
       account = await accountRepository.create({
-        id: user.id,
+        user_id: user.id,
         provider: 'google',
         provider_account_id: claims.sub,
         access_token: '',

@@ -13,12 +13,12 @@ import { PaymentProcessorFactory } from '@infrastructure/services/factoryProduce
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
-import { ApplicationRepository } from './ApplicationRespository'
+// import { ApplicationRepository } from './ApplicationRespository'
 import { LoanOfferStatus } from '@domain/enums/propertyEnum'
 
 export class MortageRepository implements IMortageRespository {
   private paymentService = new PaymentService(new PaymentProcessorFactory())
-  private applicationRepo = new ApplicationRepository()
+  // private applicationRepo = new ApplicationRepository()
   private transactionRepo = new TransactionRepository()
 
   async acceptDip(input: DIP): Promise<DIP> {
@@ -116,12 +116,13 @@ export class MortageRepository implements IMortageRespository {
         metadata,
       },
     )
-    const savedStatus = await this.savePaymentStatus(property_id, user_id)
-    await this.applicationRepo.updateApplication({
-      property_id,
-      user_id,
-      mortage_payment_status_id: savedStatus.mortage_payment_status_id,
-    })
+
+    await this.savePaymentStatus(property_id, user_id)
+    // await this.applicationRepo.updateApplication({
+    //   property_id,
+    //   user_id,
+    //   mortage_payment_status_id: savedStatus.mortage_payment_status_id,
+    // })
 
     // Record transaction
     await this.transactionRepo.saveTransaction({

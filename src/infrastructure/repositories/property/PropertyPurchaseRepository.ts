@@ -80,7 +80,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     return await this.getOfferLetterById(offer_letter_id)
   }
   public async confirmPropertyEscrowMeeting(escrowId: string): Promise<void> {
-    const result = await db('escrow_information')
+ await db('escrow_information')
       .update({ confirm_attendance: true })
       .where('escrow_id', escrowId)
       .returning('*')
