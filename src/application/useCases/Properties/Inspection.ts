@@ -103,7 +103,7 @@ export class InspectionService {
           user_id,
         })
       }
-      // await this.sendEmailsWithRetry(input)
+      await this.sendEmailsWithRetry(input)
 
       await trx.commit()
       return { ...scheduledInspection, ...(isVideoChat && { transactionData }) }
@@ -111,6 +111,13 @@ export class InspectionService {
       await trx.rollback()
       throw error
     }
+  }
+
+  async updateInspection(inspectionId: string, update: Partial<Inspection>) {
+    return this.inspectionRepository.updateScheduleInpection(
+      inspectionId,
+      update,
+    )
   }
 
   private async sendEmailsWithRetry(

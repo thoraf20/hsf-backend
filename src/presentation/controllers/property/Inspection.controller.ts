@@ -1,5 +1,6 @@
 import { InspectionService } from '@application/useCases/Properties/Inspection'
 import { Inspection } from '@domain/entities/Inspection'
+import { InspectionStatus } from '@domain/enums/propertyEnum'
 import {
   ApiResponse,
   createResponse,
@@ -29,6 +30,21 @@ export class InspectionController {
     return createResponse(
       StatusCodes.OK,
       'Inspection retrived successfully',
+      inspection,
+    )
+  }
+
+  public async updateScheduleInspectionStatus(
+    inspectionId: string,
+    status: InspectionStatus,
+  ) {
+    const inspection = await this.inspectionService.updateInspection(
+      inspectionId,
+      { inspection_status: status },
+    )
+    return createResponse(
+      StatusCodes.OK,
+      'Inspection updated successfully',
       inspection,
     )
   }

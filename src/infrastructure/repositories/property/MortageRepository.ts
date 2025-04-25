@@ -117,11 +117,11 @@ export class MortageRepository implements IMortageRespository {
       },
     )
     const savedStatus = await this.savePaymentStatus(property_id, user_id)
-    // await this.applicationRepo.updateApplication({
-    //   property_id,
-    //   user_id,
-    //   mortage_payment_status_id: savedStatus.mortage_payment_status_id,
-    // })
+    await this.applicationRepo.updateApplication({
+      property_id,
+      user_id,
+      mortage_payment_status_id: savedStatus.mortage_payment_status_id,
+    })
 
     // Record transaction
     await this.transactionRepo.saveTransaction({

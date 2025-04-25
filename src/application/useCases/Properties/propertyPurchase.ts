@@ -1,5 +1,6 @@
 import {
   ApplicationStatus,
+  FinancialOptionsEnum,
   OfferLetterStatusEnum,
   PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
@@ -134,7 +135,29 @@ export class PropertyPurchase {
       )
     }
 
-    if (request_type === PropertyRequestTypeEnum.ELIGIBILITY_CHECK) {
+    const application =
+      await this.applicationRepository.getIfApplicationIsRecorded(
+        property_id,
+        user_id,
+      )
+
+    if (
+      application &&
+      !(
+        application.status === ApplicationStatus.PENDING ||
+        application.status === ApplicationStatus.PROCESSING
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Application is not in pending or processing status',
+      )
+    }
+
+    if (
+      !application &&
+      request_type === PropertyRequestTypeEnum.ELIGIBILITY_CHECK
+    ) {
       if (
         !(
           purchase_type === OfferLetterStatusEnum.INSTALLMENT ||
@@ -156,28 +179,27 @@ export class PropertyPurchase {
       })
     }
 
-    const application =
-      await this.applicationRepository.getIfApplicationIsRecorded(
+    if (!application && request_type === PropertyRequestTypeEnum.INITIATE) {
+      if (purchase_type !== OfferLetterStatusEnum.OUTRIGHT) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Initiate request only available for outright purchase',
+        )
+      }
+
+      return await this.applicationRepository.createApplication({
+        status: ApplicationStatus.PENDING,
         property_id,
         user_id,
-      )
+        application_type: purchase_type,
+        inspection_id: inspection.id,
+      })
+    }
 
     if (!application) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
-        'Application not found',
-      )
-    }
-
-    if (
-      !(
-        application.status === ApplicationStatus.PENDING ||
-        application.status === ApplicationStatus.PROCESSING
-      )
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'Application is not in pending or processing status',
+        'Application not found or initiate',
       )
     }
 
@@ -191,7 +213,7 @@ export class PropertyPurchase {
             property_id,
             purchase_type,
             user_id,
-            application_id: application.application_id,
+            application_id: application?.application_id,
             inspection_id: inspection.id,
           })
 
@@ -200,7 +222,7 @@ export class PropertyPurchase {
           return await this.requestForPropertyClosing(
             property_id,
             user_id,
-            application.application_id,
+            application?.application_id,
           )
 
         case PropertyRequestTypeEnum.ESCROW_ATTENDANCE:
@@ -312,6 +334,7 @@ export class PropertyPurchase {
       property_id,
       user_id,
     )
+
     await this.applicationRepository.updateApplication({
       application_id,
       property_id,
@@ -418,7 +441,7 @@ export class PropertyPurchase {
     property_id: string
     purchase_type: OfferLetterStatusEnum
     user_id: string
-    application_id?: string
+    application_id: string
     inspection_id?: string
   }): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
@@ -447,23 +470,12 @@ export class PropertyPurchase {
       purchase_type: purchase_type,
     })
 
-    if (!application_id) {
-      await this.applicationRepository.createApplication({
-        status: ApplicationStatus.PENDING,
-        property_id,
-        offer_letter_id: offer_letter.offer_letter_id,
-        user_id,
-        application_type: purchase_type,
-        inspection_id,
-      })
-    } else {
-      await this.applicationRepository.updateApplication({
-        application_id: application_id,
-        property_id,
-        offer_letter_id: offer_letter.offer_letter_id,
-        user_id,
-      })
-    }
+    await this.applicationRepository.updateApplication({
+      application_id: application_id,
+      property_id,
+      offer_letter_id: offer_letter.offer_letter_id,
+      user_id,
+    })
 
     return offer_letter
   }

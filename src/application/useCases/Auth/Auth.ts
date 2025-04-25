@@ -58,6 +58,8 @@ export class AuthService {
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
 
+    //@ts-ignore
+    delete input.user_id
     let user = await this.userRepository.create(
       new User({ ...input, email, role_id: findRole.id }),
     )

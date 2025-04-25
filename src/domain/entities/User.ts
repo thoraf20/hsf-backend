@@ -2,7 +2,7 @@
 
 import { Role } from '../enums/rolesEmun'
 
-export class User  {
+export class User {
   id?: string
   first_name: string
   last_name: string
@@ -21,11 +21,9 @@ export class User  {
   is_default_password?: boolean
   constructor(data: Partial<User>) {
     Object.assign(this, {
-        created_at: new Date(),
-        updated_at: new Date(),
-        ...data
-    });
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
+  }
 }
-
-}
-

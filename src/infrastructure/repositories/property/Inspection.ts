@@ -157,4 +157,15 @@ export class InspectionRepository implements IInspectionRepository {
       ...new Properties(inspection),
     }
   }
+
+  async updateScheduleInpection(
+    inspectionId: string,
+    update: Partial<Inspection>,
+  ): Promise<Inspection> {
+    const [updated] = await db<Inspection>('inspection')
+      .update(update)
+      .where({ id: inspectionId })
+      .returning('*')
+    return updated
+  }
 }

@@ -237,6 +237,7 @@ export class PropertyRepository implements IPropertyRepository {
         db.raw('row_to_json(property_closing) as property_closing'),
 
         db.raw('row_to_json(inspection) as inspection'),
+        db.raw('row_to_json(application) as application'),
         db.raw(`
           COALESCE(
             json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
@@ -288,6 +289,7 @@ export class PropertyRepository implements IPropertyRepository {
       .groupBy(
         'properties.id',
         'inspection.*',
+        'application.*',
         'offer_letter.purchase_type',
         'property_closing.*',
         'offer_letter.offer_letter_status',

@@ -11,6 +11,9 @@ export const envSchema = z.object({
   AWS_ACCESS_KEY_ID: z.string(),
   AWS_SECRET_ACCESS_KEY: z.string(),
   AWS_BUCKET_NAME: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
+  ORIGINS: z.string().transform((value) => value.split(',')),
 })
 
 export const formatErrors = (
