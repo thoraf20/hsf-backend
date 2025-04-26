@@ -3,9 +3,14 @@ import { UserService } from '@application/useCases/User/User'
 import { resetPassword } from '@shared/types/userType'
 import { ApiResponse, createResponse } from '../response/responseType'
 import { StatusCodes } from 'http-status-codes'
+import { IAccountRepository } from '@interfaces/IAccountRepository'
+import { Account } from '@entities/Account'
 
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly accountRepository: IAccountRepository,
+  ) {}
 
   public async update(input: User, id: string): Promise<ApiResponse<any>> {
     await this.userService.update(input, id)
@@ -18,7 +23,18 @@ export class UserController {
   }
 
   public async getUserById(id: string): Promise<ApiResponse<any>> {
-    const user = await this.userService.getUserProfile(id)
+    const user: User & { accounts?: Account[] } =
+      await this.userService.getUserProfile(id)
+
+    if (user) {
+      user.accounts = await this.accountRepository.findByUserID(user.id)
+      user.accounts.forEach((account) => {
+        delete account.access_token
+        delete account.refresh_token
+        delete account.token_type
+      })
+    }
+
     return createResponse(StatusCodes.OK, 'User retrived successfully', user)
   }
 

@@ -8,10 +8,12 @@ import {
   updateProfileSchema,
   verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
+import { AccountRepository } from '@repositories/user/AccountRepository'
 const userRoutes: Router = Router()
 
 const userServices = new UserService(new UserRepository())
-const userController = new UserController(userServices)
+const accountRepository = new AccountRepository()
+const userController = new UserController(userServices, accountRepository)
 
 userRoutes.put(
   '/update',
@@ -51,7 +53,7 @@ userRoutes.put(
     res.status(updatePassword.statusCode).json(updatePassword)
   }),
 )
- 
+
 userRoutes.put(
   '/enable-mfa',
   asyncMiddleware(async (req, res) => {

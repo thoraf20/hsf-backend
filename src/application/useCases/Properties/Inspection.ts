@@ -19,6 +19,7 @@ import { TimeSpan } from '@shared/utils/time-unit'
 import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingRepository'
 import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
 import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectionQueue'
+import { serviceProductFeeCodes } from '@infrastructure/config/serviceProductFeeCodes'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private serviceRepository: IServiceOfferingRepository
@@ -84,6 +85,15 @@ export class InspectionService {
           throw new ApplicationCustomError(
             StatusCodes.BAD_REQUEST,
             `Product code not found`,
+          )
+        }
+
+        if (
+          inspectionFee.product_code !== serviceProductFeeCodes.INSPECTION_FEE
+        ) {
+          throw new ApplicationCustomError(
+            StatusCodes.BAD_REQUEST,
+            `Product code does not match inspection fee`,
           )
         }
 
