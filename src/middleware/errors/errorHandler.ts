@@ -2,6 +2,7 @@ import { ErrorRequestHandler, NextFunction, Response, Request } from 'express'
 import { ApplicationError } from '@shared/utils/error'
 import { StatusCodes } from 'http-status-codes'
 import logger from '../logger'
+import { createResponse } from '@presentation/response/responseType'
 
 export const ErrorHandler: ErrorRequestHandler = (
   error: Error,
@@ -10,11 +11,13 @@ export const ErrorHandler: ErrorRequestHandler = (
   next: NextFunction,
 ) => {
   if (error instanceof ApplicationError) {
-    res.status(error.statusCode).json({
-      status: error.statusCode,
-      message: error.serialize().message,
-      body: error.body,
-    })
+    const response = createResponse(
+      error.statusCode,
+      error.serialize().message,
+      error.body,
+      error.error_code,
+    )
+    res.status(response.statusCode).json(response)
     return next()
   } else {
     console.log(error)

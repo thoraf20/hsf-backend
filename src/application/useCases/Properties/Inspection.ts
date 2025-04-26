@@ -8,22 +8,32 @@ import { PaymentProcessorFactory } from '@infrastructure/services/factoryProduce
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { ITransaction } from '@domain/interfaces/ITransactionRepository'
 import { TransactionEnum } from '@domain/enums/transactionEnum'
-import { generateTransactionId, syncToCalendar } from '@shared/utils/helpers'
+import { generateTransactionId } from '@shared/utils/helpers'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { PaymentEnum, PaymentType } from '@domain/enums/PaymentEnum'
 import emailTemplates from '@infrastructure/email/template/constant'
 import db from '@infrastructure/database/knex'
+import { v4 as uuidv4 } from 'uuid'
+import { RedisClient } from '@infrastructure/cache/redisClient'
+import { TimeSpan } from '@shared/utils/time-unit'
+import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingRepository'
+import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
+import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectionQueue'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
+  private serviceRepository: IServiceOfferingRepository
   private utilsInspection: InspectionBaseUtils
   private payment = new PaymentService(new PaymentProcessorFactory())
   private transaction: ITransaction
+  private cache = new RedisClient()
 
   constructor(
     inspectionRepository: IInspectionRepository,
+    serviceRepository: IServiceOfferingRepository,
     transactions: ITransaction,
   ) {
     this.inspectionRepository = inspectionRepository
+    this.serviceRepository = serviceRepository
     this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
 
     if (!transactions) {
@@ -33,7 +43,7 @@ export class InspectionService {
   }
 
   public async ScheduleInspection(
-    input: Inspection,
+    input: ScheduleInspectionInput,
     user_id: string,
   ): Promise<Inspection | any> {
     await this.utilsInspection.findALreadyScheduledInspection(
@@ -41,72 +51,101 @@ export class InspectionService {
       user_id,
     )
 
-    const isVideoChat =
-      input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT
-
-    if (isVideoChat && !input.payment_type) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        `Payment is required for ${InspectionMeetingType.VIDEO_CHAT}`,
-      )
-    }
-
     const trx = await db.transaction()
-    let transactionData = {} as any
 
-    const { amount, payment_type, ...inspectionData } = input
+    const { ...inspectionData } = input
     try {
-      const scheduledInspection =
-        await this.inspectionRepository.createInpection(
-          {
-            ...inspectionData,
-            meet_link: input.meet_link || '',
-            user_id,
-          },
-          trx,
-        )
-      const transaction_id = generateTransactionId()
+      const pendingInspection: Partial<Inspection> = {
+        contact_number: inspectionData.contact_number,
+        inspection_date: inspectionData.inspection_date,
+        inspection_time: inspectionData.inspection_time,
+        inspection_fee_paid: null,
+        user_id,
+        full_name: inspectionData.full_name,
+        email: inspectionData.email,
+        meeting_platform: inspectionData.meeting_platform,
+        property_id: inspectionData.property_id,
+        inspection_meeting_type: inspectionData.inspection_meeting_type,
+      }
 
-      if (isVideoChat) {
+      if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {
+        if (!(input.product_code && input.amount)) {
+          throw new ApplicationCustomError(
+            StatusCodes.BAD_REQUEST,
+            `Product code and amount are required for ${InspectionMeetingType.VIDEO_CHAT}`,
+          )
+        }
+
+        const inspectionFee = await this.serviceRepository.getByProductCode(
+          input.product_code,
+        )
+
+        if (!inspectionFee) {
+          throw new ApplicationCustomError(
+            StatusCodes.BAD_REQUEST,
+            `Product code not found`,
+          )
+        }
+
+        if (Number(inspectionFee.base_price) !== input.amount) {
+          throw new ApplicationCustomError(
+            StatusCodes.BAD_REQUEST,
+            `Amount does not match product price`,
+          )
+        }
+
+        const id = uuidv4()
+        const key = createPendingInspectionCacheKey(id)
+
+        await this.cache.setKey(
+          key,
+          pendingInspection,
+          new TimeSpan(7, 'd').toMilliseconds(),
+        )
+
+        const transactionId = generateTransactionId()
+
         const paymentResponse = await this.payment.makePayment(
           PaymentEnum.PAYSTACK,
           {
-            amount: 1000,
+            amount: Number(inspectionFee.base_price),
             email: input.email,
             metadata: {
               user_id,
-              inspection_id: scheduledInspection.id,
-              transaction_id,
+              inspection_id: id,
+              transaction_id: transactionId,
               paymentType: PaymentType.INSPECTION,
+              product_code: inspectionFee.product_code,
+              inspection: pendingInspection,
             },
           },
         )
 
-        this.transaction.saveTransaction({
+        const transaction = await this.transaction.saveTransaction({
           user_id,
           transaction_type: PaymentType.INSPECTION,
-          amount: 1000,
+          amount: Number(inspectionFee.base_price),
           property_id: input.property_id,
           reference: paymentResponse.reference,
           status: TransactionEnum.PENDING,
-          transaction_id,
-        }),
-          (transactionData = paymentResponse)
-      }
-
-      if (isVideoChat && input.meet_link && input.meeting_platform) {
-        await syncToCalendar({
-          platform: input.meeting_platform,
-          meeting_link: input.meet_link,
-          date: input.inspection_date,
-          time: input.inspection_time,
-          user_id,
+          transaction_id: transactionId,
         })
-      }
-      await this.sendEmailsWithRetry(input)
 
+        return {
+          id,
+          ...pendingInspection,
+          transactionData: { ...transaction, ...paymentResponse },
+        }
+      }
+
+      const inspection = await this.inspectionRepository.createInpection(
+        pendingInspection as Inspection,
+      )
+
+      await this.sendEmailsWithRetry(inspection)
       await trx.commit()
-      return { ...scheduledInspection, ...(isVideoChat && { transactionData }) }
+
+      return inspection
     } catch (error) {
       await trx.rollback()
       throw error

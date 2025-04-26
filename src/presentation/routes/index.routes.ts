@@ -12,6 +12,7 @@ import enquiryRoutes from '@routes/property/enquiry.routes'
 import developerRoutes from '@routes/developer/developer.routes'
 import preQualifierRoutes from '@routes/property/preQualifiier/prequalify.routes'
 import propertyPurchaseRoutes from './property/purchaseProperty.routes'
+import serviceOfferingRoutes from '@routes/Super Admin/serviceOffering.routes'
 import oauthRoutes from './authRoutes/oauth.routes'
 import fileRoutes from './file/file.routes'
 
@@ -30,5 +31,6 @@ routes.use('/auth', authRoutes)
 routes.use('/oauth', oauthRoutes)
 routes.use('/webhook', webhook)
 routes.use('/file', fileRoutes)
+routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
 
 export default routes

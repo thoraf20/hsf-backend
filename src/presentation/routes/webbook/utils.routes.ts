@@ -8,6 +8,7 @@ import { SseService } from '@infrastructure/services/sse.service'
 import { Transaction } from '@entities/Transaction'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
+import { addVerifyInspectionPaymentJob } from '@infrastructure/queue/inspectionQueue'
 
 const WebhookRouter: Router = Router()
 const sse = new SseService()
@@ -32,6 +33,8 @@ WebhookRouter.post(
       const event = req.body
       if (event.event === 'charge.success') {
         const metadata = event.data.metadata
+
+        console.log({ metadata })
         const transaction_id = metadata?.transaction_id
         console.log('Transaction ID:', transaction_id)
         if (!transaction_id) {
@@ -74,9 +77,12 @@ WebhookRouter.post(
                 .status(400)
                 .json({ message: 'Missing inspection ID in metadata' })
             }
-            await db('inspection')
-              .update({ inspection_fee_paid: true })
-              .where({ id: inspection_id, user_id })
+
+            await addVerifyInspectionPaymentJob({
+              inspectionId: inspection_id,
+              transactionId: transaction.id,
+            })
+
             break
           default:
             break

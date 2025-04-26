@@ -14,10 +14,12 @@ import {
   updateInspectionStatusSchema,
 } from '@application/requests/dto/inspectionVaidator'
 import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
+import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
   new InspectionRepository(),
+  new ServiceOfferingRepository(),
   new TransactionRepository(),
 )
 

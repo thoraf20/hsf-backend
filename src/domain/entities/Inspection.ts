@@ -1,6 +1,5 @@
-import { PaymentEnum } from '@domain/enums/PaymentEnum'
+// import { PaymentEnum } from '@domain/enums/PaymentEnum'
 import {
-  FinancialOptionsEnum,
   InspectionMeetingType,
   InspectionStatus,
   MeetingPlatform,
@@ -8,7 +7,6 @@ import {
 
 export class Inspection {
   id?: string
-  purchase_plan_type: FinancialOptionsEnum
   property_id: string
   inspection_date: string
   inspection_time: string
@@ -20,11 +18,11 @@ export class Inspection {
   inspection_fee_paid: boolean
   inspection_status: InspectionStatus
   meet_link?: string
-  amount?: string
+  // amount?: string
   user_id: string
   created_at?: Date
   updated_at?: Date
-  payment_type?: PaymentEnum
+  // payment_type?: PaymentEnum
   constructor(d: Partial<Inspection>) {
     let data = {
       ...d,

@@ -12,19 +12,45 @@ import { ExistingUsers } from '../utils'
 import { Role } from '@domain/enums/rolesEmun'
 import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
+import { IAccountRepository } from '@interfaces/IAccountRepository'
+import { ErrorCode } from '@shared/utils/error'
 
 export class AuthService {
   private userRepository: IUserRepository
+  private accountRepository: IAccountRepository
   private readonly existingUsers: ExistingUsers
   private readonly hashData = new Hashing()
   private readonly client = new RedisClient()
-  constructor(userRepository: IUserRepository) {
+  constructor(
+    userRepository: IUserRepository,
+    accountRepository: IAccountRepository,
+  ) {
     this.userRepository = userRepository
+    this.accountRepository = accountRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
   }
 
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {
-    await this.existingUsers.beforeCreateEmail(input.email)
+    const user = await this.userRepository.findByEmail(input.email)
+
+    if (user) {
+      if (!user.password || user.password.length === 0) {
+        const account = await this.accountRepository.findByUserID(user.id)
+        if (account) {
+          throw new ApplicationCustomError(
+            StatusCodes.CONFLICT,
+            'This account was registered via OAuth. Please log in using your OAuth provider.',
+            null,
+            ErrorCode.OAUTH_REGISTERED,
+          )
+        }
+      }
+
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email is already in use.',
+      )
+    }
     const otp = generateRandomSixNumbers()
     console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
@@ -205,6 +231,17 @@ export class AuthService {
         StatusCodes.TOO_MANY_REQUESTS,
         'Too many failed login attempts. Please try again after 10 minutes.',
       )
+    }
+
+    if (!user.password || user.password.length === 0) {
+      const account = await this.accountRepository.findByUserID(user.id)
+
+      if (account) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'This account was registered via OAuth. Please log in using your OAuth provider.',
+        )
+      }
     }
 
     const isValid = await this.userRepository.comparedPassword(
