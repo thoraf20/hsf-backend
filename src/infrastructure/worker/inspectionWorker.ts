@@ -7,12 +7,14 @@ import {
   createPendingInspectionCacheKey,
 } from '@infrastructure/queue/inspectionQueue'
 import logger from '@middleware/logger'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { InspectionRepository } from '@repositories/property/Inspection'
 import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
 import { Job, Worker } from 'bullmq'
 
 const inspectionRepository = new InspectionRepository()
 const transactionRepository = new TransactionRepository()
+const applicationRepository = new ApplicationRepository()
 const paymentProcessor = new PaystackProcessor()
 const cache = new RedisClient()
 
@@ -22,17 +24,21 @@ const inspectionWorker = new Worker(
     const { transactionId, inspectionId } = job.data
 
     try {
-      const inspection: Inspection | null = await cache.getKey(
-        createPendingInspectionCacheKey(inspectionId),
+      let inspection = <Inspection>(
+        await inspectionRepository.getScheduleInspectionById(inspectionId)
       )
 
-      if (!inspection) {
-        logger.warn(`Inspection with ID ${inspectionId} not found.`)
+      if (inspection?.inspection_fee_paid) {
+        logger.info(`Inspection with ID ${inspectionId} has already been paid.`)
         return
       }
 
-      if (inspection.inspection_fee_paid) {
-        logger.warn(`Inspection with ID ${inspectionId} already confirmed.`)
+      const inspectionData: Inspection | null = await cache.getKey(
+        createPendingInspectionCacheKey(inspectionId),
+      )
+
+      if (!inspectionData) {
+        logger.warn(`Inspection with ID ${inspectionId} not found.`)
         return
       }
 
@@ -56,10 +62,23 @@ const inspectionWorker = new Worker(
       )
 
       if (response.status === PaystackPaymentStatus.SUCCESS) {
-        await inspectionRepository.createInpection({
-          ...inspection,
+        inspection = await inspectionRepository.createInpection({
+          ...inspectionData,
           inspection_fee_paid: true,
         })
+
+        const application =
+          await applicationRepository.getIfApplicationIsRecorded(
+            inspection.property_id,
+            inspection.user_id,
+          )
+
+        if (application) {
+          await applicationRepository.updateApplication({
+            application_id: application.application_id,
+            inspection_id: inspection.id,
+          })
+        }
       }
 
       // Send Successfull Email for the scheduled inpection
