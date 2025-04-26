@@ -31,3 +31,9 @@ export async function syncToCalendar(details: {
     console.log(`Syncing meeting to ${details.platform} calendar for user ${details.user_id}`)
   }
   
+
+export function generateInvitationToken(): string {
+    const randomString = Math.random().toString(36).substring(2, 12);
+    const timestamp = Date.now().toString(36);
+    return `INV-${randomString.toUpperCase()}-${timestamp}`;
+}

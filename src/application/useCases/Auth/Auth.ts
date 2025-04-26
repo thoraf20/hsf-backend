@@ -123,7 +123,7 @@ export class AuthService {
     }
 
     const otp = generateRandomSixNumbers()
-    console.log(otp)
+
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
@@ -214,7 +214,6 @@ export class AuthService {
       const failedLoginAttempts = (user.failed_login_attempts || 0) + 1
       if (failedLoginAttempts >= 3) {
         await this.client.setKey(lockKey, true, 600)
-        // Lock account for 10 mins
         await this.userRepository.update(user.id, {
           failed_login_attempts: failedLoginAttempts,
         })
@@ -238,9 +237,6 @@ export class AuthService {
     if (user.failed_login_attempts > 0) {
       await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
-
-    // Generate token
-
     user = await this.userRepository.findById(user.id)
     const token = await this.hashData.accessCode(user.user_id, user.role)
     await this.client.deleteKey(lockKey)

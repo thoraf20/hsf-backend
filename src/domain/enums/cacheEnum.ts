@@ -5,5 +5,6 @@ export enum CacheEnumKeys {
      MFA_VERIFICATION_KEY = `mfa_verification`,
      EMAIL_CHANGE = `request_email_update`,
      CONTINUE_REGISTRATION = "continue_registration",
-     preQualify_VERIFICATION= `Prequalify`
+     preQualify_VERIFICATION= `Prequalify`,
+     ACCEPT_INVITE_KEY = "ACCEPT_INVITE_KEY"
 }

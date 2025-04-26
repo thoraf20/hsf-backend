@@ -78,4 +78,8 @@ export class UserRepository implements IUserRepository {
   public async hashedPassword(input: string): Promise<string | void> {
     return await this.hashData.hashing(input)
   }
+  public async getRoleById(id: string): Promise<Record<string, any> | null> {
+    return db('roles').where('id', id).first()
+  }
+  
 }

@@ -225,5 +225,28 @@ export default {
         `Unable to send email`,
       )
     }
-  }
+  },
+
+  InvitationEmail(email: string, fullname:string, activationLink: string, role: string,  defaultPassword: string) {
+    let subject = `Invitation email`
+    let text = `Accept invitation`
+    let html = templates.InvitationEmail 
+    .replace('{{fullname}}', fullname)
+    .replace('{{role}}', role)
+    .replace('{{defaultPassword}}', defaultPassword)
+    .replace('{{activationLink}}', activationLink)
+    .replace('{{year}}', new Date().getFullYear().toString());
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

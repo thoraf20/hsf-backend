@@ -1,30 +1,40 @@
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
-import { User } from '@domain/entities/User'
+import { User, UserRegProfile } from '@domain/entities/User'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { DeveloperUtils, ExistingUsers } from '../utils'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
+import emailTemplates from '@infrastructure/email/template/constant'
 import {
   generateRandomSixNumbers,
   generateDefaultPassword,
+  generateInvitationToken,
 } from '@shared/utils/helpers'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { Role } from '@domain/enums/rolesEmun'
 import { Developer, DevelopeReg } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IAdminRepository } from '@interfaces/IAdminRespository'
+import { resetPassword } from '@shared/types/userType'
 
 export class Agents {
   private userRepository: IUserRepository
+  private readonly adminRepository: IAdminRepository
   private readonly developerRepository: IDeveloperRepository
   private readonly client = new RedisClient()
   private readonly existingUsers: ExistingUsers
   private readonly developer: DeveloperUtils
-  constructor(userRepository: IUserRepository, developerRepository: IDeveloperRepository) {
+  constructor(
+    userRepository: IUserRepository,
+    developerRepository: IDeveloperRepository,
+    adminRepository: IAdminRepository,
+  ) {
     this.userRepository = userRepository
     this.developerRepository = developerRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
     this.developer = new DeveloperUtils(this.developerRepository)
+    this.adminRepository = adminRepository
   }
 
   public async createAdmin(input: User): Promise<User> {
@@ -39,23 +49,184 @@ export class Agents {
     return user
   }
 
-  public async createDevelopers (input: DevelopeReg):Promise<DevelopeReg> {
-    await Promise.all([ 
+  public async inviteAdmin(
+    input: UserRegProfile,
+    agent_id: string,
+  ): Promise<User> {
+    await Promise.all([
+      this.existingUsers.beforeCreateEmail(input.email),
+      this.existingUsers.beforeCreatePhone(input.phone_number),
+    ])
+
+    const [agentUser, findRole] = await Promise.all([
+      this.userRepository.findById(agent_id),
+      this.userRepository.getRoleByName(input.role),
+    ])
+
+    if (!findRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    if (agentUser.role_id === findRole.id && input.role === Role.SUPER_ADMIN) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'You cannot create a super admin from an admin account',
+      )
+    }
+
+    const defaultPassword = generateDefaultPassword()
+    const password = await this.userRepository.hashedPassword(defaultPassword)
+
+    const newUser = await this.userRepository.create(
+      new User({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        phone_number: input.phone_number,
+        password,
+        role_id: findRole.id,
+        is_default_password: true,
+      }),
+    )
+    const adminProfile = await this.adminRepository.createAdminProfile({
+      street_address: input.street_address,
+      city: input.city,
+      state: input.state,
+      landmark: input.landmark,
+      country: input.country,
+      user_id: newUser.id,
+    })
+
+    const token = generateInvitationToken()
+    const encryptedtoken = await this.userRepository.hashedPassword(
+      token.toString(),
+    )
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+    const details = {
+      user_id: newUser.id,
+      token: encryptedtoken,
+      type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+    }
+    const oneDayInMs = 24 * 60 * 60 * 1000
+    await this.client.setKey(key, details, oneDayInMs)
+    const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    delete newUser.password
+    return { ...newUser, ...adminProfile }
+  }
+
+  
+
+  public async acceptInvitation(invitation_token: string): Promise<void> {
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${invitation_token}`
+    await this.client.checkAndClearCache(key)
+    const details = await this.client.getKey(key)
+    const { token, type, user_id } =
+    typeof details === 'string' ? JSON.parse(details) : details
+    const isValidToken = await this.userRepository.comparedPassword(invitation_token, token)
+    if(type !== OtpEnum.AGENT_EMAIL_VERIFICATION) {
+      await this.client.deleteKey(key)
+      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Sorry we can't complete this request`)
+    }
+    if(!isValidToken) {
+      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Invalid or expired invitation link`)
+    }
+    await this.userRepository.update(user_id, {is_email_verified: true})
+    await this.client.deleteKey(key)
+  }
+
+  public async resendInvitationEmail(
+    user_id: string,
+  ): Promise<void> {
+    const user = await this.userRepository.findById(user_id)
+    if (user.is_email_verified) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'User already verified',
+      )
+    }
+    const token = generateInvitationToken()
+    const encryptedtoken = await this.userRepository.hashedPassword(
+      token.toString(),
+    )
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+    const details = {
+      user_id: user.id,
+      token: encryptedtoken,
+      type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+    }
+    const userRole = await this.userRepository.getRoleById(user.role_id)
+    const defaultPassword = generateDefaultPassword()
+    const password = await this.userRepository.hashedPassword(defaultPassword)
+    const oneDayInMs = 24 * 60 * 60 * 1000
+    await this.client.setKey(key, details, oneDayInMs)
+    await this.userRepository.update(user.id, { password, is_default_password: true })
+    const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+    emailTemplates.InvitationEmail(user.email, `${user.first_name} ${user.last_name}`, invitation_email, userRole.name, password)
+  }
+
+  public async changeInviteePassword(input: resetPassword, id: string): Promise<void> {
+    const user = await this.userRepository.findById(id)
+
+    if (
+      !(await this.userRepository.comparedPassword(
+        input.oldPassword,
+        user.password,
+      ))
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Old password is incorrect',
+      )
+    }
+
+    if (input.oldPassword === input.newPassword) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        "New password can't be the same as old password",
+      )
+    }
+
+    const hashedNewPassword = await this.userRepository.hashedPassword(
+      input.newPassword,
+    )
+
+    const updatePayload: Partial<User> = { password: hashedNewPassword }
+    if (user.is_default_password) updatePayload.is_default_password = false
+    if(user.force_password_reset) updatePayload.force_password_reset = false
+    if(user.is_mfa_enabled) updatePayload.is_mfa_enabled = true
+
+    await this.userRepository.update(id, updatePayload)
+   
+  }
+  public async inviteDevelopers(input: DevelopeReg, agent_id: string): Promise<DevelopeReg> {
+    await Promise.all([
+      this.existingUsers.beforeCreateEmail(input.email),
+      this.existingUsers.beforeCreatePhone(input.phone_number),
       this.developer.findIfCompanyNameExist(input.company_name),
       this.developer.findIfCompanyRegistrationNumberExist(
         input.company_registration_number,
       ),
-      await this.existingUsers.beforeCreateEmail(input.email),
-      await this.existingUsers.beforeCreatePhone(input.phone_number),
       this.developer.findIfCompanyEmailExist(input.company_email),
     ])
+    const findRole =  await this.userRepository.getRoleByName(input.role)
+
+    if (!findRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
-    const findRole = await this.userRepository.getRoleByName(Role.DEVELOPER)
     let user = await this.userRepository.create(
-      new User({ ...input, password, is_default_password: true, role_id: findRole.id }),
+      new User({
+        ...input,
+        password,
+        is_default_password: true,
+        role_id: findRole.id,
+      }),
     )
-    const developer = await this.userRepository.create(
+    const developer = await this.developerRepository.createDeveloperProfile(
       new Developer({
         company_email: input.company_email,
         company_name: input.company_name,
@@ -69,20 +240,26 @@ export class Agents {
         region_of_operation: input.region_of_operation,
         company_image: input.company_image,
         documents: input.documents,
-        developers_profile_id: user.id
-       }),
+        developers_profile_id: user.id,
+      }),
     )
-    const otp = generateRandomSixNumbers()
-    const encryptedOtp = await this.userRepository.hashedPassword(otp.toString())
-
-    const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
-    const details = { id: user.id, otp: encryptedOtp, type: OtpEnum.DEVELOPER_EMAIL_VERIFICATION, password}
-    await this.client.setKey(key, details, 60)
-    user = await this.userRepository.findById(user.id)
+    const token = generateInvitationToken()
+    const encryptedtoken = await this.userRepository.hashedPassword(
+      token.toString(),
+    )
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+    const details = {
+      user_id: user.id,
+      token: encryptedtoken,
+      type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+    }
+    const oneDayInMs = 24 * 60 * 60 * 1000
+    await this.client.setKey(key, details, oneDayInMs)
+    const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    delete developer.password
     return { ...user, ...developer }
-    
   }
-
 
   public async inviteAgents(input: User): Promise<User> {
     await this.existingUsers.beforeCreateEmail(input.email)

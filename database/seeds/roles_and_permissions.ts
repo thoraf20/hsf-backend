@@ -8,6 +8,11 @@ export async function seed(knex: Knex): Promise<void> {
     const roles = [
         { name: "home_buyer" },
         { name: "admin" },
+        { name: "loan officer" },
+        { name: "compliance office" },
+        { name: "inspection manager" },
+        { name: "dispute manager" },
+        { name: "customer support" },
         { name: "developer" },
         { name: "trustee" },
         { name: "bank" },

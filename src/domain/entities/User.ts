@@ -15,6 +15,10 @@ export class User  {
   user_agent?: string
   role?: Role
   failed_login_attempts?: number
+  force_password_reset?: boolean
+  ip_address?: string
+  os?: string
+  browser?: string
   is_email_verified?: boolean
   is_phone_verified?: boolean
   is_mfa_enabled?: boolean
@@ -29,3 +33,23 @@ export class User  {
 
 }
 
+
+export class AgentProfile {
+  id?: string;
+  street_address:string;
+  city: string;
+  state: string;
+  landmark?: string;
+  country?: string;
+  user_id: string
+  constructor(data: Partial<User>) {
+    Object.assign(this, {
+        created_at: new Date(),
+        updated_at: new Date(),
+        ...data
+    });
+}
+
+}
+
+export type UserRegProfile = User & AgentProfile

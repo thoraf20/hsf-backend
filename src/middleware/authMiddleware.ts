@@ -1,3 +1,4 @@
+import db from '@infrastructure/database/knex';
 import { Request} from 'express'
 import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
@@ -6,7 +7,7 @@ interface AuthRequest extends Request {
   role?: string
 }
 
-const authenticate = (req: AuthRequest, res, next,) => {
+const authenticate = async (req: AuthRequest, res, next,) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
@@ -21,6 +22,15 @@ const authenticate = (req: AuthRequest, res, next,) => {
     const secret = process.env.SECRET_TOKEN!;
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
+    const user = await db('users').where({ id: req.user.id }).first(); // Adjust table/column names
+
+    if (!user) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        ok: false,
+        status: StatusCodes.UNAUTHORIZED,
+        message: 'Unauthorized Request.',
+      });
+    }
     
     next();
   } catch (error) {

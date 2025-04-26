@@ -633,5 +633,77 @@ sharePropertyTemplate : `<!DOCTYPE html>
   </div>
 </body>
 </html>
+`,
+
+InvitationEmail: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Invitation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      background-color: #fff;
+      margin: 50px auto;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+      color: #333;
+    }
+    .header {
+      text-align: center;
+      padding-bottom: 20px;
+    }
+    .header h2 {
+      color: #2c3e50;
+    }
+    .message {
+      margin-bottom: 25px;
+      line-height: 1.6;
+    }
+    .button {
+      display: block;
+      width: fit-content;
+      margin: 20px auto;
+      padding: 12px 24px;
+      background-color: #3498db;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .footer {
+      text-align: center;
+      font-size: 12px;
+      color: #999;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h2>You're Invited to Join as an Admin</h2>
+    </div>
+    <div class="message">
+      <p>Hello, {{fullname}}</p>
+      <p>You have been invited to join our platform as an {{role}}. Please activate your account by clicking the button below. Your default password is:</p>
+      <p><strong>{{defaultPassword}}</strong></p>
+      <p>For security, you will be prompted to change your password on first login.</p>
+    </div>
+    <a href="{{activationLink}}" class="button">Accept Invite</a>
+    <div class="footer">
+      &copy; {{year}} HsfDirect. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
 `
 }
