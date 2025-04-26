@@ -237,8 +237,6 @@ export class ApplicationRepository implements IApplicationRespository {
       .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
       .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
       .select(
-        'a.application_id',
-        'a.application_type',
         'es.escrow_status',
         'es.is_escrow_set',
         'pc.closing_status',
@@ -250,6 +248,8 @@ export class ApplicationRepository implements IApplicationRespository {
         'rp.*',
         'dp.*',
         'lo.*',
+        'a.*',
+        'p.*',
       )
       .where('a.application_id', application_id)
       .first()

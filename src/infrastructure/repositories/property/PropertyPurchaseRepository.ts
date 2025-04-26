@@ -22,7 +22,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     user_id: string,
   ): Promise<PropertyClosing> {
     const [propertyClosing] = await db('property_closing')
-      .insert({ property_id, user_id })
+      .insert({ property_id, user_id, closing_status: 'Approved' })
       .returning('*')
     return new PropertyClosing(propertyClosing) ? propertyClosing : null
   }
@@ -149,7 +149,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     input: EscrowInformationStatus,
   ): Promise<EscrowInformationStatus> {
     const [escrowStatus] = await db('escrow_status')
-      .insert({ ...input, status: EscrowMeetingStatus.AWAITING })
+      .insert({ ...input, escrow_status: EscrowMeetingStatus.AWAITING })
       .returning('*')
     return new EscrowInformationStatus(escrowStatus) ? escrowStatus : null
   }

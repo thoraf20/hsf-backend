@@ -113,6 +113,13 @@ export class InspectionService {
     }
   }
 
+  async updateInspection(inspectionId: string, update: Partial<Inspection>) {
+    return this.inspectionRepository.updateScheduleInpection(
+      inspectionId,
+      update,
+    )
+  }
+
   private async sendEmailsWithRetry(
     input: Inspection,
     retries = 3,

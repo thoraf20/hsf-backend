@@ -116,6 +116,7 @@ export class MortageRepository implements IMortageRespository {
         metadata,
       },
     )
+
     await this.savePaymentStatus(property_id, user_id)
     // await this.applicationRepo.updateApplication({
     //   property_id,

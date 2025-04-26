@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {
   MeetingPlatform,
   InspectionMeetingType,
-  // FinancialOptionsEnum,
+  InspectionStatus,
 } from '@domain/enums/propertyEnum'
 // import { DateTime } from 'luxon';
 
@@ -87,3 +87,11 @@ export const inspectionSchema = z.object({
 
   property_id: z.string(),
 })
+
+export const updateInspectionStatusSchema = z.object({
+  status: z.enum([InspectionStatus.COMPLETED, InspectionStatus.CANCELED]),
+})
+
+export type UpdateInspectionStatusPayload = z.infer<
+  typeof updateInspectionStatusSchema
+>

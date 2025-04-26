@@ -5,7 +5,7 @@ import { Hashing } from '@shared/utils/hashing'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
-  async create(user: User): Promise<User> {
+  async create(user: Omit<User, 'user_id'>): Promise<User> {
     const [newUser] = await db('users').insert(user).returning('*')
     return new User(newUser)
   }
@@ -23,6 +23,7 @@ export class UserRepository implements IUserRepository {
   async findById(id: string): Promise<any> {
     const user = await db('users')
       .select(
+        'users.id as id',
         'users.id as user_id',
         'users.first_name',
         'users.last_name',

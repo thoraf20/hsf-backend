@@ -11,6 +11,7 @@ export enum PreQualifierEnum {
 
 export enum PropertyRequestTypeEnum {
   OfferLetter = 'Offer Letter',
+  INITIATE = 'Initiate',
   PROPERTY_CLOSSING = 'Property Closing',
   ELIGIBILITY_CHECK = 'Eligibility Check',
   ESCROW_ATTENDANCE = 'Escrow Attendance',

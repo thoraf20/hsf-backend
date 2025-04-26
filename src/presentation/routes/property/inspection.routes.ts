@@ -8,7 +8,11 @@ import {
   Role,
   validateRequest,
 } from '../index.t'
-import { inspectionSchema } from '@application/requests/dto/inspectionVaidator'
+import {
+  inspectionSchema,
+  UpdateInspectionStatusPayload,
+  updateInspectionStatusSchema,
+} from '@application/requests/dto/inspectionVaidator'
 import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
 
 const inspectionRoutes: Router = Router()
@@ -30,6 +34,22 @@ inspectionRoutes.post(
       user.id,
     )
     res.status(schedule.statusCode).json(schedule)
+  }),
+)
+
+inspectionRoutes.patch(
+  '/:inspection_id/status',
+  requireRoles(Role.DEVELOPER),
+  validateRequest(updateInspectionStatusSchema),
+  asyncMiddleware(async (req, res) => {
+    const { inspection_id } = req.params
+    const body: UpdateInspectionStatusPayload = req.body
+    const response = await inspectionController.updateScheduleInspectionStatus(
+      inspection_id,
+      body.status,
+    )
+
+    return res.status(response.statusCode).json(response)
   }),
 )
 

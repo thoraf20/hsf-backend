@@ -11,18 +11,28 @@ import IndexRouters from '../presentation/routes/index'
 import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
+import cookieParser from 'cookie-parser'
 import path from 'path'
 import http from 'http'
+import { getEnv } from '@infrastructure/config/env/env.config'
 
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 // import { Admin } from '@use-cases/Admin/Admin'
 const app: Application = express()
 
-app.use(cors())
+app.use(cookieParser())
+app.use(
+  cors({
+    origin:
+      getEnv('NODE_ENV') === 'development'
+        ? ['http://localhost:3000']
+        : getEnv('ORIGINS'),
+    credentials: true,
+  }),
+)
 const server = http.createServer(app)
 app.use(express.json({ limit: '10kb' })) // Max 10KB JSON payload
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-
 app.use(helmet())
 app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY')
@@ -78,6 +88,7 @@ app.use(ErrorHandler)
 
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => {
-  console.log(`Server is running on port http://localhost:${PORT} at ${new Date}`)
+  console.log(
+    `Server is running on port http://localhost:${PORT} at ${new Date()}`,
+  )
 })
- 
