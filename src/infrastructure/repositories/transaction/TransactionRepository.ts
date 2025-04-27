@@ -2,7 +2,10 @@ import { Transaction } from '@domain/entities/Transaction'
 import { ITransaction } from '@domain/interfaces/ITransactionRepository'
 import { User } from '@entities/User'
 import db from '@infrastructure/database/knex'
-import { SeekPaginationOption, SeekPaginationResult } from '@shared/types/paginate'
+import {
+  SeekPaginationOption,
+  SeekPaginationResult,
+} from '@shared/types/paginate'
 
 export class TransactionRepository implements ITransaction {
   public async saveTransaction(input: Transaction): Promise<Transaction> {
@@ -11,18 +14,21 @@ export class TransactionRepository implements ITransaction {
   }
 
   public async getTransactionById(id: string): Promise<Transaction> {
-    const [transaction] = await db('transactions').where({ id }).first('*')
+    const transaction = await db('transactions').where({ id }).first('*')
     return new Transaction(transaction)
   }
 
-  public async getAlltransactionbyIds(ids : string[], paginate?: SeekPaginationOption,): Promise<Promise<SeekPaginationResult<Transaction>>> {
-    var query = db('transactions');
+  public async getAlltransactionbyIds(
+    ids: string[],
+    paginate?: SeekPaginationOption,
+  ): Promise<Promise<SeekPaginationResult<Transaction>>> {
+    var query = db('transactions')
 
-    for (var i in ids){
-      if (+i > 0){
-        query = query.or.where({property_id : ids[i]});
-      }else {
-        query = query.where({property_id : ids[i]});
+    for (var i in ids) {
+      if (+i > 0) {
+        query = query.or.where({ property_id: ids[i] })
+      } else {
+        query = query.where({ property_id: ids[i] })
       }
     }
 
@@ -31,8 +37,7 @@ export class TransactionRepository implements ITransaction {
       query = query.limit(paginate.result_per_page).offset(offset)
     }
 
-
-    const results = (await query.select("*")).map(t => new Transaction(t));
+    const results = (await query.select('*')).map((t) => new Transaction(t))
 
     return new SeekPaginationResult<Transaction>({
       result: results,
@@ -41,8 +46,10 @@ export class TransactionRepository implements ITransaction {
     })
   }
 
-
-  public async fetchUserFromTransactionByPaymentIds(ids : string[], paginate?: SeekPaginationOption,): Promise<Promise<SeekPaginationResult<User>>> {
+  public async fetchUserFromTransactionByPaymentIds(
+    ids: string[],
+    paginate?: SeekPaginationOption,
+  ): Promise<Promise<SeekPaginationResult<User>>> {
     let query = db('users')
       .join('transactions', 'users.id', 'transactions.user_id')
       .whereIn('transactions.property_id', ids)
@@ -53,7 +60,7 @@ export class TransactionRepository implements ITransaction {
         'users.phone_number',
         'users.image',
         'users.profile',
-      );
+      )
 
     if (paginate) {
       const offset = (paginate.page_number - 1) * paginate.result_per_page

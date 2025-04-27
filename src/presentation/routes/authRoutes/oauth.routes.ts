@@ -52,7 +52,6 @@ oauthRoutes.get('/google/login', async (req: Request, res: Response) => {
 })
 
 oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
-  console.log('Callback hit!') // Confirm the route is reached
   const stateCookie = req.cookies['google_oauth_state']
   const codeVerifier = req.cookies['code_verifier']
 
@@ -65,7 +64,6 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       res.status(response.statusCode).json(response)
       return
     }
-    console.log({ hello: req.cookies, code, codeVerifier })
 
     const tokens = await google.validateAuthorizationCode(code, codeVerifier)
     const idToken = tokens.idToken()

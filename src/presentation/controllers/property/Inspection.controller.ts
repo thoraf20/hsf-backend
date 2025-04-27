@@ -1,17 +1,17 @@
 import { InspectionService } from '@application/useCases/Properties/Inspection'
-import { Inspection } from '@domain/entities/Inspection'
 import { InspectionStatus } from '@domain/enums/propertyEnum'
 import {
   ApiResponse,
   createResponse,
 } from '@presentation/response/responseType'
+import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
 import { StatusCodes } from 'http-status-codes'
 
 export class InspectionController {
   constructor(private readonly inspectionService: InspectionService) {}
 
   public async scheduleInspectionController(
-    input: Inspection,
+    input: ScheduleInspectionInput,
     user_id: string,
   ): Promise<ApiResponse<any>> {
     const schedule = await this.inspectionService.ScheduleInspection(

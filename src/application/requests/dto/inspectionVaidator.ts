@@ -74,19 +74,14 @@ export const inspectionSchema = z.object({
     })
     .optional(),
 
-  amount: z
-    .string()
-    .regex(
-      /^\d+(\.\d{1,2})?$/,
-      'Amount must be a valid number with up to 2 decimal places',
-    )
-    .refine((value) => parseFloat(value) > 0, {
-      message: 'Amount must be a positive number.',
-    })
-    .optional(),
+  product_code: z.string().nonempty().optional(),
+
+  amount: z.coerce.number().positive().optional(),
 
   property_id: z.string(),
 })
+
+export type ScheduleInspectionInput = z.infer<typeof inspectionSchema>
 
 export const updateInspectionStatusSchema = z.object({
   status: z.enum([InspectionStatus.COMPLETED, InspectionStatus.CANCELED]),

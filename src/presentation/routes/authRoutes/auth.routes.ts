@@ -15,8 +15,9 @@ import { UserRepository } from '@infrastructure/repositories/user/UserRepository
 import { AuthController } from '@presentation/controllers/Auth.controller'
 import { asyncMiddleware, validateRequest } from '../index.t'
 import { bruteforce } from '@middleware/security'
+import { AccountRepository } from '@repositories/user/AccountRepository'
 
-const service = new AuthService(new UserRepository())
+const service = new AuthService(new UserRepository(), new AccountRepository())
 const controller = new AuthController(service)
 const authRoutes: Router = Router()
 

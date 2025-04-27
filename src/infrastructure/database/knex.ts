@@ -1,5 +1,6 @@
-import knex from 'knex'
+import knex, { Knex } from 'knex'
 import configs from '@config/config'
+import { SearchType } from '@shared/types/repoTypes'
 
 const db = knex({
   client: 'pg',
@@ -18,3 +19,8 @@ const db = knex({
 })
 
 export default db
+
+export const createUnion = (searchType: SearchType) =>
+  searchType === SearchType.EXCLUSIVE
+    ? (q: Knex.QueryBuilder<any, any[]>) => q.and
+    : (q: Knex.QueryBuilder<any, any[]>) => q.or

@@ -116,3 +116,36 @@
     at ServerResponse.json (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/express/lib/response.js:278:15)
     at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/authRoutes/oauth.routes.ts:155:37
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-04-26 13:35:08 [ERROR]: Error: Worker is already running.
+    at Worker.run (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/bullmq/src/classes/worker.ts:435:13)
+    at Object.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/server/app.ts:54:18)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1554:14)
+    at Module._compile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/source-map-support/source-map-support.js:568:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-5389927828948713.js:69:33)
+    at node:internal/modules/cjs/loader:1706:10
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-5389927828948713.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-5389927828948713.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-04-26 13:35:26 [ERROR]: Error: Worker is already running.
+    at Worker.run (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/bullmq/src/classes/worker.ts:435:13)
+    at Object.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/server/app.ts:54:18)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1554:14)
+    at Module._compile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/source-map-support/source-map-support.js:568:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-4457408779768026.js:69:33)
+    at node:internal/modules/cjs/loader:1706:10
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-4457408779768026.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-4457408779768026.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-04-26 13:35:42 [ERROR]: Error: Worker is already running.
+    at Worker.run (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/bullmq/src/classes/worker.ts:435:13)
+    at Object.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/server/app.ts:54:18)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1554:14)
+    at Module._compile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/source-map-support/source-map-support.js:568:25)
+    at Module.m._compile (/tmp/ts-node-dev-hook-4457408779768026.js:69:33)
+    at node:internal/modules/cjs/loader:1706:10
+    at require.extensions..jsx.require.extensions..js (/tmp/ts-node-dev-hook-4457408779768026.js:114:20)
+    at require.extensions.<computed> (/tmp/ts-node-dev-hook-4457408779768026.js:71:20)
+    at Object.nodeDevHook [as .ts] (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/ts-node-dev/lib/hook.js:63:13)
+    at Module.load (node:internal/modules/cjs/loader:1289:32)

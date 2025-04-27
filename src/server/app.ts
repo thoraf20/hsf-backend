@@ -15,6 +15,7 @@ import cookieParser from 'cookie-parser'
 import path from 'path'
 import http from 'http'
 import { getEnv } from '@infrastructure/config/env/env.config'
+import '@infrastructure/worker/inspectionWorker'
 
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
 // import { Admin } from '@use-cases/Admin/Admin'

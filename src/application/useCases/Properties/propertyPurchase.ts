@@ -1,6 +1,5 @@
 import {
   ApplicationStatus,
-  FinancialOptionsEnum,
   OfferLetterStatusEnum,
   PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
@@ -126,15 +125,6 @@ export class PropertyPurchase {
         user_id,
       )
 
-    if (!inspection) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'You are required to perform inspection before proceeding with the purchase',
-        null,
-        ErrorCode.REQUIRED_INSPECTION,
-      )
-    }
-
     const application =
       await this.applicationRepository.getIfApplicationIsRecorded(
         property_id,
@@ -175,7 +165,7 @@ export class PropertyPurchase {
         property_id,
         purchase_type,
         user_id,
-        inspection_id: inspection.id,
+        inspection_id: inspection?.id,
       })
     }
 
@@ -192,7 +182,7 @@ export class PropertyPurchase {
         property_id,
         user_id,
         application_type: purchase_type,
-        inspection_id: inspection.id,
+        inspection_id: inspection?.id,
       })
     }
 
@@ -214,7 +204,6 @@ export class PropertyPurchase {
             purchase_type,
             user_id,
             application_id: application?.application_id,
-            inspection_id: inspection.id,
           })
 
         case PropertyRequestTypeEnum.PROPERTY_CLOSSING:
@@ -436,13 +425,11 @@ export class PropertyPurchase {
     purchase_type,
     user_id,
     application_id,
-    inspection_id,
   }: {
     property_id: string
     purchase_type: OfferLetterStatusEnum
     user_id: string
     application_id: string
-    inspection_id?: string
   }): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
 
