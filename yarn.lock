@@ -3140,9 +3140,24 @@ interpret@^2.2.0:
   resolved "https://registry.npmjs.org/interpret/-/interpret-2.2.0.tgz"
   integrity sha512-Ju0Bz/cEia55xDwUWEa8+olFpCiQoypjnQySseKtmjNrnps3P+xfpUmGr90T7yjlVJmOtybRvPXhKMbHr+fWnw==
 
-ioredis@^5.4.1, ioredis@^5.6.1:
+ioredis@^5.4.1:
   version "5.6.1"
   resolved "https://registry.npmjs.org/ioredis/-/ioredis-5.6.1.tgz"
+  integrity sha512-UxC0Yv1Y4WRJiGQxQkP0hfdL0/5/6YvdfOOClRgJ0qppSarkhneSa6UvkMkms0AkdGimSH3Ikqm+6mkMmX7vGA==
+  dependencies:
+    "@ioredis/commands" "^1.1.1"
+    cluster-key-slot "^1.1.0"
+    debug "^4.3.4"
+    denque "^2.1.0"
+    lodash.defaults "^4.2.0"
+    lodash.isarguments "^3.1.0"
+    redis-errors "^1.2.0"
+    redis-parser "^3.0.0"
+    standard-as-callback "^2.1.0"
+
+ioredis@^5.6.1:
+  version "5.6.1"
+  resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-5.6.1.tgz#1ed7dc9131081e77342503425afceaf7357ae599"
   integrity sha512-UxC0Yv1Y4WRJiGQxQkP0hfdL0/5/6YvdfOOClRgJ0qppSarkhneSa6UvkMkms0AkdGimSH3Ikqm+6mkMmX7vGA==
   dependencies:
     "@ioredis/commands" "^1.1.1"
@@ -3643,7 +3658,7 @@ neo-async@^2.6.2:
     luxon "^3.5.0"
     morgan "^1.10.0"
     multer "^1.4.5-lts.2"
-    new-hrf-api "file:../../../AppData/Local/Yarn/Cache/v6/npm-new-hrf-api-1.0.0-e58a1032-cc04-4df8-ae2e-61ee5ad860fd-1745737411414/node_modules/new-hrf-api"
+    new-hrf-api "file:../../../AppData/Local/Yarn/Cache/v6/npm-new-hrf-api-1.0.0-22a0c719-738d-4cb6-838c-b43470bc0331-1745760047822/node_modules/new-hrf-api"
     pg "^8.14.1"
     rate-limit-redis "^4.2.0"
     ulid "^3.0.0"

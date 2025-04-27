@@ -27,7 +27,6 @@ const configs = {
       app_key: process.env.APP_KEY
   }
 };
-console.log("Configurations loaded successfully.", configs.database.host);
 
 export default configs;
  
