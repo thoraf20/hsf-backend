@@ -21,7 +21,7 @@ export class PaystackProcessor implements PaymentProcessor {
     try {
       const requestBody = {
         ...input,
-        amount: Number(input.amount) * 100, // Convert amount to kobo
+        amount: Number(input.amount) * 100,
         currency: 'NGN',
       }
 

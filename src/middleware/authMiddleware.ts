@@ -19,7 +19,7 @@ const authenticate = async (req: AuthRequest, res, next,) => {
   }
 
   try {
-    const secret = process.env.SECRET_TOKEN!;
+    const secret = process.env.SECRET_TOKEN! as string;
     const decoded = jwt.verify(token, secret);
     req.user = decoded;
     const user = await db('users').where({ id: req.user.id }).first(); // Adjust table/column names
@@ -51,7 +51,7 @@ export function optionalAuth(req: AuthRequest, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.SECRET_TOKEN!)
+    const decoded = jwt.verify(token, process.env.SECRET_TOKEN! as string) 
     req.user = decoded
     next()
   } catch (error) {

@@ -16,7 +16,7 @@ const sse = new SseService()
 WebhookRouter.post(
   '/paystack',
   asyncMiddleware(async (req: Request, res: Response) => {
-    const secret = process.env.PAYSTACK_SECRET_KEY!
+    const secret = process.env.PAYSTACK_SECRET_KEY! as string
 
     const hash = crypto
       .createHmac('sha512', secret)

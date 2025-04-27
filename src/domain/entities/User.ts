@@ -31,6 +31,12 @@ export class User {
     })
   }
 }
+<<<<<<< Updated upstream
+=======
+
+
+
+>>>>>>> Stashed changes
 
 export class AgentProfile {
   id?: string

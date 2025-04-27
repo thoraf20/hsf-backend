@@ -37,5 +37,5 @@
     "esm": true
   },
   "include": ["src/**/*", "database"],
-  "exclude": ["database/**/*"]
+  "exclude": ["database/**/*", "node_modules/**/*", ]
 }

@@ -5,11 +5,11 @@ import { SearchType } from '@shared/types/repoTypes'
 const db = knex({
   client: 'pg',
   connection: {
-    host: configs.database.host,
-    user: configs.database.user,
-    password: configs.database.password,
-    database: configs.database.database,
-    port: configs.database.port,
+    host: configs.database.host as string,
+    user: configs.database.user as string,
+    password: configs.database.password as string,
+    database: configs.database.database as string,
+    port: Number(configs.database.port),
   },
   pool: { min: 2, max: 10 },
   migrations: {
