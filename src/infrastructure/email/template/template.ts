@@ -690,7 +690,7 @@ InvitationEmail: `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <h2>You're Invited to Join as an Admin</h2>
+      <h2>You're Invited to Join as an {{role}}</h2>
     </div>
     <div class="message">
       <p>Hello, {{fullname}}</p>

@@ -16,9 +16,13 @@ import path from 'path'
 import http from 'http'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import '@infrastructure/worker/inspectionWorker'
+// import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+// import { LenderRepository } from '@repositories/Agents/LeaderRepository'
+// import { AdminRepository } from '@repositories/Agents/AdminRepository'
 
 // import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
-// import { Admin } from '@use-cases/Admin/Admin'
+// import { Agents } from '@use-cases/Agent/agent'
+
 const app: Application = express()
 
 app.use(cookieParser())
@@ -34,7 +38,7 @@ app.use(
 const server = http.createServer(app)
 app.use(express.json({ limit: '10kb' })) // Max 10KB JSON payload
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-app.use(helmet())
+app.use(helmet()) 
 app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY')
   res.setHeader('X-Content-Type-Options', 'nosniff')
@@ -52,8 +56,11 @@ app.use(speedLimiter)
 app.use(morgan('combined'))
 app.use(morgan('dev'))
 
+
+
+
 // const userRepo = new UserRepository()
-// const create_admin = new Admin(userRepo)
+// const create_admin = new Agents(userRepo, new DeveloperRespository(), new AdminRepository(), new LenderRepository())
 
 // create_admin.createAdmin({
 //   first_name: 'Super',

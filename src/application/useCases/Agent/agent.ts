@@ -1,5 +1,5 @@
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
-import { User, UserRegProfile } from '@domain/entities/User'
+import { invitation, User, UserRegProfile } from '@domain/entities/User'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { DeveloperUtils, ExistingUsers } from '../utils'
 import { ApplicationCustomError } from '@middleware/errors/customError'
@@ -16,7 +16,7 @@ import { Role } from '@domain/enums/rolesEmun'
 import { Developer, DevelopeReg } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IAdminRepository } from '@interfaces/IAdminRespository'
-import { resetPassword } from '@shared/types/userType'
+import { changePassword } from '@shared/types/userType'
 import { Lender, LenderProfile } from '@entities/Leader'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 
@@ -64,7 +64,7 @@ export class Agents {
   public async inviteAdmin(
     input: UserRegProfile,
     agent_id: string,
-  ): Promise<User> {
+  ): Promise<User | any> {
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
@@ -79,7 +79,8 @@ export class Agents {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
 
-    if (agentUser.role_id === findRole.id && input.role === Role.SUPER_ADMIN) {
+    console.log(agentUser.role)
+    if (agentUser.role !==  Role.SUPER_ADMIN) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         'You cannot create a super admin from an admin account',
@@ -97,6 +98,7 @@ export class Agents {
         phone_number: input.phone_number,
         password,
         role_id: findRole.id,
+        force_password_reset: true,
         is_default_password: true,
       }),
     )
@@ -122,7 +124,7 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
     delete newUser.password
     return { ...newUser, ...adminProfile }
   }
@@ -133,13 +135,17 @@ export class Agents {
     * @returns void
     */
 
-  public async acceptInvitation(invitation_token: string): Promise<void> {
-    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${invitation_token}`
+  public async acceptInvitation(input: invitation): Promise<void> {
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${input.invite_code}`
+    
     await this.client.checkAndClearCache(key)
     const details = await this.client.getKey(key)
+    if(!details)  {
+      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Invalid or expired invitation link`)
+    }
     const { token, type, user_id } =
     typeof details === 'string' ? JSON.parse(details) : details
-    const isValidToken = await this.userRepository.comparedPassword(invitation_token, token)
+    const isValidToken = await this.userRepository.comparedPassword(input.invite_code, token)
     if(type !== OtpEnum.AGENT_EMAIL_VERIFICATION) {
       await this.client.deleteKey(key)
       throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Sorry we can't complete this request`)
@@ -178,7 +184,7 @@ export class Agents {
     await this.client.setKey(key, details, oneDayInMs)
     await this.userRepository.update(user.id, { password, is_default_password: true })
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(user.email, `${user.first_name} ${user.last_name}`, invitation_email, userRole.name, password)
+    emailTemplates.InvitationEmail(user.email, `${user.first_name} ${user.last_name}`, invitation_email, userRole.name, defaultPassword)
   }
 
   /*
@@ -221,6 +227,7 @@ export class Agents {
           email: input.email,
           phone_number: input.phone_number,
           password,
+          force_password_reset: true,
           role_id: findRole.id,
           is_default_password: true,
         }),
@@ -247,7 +254,7 @@ export class Agents {
       const oneDayInMs = 24 * 60 * 60 * 1000
       await this.client.setKey(key, details, oneDayInMs)
       const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-      emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+      emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
       delete newUser.password
       return { ...newUser, ...adminProfile }
     
@@ -255,13 +262,19 @@ export class Agents {
  
   /*
     * @description This method is used to change the password of the user
-    * @param input - resetPassword
+    * @param input - changePassword
     * @param id - string
     * @returns void
     */
-  public async changeInviteePassword(input: resetPassword, id: string): Promise<void> {
+  public async changeInviteePassword(input: changePassword, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
-
+  
+    if (input.oldPassword === input.newPassword) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        "New password can't be the same as old password",
+      )
+    }
     if (
       !(await this.userRepository.comparedPassword(
         input.oldPassword,
@@ -273,14 +286,6 @@ export class Agents {
         'Old password is incorrect',
       )
     }
-
-    if (input.oldPassword === input.newPassword) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        "New password can't be the same as old password",
-      )
-    }
-
     const hashedNewPassword = await this.userRepository.hashedPassword(
       input.newPassword,
     )
@@ -326,6 +331,7 @@ export class Agents {
         phone_number: input.phone_number,
         password,
         role_id: findRole.id,
+        force_password_reset: true,
         is_default_password: true
       }),
     )
@@ -359,7 +365,7 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
     delete developer.password
     return { ...user, ...developer }
   }
@@ -393,7 +399,9 @@ export class Agents {
         phone_number: input.phone_number,
         password,
         role_id: findRole.id,
+        force_password_reset: true,
         is_default_password: true
+        
       }),
     )
     const lenderProfile = await this.lenderRepository.createLender(
@@ -419,7 +427,7 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
     delete lenderProfile.password
     return { ...user, ...lenderProfile }
   }

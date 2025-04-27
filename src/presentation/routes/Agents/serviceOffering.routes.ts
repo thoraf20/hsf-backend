@@ -1,4 +1,4 @@
-import { ServiceOfferingController } from '@controllers/Super Admin/ServiceOffering.controller'
+import { ServiceOfferingController } from '@controllers/Agent/ServiceOffering.controller'
 import { User } from '@entities/User'
 import { validateRequest } from '@middleware/validateRequest'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
