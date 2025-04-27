@@ -6,7 +6,7 @@ import {
 } from '@domain/enums/propertyEnum'
 import { z } from 'zod'
 
-const DocumentSchema = z.object({
+export const DocumentSchema = z.object({
   type: z.string(),
   document_img_url: z
     .string()

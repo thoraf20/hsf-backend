@@ -7,38 +7,32 @@ dotenv.config()
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('development'),
   PORT: z.string(),
-
-  // Database
   DB_HOST: z.string(),
   DB_PORT: z.string(),
   DB_USER: z.string(),
   DB_NAME: z.string(),
   DB_PASSWORD: z.string(),
-
   REDIS_URL: z.string(),
-
   APP_KEY: z.string(),
   SECRET_TOKEN: z.string(),
-
   ADMIN_EMAIL: z.string().email(),
   ADMIN_PHONE: z.string(),
   ADMIN_PASS: z.string(),
   ADMIN_ROLEID: z.string(),
-
   PAYSTACK_baseURL: z.string().url(),
   PAYSTACK_SECRET_KEY: z.string(),
-
   SENDCHAMP_API_KEY: z.string(),
-
   SENDGRID_API_KEY: z.string(),
   SENDGRID_SENDER_EMAIL: z.string().email(),
   FRONTEND_URL: z.string().url(),
-  AWS_REGION: z.string(),
-  AWS_ACCESS_KEY_ID: z.string(),
-  AWS_SECRET_ACCESS_KEY: z.string(),
-  AWS_BUCKET_NAME: z.string(),
-  GOOGLE_CLIENT_ID: z.string(),
-  GOOGLE_CLIENT_SECRET: z.string(),
+
+  AWS_REGION: z.string().optional(),
+  AWS_ACCESS_KEY_ID: z.string().optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().optional(),
+  AWS_BUCKET_NAME: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+
   ORIGINS: z.string().transform((value) => value.split(',')),
   SERVICE_INSPECTION_FEE_CODE: z.string().optional(),
   BACKEND_URL: z.string().url(),

@@ -314,7 +314,7 @@ export class Agents {
       ),
       this.developer.findIfCompanyEmailExist(input.company_email),
     ])
-    const findRole =  await this.userRepository.getRoleByName(input.role)
+    const findRole =  await this.userRepository.getRoleByName(Role.DEVELOPER)
 
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
@@ -365,8 +365,8 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
-    delete developer.password
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, Role.DEVELOPER, defaultPassword)
+    delete user.password
     return { ...user, ...developer }
   }
 
@@ -378,12 +378,12 @@ export class Agents {
     */
 
   public async inviteLender(input: LenderProfile, agent_id: string): Promise<LenderProfile> { 
-         
+           
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
     ])
-    const findRole = await this.userRepository.getRoleByName(input.role)
+    const findRole = await this.userRepository.getRoleByName(Role.LENDER)
 
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
@@ -427,8 +427,8 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
-    delete lenderProfile.password
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, Role.LENDER, defaultPassword)
+    delete user.password
     return { ...user, ...lenderProfile }
   }
 

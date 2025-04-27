@@ -10,6 +10,8 @@ import {
   acceptInviteSchema,
   AdminSchema,
   AgentPasswordChangeSchema,
+  DeveloperSchema,
+  LenderSchema,
   SubAdminSchema,
 } from '@validators/agentsValidator'
 import { AgentsController } from '@controllers/Agent/Agent.controller'
@@ -56,6 +58,26 @@ agentsRoute.post(
   asyncMiddleware(async (req, res) => {
     const { body } = req
     const user = await controller.inviteSubAdmin(body, req.user.id)
+    res.status(user.statusCode).json(user)
+  }),
+)
+agentsRoute.post(
+  '/invite-developer',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(DeveloperSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body } = req
+    const user = await controller.inviteDeveloper(body, req.user.id)
+    res.status(user.statusCode).json(user)
+  }),
+)
+agentsRoute.post(
+  '/invite-lender',
+  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  validateRequest(LenderSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body } = req
+    const user = await controller.inviteLender(body, req.user.id)
     res.status(user.statusCode).json(user)
   }),
 )

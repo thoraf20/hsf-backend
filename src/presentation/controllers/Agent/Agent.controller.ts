@@ -6,6 +6,8 @@ import { Agents } from '@use-cases/Agent/agent'
 import { invitation, User, UserRegProfile } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 import { changePassword } from '@shared/types/userType'
+import { DevelopeReg } from '@entities/Developer'
+import { LenderProfile } from '@entities/Leader'
 
 
 export class AgentsController {
@@ -55,4 +57,34 @@ export class AgentsController {
       {},
     )
   }
-} 
+
+  public async resendInvitation(user_id: string): Promise<ApiResponse<any>> {
+    await this.adminService.resendInvitationEmail(user_id)
+    return createResponse(
+      StatusCodes.CREATED,
+      `Invitation resent successfully`,
+      {},
+    )
+  }
+
+  public async inviteDeveloper(input: DevelopeReg, agent_id: string): Promise<ApiResponse<any>> {
+    const user = await this.adminService.inviteDevelopers(input, agent_id)
+    return createResponse(
+      StatusCodes.CREATED,
+      `${user.role} account created successfully`,
+      user,
+    )
+  }
+
+  public async inviteLender(input: LenderProfile, agent_id: string): Promise<ApiResponse<any>> { 
+    const user = await this.adminService.inviteLender(input, agent_id)
+    return createResponse(
+      StatusCodes.CREATED,
+      `${user.role} account created successfully`,
+      user,
+    )
+  }
+}
+
+
+   
