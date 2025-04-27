@@ -59,6 +59,7 @@ export class PropertyService {
       user_id,
       userRole,
     )
+
     return fetchProperty
   }
 

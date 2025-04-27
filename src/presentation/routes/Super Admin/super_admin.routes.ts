@@ -10,10 +10,15 @@ import { AgentsSchema } from '@application/requests/dto/adminValidator'
 import { AgentsController } from '@controllers/Super Admin/Agent.controller'
 import { Agents } from '@use-cases/Super Admin/agent'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { AdminRepository } from '@repositories/Agents/AdminRepository'
 
 const agentsRoute: Router = Router()
 
-const service = new Agents(new UserRepository(), new DeveloperRespository())
+const service = new Agents(
+  new UserRepository(),
+  new DeveloperRespository(),
+  new AdminRepository(),
+)
 const controller = new AgentsController(service)
 
 agentsRoute.post(
