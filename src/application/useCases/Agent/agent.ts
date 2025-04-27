@@ -304,7 +304,7 @@ export class Agents {
     * @param agent_id - string
     * @returns DevelopeReg
     */
-  public async inviteDevelopers(input: DevelopeReg, agent_id: string): Promise<DevelopeReg> {
+  public async inviteDevelopers(input: DevelopeReg, agent_id: string): Promise<DevelopeReg | any> {
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
@@ -319,8 +319,6 @@ export class Agents {
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
-
-
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
     let user = await this.userRepository.create(
@@ -348,7 +346,7 @@ export class Agents {
         specialization: input.specialization,
         region_of_operation: input.region_of_operation,
         company_image: input.company_image,
-        documents: input.documents,
+        documents: JSON.stringify(input.documents),
         developers_profile_id: user.id,
       }),
     )
@@ -371,7 +369,7 @@ export class Agents {
   }
 
   /*
-    * @description This method is used to invite lenders to the platform
+    * @description This method is used to invite lenders to the platform 
     * @param input - LenderProfile
     * @param agent_id - string
     * @returns LenderProfile
