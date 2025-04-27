@@ -7,6 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
+import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
 
 export class MangagePropertyController {
   constructor(
@@ -56,7 +57,7 @@ export class MangagePropertyController {
   }
 
   async approvePrequalifyRequest(
-    input: Record<string, any>,
+    input: ApprovePrequalifyRequestInput,
   ): Promise<ApiResponse<any>> {
     await this.managePropertyService.approvePrequalifyRequest(input)
     return createResponse(StatusCodes.OK, 'Success', {})

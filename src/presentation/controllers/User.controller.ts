@@ -23,7 +23,7 @@ export class UserController {
   }
 
   public async getUserById(id: string): Promise<ApiResponse<any>> {
-    const user: User & { accounts?: Account[] } =
+    const user: User & { accounts?: Account[]; allow_email_change?: boolean } =
       await this.userService.getUserProfile(id)
 
     if (user) {
@@ -35,6 +35,11 @@ export class UserController {
       })
     }
 
+    user.allow_email_change = Boolean(
+      user.password.length && user.password.length > 0,
+    )
+
+    delete user.password
     return createResponse(StatusCodes.OK, 'User retrived successfully', user)
   }
 

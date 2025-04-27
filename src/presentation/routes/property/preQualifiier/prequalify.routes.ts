@@ -8,7 +8,10 @@ import {
   Role,
   validateRequest,
 } from '@presentation/routes/index.t'
-import { preQualifySchema } from '@validators/prequalifyValidation'
+import {
+  preQualifierEligibleSchema,
+  preQualifySchema,
+} from '@validators/prequalifyValidation'
 import { verifyOtpSchema } from '@validators/userValidator'
 
 const preQualifierRoutes: Router = Router()
@@ -62,6 +65,17 @@ preQualifierRoutes.get(
     const { user } = req
     const prequalify = await controller.getPrequalifierByUserId(user.id)
     res.status(prequalify.statusCode).json(prequalify)
+  }),
+)
+
+preQualifierRoutes.patch(
+  '/eligible',
+  requireRoles(Role.DEVELOPER),
+  validateRequest(preQualifierEligibleSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body } = req
+    const eligible = await controller.updatePrequalifierEligibility(body)
+    res.status(eligible.statusCode).json(eligible)
   }),
 )
 

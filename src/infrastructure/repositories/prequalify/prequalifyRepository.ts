@@ -1,3 +1,4 @@
+import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 import {
   Eligibility,
   employmentInformation,
@@ -9,6 +10,7 @@ import {
 import { User } from '@entities/User'
 import db from '@infrastructure/database/knex'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
+import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
 
 export class PrequalifyRepository implements IPreQualify {
   public async storePersonaInfo(
@@ -90,6 +92,22 @@ export class PrequalifyRepository implements IPreQualify {
       .andWhere('user_id', user_id)
       .first()
     return new Eligibility(eligible) ? eligible : null
+  }
+
+  public async updateEligibility(
+    input: PreQualifierEligibleInput,
+  ): Promise<Eligibility> {
+    const [updated] = await db('eligibility')
+      .update({
+        eligiblity_status: input.is_eligible
+          ? EligibilityStatus.APPROVED
+          : EligibilityStatus.DELINCED,
+        is_eligible: input.is_eligible,
+      })
+      .where('eligibility_id', input.eligibility_id)
+      .returning('*')
+
+    return updated
   }
 
   public async updatePrequalifyStatus(

@@ -4,11 +4,10 @@ import logger from '@middleware/logger'
 
 dotenv.config()
 
-
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production']).default('development'),
   PORT: z.string(),
-  
+
   // Database
   DB_HOST: z.string(),
   DB_PORT: z.string(),
@@ -42,7 +41,8 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   ORIGINS: z.string().transform((value) => value.split(',')),
   SERVICE_INSPECTION_FEE_CODE: z.string().optional(),
-});
+  BACKEND_URL: z.string().url(),
+})
 
 export const formatErrors = (
   /** @type {import('zod').ZodFormattedError<Map<string,string>,string>} */
@@ -66,7 +66,7 @@ if (!_serverEnv.success) {
   )
 
   throw new Error('Invalid environment variables')
-} 
+}
 
 export const env = _serverEnv.data
 Object.assign(process.env, env)
