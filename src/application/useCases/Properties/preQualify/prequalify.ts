@@ -11,6 +11,7 @@ import {
   generateReferenceNumber,
 } from '@shared/utils/helpers'
 import { StatusCodes } from 'http-status-codes'
+import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
@@ -198,5 +199,11 @@ export class preQualifyService {
 
   public async getAllPreQualifierById(id: string): Promise<preQualify> {
     return await this.prequalify.getPreQualifyRequestById(id)
+  }
+
+  public async updatePrequalifierEligibility(
+    input: PreQualifierEligibleInput,
+  ): Promise<Eligibility> {
+    return await this.prequalify.updateEligibility(input)
   }
 }

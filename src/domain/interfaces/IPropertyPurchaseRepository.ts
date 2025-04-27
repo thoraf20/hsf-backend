@@ -4,6 +4,7 @@ import {
   PropertyClosing,
 } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
+import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
 
 export interface IPurchaseProperty {
   requestForOfferLetter(input: OfferLetter): Promise<OfferLetter | any>
@@ -32,10 +33,7 @@ export interface IPurchaseProperty {
     input: Record<string, any>,
     user_id: string,
   ): Promise<void>
-  approvePrequalifyRequest(
-    input: Record<string, any>,
-    user_id: string,
-  ): Promise<void>
+  approvePrequalifyRequest(input: ApprovePrequalifyRequestInput): Promise<void>
   createEscrowStatus(
     input: EscrowInformationStatus,
   ): Promise<EscrowInformationStatus>

@@ -1,3 +1,4 @@
+import { getEnv } from '@infrastructure/config/env/env.config'
 import { IFileRepository } from '@interfaces/IFileRespository'
 import { File, UploadedFile } from '@providers/fileupload'
 import fs from 'fs/promises'
@@ -31,7 +32,7 @@ export class FileRepository implements IFileRepository {
       try {
         await fs.writeFile(filePath, file.content)
         // Change this to a public-facing URL
-        const publicPath = `/uploads/${filename}` // Construct the public URL
+        const publicPath = `${getEnv('BACKEND_URL')}/uploads/${filename}` // Construct the public URL
         uploadedFiles.push({ path: publicPath }) // Store the URL, not the absolute file path
       } catch (error) {
         console.error(`Error writing file ${filename}: ${error}`)

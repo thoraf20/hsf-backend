@@ -217,6 +217,11 @@ export class ApplicationRepository implements IApplicationRespository {
         'pc.property_closing_id',
       )
       .leftJoin('prequalify_status as ps', 'a.prequalifier_id', 'ps.status_id')
+      .leftJoin(
+        'prequalify_personal_information as ppi',
+        'ps.personal_information_id',
+        'ppi.personal_information_id',
+      )
       .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
       .leftJoin(
@@ -240,6 +245,16 @@ export class ApplicationRepository implements IApplicationRespository {
         'es.escrow_status',
         'es.is_escrow_set',
         'pc.closing_status',
+        db.raw(`
+                      CASE
+                          WHEN ppi IS NOT NULL THEN json_build_object(
+                              'ppi', row_to_json(ppi),
+                              'prequalify_status', row_to_json(ps),
+                              'eligibility', row_to_json(el)
+                          )
+                          ELSE NULL
+                      END as prequalify_personal_information
+                  `),
         'ps.*',
         'el.*',
         'ol.*',
@@ -248,8 +263,8 @@ export class ApplicationRepository implements IApplicationRespository {
         'rp.*',
         'dp.*',
         'lo.*',
-        'a.*',
         'p.*',
+        'a.*',
       )
       .where('a.application_id', application_id)
       .first()

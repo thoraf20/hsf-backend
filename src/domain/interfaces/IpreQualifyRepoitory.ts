@@ -7,6 +7,7 @@ import {
   prequalifyStatus,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
+import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
 
 export interface IPreQualify {
   storePersonaInfo(input: personalinformation): Promise<personalinformation>
@@ -26,6 +27,7 @@ export interface IPreQualify {
   getSuccessfulPrequalifyRequestByUser(user_id: string): Promise<preQualify>
   addEligibility(input: Eligibility): Promise<Eligibility>
   findEligiblity(property_id: string, user_id: string): Promise<Eligibility>
+  updateEligibility(input: PreQualifierEligibleInput): Promise<Eligibility>
   IsHomeBuyerEligible(
     property_id: string,
     user_id: string,

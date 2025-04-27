@@ -12,6 +12,7 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
 
 export class manageProperty {
   private readonly propertyRepository: IPropertyRepository
@@ -103,9 +104,9 @@ export class manageProperty {
   }
 
   public async approvePrequalifyRequest(
-    input: Record<string, any>,
+    input: ApprovePrequalifyRequestInput,
   ): Promise<void> {
-    await this.purchaseRepository.approvePrequalifyRequest(input, input.user_id)
+    await this.purchaseRepository.approvePrequalifyRequest(input)
   }
 
   public async changeOfferLetterStatus(

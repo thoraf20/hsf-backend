@@ -412,9 +412,10 @@ export class PropertyPurchase {
       property_id,
       user_id,
       inspection_id,
+
       eligibility_id: eligible.eligibility_id,
       application_type: purchase_type,
-      prequalifier_id: preQualify.prequalify_status_id,
+      prequalifier_id: preQualify.status_id,
     })
 
     return application

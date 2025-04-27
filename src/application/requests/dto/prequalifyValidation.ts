@@ -43,3 +43,12 @@ export const preQualifySchema = z.object({
   property_name: z.string().min(1, 'Property name is required').optional(),
   preferred_lender: z.string().optional(),
 })
+
+export const preQualifierEligibleSchema = z.object({
+  eligibility_id: z.string(),
+  is_eligible: z.boolean(),
+})
+
+export type PreQualifierEligibleInput = z.infer<
+  typeof preQualifierEligibleSchema
+>

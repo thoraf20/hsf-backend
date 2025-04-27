@@ -15,6 +15,7 @@ export const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string(),
   ORIGINS: z.string().transform((value) => value.split(',')),
   SERVICE_INSPECTION_FEE_CODE: z.string().optional(),
+  BACKEND_URL: z.string().url(),
 })
 
 export const formatErrors = (

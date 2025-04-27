@@ -7,6 +7,7 @@ import {
 import { EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
+import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
   private readonly tablename: string = 'offer_letter'
@@ -80,7 +81,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     return await this.getOfferLetterById(offer_letter_id)
   }
   public async confirmPropertyEscrowMeeting(escrowId: string): Promise<void> {
- await db('escrow_information')
+    await db('escrow_information')
       .update({ confirm_attendance: true })
       .where('escrow_id', escrowId)
       .returning('*')
@@ -137,12 +138,11 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   }
 
   public async approvePrequalifyRequest(
-    input: Record<string, any>,
-    user_id: string,
+    input: ApprovePrequalifyRequestInput,
   ): Promise<void> {
     await db('prequalify_status')
-      .update({ status: input.status })
-      .where('loaner_id', user_id)
+      .update({ is_approved: input.is_approved })
+      .where('loaner_id', input.user_id)
   }
 
   public async createEscrowStatus(
