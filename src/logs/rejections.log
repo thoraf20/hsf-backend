@@ -149,3 +149,13 @@
     at require.extensions.<computed> (/tmp/ts-node-dev-hook-4457408779768026.js:71:20)
     at Object.nodeDevHook [as .ts] (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/ts-node-dev/lib/hook.js:63:13)
     at Module.load (node:internal/modules/cjs/loader:1289:32)
+2025-04-27 14:44:39 [ERROR]: Error [ERR_REQUIRE_ESM]: require() of ES Module C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\arctic\dist\index.js from C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts not supported.
+Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts to a dynamic import() which is available in all CommonJS modules.
+    at require.extensions..jsx.require.extensions..js (C:\Users\jarvis\AppData\Local\Temp\ts-node-dev-hook-6739317050148665.js:114:20)
+    at Object.nodeDevHook [as .js] (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\ts-node-dev\lib\hook.js:63:13)
+    at C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts:44:58
+2025-04-27 14:44:49 [ERROR]: Error [ERR_REQUIRE_ESM]: require() of ES Module C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\arctic\dist\index.js from C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts not supported.
+Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts to a dynamic import() which is available in all CommonJS modules.
+    at require.extensions..jsx.require.extensions..js (C:\Users\jarvis\AppData\Local\Temp\ts-node-dev-hook-6739317050148665.js:114:20)
+    at Object.nodeDevHook [as .js] (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\ts-node-dev\lib\hook.js:63:13)
+    at C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\infrastructure\oauth\google.ts:40:58

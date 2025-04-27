@@ -32,6 +32,9 @@ export class User {
   }
 }
 
+
+
+
 export class AgentProfile {
   id?: string
   street_address: string

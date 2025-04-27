@@ -17,11 +17,14 @@ import { Developer, DevelopeReg } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IAdminRepository } from '@interfaces/IAdminRespository'
 import { resetPassword } from '@shared/types/userType'
+import { Lender, LenderProfile } from '@entities/Leader'
+import { ILenderRepository } from '@interfaces/ILenderRepository'
 
 export class Agents {
   private userRepository: IUserRepository
   private readonly adminRepository: IAdminRepository
   private readonly developerRepository: IDeveloperRepository
+  private readonly lenderRepository: ILenderRepository
   private readonly client = new RedisClient()
   private readonly existingUsers: ExistingUsers
   private readonly developer: DeveloperUtils
@@ -29,11 +32,13 @@ export class Agents {
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
     adminRepository: IAdminRepository,
+    lenderRepository: ILenderRepository,
   ) {
     this.userRepository = userRepository
     this.developerRepository = developerRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
     this.developer = new DeveloperUtils(this.developerRepository)
+    this.lenderRepository = lenderRepository
     this.adminRepository = adminRepository
   }
 
@@ -48,6 +53,13 @@ export class Agents {
     console.log(`Admin with id ${user.id} has been created`)
     return user
   }
+
+  /*
+    * @description This method is used to create an admin profile for the user
+    * @param input - UserRegProfile
+    * @param agent_id - string
+    * @returns User
+    */
 
   public async inviteAdmin(
     input: UserRegProfile,
@@ -115,7 +127,11 @@ export class Agents {
     return { ...newUser, ...adminProfile }
   }
 
-  
+  /*
+    * @description This method is used to accept an invitation link sent to the user
+    * @param invitation_token - string
+    * @returns void
+    */
 
   public async acceptInvitation(invitation_token: string): Promise<void> {
     const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${invitation_token}`
@@ -165,6 +181,84 @@ export class Agents {
     emailTemplates.InvitationEmail(user.email, `${user.first_name} ${user.last_name}`, invitation_email, userRole.name, password)
   }
 
+  /*
+    * @description This method is used to invite sub admin to the platform
+    * @param input - UserRegProfile
+    * @param agent_id - string
+    * @returns User
+    */
+   
+  public async inviteSubAdmin(  input: UserRegProfile,
+    agent_id: string,): Promise<User> {
+      await Promise.all([
+        this.existingUsers.beforeCreateEmail(input.email),
+        this.existingUsers.beforeCreatePhone(input.phone_number),
+      ])
+  
+      const [agentUser, findRole] = await Promise.all([
+        this.userRepository.findById(agent_id),
+        this.userRepository.getRoleByName(input.role),
+      ])
+  
+      if (!findRole) {
+        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+      }
+  
+      if (agentUser.role_id === findRole.id && input.role === Role.SUPER_ADMIN) {
+        throw new ApplicationCustomError(
+          StatusCodes.BAD_REQUEST,
+          'You cannot create a super admin from an admin account',
+        )
+      }
+  
+      const defaultPassword = generateDefaultPassword()
+      const password = await this.userRepository.hashedPassword(defaultPassword)
+  
+      const newUser = await this.userRepository.create(
+        new User({
+          first_name: input.first_name,
+          last_name: input.last_name,
+          email: input.email,
+          phone_number: input.phone_number,
+          password,
+          role_id: findRole.id,
+          is_default_password: true,
+        }),
+      )
+      const adminProfile = await this.adminRepository.createAdminProfile({
+        street_address: input.street_address,
+        city: input.city,
+        state: input.state,
+        landmark: input.landmark,
+        country: input.country,
+        user_id: newUser.id,
+      })
+  
+      const token = generateInvitationToken()
+      const encryptedtoken = await this.userRepository.hashedPassword(
+        token.toString(),
+      )
+      const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+      const details = {
+        user_id: newUser.id,
+        token: encryptedtoken,
+        type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+      }
+      const oneDayInMs = 24 * 60 * 60 * 1000
+      await this.client.setKey(key, details, oneDayInMs)
+      const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+      emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+      delete newUser.password
+      return { ...newUser, ...adminProfile }
+    
+  }
+ 
+  /*
+    * @description This method is used to change the password of the user
+    * @param input - resetPassword
+    * @param id - string
+    * @returns void
+    */
   public async changeInviteePassword(input: resetPassword, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
 
@@ -199,6 +293,12 @@ export class Agents {
     await this.userRepository.update(id, updatePayload)
    
   }
+  /*
+    * @description This method is used to invite developers to the platform
+    * @param input - DevelopeReg
+    * @param agent_id - string
+    * @returns DevelopeReg
+    */
   public async inviteDevelopers(input: DevelopeReg, agent_id: string): Promise<DevelopeReg> {
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
@@ -220,10 +320,13 @@ export class Agents {
     const password = await this.userRepository.hashedPassword(defaultPassword)
     let user = await this.userRepository.create(
       new User({
-        ...input,
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        phone_number: input.phone_number,
         password,
-        is_default_password: true,
         role_id: findRole.id,
+        is_default_password: true
       }),
     )
     const developer = await this.developerRepository.createDeveloperProfile(
@@ -259,6 +362,66 @@ export class Agents {
     emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
     delete developer.password
     return { ...user, ...developer }
+  }
+
+  /*
+    * @description This method is used to invite lenders to the platform
+    * @param input - LenderProfile
+    * @param agent_id - string
+    * @returns LenderProfile
+    */
+
+  public async inviteLender(input: LenderProfile, agent_id: string): Promise<LenderProfile> { 
+         
+    await Promise.all([
+      this.existingUsers.beforeCreateEmail(input.email),
+      this.existingUsers.beforeCreatePhone(input.phone_number),
+    ])
+    const findRole = await this.userRepository.getRoleByName(input.role)
+
+    if (!findRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    const defaultPassword = generateDefaultPassword()
+    const password = await this.userRepository.hashedPassword(defaultPassword)
+    let user = await this.userRepository.create(
+      new User({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        phone_number: input.phone_number,
+        password,
+        role_id: findRole.id,
+        is_default_password: true
+      }),
+    )
+    const lenderProfile = await this.lenderRepository.createLender(
+      new Lender({
+        lender_name: input.lender_name,
+        lender_type: input.lender_type,
+        cac: input.cac,
+        head_office_address: input.head_office_address,
+        state: input.state,
+        user_id: user.id,
+      }),
+    )
+    const token = generateInvitationToken()
+    const encryptedtoken = await this.userRepository.hashedPassword(
+      token.toString(),
+    )
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+    const details = {
+      user_id: user.id,
+      token: encryptedtoken,
+      type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+    }
+    const oneDayInMs = 24 * 60 * 60 * 1000
+    await this.client.setKey(key, details, oneDayInMs)
+    const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, password)
+    delete lenderProfile.password
+    return { ...user, ...lenderProfile }
   }
 
   public async inviteAgents(input: User): Promise<User> {
