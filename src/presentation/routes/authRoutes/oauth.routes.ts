@@ -2,6 +2,7 @@ import { User } from '@entities/User'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { google } from '@infrastructure/oauth/google'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
+import logger from '@middleware/logger'
 import { createResponse } from '@presentation/response/responseType'
 import { AccountRepository } from '@repositories/user/AccountRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
@@ -141,6 +142,7 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
     res.status(response.statusCode).json(response)
     return
   } catch (e) {
+    logger.error(`Error while authing via Google: ${e.message}`)
     const response = createResponse(
       StatusCodes.INTERNAL_SERVER_ERROR,
       'something went wrong while authing',

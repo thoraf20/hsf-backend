@@ -47,7 +47,7 @@ Object.assign(process.env, env)
 export type ServerEnv = TypeOf<typeof envSchema>
 declare global {
   namespace NodeJS {
-    interface ProcessEnv extends ServerEnv, Dict<any> {}
+    interface ProcessEnv extends Record<keyof ServerEnv, string>, Dict<any> {}
   }
 }
 

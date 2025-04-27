@@ -9,7 +9,7 @@ export class PaymentProcessorFactory {
     input: Payment,
   ): Promise<PaymentProcessor> {
     if (type === PaymentEnum.PAYSTACK) {
-      return new PaystackProcessor(input)
+      return new PaystackProcessor()
     }
   }
 }
