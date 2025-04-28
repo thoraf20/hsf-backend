@@ -39,10 +39,24 @@ export class UserService {
       )
     }
 
+    if (existedEmail?.id === id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your account is currently linked to this email',
+      )
+    }
+
     if (existedPhone && existedPhone.id !== id) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Phone number already exists',
+      )
+    }
+
+    if (existedPhone?.id === id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your account is currently linked to this phone number',
       )
     }
 
@@ -76,7 +90,7 @@ export class UserService {
 
       await this.client.setKey(key, details, 60 * 10)
 
-      const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`
+      const verificationLink = `${process.env.FRONTEND_URL}/user/verify-email-changes?token=${token}`
       emailTemplates.changeEmail(input.email, verificationLink)
       throw new ApplicationCustomError(
         StatusCodes.OK,
