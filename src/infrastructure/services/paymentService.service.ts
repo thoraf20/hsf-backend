@@ -7,11 +7,9 @@ export class PaymentService {
   ) {}
 
   async makePayment(type: string, input: Payment) {
-    const processor = await this.paymentProcessorFactory.createPaymentProcessor(
-      type,
-      input,
-    )
-    
+    const processor =
+      await this.paymentProcessorFactory.createPaymentProcessor(type)
+
     return await processor.createProcess(input)
   }
 }
