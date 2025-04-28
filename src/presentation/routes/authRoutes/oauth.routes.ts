@@ -59,6 +59,7 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
   const code = req.query.code as string | undefined
   const state = req.query.state as string | undefined
 
+  console.log({ query: req.query, stateCookie, codeVerifier })
   try {
     if (!code || !state || !stateCookie || stateCookie !== state) {
       const response = createResponse(StatusCodes.BAD_REQUEST, 'bad request')
