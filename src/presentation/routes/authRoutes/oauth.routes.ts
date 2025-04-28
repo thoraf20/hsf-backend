@@ -120,12 +120,14 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
     res.cookie('google_oauth_state', '', {
       httpOnly: true,
       secure: getEnv('NODE_ENV') === 'production',
+      sameSite: 'lax',
       maxAge: 0,
     })
 
     res.cookie('code_verifier', '', {
       httpOnly: true,
       secure: getEnv('NODE_ENV') === 'production',
+      sameSite: 'lax',
       maxAge: 0,
     })
 
