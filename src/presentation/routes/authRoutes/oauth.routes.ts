@@ -98,7 +98,6 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
           email: claims.email,
           image: claims.picture,
           password: '',
-          phone_number: '',
           role_id: findRole.id,
         })
       }

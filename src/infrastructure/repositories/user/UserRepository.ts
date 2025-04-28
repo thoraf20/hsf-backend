@@ -5,7 +5,7 @@ import { Hashing } from '@shared/utils/hashing'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
-  async create(user: Omit<User, 'user_id'>): Promise<User> {
+  async create(user: Partial<Omit<User, 'user_id'>>): Promise<User> {
     const [newUser] = await db('users').insert(user).returning('*')
     return new User(newUser)
   }
@@ -82,5 +82,4 @@ export class UserRepository implements IUserRepository {
   public async getRoleById(id: string): Promise<Record<string, any> | null> {
     return db('roles').where('id', id).first()
   }
-  
 }
