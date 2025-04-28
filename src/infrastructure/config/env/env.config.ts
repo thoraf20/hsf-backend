@@ -51,6 +51,7 @@ export const formatErrors = (
 
 const _serverEnv = envSchema.safeParse(process.env)
 
+console.log({ errors: _serverEnv.error })
 if (!_serverEnv.success) {
   logger.error(
     '❌ Invalid environment variables:\n',
