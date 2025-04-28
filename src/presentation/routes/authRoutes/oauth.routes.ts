@@ -28,7 +28,7 @@ oauthRoutes.get('/google/login', async (req: Request, res: Response) => {
   res.cookie('google_oauth_state', state, {
     httpOnly: false,
     path: '/',
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: getEnv('NODE_ENV') === 'production',
     expires: createDate(new TimeSpan(10, 'm')),
   })
@@ -36,7 +36,7 @@ oauthRoutes.get('/google/login', async (req: Request, res: Response) => {
   res.cookie('code_verifier', codeVerifier, {
     httpOnly: false,
     path: '/',
-    sameSite: 'strict',
+    sameSite: 'lax',
     secure: getEnv('NODE_ENV') === 'production',
     expires: createDate(new TimeSpan(10, 'm')),
   })
