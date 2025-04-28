@@ -60,7 +60,6 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
   const code = req.query.code as string | undefined
   const state = req.query.state as string | undefined
 
-  console.log({ query: req.query, stateCookie, codeVerifier })
   try {
     if (!code || !state || !stateCookie || stateCookie !== state) {
       const response = createResponse(StatusCodes.BAD_REQUEST, 'bad request')
@@ -116,19 +115,20 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       })
     }
 
-    // Clear session values
-
+    const isDev = getEnv('NODE_ENV') === 'development'
     res.cookie('google_oauth_state', '', {
       httpOnly: true,
-      secure: getEnv('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      path: '/',
+      sameSite: isDev ? false : 'none',
+      secure: !isDev,
       maxAge: 0,
     })
 
     res.cookie('code_verifier', '', {
       httpOnly: true,
-      secure: getEnv('NODE_ENV') === 'production',
-      sameSite: 'lax',
+      path: '/',
+      sameSite: isDev ? false : 'none',
+      secure: !isDev,
       maxAge: 0,
     })
 
