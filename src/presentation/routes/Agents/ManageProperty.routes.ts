@@ -1,7 +1,7 @@
 import { PropertyRepository } from '@infrastructure/repositories/property/PropertyRepository'
-import { manageProperty } from '@use-cases/Super Admin/ManageProperty'
+import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { Router } from 'express'
-import { MangagePropertyController } from '@controllers/Super Admin/ManageProperty.controller'
+import { MangagePropertyController } from '@controllers/Agent/ManageProperty.controller'
 import {
   asyncMiddleware,
   requireRoles,
@@ -18,7 +18,7 @@ import {
   changeOfferLetterStatusSchema,
   confirmPropertyPurchase,
   SetEscrowMeetingSchema,
-} from '@validators/adminValidator'
+} from '@validators/agentsValidator'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 
 const managePropertyRoute: Router = Router()

@@ -4,7 +4,7 @@ import { ILenderRepository } from "@interfaces/ILenderRepository"
 
 
 export class LenderRepository implements ILenderRepository {
-  private readonly tableName = 'lender_profile'
+  private readonly tableName = 'lenders_profile'
 
   async createLender(lender: Lender): Promise<LenderProfile> {
     const [createdLender] = await db(this.tableName).insert(lender).returning('*')

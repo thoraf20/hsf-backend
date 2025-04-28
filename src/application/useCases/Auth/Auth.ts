@@ -76,10 +76,9 @@ export class AuthService {
         'Email is not verified. Please verify your email before registering.',
       )
     }
-
+ 
     const email = regDetails.email
     delete input.tempId
-
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
@@ -243,7 +242,19 @@ export class AuthService {
         )
       }
     }
-
+    const role = await this.userRepository.getRoleById(user.role_id)
+    if(user.is_email_verified === false && role.name !== Role.HOME_BUYER) { 
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Invite has not been accepted.',
+      )
+    }
+    // if(user.force_password_reset === true && user.is_default_password === true) { 
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.UNAUTHORIZED,
+    //     'Please you have to change your password.',
+    //   )
+    // }
     const isValid = await this.userRepository.comparedPassword(
       input.password,
       user.password,

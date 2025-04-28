@@ -4,7 +4,7 @@ import {
 } from '@presentation/response/responseType'
 import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
 import { StatusCodes } from 'http-status-codes'
-import { manageProperty } from '@use-cases/Super Admin/ManageProperty'
+import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'

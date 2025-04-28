@@ -32,11 +32,13 @@ export class UserRepository implements IUserRepository {
         'users.profile',
         'users.image',
         'users.password',
+        'users.force_password_reset',
         'users.user_agent',
         'users.failed_login_attempts',
         'users.is_email_verified',
         'users.is_phone_verified',
         'users.is_mfa_enabled',
+        'users.is_default_password',
         'users.created_at',
         'users.updated_at',
         'users.role_id',
@@ -49,6 +51,7 @@ export class UserRepository implements IUserRepository {
       .first()
     return { ...user, ...role }
   }
+  
 
   async update(id: string, input: User): Promise<User | null> {
     const user = await db('users').update(input).where({ id })

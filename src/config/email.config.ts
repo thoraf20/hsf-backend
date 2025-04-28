@@ -4,7 +4,6 @@ import { Email } from '../domain/entities/Email'
 const sendGridApiKey = process.env.SENDGRID_API_KEY as string
 console.log(sendGridApiKey)
 sgMail.setApiKey(sendGridApiKey)
-console.log
 export const sendMail = (options: Email) => {
   const msg = {
     to: options.to, // recipient email

@@ -46,7 +46,7 @@ export class DeveloperUtils {
 
   public async findIfCompanyNameExist(company_name: string): Promise<void> {
     const company = await this.developerRepository.getCompanyName(company_name)
-
+      console.log(company_name) 
     if (company) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,

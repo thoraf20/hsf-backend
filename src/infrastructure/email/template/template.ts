@@ -690,11 +690,11 @@ InvitationEmail: `<!DOCTYPE html>
 <body>
   <div class="container">
     <div class="header">
-      <h2>You're Invited to Join as an Admin</h2>
+      <h2>You're Invited to Join as {{role}}</h2>
     </div>
     <div class="message">
       <p>Hello, {{fullname}}</p>
-      <p>You have been invited to join our platform as an {{role}}. Please activate your account by clicking the button below. Your default password is:</p>
+      <p>You have been invited to join our platform as {{role}}. Please activate your account by clicking the button below. Your default password is:</p>
       <p><strong>{{defaultPassword}}</strong></p>
       <p>For security, you will be prompted to change your password on first login.</p>
     </div>

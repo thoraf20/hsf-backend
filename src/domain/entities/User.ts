@@ -52,4 +52,10 @@ export class AgentProfile {
   }
 }
 
+
+export class invitation {
+  id?: string
+  invite_code: string
+}
+
 export type UserRegProfile = User & AgentProfile

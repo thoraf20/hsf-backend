@@ -17,6 +17,7 @@ export async function seed(knex: Knex): Promise<void> {
         { name: "trustee" },
         { name: "bank" },
         { name: "super_admin" },
+        { name: "lender" },
     ];
 
     // Define permissions

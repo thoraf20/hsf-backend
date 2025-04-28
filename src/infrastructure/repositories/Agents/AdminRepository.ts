@@ -4,7 +4,7 @@ import { IAdminRepository } from "@interfaces/IAdminRespository"
 
 
 export class AdminRepository implements IAdminRepository { 
-    private readonly tableName = 'admin_profile'
+    private readonly tableName = 'agents_profile'
     
     async createAdminProfile(data: AgentProfile): Promise<UserRegProfile> {
         const [admin] = await db(this.tableName).insert(data).returning('*')

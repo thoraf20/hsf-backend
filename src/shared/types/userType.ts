@@ -12,7 +12,7 @@ export type veriftOtpType =  {
     otp: string
 }
 
-export type resetPassword = {
+export type changePassword = {
      oldPassword :  string 
      newPassword:  string
 }
