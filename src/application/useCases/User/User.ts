@@ -2,12 +2,12 @@ import { User } from '@domain/entities/User'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { resetPassword } from '@shared/types/userType'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
+import { changePassword } from '@shared/types/userType'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -100,7 +100,7 @@ export class UserService {
     await this.client.deleteKey(key)
   }
 
-  public async resetPassword(input: resetPassword, id: string): Promise<void> {
+  public async resetPassword(input: changePassword, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
     if (!user) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')

@@ -12,7 +12,7 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
-import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
+import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export class manageProperty {
   private readonly propertyRepository: IPropertyRepository

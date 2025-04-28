@@ -1,10 +1,10 @@
 import { User } from '@domain/entities/User'
 import { UserService } from '@application/useCases/User/User'
-import { resetPassword } from '@shared/types/userType'
 import { ApiResponse, createResponse } from '../response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
 import { Account } from '@entities/Account'
+import { changePassword } from '@shared/types/userType'
 
 export class UserController {
   constructor(
@@ -44,7 +44,7 @@ export class UserController {
   }
 
   public async resetPassword(
-    input: resetPassword,
+    input: changePassword,
     id: string,
   ): Promise<ApiResponse<any>> {
     await this.userService.resetPassword(input, id)
