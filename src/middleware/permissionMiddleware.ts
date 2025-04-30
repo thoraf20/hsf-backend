@@ -3,7 +3,7 @@ import { Request } from 'express'
 import { DefaulPasswordAccess, Role } from '../domain/enums/rolesEmun'
 
 interface AuthRequest extends Request {
-  user?: { id: string; role: Role } // Ensure `user` includes `role`
+  user?: { id: string; role: Role }
 }
 
 export const requireRoles = (roles: Role | Role[] | DefaulPasswordAccess | DefaulPasswordAccess[]) => {

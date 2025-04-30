@@ -7,7 +7,7 @@ import {
 import { EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
-import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
+import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
   private readonly tablename: string = 'offer_letter'

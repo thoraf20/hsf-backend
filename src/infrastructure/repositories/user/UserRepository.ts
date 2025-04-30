@@ -2,6 +2,7 @@ import db from '@infrastructure/database/knex'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { User } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
+import { userValue } from '@shared/respositoryValues'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
@@ -21,27 +22,9 @@ export class UserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<any> {
-    const user = await db('users')
+    const user = await db('users as u')
       .select(
-        'users.id as id',
-        'users.id as user_id',
-        'users.first_name',
-        'users.last_name',
-        'users.email',
-        'users.phone_number',
-        'users.profile',
-        'users.image',
-        'users.password',
-        'users.force_password_reset',
-        'users.user_agent',
-        'users.failed_login_attempts',
-        'users.is_email_verified',
-        'users.is_phone_verified',
-        'users.is_mfa_enabled',
-        'users.is_default_password',
-        'users.created_at',
-        'users.updated_at',
-        'users.role_id',
+       ...userValue
       )
       .where({ id })
       .first()

@@ -21,7 +21,7 @@ import { Lender, LenderProfile } from '@entities/Leader'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 
 export class Agents {
-  private userRepository: IUserRepository
+  private readonly userRepository: IUserRepository
   private readonly adminRepository: IAdminRepository
   private readonly developerRepository: IDeveloperRepository
   private readonly lenderRepository: ILenderRepository
@@ -268,7 +268,12 @@ export class Agents {
     */
   public async changeInviteePassword(input: changePassword, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
-  
+    if(user.is_email_verified === false && user.force_password_reset === true) { 
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Invite has not been accepted.',
+      )
+    }
     if (input.oldPassword === input.newPassword) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -332,7 +337,7 @@ export class Agents {
         force_password_reset: true,
         is_default_password: true
       }),
-    )
+    ) 
     const developer = await this.developerRepository.createDeveloperProfile(
       new Developer({
         company_email: input.company_email,

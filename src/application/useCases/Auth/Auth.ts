@@ -249,12 +249,12 @@ export class AuthService {
         'Invite has not been accepted.',
       )
     }
-    // if(user.force_password_reset === true && user.is_default_password === true) { 
-    //   throw new ApplicationCustomError(
-    //     StatusCodes.UNAUTHORIZED,
-    //     'Please you have to change your password.',
-    //   )
-    // }
+    if(user.force_password_reset === true && user.is_default_password === true) { 
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Please you have to change your password.',
+      )
+    }
     const isValid = await this.userRepository.comparedPassword(
       input.password,
       user.password,

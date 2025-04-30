@@ -1,5 +1,6 @@
 import { QueryBoolean } from '@shared/utils/helpers'
 import { SeekPaginationOption } from './paginate'
+import { Role } from '@routes/index.t'
 
 export enum SortDateBy {
   RecentlyAdded = 'recently_added',
@@ -37,6 +38,14 @@ export type PropertyFilters = Partial<
   } & SeekPaginationOption
 >
 
+
+export type AgentsFilters = Partial<
+  {
+    role: Role
+    sort_by: SortDateBy
+    search: string
+  } & SeekPaginationOption
+>
 export type ServiceOfferingFilters = Partial<{
   search_type: SearchType
   deleted?: QueryBoolean

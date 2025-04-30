@@ -15,7 +15,7 @@ import {
   SubAdminSchema,
 } from '@validators/agentsValidator'
 import { AgentsController } from '@controllers/Agent/Agent.controller'
-import { Agents } from '@use-cases/Agent/agent'
+import { Agents } from '@use-cases/Agent/Agent'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 import { AdminRepository } from '@repositories/Agents/AdminRepository'
@@ -99,8 +99,10 @@ agentsRoute.put(
   asyncMiddleware(async (req, res) => {
     const { body, user } = req as any
 
-
-    const agent = await controller.changeInvitationDefaultPassword(body, user.id)
+    const agent = await controller.changeInvitationDefaultPassword(
+      body,
+      user.id,
+    )
     res.status(agent.statusCode).json(agent)
   }),
 )

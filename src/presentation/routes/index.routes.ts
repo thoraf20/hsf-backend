@@ -15,6 +15,7 @@ import propertyPurchaseRoutes from './property/purchaseProperty.routes'
 import serviceOfferingRoutes from '@routes/Agents/serviceOffering.routes'
 import oauthRoutes from './authRoutes/oauth.routes'
 import fileRoutes from './file/file.routes'
+import manageAgentRoutes from './Agents/ManageAgent.routes'
 
 const routes: Router = Router()
 
@@ -32,5 +33,6 @@ routes.use('/oauth', oauthRoutes)
 routes.use('/webhook', webhook)
 routes.use('/file', fileRoutes)
 routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
+routes.use('/manage', authenticate, manageAgentRoutes)
 
 export default routes
