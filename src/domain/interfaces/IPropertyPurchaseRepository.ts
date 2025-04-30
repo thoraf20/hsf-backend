@@ -4,7 +4,7 @@ import {
   PropertyClosing,
 } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
-import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
+import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export interface IPurchaseProperty {
   requestForOfferLetter(input: OfferLetter): Promise<OfferLetter | any>

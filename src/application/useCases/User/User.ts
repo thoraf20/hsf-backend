@@ -2,12 +2,12 @@ import { User } from '@domain/entities/User'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { resetPassword } from '@shared/types/userType'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
+import { changePassword } from '@shared/types/userType'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -39,10 +39,24 @@ export class UserService {
       )
     }
 
+    if (existedEmail?.id === id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your account is currently linked to this email',
+      )
+    }
+
     if (existedPhone && existedPhone.id !== id) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Phone number already exists',
+      )
+    }
+
+    if (existedPhone?.id === id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your account is currently linked to this phone number',
       )
     }
 
@@ -76,7 +90,7 @@ export class UserService {
 
       await this.client.setKey(key, details, 60 * 10)
 
-      const verificationLink = `${process.env.FRONTEND_URL}/verify-email-changes?token=${token}`
+      const verificationLink = `${process.env.FRONTEND_URL}/user/verify-email-changes?token=${token}`
       emailTemplates.changeEmail(input.email, verificationLink)
       throw new ApplicationCustomError(
         StatusCodes.OK,
@@ -100,7 +114,7 @@ export class UserService {
     await this.client.deleteKey(key)
   }
 
-  public async resetPassword(input: resetPassword, id: string): Promise<void> {
+  public async resetPassword(input: changePassword, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
     if (!user) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')

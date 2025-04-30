@@ -94,6 +94,7 @@ agentsRoute.post(
 
 agentsRoute.put(
   '/change-default-password',
+  //@ts-ignore
   requireRoles([...Object.values(DefaulPasswordAccess)]),
   validateRequest(AgentPasswordChangeSchema),
   asyncMiddleware(async (req, res) => {

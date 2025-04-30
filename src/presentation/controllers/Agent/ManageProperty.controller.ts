@@ -7,7 +7,7 @@ import { StatusCodes } from 'http-status-codes'
 import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
-import { ApprovePrequalifyRequestInput } from '@validators/adminValidator'
+import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export class MangagePropertyController {
   constructor(

@@ -25,19 +25,20 @@ oauthRoutes.get('/google/login', async (req: Request, res: Response) => {
 
   const url = google.createAuthorizationURL(state, codeVerifier, scopes)
 
+  const isDev = getEnv('NODE_ENV') === 'development'
   res.cookie('google_oauth_state', state, {
-    httpOnly: false,
+    httpOnly: true,
     path: '/',
-    sameSite: 'strict',
-    secure: getEnv('NODE_ENV') === 'production',
+    sameSite: isDev ? false : 'none',
+    secure: !isDev,
     expires: createDate(new TimeSpan(10, 'm')),
   })
 
   res.cookie('code_verifier', codeVerifier, {
-    httpOnly: false,
+    httpOnly: true,
     path: '/',
-    sameSite: 'strict',
-    secure: getEnv('NODE_ENV') === 'production',
+    sameSite: isDev ? false : 'none',
+    secure: !isDev,
     expires: createDate(new TimeSpan(10, 'm')),
   })
 
@@ -98,7 +99,6 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
           email: claims.email,
           image: claims.picture,
           password: '',
-          phone_number: '',
           role_id: findRole.id,
         })
       }
@@ -115,17 +115,20 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       })
     }
 
-    // Clear session values
-
+    const isDev = getEnv('NODE_ENV') === 'development'
     res.cookie('google_oauth_state', '', {
       httpOnly: true,
-      secure: getEnv('NODE_ENV') === 'production',
+      path: '/',
+      sameSite: isDev ? false : 'none',
+      secure: !isDev,
       maxAge: 0,
     })
 
     res.cookie('code_verifier', '', {
       httpOnly: true,
-      secure: getEnv('NODE_ENV') === 'production',
+      path: '/',
+      sameSite: isDev ? false : 'none',
+      secure: !isDev,
       maxAge: 0,
     })
 
