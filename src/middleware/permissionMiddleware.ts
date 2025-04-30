@@ -1,12 +1,12 @@
 import { StatusCodes } from 'http-status-codes'
 import { Request } from 'express'
-import { Role } from '../domain/enums/rolesEmun'
+import { DefaulPasswordAccess, Role } from '../domain/enums/rolesEmun'
 
 interface AuthRequest extends Request {
   user?: { id: string; role: Role }
 }
 
-export const requireRoles = (roles: Role | Role[]) => {
+export const requireRoles = (roles: Role | Role[] | DefaulPasswordAccess | DefaulPasswordAccess[]) => {
   return (req: AuthRequest, res, next) => {
     if (!req.user) {
       return res.status(StatusCodes.UNAUTHORIZED).json({

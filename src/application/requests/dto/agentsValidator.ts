@@ -20,11 +20,7 @@ export const AdminSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z
-  .string()
-  .regex(/^\d+$/, { message: 'Phone number must contain only digits' })
-  .min(10, { message: 'Phone number must have at least 10 digits' })
-  .nonempty({ message: 'Phone number cannot be empty' }),
+  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
   image: z.string().url('Invalid image URL').optional(),
   role: z.nativeEnum(adminRole),
   street_address: z.string().nonempty(),
@@ -44,11 +40,7 @@ export const SubAdminSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z
-  .string()
-  .regex(/^\d+$/, { message: 'Phone number must contain only digits' })
-  .min(10, { message: 'Phone number must have at least 10 digits' })
-  .nonempty({ message: 'Phone number cannot be empty' }),
+  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
   image: z.string().url('Invalid image URL').optional(),
   role: z.nativeEnum(subAdminRole),
   street_address: z.string().nonempty(),
@@ -68,11 +60,7 @@ export const DeveloperSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z
-  .string()
-  .regex(/^\d+$/, { message: 'Phone number must contain only digits' })
-  .min(10, { message: 'Phone number must have at least 10 digits' })
-  .nonempty({ message: 'Phone number cannot be empty' }),
+  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
   image: z.string().url('Invalid image URL').optional(),
   street_address: z.string().nonempty(),
   city: z.string().nonempty(),
@@ -103,11 +91,7 @@ export const LenderSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z
-  .string()
-  .regex(/^\d+$/, { message: 'Phone number must contain only digits' })
-  .min(10, { message: 'Phone number must have at least 10 digits' })
-  .nonempty({ message: 'Phone number cannot be empty' }),
+  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
   street_address: z.string().nonempty(),
   city: z.string().nonempty(),
   state: z.string().nonempty(),
