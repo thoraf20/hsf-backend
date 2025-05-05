@@ -81,7 +81,6 @@ export class manageProperty {
       )
     await this.applicationRepository.updateApplication({
       property_id: input.property_id,
-      property_closing_id: escrow.escrow_id,
       user_id: input.property_buyer_id,
       application_id: application.application_id,
     })
