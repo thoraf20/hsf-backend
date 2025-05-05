@@ -23,7 +23,7 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     user_id: string,
   ): Promise<PropertyClosing> {
     const [propertyClosing] = await db('property_closing')
-      .insert({ property_id, user_id, closing_status: 'Approved' })
+      .insert({ property_id, user_id, closing_status: 'Pending' })
       .returning('*')
     return new PropertyClosing(propertyClosing) ? propertyClosing : null
   }
