@@ -48,7 +48,7 @@ export class Agents {
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.SUPER_ADMIN)
     const user = await this.userRepository.create(
-      new User({ ...input, role_id: findRole.id }),
+      { ...input, role_id: findRole.id },
     )
     console.log(`Admin with id ${user.id} has been created`)
     return user
@@ -91,7 +91,7 @@ export class Agents {
     const password = await this.userRepository.hashedPassword(defaultPassword)
 
     const newUser = await this.userRepository.create(
-      new User({
+      {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email,
@@ -100,7 +100,7 @@ export class Agents {
         role_id: findRole.id,
         force_password_reset: true,
         is_default_password: true,
-      }),
+      },
     )
     const adminProfile = await this.adminRepository.createAdminProfile({
       street_address: input.street_address,
@@ -219,9 +219,8 @@ export class Agents {
   
       const defaultPassword = generateDefaultPassword()
       const password = await this.userRepository.hashedPassword(defaultPassword)
-  
       const newUser = await this.userRepository.create(
-        new User({
+        {
           first_name: input.first_name,
           last_name: input.last_name,
           email: input.email,
@@ -230,7 +229,7 @@ export class Agents {
           force_password_reset: true,
           role_id: findRole.id,
           is_default_password: true,
-        }),
+        },
       )
       const adminProfile = await this.adminRepository.createAdminProfile({
         street_address: input.street_address,
@@ -327,7 +326,7 @@ export class Agents {
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
     let user = await this.userRepository.create(
-      new User({
+      {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email,
@@ -336,8 +335,8 @@ export class Agents {
         role_id: findRole.id,
         force_password_reset: true,
         is_default_password: true
-      }),
-    ) 
+      },
+    )
     const developer = await this.developerRepository.createDeveloperProfile(
       new Developer({
         company_email: input.company_email,
@@ -395,7 +394,7 @@ export class Agents {
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
     let user = await this.userRepository.create(
-      new User({
+      {
         first_name: input.first_name,
         last_name: input.last_name,
         email: input.email,
@@ -405,7 +404,7 @@ export class Agents {
         force_password_reset: true,
         is_default_password: true
         
-      }),
+      },
     )
     const lenderProfile = await this.lenderRepository.createLender(
       new Lender({
@@ -448,7 +447,7 @@ export class Agents {
     console.log(defaultPassword)
     delete input.role
     let user = await this.userRepository.create(
-      new User({ ...input, password, is_default_password: true }),
+      { ...input, password, is_default_password: true },
     )
     const otp = generateRandomSixNumbers()
     console.log(otp)

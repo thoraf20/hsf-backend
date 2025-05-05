@@ -70,7 +70,7 @@ serviceOfferingRoutes.get(
   '/:serviceOfferingId',
   asyncMiddleware(async (req, res) => {
     const { serviceOfferingId } = req.params as unknown as {
-      serviceOfferingId: string
+      serviceOfferingId: string 
     }
 
     const response = await controller.getServiceOfferingById(serviceOfferingId)

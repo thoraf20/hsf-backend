@@ -86,7 +86,7 @@ export class AuthService {
     //@ts-ignore
     delete input.user_id
     let user = await this.userRepository.create(
-      new User({ ...input, email, role_id: findRole.id }),
+      { ...input, email, role_id: findRole.id },
     )
 
     await this.userRepository.update(user.id, { is_email_verified: true })
