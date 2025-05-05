@@ -13,7 +13,6 @@ export class UserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await db('users').where({ email }).first()
-    console.log({ dbUser: user })
     return user ? new User(user) : null
   }
 

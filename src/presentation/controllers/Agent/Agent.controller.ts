@@ -2,12 +2,12 @@ import {
   ApiResponse,
   createResponse,
 } from '@presentation/response/responseType'
-import { Agents } from '@use-cases/Agent/Agent'
 import { invitation, User, UserRegProfile } from '@domain/entities/User'
 import { StatusCodes } from 'http-status-codes'
 import { changePassword } from '@shared/types/userType'
 import { DevelopeReg } from '@entities/Developer'
 import { LenderProfile } from '@entities/Leader'
+import { Agents } from '@use-cases/Agent/agent'
 
 export class AgentsController {
   constructor(private readonly adminService: Agents) {}
