@@ -15,12 +15,12 @@ import {
   SubAdminSchema,
 } from '@validators/agentsValidator'
 import { AgentsController } from '@controllers/Agent/Agent.controller'
-import { Agents } from '@use-cases/Agent/Agent'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 import { AdminRepository } from '@repositories/Agents/AdminRepository'
 import { optionalAuth } from '@middleware/authMiddleware'
 import { DefaulPasswordAccess } from '@domain/enums/rolesEmun'
+import { Agents } from '@use-cases/Agent/agent'
 
 const agentsRoute: Router = Router()
 

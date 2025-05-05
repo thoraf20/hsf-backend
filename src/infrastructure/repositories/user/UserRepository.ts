@@ -13,28 +13,28 @@ export class UserRepository implements IUserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     const user = await db('users').where({ email }).first()
+    console.log({ dbUser: user })
     return user ? new User(user) : null
   }
 
   async findByPhone(phone_number: string): Promise<User | null> {
     const user = await db('users').where({ phone_number }).first()
+
     return user ? new User(user) : null
   }
 
   async findById(id: string): Promise<any> {
     const user = await db('users as u')
-      .select(
-       ...userValue
-      )
+      .select(...userValue)
       .where({ id })
       .first()
+
     const role = await db('roles')
       .select('roles.name as role')
       .where({ id: user.role_id })
       .first()
     return { ...user, ...role }
   }
-  
 
   async update(id: string, input: User): Promise<User | null> {
     const user = await db('users').update(input).where({ id })

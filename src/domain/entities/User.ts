@@ -13,6 +13,7 @@ export class User {
   password: string
   image?: string
   user_agent?: string
+  user_id?: string
   role?: Role
   failed_login_attempts?: number
   force_password_reset?: boolean
@@ -32,9 +33,6 @@ export class User {
   }
 }
 
-
-
-
 export class AgentProfile {
   id?: string
   street_address: string
@@ -51,7 +49,6 @@ export class AgentProfile {
     })
   }
 }
-
 
 export class invitation {
   id?: string
