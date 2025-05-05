@@ -1,5 +1,6 @@
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
+import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import {
   SeekPaginationOption,
   SeekPaginationResult,
@@ -96,7 +97,7 @@ export interface IPropertyRepository {
     property_id: string,
     user_id: string,
     status: EscrowMeetingStatus,
-  ): Promise<void>
+  ): Promise<EscrowInformationStatus>
 
   UpdatepropertyClosingRequest(input: Record<string, any>): Promise<void>
 }

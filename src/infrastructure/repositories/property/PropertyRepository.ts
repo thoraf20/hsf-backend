@@ -17,6 +17,7 @@ import {
 import { Knex } from 'knex'
 import omit from '@shared/utils/omit'
 import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
+import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
@@ -814,10 +815,13 @@ export class PropertyRepository implements IPropertyRepository {
     property_id: string,
     user_id: string,
     status: EscrowMeetingStatus,
-  ): Promise<void | any> {
-    return await db('escrow_status')
+  ): Promise<EscrowInformationStatus> {
+    const [updatedEscrowStatus] = await db('escrow_status')
       .update({ is_escrow_set: true, escrow_status: status })
       .where('property_id', property_id)
       .andWhere('user_id', user_id)
+      .returning('*')
+
+    return updatedEscrowStatus
   }
 }

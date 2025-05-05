@@ -65,7 +65,7 @@ export class manageProperty {
     input: EscrowInformation,
     agent_id: string,
   ): Promise<EscrowInformation> {
-    const [escrow] = await Promise.all([
+    const [escrowInformation, escrowStatus] = await Promise.all([
       this.purchaseRepository.setEscrowAttendance({ ...input, agent_id }),
       this.propertyRepository.updateEscrowMeeting(
         input.property_id,
@@ -81,11 +81,13 @@ export class manageProperty {
       )
     await this.applicationRepository.updateApplication({
       property_id: input.property_id,
+      escrow_information_id: escrowInformation.escrow_id,
+      escrow_status_id: escrowStatus.escrow_status_id,
       user_id: input.property_buyer_id,
       application_id: application.application_id,
     })
 
-    return escrow
+    return escrowInformation
   }
 
   public async confirmPropertyPurchase(
