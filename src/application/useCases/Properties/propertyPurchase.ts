@@ -58,27 +58,24 @@ export class PropertyPurchase {
   }
 
   public async checkoutDuplicate(property_id: string, user_id: string) {
-    await this.utilsProperty.getIfPropertyExist(property_id)
-    const [alreadyApprovedAndSoldOut, PendingRequest] = await Promise.all([
-      this.purchaseRepository.checkIfRequestForOfferLetterIsApproved(
-        property_id,
-      ),
+    const [property, PendingRequest] = await Promise.all([
+      this.utilsProperty.getIfPropertyExist(property_id),
       this.purchaseRepository.checkIfRequestForOfferLetter(
         property_id,
         user_id,
       ),
     ])
 
-    if (alreadyApprovedAndSoldOut) {
+    if (property.is_sold) {
       throw new ApplicationCustomError(
-        StatusCodes.NOT_FOUND,
+        StatusCodes.FORBIDDEN,
         'This property Has already been sold',
       )
     }
 
     if (PendingRequest) {
       throw new ApplicationCustomError(
-        StatusCodes.NOT_FOUND,
+        StatusCodes.FORBIDDEN,
         'Your request is under review',
       )
     }
