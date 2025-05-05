@@ -24,6 +24,12 @@ export interface IPurchaseProperty {
     property_id: string,
     user_id: string,
   ): Promise<PropertyClosing>
+
+  updatePropertyClosing(
+    property_id: string,
+    user_id: string,
+    data: Partial<PropertyClosing>,
+  ): Promise<PropertyClosing>
   confirmPropertyEscrowMeeting(escrowId: string): Promise<void>
 
   getAllOfferLetterByUserId(user_id: string): Promise<OfferLetter[]>

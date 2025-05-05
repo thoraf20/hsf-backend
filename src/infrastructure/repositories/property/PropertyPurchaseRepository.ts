@@ -153,4 +153,19 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .returning('*')
     return new EscrowInformationStatus(escrowStatus) ? escrowStatus : null
   }
+
+  public async updatePropertyClosing(
+    property_id: string,
+    user_id: string,
+    data: Partial<PropertyClosing>,
+  ): Promise<PropertyClosing> {
+    const [updatedPropertyClosing] = await db<PropertyClosing>(
+      'property_closing',
+    )
+      .update(data)
+      .where({ property_id, user_id })
+      .returning('*')
+
+    return updatedPropertyClosing
+  }
 }

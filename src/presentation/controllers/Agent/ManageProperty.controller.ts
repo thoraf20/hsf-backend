@@ -77,9 +77,10 @@ export class MangagePropertyController {
         property_id: input.property_id,
         user_id: input.user_id,
       }),
-      this.escrowStatus.requestForPropertyClosing(
+      this.escrowStatus.updatePropertyClosing(
         input.property_id,
         input.user_id,
+        { closing_status: propertyApprovalStatus.APPROVED },
       ),
     ])
 
