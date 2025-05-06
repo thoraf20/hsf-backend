@@ -246,15 +246,24 @@ export class ApplicationRepository implements IApplicationRespository {
         'es.is_escrow_set',
         'pc.closing_status',
         db.raw(`
-                      CASE
-                          WHEN ppi IS NOT NULL THEN json_build_object(
-                              'ppi', row_to_json(ppi),
-                              'prequalify_status', row_to_json(ps),
-                              'eligibility', row_to_json(el)
-                          )
-                          ELSE NULL
-                      END as prequalify_personal_information
-                  `),
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                `),
+        db.raw(`
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        `),
         'ps.*',
         'el.*',
         'ol.*',
