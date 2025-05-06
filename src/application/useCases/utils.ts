@@ -99,7 +99,7 @@ export class PropertyBaseUtils {
     )) as Properties
     if (!properties) {
       throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
+        StatusCodes.NOT_FOUND,
         'Property does not exist',
       )
     }
@@ -110,7 +110,7 @@ export class PropertyBaseUtils {
     const properties = await this.propertyRepository.getPropertyById(property_id)
     if (!properties) {
       throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
+        StatusCodes.NOT_FOUND,
         'Property does not exist',
       )
     }

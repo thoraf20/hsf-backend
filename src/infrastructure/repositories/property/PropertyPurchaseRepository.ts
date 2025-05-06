@@ -1,4 +1,4 @@
-import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
+import { EscrowMeetingStatus,  PropertyRequestTypeEnum } from '@domain/enums/propertyEnum'
 import {
   EscrowInformationStatus,
   OfferLetter,
@@ -80,11 +80,22 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .where('offer_letter_id', offer_letter_id)
     return await this.getOfferLetterById(offer_letter_id)
   }
-  public async confirmPropertyEscrowMeeting(escrowId: string): Promise<void> {
-    await db('escrow_information')
-      .update({ confirm_attendance: true })
-      .where('escrow_id', escrowId)
-      .returning('*')
+  public async confirmPropertyEscrowMeeting(escrowId: string, status: PropertyRequestTypeEnum): Promise<void> {
+    switch (status) {
+      case PropertyRequestTypeEnum.REJECT_ESCOW_MEETING:
+        await db('escrow_status')
+          .update({ escrow_status: EscrowMeetingStatus.DECLINED })
+          .where('escrow_status_id', escrowId)
+        break
+      case PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING:
+        await db('escrow_status')
+          .update({escrow_status: EscrowMeetingStatus.CONFIRMED })
+          .where('escrow_status_id', escrowId)
+        break
+      default:
+        throw new Error('Invalid status')
+    }
+
   }
 
   public async confirmPropertyPurchase(

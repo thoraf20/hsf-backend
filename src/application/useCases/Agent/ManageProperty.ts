@@ -65,12 +65,13 @@ export class manageProperty {
     input: EscrowInformation,
     agent_id: string,
   ): Promise<EscrowInformation> {
+    await this.utilsProperty.getIfPropertyExist(input.property_id)
     const [escrowInformation, escrowStatus] = await Promise.all([
       this.purchaseRepository.setEscrowAttendance({ ...input, agent_id }),
       this.propertyRepository.updateEscrowMeeting(
         input.property_id,
         input.property_buyer_id,
-        EscrowMeetingStatus.CONFIRMED,
+        EscrowMeetingStatus.AWAITING_ACCEPTANCE,
       ),
     ])
 

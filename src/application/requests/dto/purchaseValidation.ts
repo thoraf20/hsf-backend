@@ -19,7 +19,7 @@ export const purchasePropertySchema = z
     property_id: z.string().nonempty(),
     purchase_type: z.nativeEnum(OfferLetterStatusEnum),
     request_type: z.nativeEnum(PropertyRequestTypeEnum),
-    escrow_id: z.string().optional(),
+    escrow_status_id: z.string().optional(),
     dip_status: z.nativeEnum(DIPStatus).optional(),
     email: z.string().email().optional(),
     loan_acceptance_status: z.nativeEnum(LoanOfferStatus).optional(),
@@ -56,13 +56,14 @@ export const purchasePropertySchema = z
     }
 
     if (
-      request_type === PropertyRequestTypeEnum.ESCROW_ATTENDANCE &&
-      !data.escrow_id
+   (   request_type === PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING &&
+      !data.escrow_status_id) || ( request_type === PropertyRequestTypeEnum.REJECT_ESCOW_MEETING &&
+        !data.escrow_status_id)
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'escrow_id is required',
-        path: ['escrow_id'],
+        message: 'escrow_status_id is required',
+        path: ['escrow_status_id'],
       })
     }
 

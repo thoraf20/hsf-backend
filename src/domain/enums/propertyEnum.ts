@@ -14,7 +14,8 @@ export enum PropertyRequestTypeEnum {
   INITIATE = 'Initiate',
   PROPERTY_CLOSSING = 'Property Closing',
   ELIGIBILITY_CHECK = 'Eligibility Check',
-  ESCROW_ATTENDANCE = 'Escrow Attendance',
+  REJECT_ESCOW_MEETING ='Reject escrow meeting',
+  ACCEPT_ESCOW_MEETING = 'Accept escrow meeting',
   DUE_DELIGENT = 'PAYMENT_FOR_DUE_DELIGENT',
   BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
   MANAGEMENT_FEE = 'PAYMENT_FOR_MANAGEMENT_FEE',
@@ -69,6 +70,7 @@ export enum EscrowMeetingStatus {
   AWAITING = 'Awaiting',
   CONFIRMED = 'Confirmed',
   DECLINED = 'Declined',
+  AWAITING_ACCEPTANCE = 'Awaiting Acceptance',
 }
 
 export enum LoanOfferStatus {

@@ -109,7 +109,7 @@ export class PropertyPurchase {
       email,
       documents,
       dip_status,
-      escrow_id,
+      escrow_status_id,
       loan_acceptance_status,
     } = input
 
@@ -211,8 +211,10 @@ export class PropertyPurchase {
             application?.application_id,
           )
 
-        case PropertyRequestTypeEnum.ESCROW_ATTENDANCE:
-          return await this.confirmEscrowAttendanc(escrow_id)
+        case PropertyRequestTypeEnum.REJECT_ESCOW_MEETING:
+          return await this.confirmEscrowAttendanc(escrow_status_id, PropertyRequestTypeEnum.REJECT_ESCOW_MEETING)
+        case PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING:
+          return await this.confirmEscrowAttendanc(escrow_status_id, PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING)
 
         default:
           return
@@ -307,8 +309,8 @@ export class PropertyPurchase {
     }
   }
 
-  public async confirmEscrowAttendanc(escrowId: string): Promise<any> {
-    await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId)
+  public async confirmEscrowAttendanc(escrowId: string, status: PropertyRequestTypeEnum): Promise<any> {
+    await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId, status)
   }
 
   public async requestForPropertyClosing(
