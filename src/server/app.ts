@@ -38,7 +38,7 @@ app.use(
 const server = http.createServer(app)
 app.use(express.json({ limit: '10kb' })) // Max 10KB JSON payload
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-app.use(helmet()) 
+app.use(helmet())
 app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY')
   res.setHeader('X-Content-Type-Options', 'nosniff')
@@ -55,9 +55,6 @@ app.use(hpp())
 app.use(speedLimiter)
 app.use(morgan('combined'))
 app.use(morgan('dev'))
-
-
-
 
 // const userRepo = new UserRepository()
 // const create_admin = new Agents(userRepo, new DeveloperRespository(), new AdminRepository(), new LenderRepository())

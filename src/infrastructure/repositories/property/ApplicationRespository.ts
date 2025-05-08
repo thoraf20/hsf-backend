@@ -245,6 +245,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'es.escrow_status',
         'es.is_escrow_set',
         'pc.closing_status',
+        db.raw('row_to_json(dp) as dip'),
         db.raw(`
                     CASE
                         WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
@@ -270,7 +271,6 @@ export class ApplicationRepository implements IApplicationRespository {
         'du.*',
         'pdu.*',
         'rp.*',
-        'dp.*',
         'lo.*',
         'p.*',
         'a.*',

@@ -1,4 +1,5 @@
 // import { PaymentEnum } from '@domain/enums/PaymentEnum'
+import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 import {
   InspectionMeetingType,
   InspectionStatus,
@@ -17,6 +18,7 @@ export class Inspection {
   inspection_meeting_type: InspectionMeetingType
   inspection_fee_paid: boolean
   inspection_status: InspectionStatus
+  availability_slot_id?: string
   meet_link?: string
   // amount?: string
   user_id: string
@@ -27,6 +29,26 @@ export class Inspection {
     let data = {
       ...d,
       inspection_fee_paid: false,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    Object.assign(this, data)
+  }
+}
+
+export class InspectionRescheduleRequest {
+  id: string
+  inspection_id: string
+  original_slot_id: string
+  proposed_new_start_datetime: Date
+  proposed_new_end_datetime: Date
+  proposed_by_user_id: string
+  status: InspectionRescheduleRequestStatusEnum
+  user_rejection_reason: string
+
+  constructor(d: Partial<InspectionRescheduleRequest>) {
+    let data = {
+      ...d,
       created_at: new Date(),
       updated_at: new Date(),
     }
