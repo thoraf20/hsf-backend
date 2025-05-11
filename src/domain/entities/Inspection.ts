@@ -40,11 +40,10 @@ export class InspectionRescheduleRequest {
   id: string
   inspection_id: string
   original_slot_id: string
-  proposed_new_start_datetime: Date
-  proposed_new_end_datetime: Date
+  proposed_slot_id: string
   proposed_by_user_id: string
   status: InspectionRescheduleRequestStatusEnum
-  user_rejection_reason: string
+  user_rejection_reason?: string
 
   constructor(d: Partial<InspectionRescheduleRequest>) {
     let data = {

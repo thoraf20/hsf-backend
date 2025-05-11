@@ -4,6 +4,25 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import logger from '@middleware/logger'
 import { StatusCodes } from 'http-status-codes'
 
+// Helper function to make placeholder replacement more robust
+// (Handles cases where a placeholder might not be in the string)
+const safeReplace = (
+  str: string,
+  placeholder: string,
+  value: string | undefined,
+) => {
+  if (value === undefined) {
+    logger.warn(
+      `Placeholder ${placeholder} was not provided a value for replacement.`,
+    )
+    return str // Or return str.replace(placeholder, '') to remove it
+  }
+  return str.replace(
+    new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+    value,
+  )
+}
+
 export default {
   emailVerificationEmail(email: string, otp: string) {
     let subject = `Email verification`
@@ -19,6 +38,31 @@ export default {
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  /**
+   * Sends an MFA (Multi-Factor Authentication) OTP email.
+   */
+  sendMfaOtpEmail(email: string, otp: string, supportLinkUrl: string) {
+    const subject = `Your MFA Verification Code`
+    const text = `Use this code to complete your login or action.`
+    let html = templates.VerificationEmail // Reusing VerificationEmail template for OTPs
+    html = safeReplace(html, `{{otp}}`, otp)
+    html = safeReplace(html, `{{SUPPORT_LINK}}`, supportLinkUrl)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`MFA OTP email was sent successfully to ${email}`)
+    } catch (error) {
+      logger.error(
+        `Unable to send MFA OTP email to ${email}: ${(error as Error).message}`,
+      )
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,
         `Unable to send email`,
@@ -187,33 +231,41 @@ export default {
     }
   },
 
-  sharePropertyEmail(recipient_email: string, sender_email: string,  message: string, shareable_link:string, input: Record<string, any>) {
+  sharePropertyEmail(
+    recipient_email: string,
+    sender_email: string,
+    message: string,
+    shareable_link: string,
+    input: Record<string, any>,
+  ) {
     let subject = `Shared Property`
     let text = `Property was shared to you`
     const imageHtml = Array.isArray(input.property_images)
-    ? input.property_images
-        .map((url: string) => `<img src="${url}" alt="Property Image" class="property-image" />`)
-        .join('')
-    : input.property_image
-      ? `<img src="${input.property_image}" alt="Property Image" class="property-image" />`
-      : `<p>No images provided</p>`;
-  
-  
-  let html = templates.sharePropertyTemplate
-    .replace(/{{sender_email}}/g, sender_email)
-    .replace(`{{property_images}}`, imageHtml)
-    .replace(`{{property_name}}`, input.property_name)
-    .replace(`{{street_address}}`, input.street_address)
-    .replace(`{{city}}`, input.city)
-    .replace(`{{state}}`, input.state)
-    .replace(`{{property_price}}`, input.property_price)
-    .replace(`{{property_type}}`, input.property_type)
-    .replace(`{{postal_code}}`, input.postal_code)
-    .replace(`{{property_size}}`, input.property_size)
-    .replace(`{{numbers_of_bedroom}}`, input.numbers_of_bedroom.toString())
-    .replace(`{{numbers_of_bathroom}}`, input.numbers_of_bathroom.toString())
-    .replace(`{{message}}`, message)
-    .replace(`{{property_link}}`, shareable_link);
+      ? input.property_images
+          .map(
+            (url: string) =>
+              `<img src="${url}" alt="Property Image" class="property-image" />`,
+          )
+          .join('')
+      : input.property_image
+        ? `<img src="${input.property_image}" alt="Property Image" class="property-image" />`
+        : `<p>No images provided</p>`
+
+    let html = templates.sharePropertyTemplate
+      .replace(/{{sender_email}}/g, sender_email)
+      .replace(`{{property_images}}`, imageHtml)
+      .replace(`{{property_name}}`, input.property_name)
+      .replace(`{{street_address}}`, input.street_address)
+      .replace(`{{city}}`, input.city)
+      .replace(`{{state}}`, input.state)
+      .replace(`{{property_price}}`, input.property_price)
+      .replace(`{{property_type}}`, input.property_type)
+      .replace(`{{postal_code}}`, input.postal_code)
+      .replace(`{{property_size}}`, input.property_size)
+      .replace(`{{numbers_of_bedroom}}`, input.numbers_of_bedroom.toString())
+      .replace(`{{numbers_of_bathroom}}`, input.numbers_of_bathroom.toString())
+      .replace(`{{message}}`, message)
+      .replace(`{{property_link}}`, shareable_link)
     try {
       const emailData = { to: recipient_email, subject, text, html }
       sendMailInWorker(emailData)
@@ -227,15 +279,20 @@ export default {
     }
   },
 
-  InvitationEmail(email: string, fullname:string, activationLink: string, role: string,  defaultPassword: string) {
+  InvitationEmail(
+    email: string,
+    fullname: string,
+    activationLink: string,
+    role: string,
+    defaultPassword: string,
+  ) {
     let subject = `Invitation email`
     let text = `Accept invitation`
-    let html = templates.InvitationEmail 
-    .replace('{{fullname}}', fullname)
-    .replace('{{role}}', role)
-    .replace('{{defaultPassword}}', defaultPassword)
-    .replace('{{activationLink}}', activationLink)
-    .replace('{{year}}', new Date().getFullYear().toString());
+    let html = templates.InvitationEmail.replace('{{fullname}}', fullname)
+      .replace('{{role}}', role)
+      .replace('{{defaultPassword}}', defaultPassword)
+      .replace('{{activationLink}}', activationLink)
+      .replace('{{year}}', new Date().getFullYear().toString())
 
     try {
       const emailData = { to: email, subject, text, html }

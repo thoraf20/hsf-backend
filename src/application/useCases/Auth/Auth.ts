@@ -14,12 +14,24 @@ import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
 import { ErrorCode } from '@shared/utils/error'
+import { MfaToken } from '@shared/utils/mfa_token'
+import { TimeSpan } from '@shared/utils/time-unit'
+import { MfaFlow } from '@domain/enums/userEum'
+import { decryptToString } from '@shared/utils/encrypt'
+import { decodeBase64 } from '@oslojs/encoding'
+import { verifyTOTP } from '@oslojs/otp'
+import { getEnv } from '@infrastructure/config/env/env.config'
+import {
+  generateRecoveryCodes,
+  verifyCodeFromRecoveryCodeList,
+} from '@shared/utils/totp'
 
 export class AuthService {
   private userRepository: IUserRepository
   private accountRepository: IAccountRepository
   private readonly existingUsers: ExistingUsers
   private readonly hashData = new Hashing()
+  private readonly mfaTokenGen = new MfaToken()
   private readonly client = new RedisClient()
   constructor(
     userRepository: IUserRepository,
@@ -85,9 +97,11 @@ export class AuthService {
 
     //@ts-ignore
     delete input.user_id
-    let user = await this.userRepository.create(
-      { ...input, email, role_id: findRole.id },
-    )
+    let user = await this.userRepository.create({
+      ...input,
+      email,
+      role_id: findRole.id,
+    })
 
     await this.userRepository.update(user.id, { is_email_verified: true })
     user = await this.userRepository.findById(user.id)
@@ -207,12 +221,10 @@ export class AuthService {
   /**
    * Login user and return JWT token
    */
-  async login(
-    input: loginType,
-  ): Promise<{ token: string; user: Record<string, any> } | never> {
+  async login(input: loginType): Promise<({ token: string } & User) | never> {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
-    )) as any
+    )) as User
 
     if (!user) {
       throw new ApplicationCustomError(
@@ -241,6 +253,52 @@ export class AuthService {
           'This account was registered via OAuth. Please log in using your OAuth provider.',
         )
       }
+    }
+
+    if (user.is_mfa_enabled) {
+      const token = await this.mfaTokenGen.accessCode(
+        user.id ?? user.user_id,
+        user.role,
+      )
+      if (user.require_authenticator_mfa) {
+        throw new ApplicationCustomError(
+          StatusCodes.CREATED,
+          `Please open your authenticator app and enter the one-time
+        password (OTP) shown for your account.`,
+          {
+            token: token,
+            mfa_required: true,
+            mfa_type: MfaFlow.TOTP,
+          },
+        )
+      }
+
+      const otp = generateRandomSixNumbers()
+
+      const cacheKey = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${user.id ?? user.user_id}`
+      await this.client.setKey(
+        cacheKey,
+        {
+          otp,
+        },
+        new TimeSpan(10, 'm').toMilliseconds(),
+      )
+
+      emailTemplates.sendMfaOtpEmail(
+        user.email,
+        String(otp),
+        'http://localhost:3000/suport',
+      )
+      throw new ApplicationCustomError(
+        StatusCodes.CREATED,
+        `We've sent a one-time password (OTP) to your registered email address.
+        Please check your email and enter the OTP to continue.`,
+        {
+          token: token,
+          mfa_required: true,
+          mfa_type: MfaFlow.EMAIL_OTP,
+        },
+      )
     }
     const role = await this.userRepository.getRoleById(user.role_id)
     if (user.is_email_verified === false && role.name !== Role.HOME_BUYER) {
@@ -300,31 +358,98 @@ export class AuthService {
   /**
    * Verify MFA OTP
    */
-  async verifyMfa(otp: string): Promise<boolean> {
-    const key = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${otp}`
-    const details = await this.client.getKey(key)
+  async verifyMfa(otp: string, userId: string, flow: MfaFlow) {
+    const findUserById = await this.userRepository.findById(userId)
+    if (!findUserById) {
+      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, 'User not found')
+    }
 
-    if (!details) {
+    if (!findUserById.is_mfa_enabled) {
       throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Invalid or expired OTP.',
+        StatusCodes.FORBIDDEN,
+        "You don't have MFA enabled on this account.",
       )
     }
 
-    const { id, type } =
-      typeof details === 'string' ? JSON.parse(details) : details
-    const findUserById = await this.userRepository.findById(id)
+    delete findUserById.password
+    const token = await this.hashData.accessCode(
+      findUserById.id,
+      findUserById.role,
+    )
+    if (flow === MfaFlow.EMAIL_OTP) {
+      const key = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${userId}`
+      const details = await this.client.getKey(key)
 
-    if (type !== OtpEnum.MFA_VERIFICATION || !findUserById) {
+      if (!details) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid or expired OTP.',
+        )
+      }
+
+      const { otp: currentOtp } =
+        typeof details === 'string' ? JSON.parse(details) : details
+
+      if (currentOtp !== otp) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid or expired OTP.',
+        )
+      }
+
       await this.client.deleteKey(key)
+
+      return { token, ...findUserById }
+    }
+
+    if (!findUserById.require_authenticator_mfa) {
       throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Invalid OTP type or user mismatch.',
+        StatusCodes.FORBIDDEN,
+        'Authenicator not set',
       )
     }
 
-    await this.userRepository.update(id, { is_mfa_enabled: true })
-    await this.client.deleteKey(key)
-    return true
+    if (flow === MfaFlow.TOTP) {
+      const decryptedSecret = decryptToString(
+        decodeBase64(findUserById.mfa_totp_secret),
+      )
+
+      const isValidGeneratedSecretCode = verifyTOTP(
+        decodeBase64(decryptedSecret),
+        getEnv('TOTP_EXPIRES_IN'),
+        getEnv('TOTP_LENGTH'),
+        otp,
+      )
+
+      if (!isValidGeneratedSecretCode) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid otp code',
+        )
+      }
+
+      return { token, ...findUserById }
+    }
+
+    if (flow === MfaFlow.RecoveryCode) {
+      const valid = verifyCodeFromRecoveryCodeList(
+        otp,
+        findUserById.recovery_codes ?? [],
+      )
+
+      if (!valid) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid recovery code',
+        )
+      }
+
+      return { token, ...findUserById }
+    }
+
+    throw new ApplicationCustomError(
+      StatusCodes.FORBIDDEN,
+      `Invalid MFA flow ${flow}`,
+    )
   }
 }

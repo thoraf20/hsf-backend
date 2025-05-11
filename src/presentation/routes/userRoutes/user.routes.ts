@@ -54,13 +54,4 @@ userRoutes.put(
   }),
 )
 
-userRoutes.put(
-  '/enable-mfa',
-  asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const enableMfa = await userController.enableMfa(user.id)
-    res.status(enableMfa.statusCode).json(enableMfa)
-  }),
-)
-
 export default userRoutes

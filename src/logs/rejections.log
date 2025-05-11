@@ -175,3 +175,19 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at ExistingUsers.beforeCreateEmail (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\application\useCases\utils.ts:32:13)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at Agents.createAdmin (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\application\useCases\Agent\agent.ts:46:5)
+2025-05-11 08:02:23 [ERROR]: Error: Invalid secret code
+    at MfaController.verify (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/Mfa.controller.ts:98:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/userRoutes/mfa.routes.ts:25:22
+2025-05-11 08:06:05 [ERROR]: Error: Invalid secret code
+    at MfaController.verify (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/Mfa.controller.ts:99:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/userRoutes/mfa.routes.ts:25:22
+2025-05-11 08:06:47 [ERROR]: Error: Invalid secret code
+    at MfaController.verify (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/Mfa.controller.ts:101:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/userRoutes/mfa.routes.ts:25:22
+2025-05-11 08:08:46 [ERROR]: Error: Invalid secret code
+    at MfaController.verify (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/Mfa.controller.ts:102:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/userRoutes/mfa.routes.ts:25:22

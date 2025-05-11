@@ -1,5 +1,6 @@
 // Import the Role enum
 
+import { UserStatus } from '@domain/enums/userEum'
 import { Role } from '../enums/rolesEmun'
 
 export class User {
@@ -15,9 +16,14 @@ export class User {
   user_agent?: string
   user_id?: string
   role?: Role
+  status: UserStatus
   failed_login_attempts?: number
   force_password_reset?: boolean
   ip_address?: string
+  mfa_totp_secret?: string
+  require_authenticator_mfa?: boolean
+  recovery_codes?: Array<string>
+  last_logged_in_at?: Date
   os?: string
   browser?: string
   is_email_verified?: boolean

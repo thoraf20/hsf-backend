@@ -1,6 +1,7 @@
 import { type TypeOf, z } from 'zod'
 import dotenv from 'dotenv'
 import logger from '@middleware/logger'
+import { isSupportedTimeUnit, parseStrTimeUnit } from '@shared/utils/time-unit'
 
 dotenv.config()
 
@@ -25,6 +26,14 @@ export const envSchema = z.object({
   SENDGRID_API_KEY: z.string(),
   SENDGRID_SENDER_EMAIL: z.string().email(),
   FRONTEND_URL: z.string().url(),
+  MFA_RECOVERY_CODES_SIZE: z.coerce.number(),
+  MFA_SECRET_KEY: z.string().nonempty(),
+  TOTP_LENGTH: z.coerce.number().int().default(6),
+
+  TOTP_EXPIRES_IN: z
+    .string()
+    .refine(isSupportedTimeUnit, { message: 'invalid time unit value' })
+    .transform((value) => parseStrTimeUnit(value).toSeconds()!),
 
   AWS_REGION: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
@@ -36,6 +45,8 @@ export const envSchema = z.object({
   ORIGINS: z.string().transform((value) => value.split(',')),
   SERVICE_INSPECTION_FEE_CODE: z.string().optional(),
   BACKEND_URL: z.string().url(),
+  MFA_SECRET_LENGTH: z.coerce.number().int(),
+  PLATFORM_NAME: z.string().nonempty(),
 })
 
 export const formatErrors = (

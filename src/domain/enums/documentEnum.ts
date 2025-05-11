@@ -5,4 +5,22 @@ export enum DocumentApprovalEnum {
   Rejected = 'Rejected',
 }
 
-export enum ApplicationDocumentType {}
+export enum DocumentGroup {
+  DeveloperVerification = 'DeveloperVerification',
+}
+
+export enum DeveloperVerificationDocType {
+  ApplicationLetterSigned = 'ApplicationLetterSigned',
+  CAC = 'Cac',
+  MemorandumAndArticlesOfAssociation = 'MemorandumAndArticlesOfAssociation',
+  CompanyFinancialBankStatement = 'CompanyFinancialBankStatement',
+  CompanyAuditFinancials = 'CompanyAuditFinancials',
+  TaxCertificate = 'TaxCertificate',
+  PropertySurveyAndTitle = 'PropertySurveyAndTitle',
+  BillOfQuantity = 'BillOfQuantity',
+  ConstructionContractorsAndServiceAgreements = 'ConstructionContractorsAndServiceAgreements',
+  CashFlowProjectAndProfitabilityAnalysis = 'CashFlowProjectAndProfitabilityAnalysis',
+  MarketingStrategyAndListOfOffTakers = 'MarketingStrategyAndListOfOffTakers',
+  ProjectImplementationPlan = 'ProjectImplementationPlan',
+  FundUtilizationPlan = 'FundUtilizationPlan',
+}

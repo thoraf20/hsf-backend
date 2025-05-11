@@ -1,81 +1,108 @@
-import { z } from 'zod';
-
+import { MfaFlow } from '@domain/enums/userEum'
+import { z } from 'zod'
 
 export const UserSchema = z.object({
   tempId: z.string(),
-  first_name: z.string().min(2, "Firstname must have at least 2 characters"),
-  last_name: z.string().min(2, "Lastname must have at least 2 characters"),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
-  password: z.string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one digit")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+  first_name: z.string().min(2, 'Firstname must have at least 2 characters'),
+  last_name: z.string().min(2, 'Lastname must have at least 2 characters'),
+  phone_number: z.string().min(10, 'Phone number must have at least 10 digits'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit')
+    .regex(
+      /[^A-Za-z0-9]/,
+      'Password must contain at least one special character',
+    ),
   role: z.number().optional(), // Default role as 'home_buyer'
   profile: z.string().optional(),
-  image: z.string().url("Invalid image URL").optional(),
+  image: z.string().url('Invalid image URL').optional(),
   userAgent: z.string().optional(),
   failedLoginAttempts: z.number().int().min(0).default(0),
   isEmailVerified: z.boolean().default(false),
   isPhoneVerified: z.boolean().default(false),
-});
+})
 
-export const RegisterEmail = z.object({ 
-  email: z.string().email("Invalid email format"),
+export const RegisterEmail = z.object({
+  email: z.string().email('Invalid email format'),
 })
 
 export const verifyOtpSchema = z.object({
-  otp: z.string().length(6, "OTP must be 6 digits")
-});
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+})
 export const verifyTokenSchema = z.object({
-  token: z.string().nonempty()
-});
+  token: z.string().nonempty(),
+})
 
 export const resendOtpOtpSchema = z.object({
-  email: z.string().email("Invalid email format"),
-});
+  email: z.string().email('Invalid email format'),
+})
 
-export const RequestPasswordResetOtpSchema = z.object({ 
-  email: z.string().email("Invalid email format"),
+export const RequestPasswordResetOtpSchema = z.object({
+  email: z.string().email('Invalid email format'),
 })
 
 export const ResetPasswordOtpSchema = z.object({
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one digit")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-     tempId: z.string().nonempty()
-});
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit')
+    .regex(
+      /[^A-Za-z0-9]/,
+      'Password must contain at least one special character',
+    ),
+  tempId: z.string().nonempty(),
+})
 
-
-export const loginSchema = z.object({ 
+export const loginSchema = z.object({
   identifier: z.string().nonempty(),
-  password: z.string().nonempty()
-});
+  password: z.string().nonempty(),
+})
+
+export const verifyInitMfaSetupSchema = z.object({
+  otp: z.string().length(6, 'OTP must be 6 digits'),
+})
 
 export const verifyMfaSchema = z.object({
-  otp: z.string().length(6, "OTP must be 6 digits")
-});
+  code: z.string().nonempty(),
+  flow: z.nativeEnum(MfaFlow),
+  token: z.string().nonempty(),
+})
+
+export type VerifyMfaInput = z.infer<typeof verifyMfaSchema>
 
 export const updatePasswordSchema = z.object({
-  oldPassword: z.string().min(8, "Password must be at least 8 characters long"),
-  newPassword: z.string()
-    .min(8, "Password must be at least 8 characters long")
-    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
-    .regex(/[0-9]/, "Password must contain at least one digit")
-    .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
-});
+  oldPassword: z.string().min(8, 'Password must be at least 8 characters long'),
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one digit')
+    .regex(
+      /[^A-Za-z0-9]/,
+      'Password must contain at least one special character',
+    ),
+})
 
 export const updateProfileSchema = z.object({
-  first_name: z.string().min(2, "Firstname must have at least 2 characters").optional(),
-  last_name: z.string().min(2, "Lastname must have at least 2 characters").optional(),
-  email: z.string().email("Invalid email format").optional(),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits").optional(),
+  first_name: z
+    .string()
+    .min(2, 'Firstname must have at least 2 characters')
+    .optional(),
+  last_name: z
+    .string()
+    .min(2, 'Lastname must have at least 2 characters')
+    .optional(),
+  email: z.string().email('Invalid email format').optional(),
+  phone_number: z
+    .string()
+    .min(10, 'Phone number must have at least 10 digits')
+    .optional(),
   profile: z.string().optional(),
-  image: z.string().url("Invalid image URL").optional(),
-
-});
+  image: z.string().url('Invalid image URL').optional(),
+})

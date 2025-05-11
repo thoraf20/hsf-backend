@@ -7,8 +7,10 @@ import {
   resendOtpOtpSchema,
   RequestPasswordResetOtpSchema,
   ResetPasswordOtpSchema,
-  verifyMfaSchema,
+  verifyInitMfaSetupSchema,
   RegisterEmail,
+  verifyMfaSchema,
+  VerifyMfaInput,
 } from '@application/requests/dto/userValidator'
 import { AuthService } from '@application/useCases/Auth/Auth'
 import { UserRepository } from '@infrastructure/repositories/user/UserRepository'
@@ -16,8 +18,13 @@ import { AuthController } from '@presentation/controllers/Auth.controller'
 import { asyncMiddleware, validateRequest } from '../index.t'
 import { bruteforce } from '@middleware/security'
 import { AccountRepository } from '@repositories/user/AccountRepository'
+import { MfaToken } from '@shared/utils/mfa_token'
+import { ApplicationStatus } from '@domain/enums/propertyEnum'
+import { StatusCodes } from 'http-status-codes'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 
 const service = new AuthService(new UserRepository(), new AccountRepository())
+const mfaTokenGen = new MfaToken()
 const controller = new AuthController(service)
 const authRoutes: Router = Router()
 
@@ -86,8 +93,17 @@ authRoutes.post(
   '/verify-mfa',
   validateRequest(verifyMfaSchema),
   asyncMiddleware(async (req: Request, res: Response) => {
-    const { body } = req
-    const user = await controller.verifyMfa(body.otp)
+    const { body }: { body: VerifyMfaInput } = req
+    const tokenValid = await mfaTokenGen.verifyCode(body.token)
+    console.log({ tokenValid, body })
+
+    if (!tokenValid) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Your MFA session is invalid or has expired. Please try logging in again.',
+      )
+    }
+    const user = await controller.verifyMfa(body.code, tokenValid.id, body.flow)
     res.status(user.statusCode).json(user)
   }),
 )

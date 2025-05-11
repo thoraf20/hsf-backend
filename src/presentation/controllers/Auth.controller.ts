@@ -10,6 +10,7 @@ import {
   ResetPasswordType,
   veriftOtpType,
 } from '@shared/types/userType'
+import { MfaFlow } from '@domain/enums/userEum'
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -47,11 +48,19 @@ export class AuthController {
 
   public async login(input: loginType): Promise<ApiResponse<any>> {
     const user = await this.authService.login(input)
+    delete user.password
+    delete user.recovery_codes
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
   }
 
-  public async verifyMfa(otp: string): Promise<ApiResponse<any>> {
-    const user = await this.authService.verifyMfa(otp)
+  public async verifyMfa(
+    otp: string,
+    userId: string,
+    flow: MfaFlow,
+  ): Promise<ApiResponse<any>> {
+    const user = await this.authService.verifyMfa(otp, userId, flow)
+    delete user.password
+    delete user.recovery_codes
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
   }
 
@@ -64,7 +73,10 @@ export class AuthController {
     email: string,
   ): Promise<ApiResponse<any>> {
     await this.authService.requestPasswordReset(email)
-    return createResponse(StatusCodes.OK, 'Otp will be sent to this email if this account exist')
+    return createResponse(
+      StatusCodes.OK,
+      'Otp will be sent to this email if this account exist',
+    )
   }
 
   public async resetPasswordController(input: ResetPasswordType): Promise<any> {

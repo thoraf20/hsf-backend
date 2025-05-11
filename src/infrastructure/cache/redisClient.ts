@@ -28,6 +28,7 @@ export class RedisClient {
     value: any,
     expiration: number = 1728000,
   ): Promise<string | null> {
+    console.log({ value, json: JSON.stringify(value) })
     try {
       const result = await redis.set(
         key,

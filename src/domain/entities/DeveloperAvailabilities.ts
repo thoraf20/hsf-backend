@@ -31,19 +31,3 @@ export class DeveloperAvailability {
     Object.assign(this, data)
   }
 }
-
-export class DeveloperAvailabilitySlot {
-  id: string
-  developer_availability_id: string
-  developer_id: string
-  availability_id: string
-
-  constructor(d: Partial<DeveloperAvailabilitySlot>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}

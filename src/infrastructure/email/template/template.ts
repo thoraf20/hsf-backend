@@ -1,7 +1,5 @@
-
-
-export default  {
-     VerificationEmail : `<!DOCTYPE html>
+export default {
+  VerificationEmail: `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -63,7 +61,7 @@ export default  {
 </html>
 `,
 
-welcomeEmail : `<!DOCTYPE html>
+  welcomeEmail: `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -135,7 +133,7 @@ welcomeEmail : `<!DOCTYPE html>
 </html>
 `,
 
-ResetPassword : `<!DOCTYPE html>
+  ResetPassword: `<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
@@ -196,7 +194,7 @@ ResetPassword : `<!DOCTYPE html>
 </body>
 </html>`,
 
-emailChange : `<!DOCTYPE html>
+  emailChange: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -268,7 +266,7 @@ emailChange : `<!DOCTYPE html>
 </body>
 </html>
 `,
-InspectionForVideoCallEmail: `<!DOCTYPE html>
+  InspectionForVideoCallEmail: `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -338,7 +336,7 @@ InspectionForVideoCallEmail: `<!DOCTYPE html>
   </body>
 </html>
 `,
-InspectionForInpersonCallEmail: `<!DOCTYPE html>
+  InspectionForInpersonCallEmail: `<!DOCTYPE html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -405,7 +403,7 @@ InspectionForInpersonCallEmail: `<!DOCTYPE html>
 </html>
 `,
 
-prequalifierVerificationCode : `
+  prequalifierVerificationCode: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -466,7 +464,7 @@ prequalifierVerificationCode : `
 </html>
 
 `,
-SuccessfulPrequalifier: `
+  SuccessfulPrequalifier: `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -521,7 +519,7 @@ SuccessfulPrequalifier: `
 </html>
 
 `,
-sharePropertyTemplate : `<!DOCTYPE html>
+  sharePropertyTemplate: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -607,7 +605,7 @@ sharePropertyTemplate : `<!DOCTYPE html>
   {{property_images}}
 </div>
 
- 
+
     <div class="property-details">
       <h2>{{property_name}}</h2>
       <p><strong>Address:</strong> {{street_address}}, {{city}}, {{state}}, {{postal_code}}</p>
@@ -622,7 +620,7 @@ sharePropertyTemplate : `<!DOCTYPE html>
       <p>{{message}}</p>
     </div>
 
- 
+
     <div style="text-align: center;">
       <a href="{{property_link}}" class="btn">View Property</a>
     </div>
@@ -635,7 +633,7 @@ sharePropertyTemplate : `<!DOCTYPE html>
 </html>
 `,
 
-InvitationEmail: `<!DOCTYPE html>
+  InvitationEmail: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -705,5 +703,67 @@ InvitationEmail: `<!DOCTYPE html>
   </div>
 </body>
 </html>
-`
+`,
+
+  mfaVerification: `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .otp {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            margin: 20px 0;
+        }
+        .message {
+            font-size: 16px;
+            color: #666;
+        }
+        .footer {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <p class="header">OTP Confirmation</p>
+        <p class="message">Your One-Time Password (OTP) for verification is:</p>
+        <p class="otp">{{otp}}</p>
+        <p class="message">Please enter this OTP to complete your verification. This OTP will expire in 10 minutes.</p>
+        <p class="footer">If you did not request this OTP, please ignore this email or contact support.<br>
+        Need help? <a href="{{SUPPORT_LINK}}">Contact Support</a></p>
+    </div>
+</body>
+</html>
+`,
 }

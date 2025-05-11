@@ -14,6 +14,7 @@ export class DayAvailability {
   start_time: Date
   end_time: Date
   is_available: boolean
+  user_id: string
 
   constructor(d: Partial<DayAvailability>) {
     let data = {
@@ -27,7 +28,7 @@ export class DayAvailability {
 
 export class DayAvailabilitySlot {
   id: string
-  timeSlot: string
+  time_slot: string
   day_availability_id: string
 
   constructor(d: Partial<DayAvailabilitySlot>) {

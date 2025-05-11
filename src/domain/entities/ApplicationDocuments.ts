@@ -1,14 +1,14 @@
 import { DocumentApprovalEnum } from '@domain/enums/documentEnum'
 
-export class ApplicationDocument {
+export class Document {
   id: string
-  application_id: string
-  document_type: string // e.g., 'ProofOfIncome', 'ID_Card', 'TitleDeed', 'ComplianceCert' - Consider an ENUM if types are fixed
+  application_id?: string
   file_url: string // URL to the stored file (S3, local, etc.)
   file_name: string // Original file name
-  uploaded_by_user_id: string
+  uploaded_by_user_id?: string
+  document_group_type_id?: string
   version?: number // To handle re-uploads/corrections
-  constructor(d: Partial<ApplicationDocument>) {
+  constructor(d: Partial<Document>) {
     let data = {
       ...d,
       created_at: new Date(),
@@ -18,13 +18,13 @@ export class ApplicationDocument {
   }
 }
 
-export class ApprovalStage {
+export class DocumentApprovalStage {
   id: string
   name: string // e.g., 'HSF Initial Review', 'Lender Document Verification', 'Third-Party Compliance'
   description: string
   sequence_order?: number
-  next_approval_stage_id: string
-  constructor(d: Partial<ApprovalStage>) {
+  next_approval_stage_id?: string
+  constructor(d: Partial<DocumentApprovalStage>) {
     let data = {
       ...d,
       created_at: new Date(),
@@ -71,7 +71,7 @@ export class DocumentApproval {
   approver_user_id: string //User who performed the action (can be NULL if just tracking stage entry)
   status: DocumentApprovalEnum //Status for this doc at this stage
   comments: string // Optional comments, especially for rejection
-  action_timestamp: string
+  action_timestamp: Date
 
   constructor(d: Partial<DocumentApproval>) {
     let data = {
@@ -86,9 +86,10 @@ export class DocumentApproval {
 export class DocumentGroup {
   id: string
   name: string
+  tag: string
   description?: string
   display_order?: number
-  trigger_approval_stage_id: string
+  trigger_approval_stage_id?: string
 
   constructor(d: Partial<DocumentGroup>) {
     let data = {
@@ -104,7 +105,7 @@ export class DocumentGroupType {
   id: string
   group_id: string
   document_type: string
-  display_label: string
+  display_label?: string
   is_user_uploadable: boolean
   uploaded_by_role_id: string
   is_required_for_group: boolean

@@ -16,6 +16,7 @@ import serviceOfferingRoutes from '@routes/Agents/serviceOffering.routes'
 import oauthRoutes from './authRoutes/oauth.routes'
 import fileRoutes from './file/file.routes'
 import manageAgentRoutes from './Agents/ManageAgent.routes'
+import mfaRoutes from './userRoutes/mfa.routes'
 
 const routes: Router = Router()
 
@@ -28,6 +29,7 @@ routes.use('/inspection', authenticate, limiter, inspectionRoutes)
 routes.use('/agents', authenticate, limiter, agentsRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)
 routes.use('/user', authenticate, limiter, userRoutes)
+routes.use('/user/mfa', mfaRoutes)
 routes.use('/auth', authRoutes)
 routes.use('/oauth', oauthRoutes)
 routes.use('/webhook', webhook)

@@ -6,3 +6,5 @@ yarn.lock
 uploads
 /src/logs
 /src/logs/**
+*.pem
+apiRoute.txt

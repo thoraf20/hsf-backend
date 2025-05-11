@@ -8,6 +8,8 @@ import { RedisClient } from '@infrastructure/cache/redisClient'
 import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
 import { changePassword } from '@shared/types/userType'
+import { Role } from '@routes/index.t'
+import { MfaFlow } from '@domain/enums/userEum'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -21,8 +23,9 @@ export class UserService {
     return users
   }
 
-  public async update(input: User, id: string): Promise<void> {
+  public async update(input: Partial<User>, id: string): Promise<void> {
     const user = await this.userRepository.findById(id)
+    delete input.id //prevent id override
     const [existedEmail, existedPhone] = await Promise.all([
       input.email
         ? this.userRepository.findByEmail(input.email)
@@ -99,6 +102,20 @@ export class UserService {
     }
   }
 
+  public async enable2fa(
+    userId: string,
+    totpEncryptedSecret: string,
+    hashedRecoveryCodes: Array<string>,
+  ) {
+    return this.userRepository.update(userId, {
+      is_mfa_enabled: true,
+      require_authenticator_mfa: true,
+      mfa_totp_secret: totpEncryptedSecret,
+      //@ts-ignore
+      recovery_codes: JSON.stringify(hashedRecoveryCodes),
+    })
+  }
+
   public async verifyUpdate(token: string): Promise<void> {
     const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
     const data = await this.client.getKey(key)
@@ -149,17 +166,54 @@ export class UserService {
     await this.userRepository.update(id, updatePayload)
   }
 
-  public async EnableAndDisableMfa(
+  public async DisableMfa(
     id: string,
-  ): Promise<{ is_mfa_enabled: boolean }> {
-    const user = await this.userRepository.findById(id)
+    flow: MfaFlow,
+  ): Promise<{ is_mfa_enabled: boolean; totp_mfa_required: boolean }> {
+    let user = await this.userRepository.findById(id)
     if (!user) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
     }
 
-    const newMfaStatus = Boolean(!user.is_mfa_enabled)
-    await this.userRepository.update(id, { is_mfa_enabled: newMfaStatus })
-    console.log(`MFA status updated for user ${id}: ${newMfaStatus}`)
-    return { is_mfa_enabled: newMfaStatus }
+    if (!user.is_mfa_enabled) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        "You don't have MFA enabled on this account.",
+      )
+    }
+
+    if (flow === MfaFlow.TOTP && user.role !== Role.HOME_BUYER) {
+      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+    }
+
+    if (flow === MfaFlow.EMAIL_OTP) {
+      if (user.role === Role.HOME_BUYER) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You are not permitted to use the email 2fa feature',
+        )
+      }
+
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'As an admin you are not allowed to disabled the 2fa feature',
+      )
+    }
+
+    user = await this.userRepository.update(id, {
+      is_mfa_enabled: true,
+      require_authenticator_mfa: false,
+      mfa_totp_secret: null,
+      recovery_codes: null,
+    })
+
+    return {
+      is_mfa_enabled: user.is_mfa_enabled,
+      totp_mfa_required: !!user.require_authenticator_mfa,
+    }
+  }
+
+  async resetRecoveryCodes(userId: string, recoveryCodes: Array<string>) {
+    return this.userRepository.update(userId, { recovery_codes: recoveryCodes })
   }
 }

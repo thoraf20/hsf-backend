@@ -19,6 +19,7 @@ import { IAdminRepository } from '@interfaces/IAdminRespository'
 import { changePassword } from '@shared/types/userType'
 import { Lender, LenderProfile } from '@entities/Leader'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
+import { UserStatus } from '@domain/enums/userEum'
 
 export class Agents {
   private readonly userRepository: IUserRepository
@@ -47,19 +48,20 @@ export class Agents {
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.SUPER_ADMIN)
-    const user = await this.userRepository.create(
-      { ...input, role_id: findRole.id },
-    )
+    const user = await this.userRepository.create({
+      ...input,
+      role_id: findRole.id,
+    })
     console.log(`Admin with id ${user.id} has been created`)
     return user
   }
 
   /*
-    * @description This method is used to create an admin profile for the user
-    * @param input - UserRegProfile
-    * @param agent_id - string
-    * @returns User
-    */
+   * @description This method is used to create an admin profile for the user
+   * @param input - UserRegProfile
+   * @param agent_id - string
+   * @returns User
+   */
 
   public async inviteAdmin(
     input: UserRegProfile,
@@ -80,7 +82,7 @@ export class Agents {
     }
 
     console.log(agentUser.role)
-    if (agentUser.role !==  Role.SUPER_ADMIN) {
+    if (agentUser.role !== Role.SUPER_ADMIN) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         'You cannot create a super admin from an admin account',
@@ -90,18 +92,17 @@ export class Agents {
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
 
-    const newUser = await this.userRepository.create(
-      {
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email,
-        phone_number: input.phone_number,
-        password,
-        role_id: findRole.id,
-        force_password_reset: true,
-        is_default_password: true,
-      },
-    )
+    const newUser = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      phone_number: input.phone_number,
+      password,
+      role_id: findRole.id,
+      force_password_reset: true,
+      is_default_password: true,
+      status: UserStatus.Pending,
+    })
     const adminProfile = await this.adminRepository.createAdminProfile({
       street_address: input.street_address,
       city: input.city,
@@ -124,42 +125,58 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
+    emailTemplates.InvitationEmail(
+      input.email,
+      `${(input.first_name, input.last_name)}`,
+      invitation_email,
+      input.role,
+      defaultPassword,
+    )
     delete newUser.password
     return { ...newUser, ...adminProfile }
   }
 
   /*
-    * @description This method is used to accept an invitation link sent to the user
-    * @param invitation_token - string
-    * @returns void
-    */
+   * @description This method is used to accept an invitation link sent to the user
+   * @param invitation_token - string
+   * @returns void
+   */
 
   public async acceptInvitation(input: invitation): Promise<void> {
     const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${input.invite_code}`
-    
+
     await this.client.checkAndClearCache(key)
     const details = await this.client.getKey(key)
-    if(!details)  {
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Invalid or expired invitation link`)
+    if (!details) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Invalid or expired invitation link`,
+      )
     }
     const { token, type, user_id } =
-    typeof details === 'string' ? JSON.parse(details) : details
-    const isValidToken = await this.userRepository.comparedPassword(input.invite_code, token)
-    if(type !== OtpEnum.AGENT_EMAIL_VERIFICATION) {
+      typeof details === 'string' ? JSON.parse(details) : details
+    const isValidToken = await this.userRepository.comparedPassword(
+      input.invite_code,
+      token,
+    )
+    if (type !== OtpEnum.AGENT_EMAIL_VERIFICATION) {
       await this.client.deleteKey(key)
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Sorry we can't complete this request`)
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Sorry we can't complete this request`,
+      )
     }
-    if(!isValidToken) {
-      throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, `Invalid or expired invitation link`)
+    if (!isValidToken) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Invalid or expired invitation link`,
+      )
     }
-    await this.userRepository.update(user_id, {is_email_verified: true})
+    await this.userRepository.update(user_id, { is_email_verified: true })
     await this.client.deleteKey(key)
   }
 
-  public async resendInvitationEmail(
-    user_id: string,
-  ): Promise<void> {
+  public async resendInvitationEmail(user_id: string): Promise<void> {
     const user = await this.userRepository.findById(user_id)
     if (user.is_email_verified) {
       throw new ApplicationCustomError(
@@ -182,92 +199,113 @@ export class Agents {
     const password = await this.userRepository.hashedPassword(defaultPassword)
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
-    await this.userRepository.update(user.id, { password, is_default_password: true })
+    await this.userRepository.update(user.id, {
+      password,
+      is_default_password: true,
+    })
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(user.email, `${user.first_name} ${user.last_name}`, invitation_email, userRole.name, defaultPassword)
+    emailTemplates.InvitationEmail(
+      user.email,
+      `${user.first_name} ${user.last_name}`,
+      invitation_email,
+      userRole.name,
+      defaultPassword,
+    )
   }
 
   /*
-    * @description This method is used to invite sub admin to the platform
-    * @param input - UserRegProfile
-    * @param agent_id - string
-    * @returns User
-    */
-   
-  public async inviteSubAdmin(  input: UserRegProfile,
-    agent_id: string,): Promise<User> {
-      await Promise.all([
-        this.existingUsers.beforeCreateEmail(input.email),
-        this.existingUsers.beforeCreatePhone(input.phone_number),
-      ])
-  
-      const [agentUser, findRole] = await Promise.all([
-        this.userRepository.findById(agent_id),
-        this.userRepository.getRoleByName(input.role),
-      ])
-  
-      if (!findRole) {
-        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
-      }
-  
-      if (agentUser.role_id === findRole.id && input.role === Role.SUPER_ADMIN) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'You cannot create a super admin from an admin account',
-        )
-      }
-  
-      const defaultPassword = generateDefaultPassword()
-      const password = await this.userRepository.hashedPassword(defaultPassword)
-      const newUser = await this.userRepository.create(
-        {
-          first_name: input.first_name,
-          last_name: input.last_name,
-          email: input.email,
-          phone_number: input.phone_number,
-          password,
-          force_password_reset: true,
-          role_id: findRole.id,
-          is_default_password: true,
-        },
+   * @description This method is used to invite sub admin to the platform
+   * @param input - UserRegProfile
+   * @param agent_id - string
+   * @returns User
+   */
+
+  public async inviteSubAdmin(
+    input: UserRegProfile,
+    agent_id: string,
+  ): Promise<User> {
+    await Promise.all([
+      this.existingUsers.beforeCreateEmail(input.email),
+      this.existingUsers.beforeCreatePhone(input.phone_number),
+    ])
+
+    const [agentUser, findRole] = await Promise.all([
+      this.userRepository.findById(agent_id),
+      this.userRepository.getRoleByName(input.role),
+    ])
+
+    if (!findRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    if (agentUser.role_id === findRole.id && input.role === Role.SUPER_ADMIN) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'You cannot create a super admin from an admin account',
       )
-      const adminProfile = await this.adminRepository.createAdminProfile({
-        street_address: input.street_address,
-        city: input.city,
-        state: input.state,
-        landmark: input.landmark,
-        country: input.country,
-        user_id: newUser.id,
-      })
-  
-      const token = generateInvitationToken()
-      const encryptedtoken = await this.userRepository.hashedPassword(
-        token.toString(),
-      )
-      const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
-      const details = {
-        user_id: newUser.id,
-        token: encryptedtoken,
-        type: OtpEnum.AGENT_EMAIL_VERIFICATION,
-      }
-      const oneDayInMs = 24 * 60 * 60 * 1000
-      await this.client.setKey(key, details, oneDayInMs)
-      const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-      emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, input.role, defaultPassword)
-      delete newUser.password
-      return { ...newUser, ...adminProfile }
-    
+    }
+
+    const defaultPassword = generateDefaultPassword()
+    const password = await this.userRepository.hashedPassword(defaultPassword)
+    const newUser = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      phone_number: input.phone_number,
+      password,
+      force_password_reset: true,
+      role_id: findRole.id,
+      is_default_password: true,
+      status: UserStatus.Pending,
+    })
+    const adminProfile = await this.adminRepository.createAdminProfile({
+      street_address: input.street_address,
+      city: input.city,
+      state: input.state,
+      landmark: input.landmark,
+      country: input.country,
+      user_id: newUser.id,
+    })
+
+    const token = generateInvitationToken()
+    const encryptedtoken = await this.userRepository.hashedPassword(
+      token.toString(),
+    )
+    const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${token}`
+    const details = {
+      user_id: newUser.id,
+      token: encryptedtoken,
+      type: OtpEnum.AGENT_EMAIL_VERIFICATION,
+    }
+    const oneDayInMs = 24 * 60 * 60 * 1000
+    await this.client.setKey(key, details, oneDayInMs)
+    const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
+    emailTemplates.InvitationEmail(
+      input.email,
+      `${(input.first_name, input.last_name)}`,
+      invitation_email,
+      input.role,
+      defaultPassword,
+    )
+    delete newUser.password
+    return { ...newUser, ...adminProfile }
   }
- 
+
   /*
-    * @description This method is used to change the password of the user
-    * @param input - changePassword
-    * @param id - string
-    * @returns void
-    */
-  public async changeInviteePassword(input: changePassword, id: string): Promise<void> {
+   * @description This method is used to change the password of the user
+   * @param input - changePassword
+   * @param id - string
+   * @returns void
+   */
+  public async changeInviteePassword(
+    input: changePassword,
+    id: string,
+  ): Promise<void> {
     const user = await this.userRepository.findById(id)
-    if(user.is_email_verified === false && user.force_password_reset === true) { 
+    if (
+      user.is_email_verified === false &&
+      user.force_password_reset === true
+    ) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'Invite has not been accepted.',
@@ -296,19 +334,21 @@ export class Agents {
 
     const updatePayload: Partial<User> = { password: hashedNewPassword }
     if (user.is_default_password) updatePayload.is_default_password = false
-    if(user.force_password_reset) updatePayload.force_password_reset = false
-    if(user.is_mfa_enabled) updatePayload.is_mfa_enabled = true
+    if (user.force_password_reset) updatePayload.force_password_reset = false
+    if (user.is_mfa_enabled) updatePayload.is_mfa_enabled = true
 
     await this.userRepository.update(id, updatePayload)
-   
   }
   /*
-    * @description This method is used to invite developers to the platform
-    * @param input - DevelopeReg
-    * @param agent_id - string
-    * @returns DevelopeReg
-    */
-  public async inviteDevelopers(input: DevelopeReg, agent_id: string): Promise<DevelopeReg | any> {
+   * @description This method is used to invite developers to the platform
+   * @param input - DevelopeReg
+   * @param agent_id - string
+   * @returns DevelopeReg
+   */
+  public async inviteDevelopers(
+    input: DevelopeReg,
+    agent_id: string,
+  ): Promise<DevelopeReg | any> {
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
@@ -318,25 +358,24 @@ export class Agents {
       ),
       this.developer.findIfCompanyEmailExist(input.company_email),
     ])
-    const findRole =  await this.userRepository.getRoleByName(Role.DEVELOPER)
+    const findRole = await this.userRepository.getRoleByName(Role.DEVELOPER)
 
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
-    let user = await this.userRepository.create(
-      {
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email,
-        phone_number: input.phone_number,
-        password,
-        role_id: findRole.id,
-        force_password_reset: true,
-        is_default_password: true
-      },
-    )
+    let user = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      phone_number: input.phone_number,
+      password,
+      role_id: findRole.id,
+      force_password_reset: true,
+      is_default_password: true,
+      status: UserStatus.Pending,
+    })
     const developer = await this.developerRepository.createDeveloperProfile(
       new Developer({
         company_email: input.company_email,
@@ -367,20 +406,28 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, Role.DEVELOPER, defaultPassword)
+    emailTemplates.InvitationEmail(
+      input.email,
+      `${(input.first_name, input.last_name)}`,
+      invitation_email,
+      Role.DEVELOPER,
+      defaultPassword,
+    )
     delete user.password
     return { ...user, ...developer }
   }
 
   /*
-    * @description This method is used to invite lenders to the platform 
-    * @param input - LenderProfile
-    * @param agent_id - string
-    * @returns LenderProfile
-    */
+   * @description This method is used to invite lenders to the platform
+   * @param input - LenderProfile
+   * @param agent_id - string
+   * @returns LenderProfile
+   */
 
-  public async inviteLender(input: LenderProfile, agent_id: string): Promise<LenderProfile> { 
-           
+  public async inviteLender(
+    input: LenderProfile,
+    agent_id: string,
+  ): Promise<LenderProfile> {
     await Promise.all([
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
@@ -393,19 +440,17 @@ export class Agents {
 
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
-    let user = await this.userRepository.create(
-      {
-        first_name: input.first_name,
-        last_name: input.last_name,
-        email: input.email,
-        phone_number: input.phone_number,
-        password,
-        role_id: findRole.id,
-        force_password_reset: true,
-        is_default_password: true
-        
-      },
-    )
+    let user = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      phone_number: input.phone_number,
+      password,
+      role_id: findRole.id,
+      status: UserStatus.Pending,
+      force_password_reset: true,
+      is_default_password: true,
+    })
     const lenderProfile = await this.lenderRepository.createLender(
       new Lender({
         lender_name: input.lender_name,
@@ -429,7 +474,13 @@ export class Agents {
     const oneDayInMs = 24 * 60 * 60 * 1000
     await this.client.setKey(key, details, oneDayInMs)
     const invitation_email = `${process.env.FRONTEND_URL}/accept-invite?token=${token}`
-    emailTemplates.InvitationEmail(input.email, `${input.first_name, input.last_name}`, invitation_email, Role.LENDER, defaultPassword)
+    emailTemplates.InvitationEmail(
+      input.email,
+      `${(input.first_name, input.last_name)}`,
+      invitation_email,
+      Role.LENDER,
+      defaultPassword,
+    )
     delete user.password
     return { ...user, ...lenderProfile }
   }
@@ -446,9 +497,11 @@ export class Agents {
     const password = await this.userRepository.hashedPassword(defaultPassword)
     console.log(defaultPassword)
     delete input.role
-    let user = await this.userRepository.create(
-      { ...input, password, is_default_password: true },
-    )
+    let user = await this.userRepository.create({
+      ...input,
+      password,
+      is_default_password: true,
+    })
     const otp = generateRandomSixNumbers()
     console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`

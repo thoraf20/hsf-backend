@@ -50,9 +50,4 @@ export class UserController {
     await this.userService.resetPassword(input, id)
     return createResponse(StatusCodes.OK, 'Password updated successfully', {})
   }
-
-  public async enableMfa(id: string): Promise<ApiResponse<any>> {
-    await this.userService.EnableAndDisableMfa(id)
-    return createResponse(StatusCodes.OK, 'MFA updated successfully', {})
-  }
 }
