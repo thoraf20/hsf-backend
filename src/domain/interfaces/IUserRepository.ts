@@ -1,9 +1,20 @@
-import { User } from '../entities/User'
+import { RecoveryCode, User } from '../entities/User'
 
 export interface IUserRepository {
   create(user: User): Promise<User>
   findByEmail(email: string): Promise<User | null>
   findByPhone(phone_number: string): Promise<User | null>
+  setRecoveryCodes(
+    userId: string,
+    recoveryCodes: Array<string>,
+  ): Promise<Array<RecoveryCode>>
+  getRecoveryCodes(userId: string): Promise<Array<RecoveryCode>>
+  updateRecoveryCodeById(
+    id: string,
+    data: Partial<RecoveryCode>,
+  ): Promise<RecoveryCode>
+
+  clearRecoveryCodesByUserId(userId: string): Promise<void>
   findById(id: string): Promise<User | null>
   update(id: string, user: Partial<User>): Promise<User | null>
   findByIdentifier(identifier: string): Promise<User | null>

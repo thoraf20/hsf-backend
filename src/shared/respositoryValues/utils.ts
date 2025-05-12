@@ -11,7 +11,6 @@ export const userValue = [
   'u.force_password_reset',
   'u.mfa_totp_secret',
   'u.require_authenticator_mfa',
-  'u.recovery_codes',
   'u.force_password_reset',
   'u.user_agent',
   'u.failed_login_attempts',

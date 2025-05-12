@@ -4,14 +4,17 @@ import { createResponse } from '@presentation/response/responseType'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware } from '@routes/index.t'
 import { UserService } from '@use-cases/User/User'
-import { verifyMfaSetupSchema } from '@validators/mfaValidator'
+import {
+  disableMfaSchema,
+  verifyMfaSetupSchema,
+} from '@validators/mfaValidator'
 import { Request, Response, Router } from 'express'
 import { StatusCodes } from 'http-status-codes'
 
 const mfaRoutes = Router()
 
 const userService = new UserService(new UserRepository())
-const mfaController = new MfaController(userService)
+const mfaController = new MfaController(userService, new UserRepository())
 
 mfaRoutes.post('/authenticator/setup', async (req: Request, res: Response) => {
   const { user: claim } = req
@@ -32,9 +35,10 @@ mfaRoutes.post(
 
 mfaRoutes.delete(
   '/mfa/authenticator',
+  validateRequest(disableMfaSchema),
   asyncMiddleware(async (req, res) => {
-    const { user: claim } = req
-    const response = await mfaController.disableMfa(claim.id)
+    const { user: claim, body } = req
+    const response = await mfaController.disableMfa(claim.id, body)
     res.status(response.statusCode).json(response)
   }),
 )

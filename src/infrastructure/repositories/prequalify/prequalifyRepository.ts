@@ -134,7 +134,9 @@ export class PrequalifyRepository implements IPreQualify {
     return prequalify
   }
 
-  public async getPreQualifyRequestByUser(user_id: string): Promise<any> {
+  public async getPreQualifyRequestByUser(
+    user_id: string,
+  ): Promise<preQualify> {
     const prequalify = await db('prequalify_status as ps')
       .join(
         'prequalify_personal_information as ppi',

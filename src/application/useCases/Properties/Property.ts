@@ -7,6 +7,7 @@ import emailTemplates from '@infrastructure/email/template/constant'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
+import { Application } from '@entities/Application'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -253,7 +254,7 @@ export class PropertyService {
     await this.propertyRepository.viewProperty({ property_id, user_id })
   }
 
-  async getApplicationById(application_id: string): Promise<Properties> {
+  async getApplicationById(application_id: string): Promise<Application> {
     const application =
       await this.applicationRepository.getApplicationById(application_id)
     if (!application) {

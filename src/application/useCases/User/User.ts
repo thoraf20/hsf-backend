@@ -107,13 +107,12 @@ export class UserService {
     totpEncryptedSecret: string,
     hashedRecoveryCodes: Array<string>,
   ) {
-    return this.userRepository.update(userId, {
+    await this.userRepository.update(userId, {
       is_mfa_enabled: true,
       require_authenticator_mfa: true,
       mfa_totp_secret: totpEncryptedSecret,
-      //@ts-ignore
-      recovery_codes: JSON.stringify(hashedRecoveryCodes),
     })
+    await this.userRepository.setRecoveryCodes(userId, hashedRecoveryCodes)
   }
 
   public async verifyUpdate(token: string): Promise<void> {
@@ -204,8 +203,8 @@ export class UserService {
       is_mfa_enabled: true,
       require_authenticator_mfa: false,
       mfa_totp_secret: null,
-      recovery_codes: null,
     })
+    await this.userRepository.clearRecoveryCodesByUserId(user.id!)
 
     return {
       is_mfa_enabled: user.is_mfa_enabled,
@@ -213,7 +212,8 @@ export class UserService {
     }
   }
 
-  async resetRecoveryCodes(userId: string, recoveryCodes: Array<string>) {
-    return this.userRepository.update(userId, { recovery_codes: recoveryCodes })
+  async resetRecoveryCodes(userId: string, hashedRecoveryCodes: Array<string>) {
+    await this.userRepository.clearRecoveryCodesByUserId(userId)
+    await this.userRepository.setRecoveryCodes(userId, hashedRecoveryCodes)
   }
 }

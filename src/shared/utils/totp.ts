@@ -51,5 +51,5 @@ export function verifyCodeFromRecoveryCodeList(
 
   const hash = encodeBase64NoPadding(sha256(encoder.encode(code)))
 
-  return recoveryCodeHashes.some((code) => code === hash)
+  return recoveryCodeHashes.find((code) => code === hash)
 }

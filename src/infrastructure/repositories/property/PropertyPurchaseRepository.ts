@@ -1,4 +1,4 @@
-import { EscrowMeetingStatus,  PropertyRequestTypeEnum } from '@domain/enums/propertyEnum'
+import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import {
   EscrowInformationStatus,
   OfferLetter,
@@ -11,9 +11,7 @@ import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
   private readonly tablename: string = 'offer_letter'
-  public async requestForOfferLetter(
-    input: OfferLetter,
-  ): Promise<OfferLetter | any> {
+  public async requestForOfferLetter(input: OfferLetter): Promise<OfferLetter> {
     const [offerLetter] = await db(this.tablename).insert(input).returning('*')
     return new OfferLetter(offerLetter) ? offerLetter : null
   }
@@ -71,6 +69,13 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .first()
   }
 
+  public async getPropertyClosingById(id: string): Promise<PropertyClosing> {
+    return db('property_closing')
+      .select('*')
+      .where('property_closing_id', id)
+      .first()
+  }
+
   public async updateOfferLetterStatus(
     offer_letter_id: string,
     input: Partial<OfferLetter>,
@@ -80,22 +85,16 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .where('offer_letter_id', offer_letter_id)
     return await this.getOfferLetterById(offer_letter_id)
   }
-  public async confirmPropertyEscrowMeeting(escrowId: string, status: PropertyRequestTypeEnum): Promise<void> {
-    switch (status) {
-      case PropertyRequestTypeEnum.REJECT_ESCOW_MEETING:
-        await db('escrow_status')
-          .update({ escrow_status: EscrowMeetingStatus.DECLINED })
-          .where('escrow_status_id', escrowId)
-        break
-      case PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING:
-        await db('escrow_status')
-          .update({escrow_status: EscrowMeetingStatus.CONFIRMED })
-          .where('escrow_status_id', escrowId)
-        break
-      default:
-        throw new Error('Invalid status')
-    }
+  public async confirmPropertyEscrowMeeting(
+    escrowId: string,
+    status: EscrowMeetingStatus,
+  ): Promise<EscrowInformationStatus> {
+    const [escrowStatus] = await db('escrow_status')
+      .update({ escrow_status: status })
+      .where('escrow_status_id', escrowId)
+      .returning('*')
 
+    return escrowStatus
   }
 
   public async confirmPropertyPurchase(
@@ -166,15 +165,14 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
   }
 
   public async updatePropertyClosing(
-    property_id: string,
-    user_id: string,
+    propertyClosingId: string,
     data: Partial<PropertyClosing>,
   ): Promise<PropertyClosing> {
     const [updatedPropertyClosing] = await db<PropertyClosing>(
       'property_closing',
     )
       .update(data)
-      .where({ property_id, user_id })
+      .where({ property_closing_id: propertyClosingId })
       .returning('*')
 
     return updatedPropertyClosing

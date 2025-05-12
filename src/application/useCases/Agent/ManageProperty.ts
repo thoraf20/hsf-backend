@@ -76,7 +76,7 @@ export class manageProperty {
     ])
 
     const application =
-      await this.applicationRepository.getIfApplicationIsRecorded(
+      await this.applicationRepository.getLastApplicationIfExist(
         input.property_id,
         input.property_buyer_id,
       )

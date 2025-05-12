@@ -14,7 +14,7 @@ export enum PropertyRequestTypeEnum {
   INITIATE = 'Initiate',
   PROPERTY_CLOSSING = 'Property Closing',
   ELIGIBILITY_CHECK = 'Eligibility Check',
-  REJECT_ESCOW_MEETING ='Reject escrow meeting',
+  REJECT_ESCOW_MEETING = 'Reject escrow meeting',
   ACCEPT_ESCOW_MEETING = 'Accept escrow meeting',
   DUE_DELIGENT = 'PAYMENT_FOR_DUE_DELIGENT',
   BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
@@ -26,6 +26,12 @@ export enum PropertyRequestTypeEnum {
 }
 
 export enum OfferLetterStatusEnum {
+  OUTRIGHT = 'Outright Purchase',
+  INSTALLMENT = 'Installment',
+  Mortgage = 'Mortgage',
+}
+
+export enum ApplicationPurchaseType {
   OUTRIGHT = 'Outright Purchase',
   INSTALLMENT = 'Installment',
   Mortgage = 'Mortgage',
@@ -95,4 +101,16 @@ export enum ApplicationStatus {
   PROCESSING = 'Processing',
   COMPLETED = 'Completed',
   REJECTED = 'Rejected',
+}
+
+export enum OfferLetterStatus {
+  Approved = 'Approved',
+  Pending = 'Pending',
+  Rejected = 'Rejected',
+}
+
+export enum PropertyClosingStatus {
+  Approved = 'Approved',
+  Pending = 'Pending',
+  Rejected = 'Rejected',
 }

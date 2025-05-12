@@ -68,7 +68,7 @@ const inspectionWorker = new Worker(
         })
 
         const application =
-          await applicationRepository.getIfApplicationIsRecorded(
+          await applicationRepository.getLastApplicationIfExist(
             inspection.property_id,
             inspection.user_id,
           )

@@ -21,10 +21,7 @@ import { decryptToString } from '@shared/utils/encrypt'
 import { decodeBase64 } from '@oslojs/encoding'
 import { verifyTOTP } from '@oslojs/otp'
 import { getEnv } from '@infrastructure/config/env/env.config'
-import {
-  generateRecoveryCodes,
-  verifyCodeFromRecoveryCodeList,
-} from '@shared/utils/totp'
+import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -221,7 +218,9 @@ export class AuthService {
   /**
    * Login user and return JWT token
    */
-  async login(input: loginType): Promise<({ token: string } & User) | never> {
+  async login(
+    input: loginType,
+  ): Promise<({ token: string; mfa_required: boolean } & User) | never> {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
     )) as User
@@ -352,9 +351,43 @@ export class AuthService {
     const token = await this.hashData.accessCode(user.user_id, user.role)
     await this.client.deleteKey(lockKey)
     delete user.password
-    return { token, ...user }
+    return { token, mfa_required: false, ...user }
   }
 
+  async sendMfaEmailOtp(userId: string) {
+    const user = await this.userRepository.findById(userId)
+    if (!user.is_mfa_enabled) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        "You don't have 2fa enabled on this account",
+      )
+    }
+
+    if (user.require_authenticator_mfa) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `You have authenticator app set up, so you are required to enter the one-time
+          password (OTP) shown for your account.`,
+      )
+    }
+
+    const otp = generateRandomSixNumbers()
+
+    const cacheKey = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${user.id ?? user.user_id}`
+    await this.client.setKey(
+      cacheKey,
+      {
+        otp,
+      },
+      new TimeSpan(10, 'm').toMilliseconds(),
+    )
+
+    emailTemplates.sendMfaOtpEmail(
+      user.email,
+      String(otp),
+      'http://localhost:3000/suport',
+    )
+  }
   /**
    * Verify MFA OTP
    */
@@ -390,7 +423,7 @@ export class AuthService {
       const { otp: currentOtp } =
         typeof details === 'string' ? JSON.parse(details) : details
 
-      if (currentOtp !== otp) {
+      if (String(currentOtp) !== String(otp)) {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'Invalid or expired OTP.',
@@ -432,18 +465,24 @@ export class AuthService {
     }
 
     if (flow === MfaFlow.RecoveryCode) {
-      const valid = verifyCodeFromRecoveryCodeList(
-        otp,
-        findUserById.recovery_codes ?? [],
-      )
+      const recoveryCodes = (
+        await this.userRepository.getRecoveryCodes(userId)
+      ).filter((code) => !code.used)
 
-      if (!valid) {
+      const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
+      const match = verifyCodeFromRecoveryCodeList(otp, plainRecoveryCodes)
+
+      if (!match) {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'Invalid recovery code',
         )
       }
 
+      const usedCode = recoveryCodes.find(({ code: hash }) => hash === match)
+      await this.userRepository.updateRecoveryCodeById(usedCode.id, {
+        used: true,
+      })
       return { token, ...findUserById }
     }
 

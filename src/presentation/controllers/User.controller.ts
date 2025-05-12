@@ -40,6 +40,7 @@ export class UserController {
     )
 
     delete user.password
+    delete user.mfa_totp_secret
     return createResponse(StatusCodes.OK, 'User retrived successfully', user)
   }
 

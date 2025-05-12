@@ -49,7 +49,6 @@ export class AuthController {
   public async login(input: loginType): Promise<ApiResponse<any>> {
     const user = await this.authService.login(input)
     delete user.password
-    delete user.recovery_codes
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
   }
 
@@ -60,8 +59,12 @@ export class AuthController {
   ): Promise<ApiResponse<any>> {
     const user = await this.authService.verifyMfa(otp, userId, flow)
     delete user.password
-    delete user.recovery_codes
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
+  }
+
+  public async sendMfaOtp(userId: string) {
+    await this.authService.sendMfaEmailOtp(userId)
+    return createResponse(StatusCodes.OK, 'Otp send to your email successfully')
   }
 
   public async resendOtp(email: string): Promise<ApiResponse<any>> {

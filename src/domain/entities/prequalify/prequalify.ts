@@ -87,12 +87,12 @@ export class prequalifyStatus {
 
 export class payment_calculator {
   payment_calculator_id?: string
-  house_price: string
-  interest_rate: string
+  house_price: number | string
+  interest_rate: number | string
   terms: string
   type?: string
   repayment_type: string
-  est_money_payment: string
+  est_money_payment: number | string
   personal_information_id: string
   constructor(data: Partial<payment_calculator>) {
     Object.assign(this, {

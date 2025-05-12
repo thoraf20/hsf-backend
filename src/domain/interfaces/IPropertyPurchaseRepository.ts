@@ -1,4 +1,4 @@
-import { PropertyRequestTypeEnum } from '@domain/enums/propertyEnum'
+import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import {
   EscrowInformationStatus,
   OfferLetter,
@@ -25,13 +25,16 @@ export interface IPurchaseProperty {
     property_id: string,
     user_id: string,
   ): Promise<PropertyClosing>
+  getPropertyClosingById(id: string): Promise<PropertyClosing>
 
   updatePropertyClosing(
-    property_id: string,
-    user_id: string,
+    propertyClosingId: string,
     data: Partial<PropertyClosing>,
   ): Promise<PropertyClosing>
-  confirmPropertyEscrowMeeting(escrowId: string, status: PropertyRequestTypeEnum): Promise<void>
+  confirmPropertyEscrowMeeting(
+    escrowId: string,
+    status: EscrowMeetingStatus,
+  ): Promise<EscrowInformationStatus>
 
   getAllOfferLetterByUserId(user_id: string): Promise<OfferLetter[]>
   getOfferLetter(userId: string): Promise<OfferLetter[]>

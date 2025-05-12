@@ -1,4 +1,5 @@
 import {
+  ApplicationPurchaseType,
   DIPStatus,
   LoanOfferStatus,
   OfferLetterStatusEnum,
@@ -17,7 +18,7 @@ export const DocumentSchema = z.object({
 export const purchasePropertySchema = z
   .object({
     property_id: z.string().nonempty(),
-    purchase_type: z.nativeEnum(OfferLetterStatusEnum),
+    purchase_type: z.nativeEnum(ApplicationPurchaseType),
     request_type: z.nativeEnum(PropertyRequestTypeEnum),
     escrow_status_id: z.string().optional(),
     dip_status: z.nativeEnum(DIPStatus).optional(),
@@ -56,8 +57,9 @@ export const purchasePropertySchema = z
     }
 
     if (
-   (   request_type === PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING &&
-      !data.escrow_status_id) || ( request_type === PropertyRequestTypeEnum.REJECT_ESCOW_MEETING &&
+      (request_type === PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING &&
+        !data.escrow_status_id) ||
+      (request_type === PropertyRequestTypeEnum.REJECT_ESCOW_MEETING &&
         !data.escrow_status_id)
     ) {
       ctx.addIssue({

@@ -1,5 +1,7 @@
 import {
+  ApplicationPurchaseType,
   ApplicationStatus,
+  EscrowMeetingStatus,
   OfferLetterStatusEnum,
   PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
@@ -109,7 +111,6 @@ export class PropertyPurchase {
       email,
       documents,
       dip_status,
-      escrow_status_id,
       loan_acceptance_status,
     } = input
 
@@ -123,7 +124,7 @@ export class PropertyPurchase {
       )
 
     const application =
-      await this.applicationRepository.getIfApplicationIsRecorded(
+      await this.applicationRepository.getLastApplicationIfExist(
         property_id,
         user_id,
       )
@@ -147,8 +148,8 @@ export class PropertyPurchase {
     ) {
       if (
         !(
-          purchase_type === OfferLetterStatusEnum.INSTALLMENT ||
-          purchase_type === OfferLetterStatusEnum.Mortgage
+          purchase_type === ApplicationPurchaseType.INSTALLMENT ||
+          purchase_type === ApplicationPurchaseType.Mortgage
         )
       ) {
         throw new ApplicationCustomError(
@@ -167,7 +168,7 @@ export class PropertyPurchase {
     }
 
     if (!application && request_type === PropertyRequestTypeEnum.INITIATE) {
-      if (purchase_type !== OfferLetterStatusEnum.OUTRIGHT) {
+      if (purchase_type !== ApplicationPurchaseType.OUTRIGHT) {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'Initiate request only available for outright purchase',
@@ -191,8 +192,8 @@ export class PropertyPurchase {
     }
 
     if (
-      purchase_type === OfferLetterStatusEnum.OUTRIGHT ||
-      purchase_type === OfferLetterStatusEnum.INSTALLMENT
+      purchase_type === ApplicationPurchaseType.OUTRIGHT ||
+      purchase_type === ApplicationPurchaseType.INSTALLMENT
     ) {
       switch (request_type) {
         case PropertyRequestTypeEnum.OfferLetter:
@@ -211,18 +212,13 @@ export class PropertyPurchase {
             application?.application_id,
           )
 
-        case PropertyRequestTypeEnum.REJECT_ESCOW_MEETING:
-          return await this.confirmEscrowAttendanc(escrow_status_id, PropertyRequestTypeEnum.REJECT_ESCOW_MEETING)
-        case PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING:
-          return await this.confirmEscrowAttendanc(escrow_status_id, PropertyRequestTypeEnum.ACCEPT_ESCOW_MEETING)
-
         default:
           return
       }
     }
 
     // MORTGAGE flow
-    if (purchase_type === OfferLetterStatusEnum.Mortgage) {
+    if (purchase_type === ApplicationPurchaseType.Mortgage) {
       switch (request_type) {
         case PropertyRequestTypeEnum.ACCEPT_DIP:
           const dip = await this.mortgageRespository.acceptDip({
@@ -309,7 +305,10 @@ export class PropertyPurchase {
     }
   }
 
-  public async confirmEscrowAttendanc(escrowId: string, status: PropertyRequestTypeEnum): Promise<any> {
+  public async confirmEscrowAttendanc(
+    escrowId: string,
+    status: EscrowMeetingStatus,
+  ): Promise<any> {
     await this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId, status)
   }
 
@@ -350,8 +349,7 @@ export class PropertyPurchase {
     inspection_id,
   }: {
     property_id: string
-    purchase_type: OfferLetterStatusEnum
-
+    purchase_type: ApplicationPurchaseType
     user_id: string
     inspection_id: string
   }) {
@@ -368,7 +366,7 @@ export class PropertyPurchase {
     }
 
     let application =
-      await this.applicationRepository.getIfApplicationIsRecorded(
+      await this.applicationRepository.getLastApplicationIfExist(
         property_id,
         user_id,
       )
@@ -427,14 +425,14 @@ export class PropertyPurchase {
     application_id,
   }: {
     property_id: string
-    purchase_type: OfferLetterStatusEnum
+    purchase_type: ApplicationPurchaseType
     user_id: string
     application_id: string
   }): Promise<OfferLetter> {
     await this.checkoutDuplicate(property_id, user_id)
 
     const isOutright =
-      purchase_type === OfferLetterStatusEnum.OUTRIGHT ||
+      purchase_type === ApplicationPurchaseType.OUTRIGHT ||
       OfferLetterStatusEnum.Mortgage
 
     if (!isOutright) {

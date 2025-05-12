@@ -13,6 +13,7 @@
     "migrate:prod": "knex migrate:latest --env production --knexfile=database/knexfile.ts",
     "make": "knex migrate:make attendance_escrow -x ts --knexfile=database/knexfile.ts",
     "make:seed": "knex seed:make roles_and_permissions -x ts --knexfile=database/knexfile.ts",
+    "make:seed:review_requests": "knex seed:make review_requests -x ts --knexfile=database/knexfile.ts",
     "seed:run": " knex seed:run   ts --knexfile=database/knexfile.ts"
   },
   "keywords": [],

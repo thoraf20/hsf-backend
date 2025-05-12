@@ -1,5 +1,4 @@
 import { Application } from '@entities/Application'
-import { Properties } from '@entities/Property'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { PropertyFilters } from '@shared/types/repoTypes'
 
@@ -9,9 +8,9 @@ export interface IApplicationRespository {
     user_id: string,
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<any>>
-  getApplicationById(application_id: string): Promise<Properties>
+  getApplicationById(application_id: string): Promise<Application>
   updateApplication(input: Partial<Application>): Promise<void>
-  getIfApplicationIsRecorded(
+  getLastApplicationIfExist(
     property_id: string,
     user_id: string,
   ): Promise<Application>

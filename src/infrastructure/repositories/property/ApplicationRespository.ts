@@ -1,5 +1,4 @@
 import { Application } from '@entities/Application'
-import { Properties } from '@entities/Property'
 import db from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { SeekPaginationResult } from '@shared/types/paginate'
@@ -198,7 +197,7 @@ export class ApplicationRepository implements IApplicationRespository {
     })
   }
 
-  async getApplicationById(application_id: string): Promise<Properties> {
+  async getApplicationById(application_id: string): Promise<Application> {
     const result = await db('application as a')
       .leftJoin('properties as p', 'a.property_id', 'p.id')
       .leftJoin(
@@ -288,7 +287,7 @@ export class ApplicationRepository implements IApplicationRespository {
       .andWhere('user_id', input.user_id)
   }
 
-  async getIfApplicationIsRecorded(
+  async getLastApplicationIfExist(
     property_id: string,
     user_id: string,
   ): Promise<Application> {
@@ -296,6 +295,7 @@ export class ApplicationRepository implements IApplicationRespository {
       .select('*')
       .where('property_id', property_id)
       .andWhere('user_id', user_id)
+      .orderBy('created_at', 'desc')
       .first()
   }
 }

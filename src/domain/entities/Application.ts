@@ -1,8 +1,11 @@
-import { ApplicationStatus } from '@domain/enums/propertyEnum'
+import {
+  ApplicationPurchaseType,
+  ApplicationStatus,
+} from '@domain/enums/propertyEnum'
 
 export class Application {
   application_id?: string
-  application_type?: string
+  application_type?: ApplicationPurchaseType
   mortage_payment_status_id?: string
   offer_letter_id?: string
   escrow_information_id?: string

@@ -1,5 +1,9 @@
 import { createResponse } from '@presentation/response/responseType'
-import { generate2faSecret, generateRecoveryCodes } from '@shared/utils/totp'
+import {
+  generate2faSecret,
+  generateRecoveryCodes,
+  verifyCodeFromRecoveryCodeList,
+} from '@shared/utils/totp'
 import { UserService } from '@use-cases/User/User'
 import { StatusCodes } from 'http-status-codes'
 import { createTOTPKeyURI, verifyTOTP } from '@oslojs/otp'
@@ -9,16 +13,20 @@ import qrcode from 'qrcode'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { TimeSpan } from '@shared/utils/time-unit'
-import { VerifyMFASetupInput } from '@validators/mfaValidator'
+import { DisableMfaInput, VerifyMFASetupInput } from '@validators/mfaValidator'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { decryptToString, encryptString } from '@shared/utils/encrypt'
 import { MfaFlow } from '@domain/enums/userEum'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 const MFA_SETUP_KEY = 'mfa_setup_key'
 
 export class MfaController {
   private readonly client = new RedisClient()
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly userRepository: UserRepository,
+  ) {}
 
   async setup(userId: string) {
     const user = await this.userService.getUserProfile(userId)
@@ -149,7 +157,7 @@ export class MfaController {
     return recoveryCodes
   }
 
-  async disableMfa(userId: string) {
+  async disableMfa(userId: string, input: DisableMfaInput) {
     const findUserById = await this.userService.getUserProfile(userId)
     if (!findUserById) {
       throw new ApplicationCustomError(StatusCodes.FORBIDDEN, 'User not found')
@@ -169,6 +177,44 @@ export class MfaController {
       )
     }
 
+    const flow = input.flow
+
+    if (flow === MfaFlow.TOTP) {
+      const decryptedSecret = decryptToString(
+        decodeBase64(findUserById.mfa_totp_secret),
+      )
+
+      const isValidGeneratedSecretCode = verifyTOTP(
+        decodeBase64(decryptedSecret),
+        getEnv('TOTP_EXPIRES_IN'),
+        getEnv('TOTP_LENGTH'),
+        input.code,
+      )
+
+      if (!isValidGeneratedSecretCode) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid otp code',
+        )
+      }
+    } else if (flow === MfaFlow.RecoveryCode) {
+      const recoveryCodes = (
+        await this.userRepository.getRecoveryCodes(userId)
+      ).filter((code) => !code.used)
+
+      const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
+      const match = verifyCodeFromRecoveryCodeList(
+        input.code,
+        plainRecoveryCodes,
+      )
+
+      if (!match) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid recovery code',
+        )
+      }
+    }
     const data = this.userService.DisableMfa(userId, MfaFlow.TOTP)
 
     return createResponse(StatusCodes.OK, 'MFA disabled for the user.', data)

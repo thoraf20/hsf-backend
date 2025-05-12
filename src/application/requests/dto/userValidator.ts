@@ -75,6 +75,12 @@ export const verifyMfaSchema = z.object({
 
 export type VerifyMfaInput = z.infer<typeof verifyMfaSchema>
 
+export const sendMfaOtpSchema = z.object({
+  token: z.string().nonempty(),
+})
+
+export type SendMfaOtpInput = z.infer<typeof sendMfaOtpSchema>
+
 export const updatePasswordSchema = z.object({
   oldPassword: z.string().min(8, 'Password must be at least 8 characters long'),
   newPassword: z

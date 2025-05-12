@@ -1,6 +1,6 @@
 import db from '@infrastructure/database/knex'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
-import { User } from '@domain/entities/User'
+import { RecoveryCode, User } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { userValue } from '@shared/respositoryValues'
 
@@ -66,5 +66,47 @@ export class UserRepository implements IUserRepository {
   }
   public async getRoleById(id: string): Promise<Record<string, any> | null> {
     return db('roles').where('id', id).first()
+  }
+
+  async setRecoveryCodes(
+    userId: string,
+    recoveryCodes: Array<string>,
+  ): Promise<Array<RecoveryCode>> {
+    return db.transaction(async (tx) => {
+      await tx.table('recovery_codes').delete().where('user_id', userId)
+      return tx
+        .table('recovery_codes')
+        .insert<RecoveryCode>(
+          recoveryCodes.map((code) => ({ code, user_id: userId, used: false })),
+        )
+        .returning('*')
+    })
+  }
+
+  async getRecoveryCodes(userId: string): Promise<Array<RecoveryCode>> {
+    return db
+      .table<RecoveryCode>('recovery_codes')
+      .select()
+      .where({ user_id: userId })
+  }
+
+  async updateRecoveryCodeById(
+    id: string,
+    data: Partial<RecoveryCode>,
+  ): Promise<RecoveryCode> {
+    const [updatedRecovery] = await db
+      .table<RecoveryCode>('recovery_codes')
+      .update(data)
+      .where({ id })
+      .returning('*')
+
+    return updatedRecovery
+  }
+
+  async clearRecoveryCodesByUserId(userId: string): Promise<void> {
+    return void db
+      .table<RecoveryCode>('recovery_codes')
+      .delete()
+      .where({ user_id: userId })
   }
 }

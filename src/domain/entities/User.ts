@@ -22,7 +22,6 @@ export class User {
   ip_address?: string
   mfa_totp_secret?: string
   require_authenticator_mfa?: boolean
-  recovery_codes?: Array<string>
   last_logged_in_at?: Date
   os?: string
   browser?: string
@@ -62,3 +61,17 @@ export class invitation {
 }
 
 export type UserRegProfile = User & AgentProfile
+
+export class RecoveryCode {
+  id: string
+  code: string
+  used: boolean
+  user_id: string
+  constructor(data: Partial<RecoveryCode>) {
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
+  }
+}
