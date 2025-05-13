@@ -4,8 +4,7 @@ import { PropertyFilters } from '@shared/types/repoTypes'
 
 export interface IApplicationRespository {
   createApplication(input: Application): Promise<Application>
-  getAllUserApplication(
-    user_id: string,
+  getAllApplication(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<any>>
   getApplicationById(application_id: string): Promise<Application>

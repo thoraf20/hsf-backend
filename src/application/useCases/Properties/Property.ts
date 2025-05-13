@@ -151,13 +151,9 @@ export class PropertyService {
   }
 
   public async propertyApplication(
-    user_id: string,
     filters: PropertyFilters,
   ): Promise<SeekPaginationResult<any>> {
-    return await this.applicationRepository.getAllUserApplication(
-      user_id,
-      filters,
-    )
+    return await this.applicationRepository.getAllApplication(filters)
   }
 
   public async shareProperty(

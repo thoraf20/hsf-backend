@@ -18,6 +18,7 @@ import fileRoutes from './file/file.routes'
 import manageAgentRoutes from './Agents/ManageAgent.routes'
 import mfaRoutes from './userRoutes/mfa.routes'
 import applicationRoutes from './application/application.routes'
+import manageApplicationRoutes from './application/application.manage.routes'
 
 const routes: Router = Router()
 
@@ -38,5 +39,6 @@ routes.use('/applications', authenticate, limiter, applicationRoutes)
 routes.use('/file', fileRoutes)
 routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
 routes.use('/manage', authenticate, manageAgentRoutes)
+routes.use('/manage', authenticate, limiter, manageApplicationRoutes)
 
 export default routes

@@ -1,10 +1,10 @@
 export enum UserStatus {
-  Active,
-  Inactive,
-  Pending,
-  Suspended,
-  Banned,
-  Deleted,
+  Active = 'Active',
+  Inactive = 'Inactive',
+  Pending = 'Pending',
+  Suspended = 'Suspended',
+  Banned = 'Banned',
+  Deleted = 'Deleted',
 }
 
 export enum MfaFlow {

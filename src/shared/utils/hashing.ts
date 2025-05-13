@@ -4,12 +4,13 @@ import configs from '@config/config'
 import Jwt from 'jsonwebtoken'
 import { Role } from '@domain/enums/rolesEmun'
 
-const secret = process.env.SECRET_TOKEN as string | 'theSecretofDoom'
-console.log(configs.salt.app_key)
 export class Hashing {
   private readonly bcrHash = bcrypt
   private readonly jwt = Jwt
-  constructor() {}
+  private readonly secret: string
+  constructor() {
+    this.secret = process.env.SECRET_TOKEN as string
+  }
 
   public async hashing(data: string): Promise<string> {
     const key: number = Number(configs.salt.app_key)
@@ -23,7 +24,7 @@ export class Hashing {
   }
 
   public async accessCode(id: string, role: Role): Promise<string> {
-    const access_key = this.jwt.sign({ id, role }, secret, {
+    const access_key = this.jwt.sign({ id, role }, this.secret, {
       expiresIn: '1d',
     })
     return access_key

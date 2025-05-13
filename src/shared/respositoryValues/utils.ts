@@ -7,6 +7,7 @@ export const userValue = [
   'u.phone_number',
   'u.profile',
   'u.image',
+  'u.status',
   'u.password',
   'u.force_password_reset',
   'u.mfa_totp_secret',

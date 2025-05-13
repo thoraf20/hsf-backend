@@ -80,3 +80,13 @@ const serviceOfferings = [
   //     currency: 'NGN',
   //   },
 ]
+
+exports.seed = async function(knex: any) {
+  // Deletes ALL existing entries
+  // await knex('table_name').del()
+  // await knex('table_name').insert([
+  //   {colName: 'row1Value'},
+  //   {colName: 'row2Value'},
+  //   {colName: 'row3Value'}
+  // ]);
+};

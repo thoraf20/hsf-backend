@@ -138,7 +138,16 @@ export class ApplicationService {
   }
 
   async getByUserId(userId: string, filter: PropertyFilters) {
-    return this.applicationRepository.getAllUserApplication(userId, filter)
+    return this.applicationRepository.getAllApplication({
+      ...filter,
+      user_id: userId,
+    })
+  }
+
+  async getAll(filter: PropertyFilters) {
+    return this.applicationRepository.getAllApplication({
+      ...filter,
+    })
   }
 
   async getById(id: string) {

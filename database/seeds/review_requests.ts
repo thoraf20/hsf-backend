@@ -14,41 +14,59 @@ import {
 export async function seed(knex: Knex) {
   try {
     await reviewRequestStageSeed(knex)
-    await Promise.all([offerLetterReviewRequestSeed(knex)])
+    await offerLetterReviewRequestSeed(knex)
     console.log(`Review Requests Seeding Completed`)
   } catch (e) {
-    console.log(`Review Requests Seeding Failed:`, e)
+    console.error(`Review Requests Seeding Failed:`, e)
   }
 }
 
 async function reviewRequestStageSeed(knex: Knex) {
-  await knex
-    .table<ReviewRequestStage>('review_request_stages')
-    .upsert({
-      name: ReviewRequestStageKind.HsfOfferLetterReview,
-    })
-    .onConflict(['name'])
-    .ignore()
+  for (const stage of [
+    ReviewRequestStageKind.HsfOfferLetterReview,
+    ReviewRequestStageKind.LenderBankOfferLetterReview,
+  ]) {
+    const existingStage = await knex
+      .table<ReviewRequestStage>('review_request_stages')
+      .where({ name: stage })
+      .first()
+    if (existingStage) {
+      // If the stage exists, we don't need to do anything
+      continue
+    }
 
-  await knex
-    .table<ReviewRequestStage>('review_request_stages')
-    .upsert({
-      name: ReviewRequestStageKind.LenderBankOfferLetterReview,
-    })
-    .onConflict(['name'])
-    .ignore()
+    try {
+      await knex
+        .table<ReviewRequestStage>('review_request_stages')
+        .insert({ name: stage })
+    } catch (error: any) {
+      // If the insert fails because of a conflict, we ignore the error
+      if (error.code === '23505') {
+        // PostgreSQL error code for unique violation
+        console.log(`Stage '${stage}' already exists. Skipping insert.`)
+      } else {
+        // If it's another error, we throw it
+        throw error
+      }
+    }
+  }
 }
 
 async function offerLetterReviewRequestSeed(knex: Knex) {
-  const [offerLetterReviewType] = await knex
+  let offerLetterReviewType = await knex
     .table<ReviewRequestType>('review_request_types')
-    .upsert({
-      type: ReviewRequestTypeKind.LoanOffer,
-      id: uuidv4(),
-    })
-    .onConflict(['type'])
-    .ignore()
-    .returning('*')
+    .where({ type: ReviewRequestTypeKind.LoanOffer })
+    .first()
+
+  if (!offerLetterReviewType) {
+    ;[offerLetterReviewType] = await knex
+      .table<ReviewRequestType>('review_request_types')
+      .insert({
+        type: ReviewRequestTypeKind.LoanOffer,
+        id: uuidv4(),
+      })
+      .returning('*')
+  }
 
   const offerLetterReviewStages: Array<ReviewRequestStageKind> = [
     ReviewRequestStageKind.HsfOfferLetterReview,
@@ -59,7 +77,7 @@ async function offerLetterReviewRequestSeed(knex: Knex) {
     'review_request_type_stages',
   )
 
-  offerLetterReviewStages.map(async (stage, index) => {
+  for (const stage of offerLetterReviewStages) {
     const reviewStage = await knex
       .table<ReviewRequestStage>('review_request_stages')
       .select()
@@ -67,18 +85,35 @@ async function offerLetterReviewRequestSeed(knex: Knex) {
       .first('*')
 
     if (!stage) {
-      throw new Error(`Review request stage '${stage}' not exist`)
+      throw new Error(`Review request stage \'${stage}\' not exist`)
     }
 
-    const stageOrder = index + 1
-    await reviewRequestTypeStageTable
-      .upsert({
+    const stageOrder = offerLetterReviewStages.indexOf(stage) + 1
+
+    let existingTypeStage = await reviewRequestTypeStageTable
+      .select()
+      .where({
+        stage_id: reviewStage.id,
+        request_type_id: offerLetterReviewType.id,
+      })
+      .limit(1)
+
+    console.log({ existingTypeStage, stageOrder })
+
+    if (!existingTypeStage) {
+      await reviewRequestTypeStageTable.insert({
         stage_id: reviewStage.id,
         stage_order: stageOrder,
         id: uuidv4(),
         request_type_id: offerLetterReviewType.id,
       })
-      .onConflict(['stage_id', 'request_type_id'])
-      .merge({ stage_order: stageOrder })
-  })
+    } else {
+      await reviewRequestTypeStageTable
+        .where({
+          stage_id: reviewStage.id,
+          request_type_id: offerLetterReviewType.id,
+        })
+        .update({ stage_order: stageOrder })
+    }
+  }
 }

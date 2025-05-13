@@ -75,6 +75,10 @@ export class ApplicationRepository implements IApplicationRespository {
       )
     }
 
+    if (filters.user_id) {
+      add(q).whereRaw(`${tablename}user_id = ${filters.user_id}`)
+    }
+
     if (filters.bedrooms) {
       q = add(q).whereRaw(
         `${tablename}numbers_of_bedroom >= '${filters.bedrooms}'`,
@@ -131,8 +135,7 @@ export class ApplicationRepository implements IApplicationRespository {
     return new Application(application) ? application : null
   }
 
-  async getAllUserApplication(
-    user_id: string,
+  async getAllApplication(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<any>> {
     const page = filters?.page_number ?? 1
@@ -153,6 +156,18 @@ export class ApplicationRepository implements IApplicationRespository {
       .clone()
       .select(
         'a.*',
+        db.raw(`
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role': u.role,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          `),
         'p.property_name',
         'p.property_price',
         'p.property_images',
@@ -180,9 +195,9 @@ export class ApplicationRepository implements IApplicationRespository {
         'p.deleted_at',
         db.raw(`DATE_PART('day', NOW() - a.created_at) AS days_Applied`),
       )
+      .leftJoin('users as u', 'u.id', 'p.user_id')
       .limit(perPage)
       .offset(offset)
-      .where('a.user_id', user_id)
 
     const totalPages = Math.ceil(Number(total) / perPage)
 
@@ -210,6 +225,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'a.escrow_information_id',
         'ei.escrow_id',
       )
+      .leftJoin('users as u', 'u.id', 'user_id')
       .leftJoin(
         'property_closing as pc',
         'a.property_closing_id',
@@ -264,6 +280,18 @@ export class ApplicationRepository implements IApplicationRespository {
             ELSE NULL
         END as escrow_status_info
         `),
+        db.raw(`
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role': u.role,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           )
+          `),
         'ps.*',
         'el.*',
         'ol.*',

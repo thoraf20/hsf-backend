@@ -29,6 +29,7 @@ export type PropertyFilters = Partial<
     bedrooms: string // convert to numerical
     bathrooms: string // convert to numerical
 
+    user_id: string
     min_price: string
     max_price: string
     financing_type: string // "Outright,mortgage,installment" or "select_all"
@@ -37,7 +38,6 @@ export type PropertyFilters = Partial<
     property_features: string // "ac,cctv"
   } & SeekPaginationOption
 >
-
 
 export type AgentsFilters = Partial<
   {
