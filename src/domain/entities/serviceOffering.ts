@@ -2,13 +2,13 @@ import { PartialInstantiable } from '@shared/types/partials'
 
 export class ServiceOffering extends PartialInstantiable<ServiceOffering> {
   id?: string
-  service_name?: string
+  service_name: string
   description?: string
-  base_price?: number
-  image_url?: string
-  product_code?: string
+  base_price: number
+  image_url: string
+  product_code: string
   currency?: string
-  is_active?: boolean
+  is_active: boolean
   deleted_at?: Date
   deleted_by_id?: string
   created_by_id?: string

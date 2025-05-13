@@ -81,7 +81,6 @@ export class Agents {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
 
-    console.log(agentUser.role)
     if (agentUser.role !== Role.SUPER_ADMIN) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -495,7 +494,6 @@ export class Agents {
     input.role_id = checkRole.id
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
-    console.log(defaultPassword)
     delete input.role
     let user = await this.userRepository.create({
       ...input,

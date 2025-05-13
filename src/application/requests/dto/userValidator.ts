@@ -73,6 +73,14 @@ export const verifyMfaSchema = z.object({
   token: z.string().nonempty(),
 })
 
+export const changePasswordCompleteSchema = z.object({
+  token: z.string().nonempty(),
+})
+
+export type ChangePasswordCompleteInput = z.infer<
+  typeof changePasswordCompleteSchema
+>
+
 export type VerifyMfaInput = z.infer<typeof verifyMfaSchema>
 
 export const sendMfaOtpSchema = z.object({
@@ -112,3 +120,22 @@ export const updateProfileSchema = z.object({
   profile: z.string().optional(),
   image: z.string().url('Invalid image URL').optional(),
 })
+
+export const updateProfileImageSchema = z.object({
+  image: z.string().nonempty().url().nullable(),
+})
+
+export type UpdateProfileImageInput = z.infer<typeof updateProfileImageSchema>
+
+export const changeUserPasswordSchema = z
+  .object({
+    current_password: z.string().min(8).max(100),
+    new_password: z.string().min(8).max(100),
+    confirm_password: z.string().min(8).max(100),
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: 'Passwords do not match',
+    path: ['confirm_password'],
+  })
+
+export type ChangePasswordInput = z.infer<typeof changeUserPasswordSchema>

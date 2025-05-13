@@ -36,8 +36,8 @@ export class UserRepository implements IUserRepository {
   }
 
   async update(id: string, input: User): Promise<User | null> {
-    const user = await db('users').update(input).where({ id })
-    return user ? new User(input) : null
+    const [user] = await db('users').update(input).where({ id }).returning('*')
+    return user ?? null
   }
 
   async findByIdentifier(identifier: string): Promise<User | null> {
@@ -45,7 +45,7 @@ export class UserRepository implements IUserRepository {
       .where({ email: identifier })
       .orWhere({ phone_number: identifier })
       .first()
-    return user ? new User(user) : null
+    return user ?? null
   }
 
   public async getRoleByName(

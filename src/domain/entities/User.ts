@@ -2,9 +2,9 @@
 
 import { UserStatus } from '@domain/enums/userEum'
 import { Role } from '../enums/rolesEmun'
+import { BaseEntity } from '.'
 
-export class User {
-  id?: string
+export class User extends BaseEntity {
   first_name: string
   last_name: string
   email?: string
@@ -30,6 +30,7 @@ export class User {
   is_mfa_enabled?: boolean
   is_default_password?: boolean
   constructor(data: Partial<User>) {
+    super()
     Object.assign(this, {
       created_at: new Date(),
       updated_at: new Date(),
@@ -73,5 +74,59 @@ export class RecoveryCode {
       updated_at: new Date(),
       ...data,
     })
+  }
+}
+
+export function getUserClientView(
+  user: User,
+): Pick<
+  User,
+  | 'id'
+  | 'first_name'
+  | 'last_name'
+  | 'email'
+  | 'phone_number'
+  | 'is_mfa_enabled'
+  | 'is_email_verified'
+  | 'is_phone_verified'
+  | 'is_default_password'
+  | 'user_id'
+  | 'status'
+  | 'require_authenticator_mfa'
+  | 'role'
+  | 'role_id'
+  | 'image'
+  | 'profile'
+  | 'ip_address'
+  | 'last_logged_in_at'
+  | 'failed_login_attempts'
+  | 'user_agent'
+  | 'os'
+  | 'force_password_reset'
+> {
+  console.log({ user })
+  return {
+    id: user.id,
+    user_id: user.user_id,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    phone_number: user.phone_number,
+    is_default_password: user.is_default_password,
+    is_email_verified: user.is_email_verified,
+    is_phone_verified: user.is_phone_verified,
+    status: user.status,
+    image: user.image,
+    role: user.role,
+    role_id: user.role_id,
+    profile: user.profile,
+    force_password_reset: user.force_password_reset,
+    ip_address: user.ip_address,
+    is_mfa_enabled: user.is_mfa_enabled,
+    last_logged_in_at: user.last_logged_in_at,
+    require_authenticator_mfa: user.require_authenticator_mfa,
+    failed_login_attempts: user.failed_login_attempts,
+    user_agent: user.user_agent,
+    os: user.os,
   }
 }

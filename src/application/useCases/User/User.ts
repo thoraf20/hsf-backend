@@ -1,4 +1,4 @@
-import { User } from '@domain/entities/User'
+import { getUserClientView, User } from '@domain/entities/User'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
@@ -9,7 +9,21 @@ import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
 import { changePassword } from '@shared/types/userType'
 import { Role } from '@routes/index.t'
-import { MfaFlow } from '@domain/enums/userEum'
+import { MfaFlow, UserStatus } from '@domain/enums/userEum'
+import {
+  ChangePasswordCompleteInput,
+  ChangePasswordInput,
+  UpdateProfileImageInput,
+} from '@validators/userValidator'
+import { TimeSpan } from '@shared/utils/time-unit'
+import {
+  generateRandomOTP,
+  verifyCodeFromRecoveryCodeList,
+} from '@shared/utils/totp'
+import { verifyTOTP } from '@oslojs/otp'
+import { decodeBase64 } from '@oslojs/encoding'
+import { getEnv } from '@infrastructure/config/env/env.config'
+import { decryptToString } from '@shared/utils/encrypt'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -100,6 +114,18 @@ export class UserService {
         'A verification email has been sent. Please click the link to confirm the update.',
       )
     }
+  }
+
+  public async updateProfileImage(id: string, input: UpdateProfileImageInput) {
+    const updatedUser = await this.userRepository.update(id, {
+      image: input.image,
+    })
+
+    if (!updatedUser) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    return getUserClientView(updatedUser)
   }
 
   public async enable2fa(
@@ -215,5 +241,241 @@ export class UserService {
   async resetRecoveryCodes(userId: string, hashedRecoveryCodes: Array<string>) {
     await this.userRepository.clearRecoveryCodesByUserId(userId)
     await this.userRepository.setRecoveryCodes(userId, hashedRecoveryCodes)
+  }
+
+  async initiateChangeUserPassword(id: string, input: ChangePasswordInput) {
+    const user = await this.userRepository.findById(id)
+    if (!user || user.status === UserStatus.Deleted) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    if (
+      !(
+        user.status === UserStatus.Active || user.status === UserStatus.Inactive
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Password change not allowed for user with status: ${user.status}. Account must be active or inactive.`,
+      )
+    }
+
+    const isSameWithOldPassword = await this.userRepository.comparedPassword(
+      input.new_password,
+      user.password,
+    )
+
+    if (isSameWithOldPassword) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'New password cannot be the same as the current password.',
+      )
+    }
+
+    const hashedPassword = this.userRepository.hashedPassword(
+      input.new_password,
+    )
+
+    if (user.is_mfa_enabled) {
+      const id = uuidv4()
+      await this.client.setKey(
+        `${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${id}`,
+        {
+          new_password: hashedPassword,
+          email: user.email,
+          user_id: user.id ?? user.user_id!,
+        },
+        new TimeSpan(1, 'h').toMilliseconds(),
+      )
+
+      if (!user.require_authenticator_mfa) {
+        const totpForEmailMfa = generateRandomOTP()
+        await this.client.setKey(
+          `${CacheEnumKeys.PASSWORD_CHANGE_MFA_TOTP}-${totpForEmailMfa}`,
+          id,
+          new TimeSpan(10, 'm').toMilliseconds(),
+        )
+      }
+
+      return {
+        token: id,
+        mfa_required: true,
+        mfa_type: user.require_authenticator_mfa
+          ? MfaFlow.TOTP
+          : MfaFlow.EMAIL_OTP,
+      }
+    }
+
+    const passwordChangeToken = uuidv4()
+    await this.client.setKey(
+      `${CacheEnumKeys.RESET_PASSWORD}-${passwordChangeToken}`,
+      {
+        new_password: hashedPassword,
+        email: user.email,
+        user_id: user.id ?? user.user_id!,
+      },
+      new TimeSpan(1, 'h').toMilliseconds(),
+    )
+
+    return {
+      token: passwordChangeToken,
+      mfa_required: false,
+    }
+  }
+
+  async verifyChangePasswordMfa(
+    userId: string,
+    flow: MfaFlow,
+    token: string,
+    code: string,
+  ) {
+    const user = await this.userRepository.findById(userId)
+    if (!user || user.status === UserStatus.Deleted) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    if (
+      !(
+        user.status === UserStatus.Active || user.status === UserStatus.Inactive
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Password change not allowed for user with status: ${user.status}. Account must be active or inactive.`,
+      )
+    }
+
+    if (flow === MfaFlow.EMAIL_OTP) {
+      const totpKey = `${CacheEnumKeys.PASSWORD_CHANGE_MFA_TOTP}-${code}`
+      const totpSecret = await (<Promise<string | null>>(
+        this.client.getKey(totpKey)
+      ))
+
+      if (!(totpSecret && totpSecret === token)) {
+        throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+      }
+
+      await this.client.deleteKey(totpKey)
+    }
+
+    const sessionData: {
+      new_password: string
+      email: string
+      user_id: string
+    } | null = await this.client.getKey(
+      `${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${token}`,
+    )
+
+    if (!sessionData || sessionData.user_id === userId) {
+      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+    }
+
+    await this.verifyTOTP(user, flow, code) //throw error incase of invalid code
+
+    const resetPasswordToken = uuidv4()
+    await this.client.setKey(
+      `${CacheEnumKeys.RESET_PASSWORD}-${resetPasswordToken}`,
+      sessionData,
+      new TimeSpan(1, 'h').toMilliseconds(),
+    )
+
+    await this.client.deleteKey(`${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${token}`)
+
+    return {
+      token: resetPasswordToken,
+    }
+  }
+
+  async verifyTOTP(user: User, flow: MfaFlow, code: string) {
+    if (!user.require_authenticator_mfa) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Authenicator not set',
+      )
+    }
+
+    if (flow === MfaFlow.TOTP) {
+      const decryptedSecret = decryptToString(
+        decodeBase64(user.mfa_totp_secret),
+      )
+
+      const isValidGeneratedSecretCode = verifyTOTP(
+        decodeBase64(decryptedSecret),
+        getEnv('TOTP_EXPIRES_IN'),
+        getEnv('TOTP_LENGTH'),
+        code,
+      )
+
+      if (!isValidGeneratedSecretCode) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid otp code',
+        )
+      }
+    }
+
+    if (flow === MfaFlow.RecoveryCode) {
+      const recoveryCodes = (
+        await this.userRepository.getRecoveryCodes(user.id ?? user.user_id)
+      ).filter((code) => !code.used)
+
+      const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
+      const match = verifyCodeFromRecoveryCodeList(code, plainRecoveryCodes)
+
+      if (!match) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Invalid recovery code',
+        )
+      }
+
+      const usedCode = recoveryCodes.find(({ code: hash }) => hash === match)
+      await this.userRepository.updateRecoveryCodeById(usedCode.id, {
+        used: true,
+      })
+    }
+  }
+
+  async completeChangePassword(
+    userId: string,
+    input: ChangePasswordCompleteInput,
+  ) {
+    const user = await this.userRepository.findById(userId)
+    if (!user || user.status === UserStatus.Deleted) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    if (
+      !(
+        user.status === UserStatus.Active || user.status === UserStatus.Inactive
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Password change not allowed for user with status: ${user.status}. Account must be active or inactive.`,
+      )
+    }
+
+    const sessionData: {
+      new_password: string
+      email: string
+      user_id: string
+    } | null = await this.client.getKey(
+      `${CacheEnumKeys.RESET_PASSWORD}-${input.token}`,
+    )
+
+    if (
+      !(
+        sessionData &&
+        sessionData.user_id === userId &&
+        sessionData.email === user.email
+      )
+    ) {
+      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+    }
+
+    await this.userRepository.update(userId, {
+      password: sessionData.new_password,
+    })
   }
 }
