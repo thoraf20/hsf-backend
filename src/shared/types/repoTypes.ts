@@ -19,26 +19,6 @@ export enum SearchType {
   EXCLUSIVE = 'exclusive',
 }
 
-export type PropertyFilters = Partial<
-  {
-    search_type: SearchType
-    sort_by: SortDateBy
-    search: string
-    location: string
-    property_type: string
-    bedrooms: string // convert to numerical
-    bathrooms: string // convert to numerical
-
-    user_id: string
-    min_price: string
-    max_price: string
-    financing_type: string // "Outright,mortgage,installment" or "select_all"
-
-    property_status: propertyStatusFilter
-    property_features: string // "ac,cctv"
-  } & SeekPaginationOption
->
-
 export type AgentsFilters = Partial<
   {
     role: Role

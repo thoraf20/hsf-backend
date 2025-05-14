@@ -2,6 +2,11 @@ import { NextFunction, Request, Response } from 'express'
 import { z, ZodError } from 'zod'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
+import { Knex } from 'knex'
+import {
+  SeekPaginationOption,
+  SeekPaginationResult,
+} from '@shared/types/paginate'
 
 const DEFAULT_PAGE_NUMBER = 1
 const DEFAULT_PAGE_SIZE = 20
@@ -21,7 +26,7 @@ export function withPaginateSchema<Schema extends z.ZodObject<any>>(
   return paginationQuerySchema.and(schema)
 }
 
-export const validateRequestQuery = <Schema extends z.ZodObject<any>>(
+export const validateRequestQuery = <Schema extends z.ZodSchema<any>>(
   schema: Schema,
 ) => {
   return function (req: Request, res: Response, next: NextFunction) {
@@ -48,4 +53,34 @@ export const validateRequestQuery = <Schema extends z.ZodObject<any>>(
       return
     }
   }
+}
+
+export async function applyPagination<T>(
+  baseQuery: Knex.QueryBuilder,
+  filters?: SeekPaginationOption,
+): Promise<SeekPaginationResult<T>> {
+  const page = filters?.page_number ?? 1
+  const perPage = filters?.result_per_page ?? 10
+  const offset = (page - 1) * perPage
+
+  // Clone the base query for counting
+  const totalRecordsQuery = baseQuery.clone().count('* as count').first()
+  const [{ count: total }] = await Promise.all([totalRecordsQuery])
+
+  // Apply limit and offset to the data query
+  const dataQuery = baseQuery.clone().limit(perPage).offset(offset)
+
+  const data = await dataQuery
+
+  const totalPages = Math.ceil(total / perPage)
+
+  return new SeekPaginationResult<T>({
+    result: data as T[],
+    result_per_page: perPage,
+    page,
+    total_records: total,
+    total_pages: totalPages,
+    next_page: page < totalPages ? page + 1 : null,
+    prev_page: page > 1 ? page - 1 : null,
+  })
 }

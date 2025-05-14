@@ -1,6 +1,5 @@
 import { OfferLetterStatus } from '@domain/enums/propertyEnum'
 import { createResponse } from '@presentation/response/responseType'
-import { PropertyFilters } from '@shared/types/repoTypes'
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   CreateApplicationInput,
@@ -9,6 +8,7 @@ import {
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
 } from '@validators/applicationValidator'
+import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 
 export class ApplicationController {
@@ -19,7 +19,7 @@ export class ApplicationController {
     return createResponse(
       StatusCodes.CREATED,
       'Application intiated successfully',
-      application,
+      { application },
     )
   }
 

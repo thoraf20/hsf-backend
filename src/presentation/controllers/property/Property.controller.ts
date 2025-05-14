@@ -5,16 +5,19 @@ import {
 import { PropertyService } from '@application/useCases/Properties/Property'
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
-import { PropertyFilters } from '@shared/types/repoTypes'
+import { PropertyFilters } from '@validators/propertyValidator'
 
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
 
   public async createProperty(
     input: Properties,
-    user_id: string,
+    organization_id: string,
   ): Promise<ApiResponse<any>> {
-    const property = await this.propertyService.createProperty(input, user_id)
+    const property = await this.propertyService.createProperty(
+      input,
+      organization_id,
+    )
     return createResponse(
       StatusCodes.CREATED,
       'Property created successfully',
@@ -38,14 +41,25 @@ export class PropertyController {
     )
   }
 
-  public async getPropertyByUserId(
-    user_id: string,
+  public async getPropertyByDeveloperOrgId(
+    orgId: string,
     filters?: PropertyFilters,
   ): Promise<ApiResponse<any>> {
-    const properties = await this.propertyService.getPropertyByUserId(
-      user_id,
+    const properties = await this.propertyService.getPropertyByDeveloperOrg(
+      orgId,
       filters,
     )
+    return createResponse(
+      StatusCodes.OK,
+      'Properties fetched successfully',
+      properties,
+    )
+  }
+
+  public async getPropertyByHSFAdmin(
+    filters?: PropertyFilters,
+  ): Promise<ApiResponse<any>> {
+    const properties = await this.propertyService.getPropertyByHSFAdmin(filters)
     return createResponse(
       StatusCodes.OK,
       'Properties fetched successfully',

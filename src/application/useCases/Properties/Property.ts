@@ -1,4 +1,3 @@
-import { PropertyFilters } from '@shared/types/repoTypes'
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
@@ -8,6 +7,7 @@ import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { Application } from '@entities/Application'
+import { PropertyFilters } from '@validators/propertyValidator'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -23,15 +23,13 @@ export class PropertyService {
 
   async createProperty(
     input: Properties,
-    user_id: string,
+    organization_id: string,
   ): Promise<Properties> {
-    await this.utilsProperty.findIfPropertyExistByName(input.property_name)
-
     const address = await this.propertyRepository.createProperties(
       new Properties({
         ...input,
         documents: JSON.stringify(input.documents),
-        user_id,
+        organization_id,
       }),
     )
     return { ...address }
@@ -64,14 +62,23 @@ export class PropertyService {
     return fetchProperty
   }
 
-  public async getPropertyByUserId(
+  public async getPropertyByDeveloperOrg(
     user_id: string,
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    const fetchProperty = await this.propertyRepository.findPropertiesByUserId(
-      user_id,
-      filters,
-    )
+    const fetchProperty =
+      await this.propertyRepository.findPropertiesByDeveloperOrg(
+        user_id,
+        filters,
+      )
+    return fetchProperty
+  }
+
+  public async getPropertyByHSFAdmin(
+    filters?: PropertyFilters,
+  ): Promise<SeekPaginationResult<Properties>> {
+    const fetchProperty =
+      await this.propertyRepository.findPropertiesByHSFAdmin(filters)
     return fetchProperty
   }
 

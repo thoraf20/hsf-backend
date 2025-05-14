@@ -5,7 +5,8 @@ import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate'
-import { PropertyCount, PropertyFilters } from '@shared/types/repoTypes'
+import { PropertyCount } from '@shared/types/repoTypes'
+import { PropertyFilters } from '@validators/propertyValidator'
 
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
@@ -16,8 +17,12 @@ export interface IPropertyRepository {
     userRole?: string,
   ): Promise<Properties | null>
 
-  findPropertiesByUserId(
-    user_id: string,
+  findPropertiesByDeveloperOrg(
+    organization_id: string,
+    filters?: PropertyFilters,
+  ): Promise<SeekPaginationResult<Properties>>
+
+  findPropertiesByHSFAdmin(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>>
 

@@ -6,7 +6,7 @@ import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurch
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware, requireRoles, Role } from '@routes/index.t'
-import { PropertyFilters } from '@shared/types/repoTypes'
+
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   createApplicationSchema,
@@ -14,6 +14,7 @@ import {
   scheduleEscrowMeetingRespondSchema,
   scheduleEscrowMeetingSchema,
 } from '@validators/applicationValidator'
+import { PropertyFilters } from '@validators/propertyValidator'
 import { Router } from 'express'
 
 const applicationService = new ApplicationService(

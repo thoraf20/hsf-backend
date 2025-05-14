@@ -1,9 +1,12 @@
 import { ServiceOfferingController } from '@controllers/Agent/ServiceOffering.controller'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 import { User } from '@entities/User'
+import { authorize } from '@middleware/authorization'
 import { validateRequest } from '@middleware/validateRequest'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 import { asyncMiddleware, requireRoles, Role } from '@routes/index.t'
 import { ServiceOfferingFilters } from '@shared/types/repoTypes'
+import { requireOrganizationType } from '@shared/utils/permission-policy'
 import { ServiceOfferingService } from '@use-cases/ServiceOffering/serviceOffering'
 import {
   CreateServiceOfferingInput,
@@ -56,6 +59,7 @@ serviceOfferingRoutes.put(
 
 serviceOfferingRoutes.get(
   '/',
+  // authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   asyncMiddleware(async (req, res) => {
     const { query } = req as unknown as {
       query: ServiceOfferingFilters
@@ -70,7 +74,7 @@ serviceOfferingRoutes.get(
   '/:serviceOfferingId',
   asyncMiddleware(async (req, res) => {
     const { serviceOfferingId } = req.params as unknown as {
-      serviceOfferingId: string 
+      serviceOfferingId: string
     }
 
     const response = await controller.getServiceOfferingById(serviceOfferingId)

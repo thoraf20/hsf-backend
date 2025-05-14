@@ -9,6 +9,7 @@ import {
   validateRequest,
 } from '../index.t'
 import {
+  propertyFiltersSchema,
   PropertySchema,
   sharePropertySchema,
   UpdateSchema,
@@ -24,6 +25,7 @@ import {
 import { limiter } from '@middleware/security'
 import { optionalAuth } from '@middleware/authMiddleware'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { validateRequestQuery } from '@shared/utils/paginate'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -37,8 +39,11 @@ propertyRoute.post(
   limiter,
   validateRequest(PropertySchema),
   asyncMiddleware(async (req, res) => {
-    const { body, user } = req
-    const property = await controller.createProperty(body, user.id)
+    const { body, authInfo } = req
+    const property = await controller.createProperty(
+      body,
+      authInfo.currentOrganizationId,
+    )
     res.status(property.statusCode).json(property)
   }),
 )
@@ -46,6 +51,7 @@ propertyRoute.post(
 propertyRoute.get(
   '/all',
   optionalAuth,
+  validateRequestQuery(propertyFiltersSchema),
   asyncMiddleware(async (req, res) => {
     const { query, user } = req as any
     const properties = await controller.getAllProperties(
@@ -60,13 +66,30 @@ propertyRoute.get(
 propertyRoute.get(
   '/developer-properties',
   authenticate,
+  validateRequestQuery(propertyFiltersSchema),
   authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
   limiter,
   asyncMiddleware(async (req, res) => {
-    const { user, query } = req
-    const properties = await controller.getPropertyByUserId(user.id, query)
+    const { query, authInfo } = req
+    const properties = await controller.getPropertyByDeveloperOrgId(
+      authInfo.currentOrganizationId,
+      query,
+    )
     res.status(properties.statusCode).json(properties)
   }),
+)
+
+propertyRoute.get(
+  '/admin-properties',
+  authenticate,
+  validateRequestQuery(propertyFiltersSchema),
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  limiter,
+  async (req, res) => {
+    const { query } = req
+    const properties = await controller.getPropertyByHSFAdmin(query)
+    res.status(properties.statusCode).json(properties)
+  },
 )
 
 propertyRoute.get(

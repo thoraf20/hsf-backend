@@ -4,6 +4,12 @@ import {
   propertyApprovalStatus,
   PropertyFeatureEnum,
 } from '@domain/enums/propertyEnum'
+import {
+  propertyStatusFilter,
+  SearchType,
+  SortDateBy,
+} from '@shared/types/repoTypes'
+import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
 // Define the schema for a single document object
@@ -119,3 +125,23 @@ export const approvePropertyClosingSchema = z.object({
   property_id: z.string().nonempty(),
   user_id: z.string().nonempty(),
 })
+
+export const propertyFiltersSchema = withPaginateSchema(
+  z.object({
+    search_type: z.nativeEnum(SearchType).optional(),
+    sort_by: z.nativeEnum(SortDateBy).optional(),
+    search: z.string().optional(),
+    location: z.string().optional(),
+    property_type: z.string().optional(),
+    bedrooms: z.coerce.number().int().positive().optional(),
+    bathrooms: z.coerce.number().int().positive().optional(),
+    user_id: z.string().optional(),
+    min_price: z.coerce.number().positive().optional(),
+    max_price: z.coerce.number().positive().optional(),
+    financing_type: z.string().optional(),
+    property_status: z.nativeEnum(propertyStatusFilter).optional(),
+    property_features: z.string().optional(),
+  }),
+)
+
+export type PropertyFilters = z.infer<typeof propertyFiltersSchema>

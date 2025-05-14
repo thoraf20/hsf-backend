@@ -69,16 +69,16 @@ managePropertyRoute.put(
     res.status(property.statusCode).json(property)
   }),
 )
-managePropertyRoute.put(
-  '/property/grant-offer-letter',
-  requireRoles(Role.DEVELOPER),
-  validateRequest(changeOfferLetterStatusSchema),
-  asyncMiddleware(async (req, res) => {
-    const { body } = req
-    const property = await controller.changeOfferLetterStatus(body)
-    res.status(property.statusCode).json(property)
-  }),
-)
+// managePropertyRoute.put(
+//   '/property/grant-offer-letter',
+//   requireRoles(Role.DEVELOPER),
+//   validateRequest(changeOfferLetterStatusSchema),
+//   asyncMiddleware(async (req, res) => {
+//     const { body } = req
+//     const property = await controller.changeOfferLetterStatus(body)
+//     res.status(property.statusCode).json(property)
+//   }),
+// )
 managePropertyRoute.put(
   '/property/closing',
   requireRoles([Role.SUPER_ADMIN]),

@@ -3,7 +3,6 @@ import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { Properties, shareProperty } from '@domain/entities/Property'
 import {
   PropertyCount,
-  PropertyFilters,
   //@ts-ignore
   propertyStatusFilter,
   SearchType,
@@ -18,6 +17,8 @@ import { Knex } from 'knex'
 import omit from '@shared/utils/omit'
 import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
+import { applyPagination } from '@shared/utils/paginate'
+import { PropertyFilters } from '@validators/propertyValidator'
 
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
@@ -149,38 +150,23 @@ export class PropertyRepository implements IPropertyRepository {
     userRole: string = 'guest',
     userId?: string,
   ): Promise<SeekPaginationResult<Properties>> {
-    const page = filters?.page_number ?? 1
-    const perPage = filters?.result_per_page ?? 10
-    const offset = (page - 1) * perPage
-
     let baseQuery = db('properties')
       .where({ is_live: true })
       .join('users', 'users.id', '=', 'properties.user_id')
 
-    baseQuery = this.useFilter(
-      baseQuery,
+    let dataQuery = this.useFilter(
+      baseQuery.clone(),
       omit(filters, ['sort_by']), // aggregate function count cant be sorted
       'properties.',
     )
-
-    const totalRecordsQuery = baseQuery.clone().count('* as count').first()
-    const [{ count: total }] = await Promise.all([totalRecordsQuery])
-
-    let dataQuery = baseQuery
-      .clone()
       .select('properties.*')
-      .orderBy('properties.id', 'desc')
-      .limit(perPage)
-      .offset(offset)
+      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
 
+    // Apply user-specific selects BEFORE pagination
     if (userId) {
       dataQuery = dataQuery.select(
         db.raw(
-          `(SELECT EXISTS (
-            SELECT 1 FROM property_watchlist
-            WHERE property_watchlist.property_id = properties.id
-            AND property_watchlist.user_id = ?
-          )) AS is_whitelisted`,
+          `(SELECT EXISTS (\n            SELECT 1 FROM property_watchlist\n            WHERE property_watchlist.property_id = properties.id\n            AND property_watchlist.user_id = ?\n          )) AS is_whitelisted`,
           [userId],
         ),
       )
@@ -190,25 +176,25 @@ export class PropertyRepository implements IPropertyRepository {
       dataQuery = dataQuery.select(db.raw('NULL as documents'))
     }
 
-    const rawResult = await dataQuery
+    // Use shared applyPagination for handling limit, offset, and total count
+    const paginationResult = await applyPagination<Properties>(
+      dataQuery,
+      filters,
+    )
 
-    const result = rawResult.map((item) => ({
-      ...item,
-      is_whitelisted:
-        item.is_whitelisted === true || item.is_whitelisted === 't',
-    }))
-
-    const totalPages = Math.ceil(Number(total) / perPage)
-
-    return new SeekPaginationResult<Properties>({
-      result,
-      result_per_page: perPage,
-      page,
-      total_records: Number(total),
-      total_pages: totalPages,
-      next_page: page < totalPages ? page + 1 : null,
-      prev_page: page > 1 ? page - 1 : null,
+    // Map the raw data results within the paginationResult to Properties instances
+    const mappedResults = paginationResult.result.map((item: any) => {
+      // Apply custom mapping for is_whitelisted if needed, then map to Properties
+      const processedItem = {
+        ...item,
+        is_whitelisted:
+          item.is_whitelisted === true || item.is_whitelisted === 't',
+      }
+      return new Properties(processedItem)
     })
+
+    paginationResult.result = mappedResults
+    return paginationResult
   }
 
   async findPropertyById(
@@ -430,31 +416,47 @@ export class PropertyRepository implements IPropertyRepository {
     return queryresp
   }
 
-  async findPropertiesByUserId(
-    user_id: string,
+  async findPropertiesByDeveloperOrg(
+    organization_id: string,
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    let query = db('properties')
-      .select('properties.*')
-      .where('properties.user_id', user_id)
+    let baseQuery = db('properties')
+      .where('properties.organization_id', organization_id)
       .orderBy('properties.id', 'desc')
 
-    query = this.useFilter(query, filters)
+    let dataQuery = this.useFilter(
+      baseQuery.clone().groupBy('properties.id'),
+      filters,
+    )
+      .select('properties.*')
+      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
 
-    if (filters) {
-      if (filters?.result_per_page && filters?.page_number) {
-        const offset = (filters.page_number - 1) * filters.result_per_page
-        query = query.limit(filters.result_per_page).offset(offset)
-      }
-    }
+    const paginationResult = await applyPagination<Properties>(
+      dataQuery,
+      filters,
+    )
 
-    const results = (await query).map((item) => new Properties(item))
+    return paginationResult
+  }
 
-    return new SeekPaginationResult<Properties>({
-      result: results,
-      page: filters?.page_number || 1,
-      result_per_page: filters?.result_per_page || results.length,
-    })
+  async findPropertiesByHSFAdmin(
+    filters?: PropertyFilters,
+  ): Promise<SeekPaginationResult<Properties>> {
+    let baseQuery = db('properties').orderBy('properties.id', 'desc')
+
+    let dataQuery = this.useFilter(
+      baseQuery.clone().groupBy('properties.id'),
+      filters,
+    ) // Apply filters
+      .select('properties.*')
+      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
+
+    // Call shared applyPagination which returns SeekPaginationResult<RawData>
+    const paginationResult = await applyPagination<Properties>(
+      dataQuery,
+      filters,
+    )
+    return paginationResult
   }
 
   async softDeleteProperty(id: string): Promise<boolean> {
