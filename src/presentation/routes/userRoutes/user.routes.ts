@@ -14,12 +14,21 @@ import {
   verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
 import { AccountRepository } from '@repositories/user/AccountRepository'
+import { AddressController } from '@controllers/AddressController'
+import { AddressService } from '@use-cases/User/Address'
+import { AddressRepository } from '@repositories/user/AddressRepository'
+import {
+  createAddressSchema,
+  updateAddressSchema,
+} from '@validators/addressValidator'
 const userRoutes: Router = Router()
 
 const userServices = new UserService(new UserRepository())
 const accountRepository = new AccountRepository()
 const userController = new UserController(userServices, accountRepository)
-
+const addressController = new AddressController(
+  new AddressService(new AddressRepository()),
+)
 userRoutes.put(
   '/update',
   validateRequest(updateProfileSchema),
@@ -36,6 +45,67 @@ userRoutes.get(
     const { user } = req
     const userProfile = await userController.getUserById(user.id)
     return res.status(userProfile.statusCode).json(userProfile)
+  }),
+)
+
+userRoutes.post(
+  '/address',
+  validateRequest(createAddressSchema),
+  asyncMiddleware(async (req, res) => {
+    const { user: claim, body } = req
+
+    const response = await addressController.createByUser(claim.id, body)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+userRoutes.get(
+  '/address',
+  asyncMiddleware(async (req, res) => {
+    const { user: claim } = req
+
+    const response = await addressController.getByUser(claim.id)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+userRoutes.get(
+  '/address/:address_id',
+  asyncMiddleware(async (req, res) => {
+    const { user: claim, params } = req
+
+    const response = await addressController.getOneByUserId(
+      params.address_id,
+      claim.id,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+userRoutes.put(
+  '/address/:address_id',
+  validateRequest(updateAddressSchema),
+  asyncMiddleware(async (req, res) => {
+    const { user: claim, body, params } = req
+
+    const response = await addressController.updateByUser(
+      claim.id,
+      params.address_id,
+      body,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+userRoutes.delete(
+  '/address/:address_id',
+  asyncMiddleware(async (req, res) => {
+    const { user: claim, params } = req
+    const response = await addressController.deleteByUser(
+      params.address_id,
+      claim.id,
+    )
+    res.status(response.statusCode).json(response)
   }),
 )
 

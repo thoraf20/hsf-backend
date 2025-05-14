@@ -79,8 +79,6 @@ const authenticate = asyncMiddleware(
         currentOrganizationId: undefined,
       }
 
-      console.log({ organizationMembership })
-
       if (organizationMembership) {
         const orgRoleRecord = await db('roles')
           .where({ id: organizationMembership.role_id })

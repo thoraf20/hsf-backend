@@ -1,5 +1,6 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { Role } from '@domain/enums/rolesEmun'
+import { UserRolePermission } from '@entities/User'
 
 /**
  * Represents a user's membership in a specific organization,
@@ -7,6 +8,7 @@ import { Role } from '@domain/enums/rolesEmun'
  */
 export interface OrganizationMembership {
   organizationId: string
+  permissions?: Array<UserRolePermission>
   organizationRole: Role // The role the user has within this specific organization
 }
 
@@ -86,7 +88,6 @@ export const All = (...checks: PermissionCheck[]): PermissionCheck => {
 }
 
 export function isOrganizationUser(authInfo: AuthInfo) {
-  console.log({ a: authInfo.currentOrganizationId })
   return !!authInfo.currentOrganizationId
 }
 

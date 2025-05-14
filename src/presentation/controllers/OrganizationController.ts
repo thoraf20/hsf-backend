@@ -1,5 +1,4 @@
 // HSF-Backend-New/src/presentation/controllers/OrganizationController.ts
-import { Request, Response } from 'express'
 import { ManageOrganizations } from '@application/useCases/ManageOrganizations'
 import { OrganizationRepository } from '@infrastructure/repositories/OrganizationRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'

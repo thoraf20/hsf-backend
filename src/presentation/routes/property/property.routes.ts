@@ -5,7 +5,6 @@ import { PropertyController } from '@controllers/property/Property.controller'
 import {
   asyncMiddleware,
   authenticate,
-  requireRoles,
   Role,
   validateRequest,
 } from '../index.t'
@@ -14,9 +13,17 @@ import {
   sharePropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
-// import { optionalAuth } from '@middleware/authMiddleware'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
-// import { limiter } from '@middleware/security'
+import { authorize } from '@middleware/authorization'
+import {
+  All,
+  isHomeBuyer,
+  requireOrganizationRole,
+  requireOrganizationType,
+} from '@shared/utils/permission-policy'
+import { limiter } from '@middleware/security'
+import { optionalAuth } from '@middleware/authMiddleware'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -26,8 +33,8 @@ const controller = new PropertyController(service)
 propertyRoute.post(
   '/create',
   authenticate,
-  // requireRoles(Role.DEVELOPER),
-  // limiter,
+  authorize(requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.HSF_ADMIN])),
+  limiter,
   validateRequest(PropertySchema),
   asyncMiddleware(async (req, res) => {
     const { body, user } = req
@@ -38,7 +45,7 @@ propertyRoute.post(
 
 propertyRoute.get(
   '/all',
-  // optionalAuth,
+  optionalAuth,
   asyncMiddleware(async (req, res) => {
     const { query, user } = req as any
     const properties = await controller.getAllProperties(
@@ -53,19 +60,20 @@ propertyRoute.get(
 propertyRoute.get(
   '/developer-properties',
   authenticate,
-  // requireRoles(Role.DEVELOPER),
-  // limiter,
+  authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
     const properties = await controller.getPropertyByUserId(user.id, query)
     res.status(properties.statusCode).json(properties)
   }),
 )
+
 propertyRoute.get(
   '/watchlist',
   authenticate,
-  requireRoles(Role.HOME_BUYER),
-  // limiter,
+  authorize(isHomeBuyer),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
 
@@ -76,8 +84,8 @@ propertyRoute.get(
 
 propertyRoute.get(
   '/:id',
-  // limiter,
-  // optionalAuth,
+  limiter,
+  optionalAuth,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req as any
     const property = await controller.getPropertyById(
@@ -92,8 +100,13 @@ propertyRoute.get(
 propertyRoute.put(
   '/update/:id',
   authenticate,
-  // requireRoles(Role.DEVELOPER),
-  // limiter,
+  authorize(
+    All(
+      requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
+      requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT]),
+    ),
+  ),
+  limiter,
   validateRequest(UpdateSchema),
   asyncMiddleware(async (req, res) => {
     const { body, params, user } = req
@@ -105,8 +118,21 @@ propertyRoute.put(
 propertyRoute.delete(
   '/delete/:id',
   authenticate,
-  // requireRoles(Role.DEVELOPER),
-  // limiter,
+  authorize(
+    All(
+      requireOrganizationType(
+        OrganizationType.DEVELOPER_COMPANY,
+        OrganizationType.HSF_INTERNAL,
+      ),
+      requireOrganizationRole([
+        Role.DEVELOPER_ADMIN,
+        Role.DEVELOPER_AGENT,
+        Role.SUPER_ADMIN,
+        Role.HSF_ADMIN,
+      ]),
+    ),
+  ),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req
     const property = await controller.deleteProperty(params.id, user.id)
@@ -116,8 +142,8 @@ propertyRoute.delete(
 propertyRoute.delete(
   '/remove-watchlist/:property_id',
   authenticate,
-  requireRoles(Role.HOME_BUYER),
-  // limiter,
+  authorize(isHomeBuyer),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
     const property = await controller.removeFromWatchList(
@@ -131,8 +157,21 @@ propertyRoute.delete(
 propertyRoute.delete(
   '/soft-delete/:id',
   authenticate,
-  // requireRoles(Role.DEVELOPER),
-  // limiter,
+  authorize(
+    All(
+      requireOrganizationType(
+        OrganizationType.DEVELOPER_COMPANY,
+        OrganizationType.HSF_INTERNAL,
+      ),
+      requireOrganizationRole([
+        Role.DEVELOPER_ADMIN,
+        Role.DEVELOPER_AGENT,
+        Role.SUPER_ADMIN,
+        Role.HSF_ADMIN,
+      ]),
+    ),
+  ),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req
     const property = await controller.softDeleteProperty(params.id, user.id)
@@ -143,8 +182,8 @@ propertyRoute.delete(
 propertyRoute.post(
   '/add-watchlist/:property_id',
   authenticate,
-  requireRoles(Role.HOME_BUYER),
-  // limiter,
+  authorize(isHomeBuyer),
+  limiter,
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
 
@@ -159,7 +198,7 @@ propertyRoute.post(
 propertyRoute.get(
   '/application/all',
   authenticate,
-  requireRoles(Role.HOME_BUYER),
+  authorize(isHomeBuyer),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
     const property = await controller.propertyApplication(user.id, query)
@@ -169,7 +208,7 @@ propertyRoute.get(
 propertyRoute.get(
   '/application/:application_id',
   authenticate,
-  requireRoles(Role.HOME_BUYER),
+  authorize(isHomeBuyer),
   asyncMiddleware(async (req, res) => {
     const { params } = req
     const property = await controller.getApplicationById(params.application_id)

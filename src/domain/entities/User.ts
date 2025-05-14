@@ -1,6 +1,6 @@
 // Import the Role enum
 
-import { UserStatus } from '@domain/enums/userEum'
+import { AddressType, UserStatus } from '@domain/enums/userEum'
 import { Role } from '../enums/rolesEmun'
 import { BaseEntity } from '.'
 import { Organization } from './Organization'
@@ -168,6 +168,25 @@ export class UserRolePermission extends BaseEntity {
   permission_id: string
 
   constructor(data: Partial<UserRolePermission>) {
+    super()
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
+  }
+}
+
+export class Address extends BaseEntity {
+  street_address: string
+  city: string
+  state: string
+  country: string
+  postal_code?: string
+  address_type?: AddressType
+  user_id?: string
+
+  constructor(data: Partial<Address>) {
     super()
     Object.assign(this, {
       created_at: new Date(),

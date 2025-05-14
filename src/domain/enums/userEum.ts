@@ -12,3 +12,11 @@ export enum MfaFlow {
   TOTP = 'totp',
   RecoveryCode = 'recovery_code',
 }
+
+export enum AddressType {
+  Home = 'Home',
+  Work = 'Work',
+  Billing = 'Billing',
+  Shipping = 'Shipping',
+  Other = 'Other',
+}
