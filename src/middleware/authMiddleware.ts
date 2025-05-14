@@ -10,7 +10,6 @@ import { UserOrganizationMember } from '@entities/UserOrganizationMember'
 
 interface AuthRequest extends Request {
   authInfo?: AuthInfo
-  // role?: string // Role is now part of AuthInfo
   currentOrganizationId?: string // Allows setting current org ID on request
 }
 

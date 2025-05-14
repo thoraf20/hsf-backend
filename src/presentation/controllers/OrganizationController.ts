@@ -64,14 +64,10 @@ export class OrganizationController {
   }
 
   // Modified to accept pagination and use asyncMiddleware
-  async getOrganizationMembers(req: Request, res: Response) {
-    // Cast req.query to SeekPaginationOption as it contains potential pagination parameters
-    const paginationOptions = req.query as unknown as SeekPaginationOption
-    const organizationId = req.params.id
-
+  async getOrganizationMembers(organizationId: string, query: any) {
     const members = await this.manageOrganizations.getOrganizationMembers(
       organizationId,
-      paginationOptions, // Pass pagination options
+      query,
     )
 
     return createResponse(

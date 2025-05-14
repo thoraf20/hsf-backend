@@ -1,8 +1,9 @@
 import db from '@infrastructure/database/knex'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
-import { RecoveryCode, User } from '@domain/entities/User'
+import { RecoveryCode, User, UserRole } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { userValue } from '@shared/respositoryValues'
+import { Knex } from 'knex'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
@@ -48,9 +49,7 @@ export class UserRepository implements IUserRepository {
     return user ?? null
   }
 
-  public async getRoleByName(
-    name: string,
-  ): Promise<Record<string, any> | null> {
+  public async getRoleByName(name: string): Promise<UserRole | null> {
     return db('roles').where('name', name).first()
   }
 
@@ -109,4 +108,8 @@ export class UserRepository implements IUserRepository {
       .delete()
       .where({ user_id: userId })
   }
+
+  useFilters(query: Knex.QueryBuilder<any, any[]>) {}
+
+  async getAll() {}
 }

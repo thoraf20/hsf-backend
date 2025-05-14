@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from './errors/customError'
-import { AuthInfo, PermissionCheck } from '../types/auth' // Import AuthInfo and PermissionCheck types and helpers
+import { AuthInfo, PermissionCheck } from '../shared/utils/permission-policy' // Import AuthInfo and PermissionCheck types and helpers
 
 // Extend Express's Request interface to include our authInfo
 interface AuthRequest extends Request {

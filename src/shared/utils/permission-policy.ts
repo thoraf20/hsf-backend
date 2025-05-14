@@ -1,3 +1,4 @@
+import { OrganizationType } from '@domain/enums/organizationEnum'
 import { Role } from '@domain/enums/rolesEmun'
 
 /**
@@ -19,6 +20,7 @@ export interface AuthInfo {
   globalRole?: Role // The user\'s primary global role (from the \'users\' table)
   organizationMembership?: OrganizationMembership // The single organization the user is a member of, if any
   currentOrganizationId?: string // The organization ID relevant to the current request, if any
+  organizationType?: OrganizationType
 }
 
 /**
@@ -80,5 +82,22 @@ export const All = (...checks: PermissionCheck[]): PermissionCheck => {
       }
     }
     return true
+  }
+}
+
+export function isOrganizationUser(authInfo: AuthInfo) {
+  return !!authInfo.currentOrganizationId
+}
+
+export function isHomeBuyer(authInfo: AuthInfo) {
+  return authInfo.globalRole === Role.HOME_BUYER
+}
+
+export function requireOrganizationType(...types: Array<OrganizationType>) {
+  return (authInfo: AuthInfo) => {
+    return (
+      isOrganizationUser(authInfo) &&
+      types.some((type) => authInfo.organizationType === type)
+    )
   }
 }

@@ -139,3 +139,5 @@ export const changeUserPasswordSchema = z
   })
 
 export type ChangePasswordInput = z.infer<typeof changeUserPasswordSchema>
+
+export const getUserFiltersSchema = z.object({})

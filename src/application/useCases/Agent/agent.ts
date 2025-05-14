@@ -17,9 +17,11 @@ import { Developer, DevelopeReg } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IAdminRepository } from '@interfaces/IAdminRespository'
 import { changePassword } from '@shared/types/userType'
-import { Lender, LenderProfile } from '@entities/Leader'
+import { Lender, LenderProfile } from '@entities/Lender'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { UserStatus } from '@domain/enums/userEum'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export class Agents {
   private readonly userRepository: IUserRepository
@@ -29,11 +31,13 @@ export class Agents {
   private readonly client = new RedisClient()
   private readonly existingUsers: ExistingUsers
   private readonly developer: DeveloperUtils
+  private readonly organizationRepository: IOrganizationRepository
   constructor(
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
     adminRepository: IAdminRepository,
     lenderRepository: ILenderRepository,
+    organizationRepository: IOrganizationRepository,
   ) {
     this.userRepository = userRepository
     this.developerRepository = developerRepository
@@ -41,6 +45,7 @@ export class Agents {
     this.developer = new DeveloperUtils(this.developerRepository)
     this.lenderRepository = lenderRepository
     this.adminRepository = adminRepository
+    this.organizationRepository = organizationRepository
   }
 
   public async createAdmin(input: User): Promise<User> {
@@ -357,12 +362,19 @@ export class Agents {
       ),
       this.developer.findIfCompanyEmailExist(input.company_email),
     ])
-    const findRole = await this.userRepository.getRoleByName(Role.DEVELOPER)
+    const findRole = await this.userRepository.getRoleByName(
+      Role.DEVELOPER_ADMIN,
+    )
 
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
     const defaultPassword = generateDefaultPassword()
+    const developerOrg = await this.organizationRepository.createOrganization({
+      name: input.company_name,
+      type: OrganizationType.DEVELOPER_COMPANY,
+    })
+
     const password = await this.userRepository.hashedPassword(defaultPassword)
     let user = await this.userRepository.create({
       first_name: input.first_name,
@@ -375,6 +387,13 @@ export class Agents {
       is_default_password: true,
       status: UserStatus.Pending,
     })
+
+    await this.organizationRepository.addUserToOrganization({
+      role_id: findRole.id,
+      user_id: user.id,
+      organization_id: developerOrg.id,
+    })
+
     const developer = await this.developerRepository.createDeveloperProfile(
       new Developer({
         company_email: input.company_email,
@@ -389,7 +408,7 @@ export class Agents {
         region_of_operation: input.region_of_operation,
         company_image: input.company_image,
         documents: JSON.stringify(input.documents),
-        developers_profile_id: user.id,
+        organization_id: developerOrg.id,
       }),
     )
     const token = generateInvitationToken()
@@ -409,7 +428,7 @@ export class Agents {
       input.email,
       `${(input.first_name, input.last_name)}`,
       invitation_email,
-      Role.DEVELOPER,
+      findRole.name,
       defaultPassword,
     )
     delete user.password
@@ -431,11 +450,16 @@ export class Agents {
       this.existingUsers.beforeCreateEmail(input.email),
       this.existingUsers.beforeCreatePhone(input.phone_number),
     ])
-    const findRole = await this.userRepository.getRoleByName(Role.LENDER)
+    const findRole = await this.userRepository.getRoleByName(Role.LENDER_ADMIN)
 
     if (!findRole) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
+
+    const lenderOrg = await this.organizationRepository.createOrganization({
+      name: input.lender_name,
+      type: OrganizationType.LENDER_INSTITUTION,
+    })
 
     const defaultPassword = generateDefaultPassword()
     const password = await this.userRepository.hashedPassword(defaultPassword)
@@ -450,6 +474,7 @@ export class Agents {
       force_password_reset: true,
       is_default_password: true,
     })
+
     const lenderProfile = await this.lenderRepository.createLender(
       new Lender({
         lender_name: input.lender_name,
@@ -457,7 +482,7 @@ export class Agents {
         cac: input.cac,
         head_office_address: input.head_office_address,
         state: input.state,
-        user_id: user.id,
+        organization_id: lenderOrg.id,
       }),
     )
     const token = generateInvitationToken()
@@ -477,7 +502,7 @@ export class Agents {
       input.email,
       `${(input.first_name, input.last_name)}`,
       invitation_email,
-      Role.LENDER,
+      Role.LENDER_ADMIN,
       defaultPassword,
     )
     delete user.password
