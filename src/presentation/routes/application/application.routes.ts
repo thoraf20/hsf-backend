@@ -66,7 +66,7 @@ applicationRoutes.post(
 
 applicationRoutes.get(
   '/:application_id/offer-letter',
-  requireRoles([Role.HOME_BUYER, Role.DEVELOPER, Role.ADMIN]),
+  requireRoles([Role.HOME_BUYER]),
   asyncMiddleware(async (req, res) => {
     const { user: claim, params } = req
     const response = await applicationController.getApplicationOfferLetter(
@@ -94,7 +94,7 @@ applicationRoutes.post(
 
 applicationRoutes.patch(
   '/:application_id/offer-letter',
-  requireRoles(Role.ADMIN),
+  requireRoles(Role.SUPER_ADMIN),
   validateRequest(requestOfferLetterRespondSchema),
   asyncMiddleware(async (req, res) => {
     const { params, body } = req
@@ -109,7 +109,7 @@ applicationRoutes.patch(
 
 applicationRoutes.patch(
   '/:application_id/closing/respond',
-  requireRoles(Role.ADMIN),
+  requireRoles(Role.SUPER_ADMIN),
   asyncMiddleware(async (req, res) => {
     const { params, body } = req
     const response = await applicationController.propertyClosingRespond(

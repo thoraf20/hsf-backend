@@ -20,7 +20,7 @@ export class Application {
   document_upload_id?: string
   property_closing_id?: string
   loan_offer_id?: string
-
+  developer_organization_id: string
   dip_id?: string
   created_at?: Date
   updated_at?: Date

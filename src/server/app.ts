@@ -30,7 +30,7 @@ app.use(
   cors({
     origin:
       getEnv('NODE_ENV') === 'development'
-        ? ['http://localhost:3000']
+        ? ['http://localhost:3000', 'http://localhost:3001']
         : getEnv('ORIGINS'),
 
     credentials: true,
@@ -39,11 +39,13 @@ app.use(
 const server = http.createServer(app)
 app.use(express.json({ limit: '10kb' })) // Max 10KB JSON payload
 app.use(express.urlencoded({ extended: true, limit: '10kb' }))
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" },
-  frameguard: { action: "deny" } // Ensures X-Frame-Options: DENY
-  // noSniff is enabled by default
-}))
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    frameguard: { action: 'deny' }, // Ensures X-Frame-Options: DENY
+    // noSniff is enabled by default
+  }),
+)
 // The lines for manual header setting and individual helmet.frameguard/noSniff calls are removed
 // as their functionality is now handled by the consolidated helmet() call above.
 

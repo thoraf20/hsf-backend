@@ -32,101 +32,82 @@ export enum Role {
    * Has all permissions across the entire platform.
    * Manages HSF settings, users, and organizations.
    */
-  SUPER_ADMIN = 'super_admin',
+  SUPER_ADMIN = 'Super Admin',
 
   /**
    * General administrative role within HSF.
    * Permissions might be a subset of SUPER_ADMIN, focused on day-to-day operations.
    */
-  HSF_ADMIN = 'admin',
+  HSF_ADMIN = 'Admin',
 
   /**
    * HSF staff responsible for processing and managing loan applications.
    */
-  HSF_LOAN_OFFICER = 'loan officer',
+  HSF_LOAN_OFFICER = 'Loan Officer',
 
   /**
    * HSF staff ensuring adherence to regulations and policies.
    */
-  HSF_COMPLIANCE_OFFICER = 'compliance officer',
+  HSF_COMPLIANCE_OFFICER = 'Compliance Officer',
 
   /**
    * HSF staff managing property inspections and related processes.
    */
-  HSF_INSPECTION_MANAGER = 'inspection manager',
+  HSF_INSPECTION_MANAGER = 'Inspection Manager',
 
   /**
    * HSF staff handling disputes and resolutions.
    */
-  HSF_DISPUTE_MANAGER = 'dispute manager',
+  HSF_DISPUTE_MANAGER = 'Dispute Manager',
 
   /**
    * HSF staff providing support to users of the platform.
    */
-  HSF_CUSTOMER_SUPPORT = 'customer support',
+  HSF_CUSTOMER_SUPPORT = 'Customer Support',
 
   // --- Developer Company Roles ---
   /**
    * Primary administrator for a Developer Company's organization.
    * Manages their company profile, agents, and property listings.
    */
-  DEVELOPER_ADMIN = 'developer_admin',
+  DEVELOPER_ADMIN = 'Developer Admin',
 
   /**
    * Agent working under a Developer Company.
    * Manages property listings assigned to them.
    */
-  DEVELOPER_AGENT = 'developer_agent',
+  DEVELOPER_AGENT = 'Developer Agent',
 
   // --- Lender Institution Roles ---
   /**
    * Primary administrator for a Lender Institution's organization.
    * Manages their institution profile, staff, and loan products.
    */
-  LENDER_ADMIN = 'lender_admin',
+  LENDER_ADMIN = 'Lender Admin',
 
   /**
    * Loan officer working within a Lender Institution.
    * Processes loan applications submitted through HSF.
    */
-  LENDER_LOAN_OFFICER = 'lender_loan_officer',
+  LENDER_LOAN_OFFICER = 'Lender Loan Officer',
 
   /**
    * Underwriter working within a Lender Institution.
    * Assesses risk and makes decisions on loan applications.
    */
-  LENDER_UNDERWRITER = 'lender_underwriter',
+  LENDER_UNDERWRITER = 'Lender Underwriter',
 
   // --- Other Key Player Roles ---
   /**
    * Individual looking to buy a home through the platform.
    */
-  HOME_BUYER = 'home_buyer',
+  HOME_BUYER = 'Home Buyer',
 
   /**
    * Neutral third-party holding funds/documents during a transaction.
    * This role might interact with specific escrow features.
    */
-  TRUSTEE = 'trustee',
-
-  /**
-   * Generic 'developer' role if needed for individual developers
-   * not necessarily managing a full Developer Company organization on HSF.
-   * Use with caution to avoid confusion with DEVELOPER_ADMIN or DEVELOPER_AGENT.
-   */
-  DEVELOPER = 'developer',
-
-  /**
-   * Generic 'lender' role, similar to the 'developer' role above,
-   * for individual lenders not part of a larger Lender Institution on HSF.
-   */
-  LENDER = 'lender',
-
-  /**
-   * Generic 'bank' role, perhaps for representatives of banks that
-   * are partners but don't manage a full Lender Institution org on HSF.
-   */
-  BANK = 'bank',
+  TRUSTEE = 'Trustee',
 }
 
 // --- Role Groupings for easier checks ---

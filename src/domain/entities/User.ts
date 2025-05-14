@@ -3,6 +3,9 @@
 import { UserStatus } from '@domain/enums/userEum'
 import { Role } from '../enums/rolesEmun'
 import { BaseEntity } from '.'
+import { Organization } from './Organization'
+import { UserOrganizationMember } from './UserOrganizationMember'
+import { Account } from './Account'
 
 export class User extends BaseEntity {
   first_name: string
@@ -17,6 +20,11 @@ export class User extends BaseEntity {
   user_id?: string
   role?: Role
   status: UserStatus
+  membership?: UserOrganizationMember & {
+    organization: Organization
+    role: { id: string; name: string }
+  }
+  accounts?: Array<Account>
   failed_login_attempts?: number
   force_password_reset?: boolean
   ip_address?: string
@@ -104,7 +112,6 @@ export function getUserClientView(
   | 'os'
   | 'force_password_reset'
 > {
-  console.log({ user })
   return {
     id: user.id,
     user_id: user.user_id,
@@ -128,5 +135,44 @@ export function getUserClientView(
     failed_login_attempts: user.failed_login_attempts,
     user_agent: user.user_agent,
     os: user.os,
+  }
+}
+
+export class UserRole extends BaseEntity {
+  name: string
+
+  constructor(data: Partial<UserRole>) {
+    super()
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
+  }
+}
+
+export class UserPermission extends BaseEntity {
+  name: string
+  constructor(data: Partial<UserPermission>) {
+    super()
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
+  }
+}
+
+export class UserRolePermission extends BaseEntity {
+  role_id: string
+  permission_id: string
+
+  constructor(data: Partial<UserRolePermission>) {
+    super()
+    Object.assign(this, {
+      created_at: new Date(),
+      updated_at: new Date(),
+      ...data,
+    })
   }
 }

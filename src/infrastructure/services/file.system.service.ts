@@ -30,6 +30,11 @@ export class FileRepository implements IFileRepository {
       const filePath = path.join(this.uploadDirectory, filename)
 
       try {
+        const stat = await fs.stat(this.uploadDirectory)
+
+        if (!stat) {
+          await fs.mkdir(this.uploadDirectory, { mode: 777 })
+        }
         await fs.writeFile(filePath, file.content)
         // Change this to a public-facing URL
         const publicPath = `${getEnv('BACKEND_URL')}/uploads/${filename}` // Construct the public URL

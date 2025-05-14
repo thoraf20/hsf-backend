@@ -33,7 +33,7 @@ const controller = new MangagePropertyController(service, purchasrRepo)
 
 managePropertyRoute.get(
   '/property/fetch',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN, Role.SUPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const property = await controller.GetAllPropertiesToBeApproved()
     res.status(property.statusCode).json(property)
@@ -41,7 +41,7 @@ managePropertyRoute.get(
 )
 managePropertyRoute.post(
   '/property/set-escrow',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(SetEscrowMeetingSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
@@ -51,7 +51,7 @@ managePropertyRoute.post(
 )
 managePropertyRoute.put(
   '/property/confirm-purchase',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(confirmPropertyPurchase),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -61,7 +61,7 @@ managePropertyRoute.put(
 )
 managePropertyRoute.put(
   '/property/approve-prequalifier',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(approvePrequalifyRequestSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -81,7 +81,7 @@ managePropertyRoute.put(
 )
 managePropertyRoute.put(
   '/property/closing',
-  requireRoles([Role.ADMIN, Role.SUPER_ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(approvePropertyClosingSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -92,7 +92,7 @@ managePropertyRoute.put(
 
 managePropertyRoute.put(
   '/go-live/:property_id',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(UpdatePropertyStatus),
   asyncMiddleware(async (req, res) => {
     const { params, body } = req

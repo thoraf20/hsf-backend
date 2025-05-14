@@ -191,3 +191,9 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at MfaController.verify (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/Mfa.controller.ts:102:13)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/userRoutes/mfa.routes.ts:25:22
+2025-05-13 20:04:24 [ERROR]: Error: ENOENT: no such file or directory, open '/home/buildthings/Documents/projects/actives/HSF-Backend-New/uploads/af4f4aaf-2e87-4811-83cc-9246e37b0316.jpeg'
+    at open (node:internal/fs/promises:638:25)
+    at Object.writeFile (node:internal/fs/promises:1212:14)
+    at FileRepository.upload (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/infrastructure/services/file.system.service.ts:33:9)
+    at FileController.uploadSingleFile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/File.controller.ts:10:26)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/file/file.routes.ts:44:24

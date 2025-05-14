@@ -43,7 +43,7 @@ const controller = new AgentsController(service)
 // )
 agentsRoute.post(
   '/invite-admin',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(AdminSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -53,7 +53,7 @@ agentsRoute.post(
 )
 agentsRoute.post(
   '/invite-sub-admin',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(SubAdminSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -63,7 +63,7 @@ agentsRoute.post(
 )
 agentsRoute.post(
   '/invite-developer',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(DeveloperSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -73,7 +73,7 @@ agentsRoute.post(
 )
 agentsRoute.post(
   '/invite-lender',
-  requireRoles([Role.SUPER_ADMIN, Role.ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   validateRequest(LenderSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req

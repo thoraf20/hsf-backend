@@ -15,7 +15,7 @@ export class Properties {
   property_images: string[]
   documents: any
   status?: propertyApprovalStatus
-  user_id: string
+  organization_id: string
   is_sold?: boolean
   street_address: string
   city: string
@@ -50,11 +50,10 @@ export class shareProperty {
   sender_email: string
   property_id: string
   message?: string
-  shareable_link?: string; 
+  shareable_link?: string
   user_id: string
   updated_at?: Date
   deleted_at?: Date
-
 
   constructor(data: Partial<shareProperty>) {
     Object.assign(this, {

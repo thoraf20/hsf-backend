@@ -6,6 +6,7 @@ import { User } from '../../src/domain/entities/User'
 import { OrganizationType } from '../../src/domain/enums/organizationEnum'
 import { UserStatus } from '../../src/domain/enums/userEum'
 import bcrypt from 'bcryptjs'
+import { Role } from '../../src/domain/enums/rolesEmun'
 
 const uuidv4 = uuid.v4
 dotenv.config({ path: path.resolve(__dirname, '../../.env') })
@@ -13,7 +14,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 // --- Configuration for HSF Staff ---
 const HSF_ORGANIZATION_NAME = 'HSF'
 const HSF_ORGANIZATION_TYPE_ENUM = OrganizationType.HSF_INTERNAL
-const SUPER_ADMIN_ROLE_NAME = 'super_admin'
+
 const SUPER_ADMIN_EMAIL =
   process.env.SUPER_ADMIN_EMAIL || 'ayomidelawal700@hsf.com'
 const DEFAULT_PASSWORD = process.env.DEFAULT_SEED_PASSWORD || 'Password123!' // Store hashed version
@@ -128,15 +129,18 @@ export async function seed(knex: Knex): Promise<void> {
     return user
   }
 
-  // --- 2. Seed Super Admin for HSF ---
+  // --- 2. Seed HSF Internal Users ---
+
+  // Seed Super Admin
   const superAdminUser = await seedHsfUser(
     SUPER_ADMIN_EMAIL,
     'Ayomide',
     'Lawal',
-    SUPER_ADMIN_ROLE_NAME,
+    Role.SUPER_ADMIN, // Use enum value directly
   )
   // If Super Admin is successfully created/found and is the designated owner of HSF Org:
-  if (superAdminUser && !hsfOrganization.owner_user_id) {
+  if (superAdminUser && hsfOrganization && !hsfOrganization.owner_user_id) {
+    // Add check for hsfOrganization existence
     await knex('organizations')
       .where({ id: hsfOrganization.id })
       .update({ owner_user_id: superAdminUser.id })
@@ -145,19 +149,48 @@ export async function seed(knex: Knex): Promise<void> {
     )
   }
 
-  // // --- 3. Seed General HSF Admin ---
-  // await seedHsfUser(HSF_ADMIN_EMAIL, 'HSF', 'GeneralAdmin', HSF_ADMIN_ROLE_NAME)
+  // Seed General HSF Admin
+  await seedHsfUser('admin.hsf@example.com', 'HSF', 'Admin', Role.HSF_ADMIN)
 
-  // // --- 4. Seed HSF Loan Officer ---
-  // await seedHsfUser(
-  //   HSF_LOAN_OFFICER_EMAIL,
-  //   'HSF',
-  //   'LoanPro',
-  //   HSF_LOAN_OFFICER_ROLE_NAME,
-  // )
+  // Seed HSF Loan Officer
+  await seedHsfUser(
+    'loan.officer@hsf.com',
+    'HSF',
+    'LoanPro',
+    Role.HSF_LOAN_OFFICER,
+  )
 
-  // // --- Add more HSF staff as needed ---
-  // // Example:
+  // Seed HSF Compliance Officer
+  await seedHsfUser(
+    'compliance.officer@hsf.com',
+    'HSF Compliance',
+    'Officer',
+    Role.HSF_COMPLIANCE_OFFICER,
+  )
+
+  // Seed HSF Inspection Manager
+  await seedHsfUser(
+    'inspection.manager@hsf.com',
+    'HSF Inspection',
+    'Manager',
+    Role.HSF_INSPECTION_MANAGER,
+  )
+
+  // Seed HSF Dispute Manager
+  await seedHsfUser(
+    'dispute.manager@hsf.com',
+    'HSF Dispute',
+    'Manager',
+    Role.HSF_DISPUTE_MANAGER,
+  )
+
+  // Seed HSF Customer Support
+  await seedHsfUser(
+    'customer.support@hsf.com',
+    'HSF Customer',
+    'Support',
+    Role.HSF_CUSTOMER_SUPPORT,
+  )
   // // const HSF_COMPLIANCE_EMAIL = process.env.TEST_HSF_COMPLIANCE_EMAIL || "hsfcompliance@homestate.finance";
   // // const HSF_COMPLIANCE_ROLE_NAME = "compliance officer"; // Ensure this role name exists
   // // await seedHsfUser(HSF_COMPLIANCE_EMAIL, "HSF", "ComplianceExpert", HSF_COMPLIANCE_ROLE_NAME);

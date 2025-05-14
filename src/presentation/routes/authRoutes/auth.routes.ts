@@ -21,8 +21,13 @@ import { AccountRepository } from '@repositories/user/AccountRepository'
 import { MfaToken } from '@shared/utils/mfa_token'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
 
-const service = new AuthService(new UserRepository(), new AccountRepository())
+const service = new AuthService(
+  new UserRepository(),
+  new AccountRepository(),
+  new OrganizationRepository(),
+)
 const mfaTokenGen = new MfaToken()
 const controller = new AuthController(service)
 const authRoutes: Router = Router()

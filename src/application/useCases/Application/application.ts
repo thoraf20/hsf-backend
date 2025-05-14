@@ -132,6 +132,7 @@ export class ApplicationService {
       prequalifier_id: preQualifier.status_id,
       application_type: input.purchase_type,
       eligibility_id: eligibility.eligibility_id,
+      developer_organization_id: '',
     })
 
     return newApplication
@@ -450,7 +451,7 @@ export class ApplicationService {
       property_buyer_id: userId,
       property_name: property.property_name,
       property_id: property.id,
-      agent_id: property.user_id,
+      agent_id: property.organization_id,
       location: input.location,
       attendancees: input.attendees.join(','),
       property_types: application.application_type,

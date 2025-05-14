@@ -161,7 +161,7 @@ preQualifierRoutes.get(
 
 preQualifierRoutes.get(
   '/agents/fetch-all',
-  requireRoles([Role.ADMIN, Role.SUPER_ADMIN]),
+  requireRoles([Role.SUPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { body } = req
     const prequalify = await controller.verification(body)

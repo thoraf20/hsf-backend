@@ -2,7 +2,6 @@ import {
   ApplicationPurchaseType,
   DIPStatus,
   LoanOfferStatus,
-  OfferLetterStatusEnum,
   PropertyRequestTypeEnum,
 } from '@domain/enums/propertyEnum'
 import { z } from 'zod'

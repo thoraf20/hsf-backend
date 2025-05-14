@@ -135,10 +135,10 @@ export class PropertyController {
     user_id: string,
     filter: PropertyFilters,
   ): Promise<ApiResponse<any>> {
-    const application = await this.propertyService.propertyApplication(
+    const application = await this.propertyService.propertyApplication({
+      ...filter,
       user_id,
-      filter,
-    )
+    })
     return createResponse(StatusCodes.OK, 'Success', application)
   }
 

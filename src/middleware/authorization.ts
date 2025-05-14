@@ -1,101 +1,54 @@
 import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
-import { PermissionService } from '@infrastructure/services/permissionService'
-import { Permission } from '@domain/enums/permissionEnum'
 import { ApplicationCustomError } from './errors/customError'
+import { AuthInfo, PermissionCheck } from '../types/auth' // Import AuthInfo and PermissionCheck types and helpers
 
+// Extend Express's Request interface to include our authInfo
 interface AuthRequest extends Request {
-  user?: {
-    // Assuming your auth middleware adds this structure
-    id: string
-    // other user properties like email, global role_id etc.
-  }
-  organizationId?: string // Optional, can be set by a preceding middleware if route is org-specific
+  authInfo?: AuthInfo
+  // organizationId is now handled within AuthInfo's currentOrganizationId property if needed
 }
 
-interface AuthorizeOptions {
-  /**
-   * If true, user must have ALL permissions. If false (default), user must have AT LEAST ONE.
-   */
-  requireAll?: boolean
-  /**
-   * Optional function to extract organizationId from the request if the permission
-   * needs to be checked in the context of a specific organization.
-   * For example, (req) => req.params.orgId
-   */
-  getOrganizationId?: (req: AuthRequest) => string | undefined
-}
-
-const permissionService = new PermissionService()
+// PermissionService is now used within individual PermissionCheck functions if needed,
+// not directly by the authorize middleware itself.
 
 /**
  * Creates an authorization middleware that checks if the authenticated user
- * has the required permission(s).
+ * satisfies the provided permission checks.
  *
- * @param requiredPermissions A single permission or an array of permissions.
- * @param options Optional configuration for the authorization check.
+ * @param checks One or more PermissionCheck functions to evaluate.
  * @returns Express middleware function.
  */
-export const authorize = (
-  requiredPermissions: Permission | Permission[],
-  options?: AuthorizeOptions,
-) => {
-  return async (req: AuthRequest, res: Response, next: NextFunction) => {
-    const permissionsToCheck = Array.isArray(requiredPermissions)
-      ? requiredPermissions
-      : [requiredPermissions]
+export const authorize = (...checks: PermissionCheck[]) => {
+  return (req: AuthRequest, res: Response, next: NextFunction) => {
+    const authInfo = req.authInfo
 
-    if (!req.user || !req.user.id) {
+    if (!authInfo) {
       return next(
         new ApplicationCustomError(
           StatusCodes.UNAUTHORIZED,
-          'Authentication required. User not found on request.',
+          'Authentication required. User not found on request or is anonymous.',
         ),
       )
     }
 
-    const userId = req.user.id
-    let organizationId: string | undefined = req.organizationId // Check if already set on request
-
-    if (options?.getOrganizationId) {
-      organizationId = options.getOrganizationId(req)
-    }
-
-    try {
-      let hasPermission = false
-      if (options?.requireAll) {
-        hasPermission = await permissionService.hasAllPermissions(
-          userId,
-          permissionsToCheck,
-          organizationId,
-        )
-      } else {
-        // Default: User needs at least one of the permissions
-        hasPermission = await permissionService.hasAnyPermission(
-          userId,
-          permissionsToCheck,
-          organizationId,
-        )
-      }
-
-      if (hasPermission) {
-        next() // User has the required permission(s)
-      } else {
-        next(
+    // Check if all provided permission checks pass for the user's authInfo
+    for (const check of checks) {
+      // This implementation assumes the combined logic (like RequireAny or All)
+      // is passed as a single check if complex combinations are needed.
+      // If multiple checks are passed to `authorize`, they are ALL required.
+      if (!check(authInfo)) {
+        // If any check fails, return forbidden
+        return next(
           new ApplicationCustomError(
             StatusCodes.FORBIDDEN,
             'You do not have sufficient permissions to access this resource.',
           ),
         )
       }
-    } catch (error) {
-      console.error('Error during permission check:', error)
-      next(
-        new ApplicationCustomError(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'An error occurred while verifying permissions.',
-        ),
-      )
     }
+
+    // If all checks pass, continue to the next middleware/route handler
+    next()
   }
 }

@@ -22,21 +22,26 @@ import { decodeBase64 } from '@oslojs/encoding'
 import { verifyTOTP } from '@oslojs/otp'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
+import { ManageOrganizations } from '@use-cases/ManageOrganizations'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 
 export class AuthService {
   private userRepository: IUserRepository
   private accountRepository: IAccountRepository
   private readonly existingUsers: ExistingUsers
+  private readonly manageOrganizations: ManageOrganizations
   private readonly hashData = new Hashing()
   private readonly mfaTokenGen = new MfaToken()
   private readonly client = new RedisClient()
   constructor(
     userRepository: IUserRepository,
     accountRepository: IAccountRepository,
+    organizationRepository: IOrganizationRepository,
   ) {
     this.userRepository = userRepository
     this.accountRepository = accountRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
+    this.manageOrganizations = new ManageOrganizations(organizationRepository)
   }
 
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {
@@ -348,6 +353,16 @@ export class AuthService {
       await this.userRepository.update(user.id, { failed_login_attempts: 0 })
     }
     user = await this.userRepository.findById(user.id)
+    user.accounts = await this.accountRepository.findByUserID(user.id)
+    user.accounts.forEach((account) => {
+      delete account.access_token
+      delete account.refresh_token
+      delete account.token_type
+    })
+
+    user.membership = await this.manageOrganizations.getOrganizationsForUser(
+      user.id,
+    )
     const token = await this.hashData.accessCode(user.user_id, user.role)
     await this.client.deleteKey(lockKey)
     delete user.password
@@ -392,7 +407,7 @@ export class AuthService {
    * Verify MFA OTP
    */
   async verifyMfa(otp: string, userId: string, flow: MfaFlow) {
-    const findUserById = await this.userRepository.findById(userId)
+    let findUserById = await this.userRepository.findById(userId)
     if (!findUserById) {
       throw new ApplicationCustomError(StatusCodes.FORBIDDEN, 'User not found')
     }
@@ -460,6 +475,18 @@ export class AuthService {
           'Invalid otp code',
         )
       }
+
+      findUserById.accounts = await this.accountRepository.findByUserID(
+        findUserById.id,
+      )
+      findUserById.accounts.forEach((account) => {
+        delete account.access_token
+        delete account.refresh_token
+        delete account.token_type
+      })
+
+      findUserById.membership =
+        await this.manageOrganizations.getOrganizationsForUser(findUserById.id)
 
       return { token, ...findUserById }
     }

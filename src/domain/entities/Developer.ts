@@ -1,24 +1,23 @@
-import { User } from "./User"
+import { User } from './User'
 
+export class Developer {
+  profile_id?: string
+  company_name: string
+  company_registration_number: string
+  office_address: string
+  company_email: string
+  state: string
+  city: string
+  developer_role: string
+  years_in_business: string
+  specialization: string
+  organization_id: string
+  region_of_operation: string
+  company_image: string
+  documents: any
+  created_at?: Date
+  updated_at?: Date
 
-export class Developer{ 
-    profile_id?: string
-    company_name: string
-    company_registration_number: string
-    office_address: string
-    company_email: string
-    state: string
-    city: string
-    developer_role: string
-    years_in_business: string
-    specialization: string
-    region_of_operation: string
-    company_image: string
-    documents: any
-    created_at?: Date
-    updated_at?: Date
-    developers_profile_id?: string
-   
   constructor(data: Partial<Developer>) {
     let complete_data = {
       documents:
@@ -35,5 +34,4 @@ export class Developer{
   }
 }
 
-
-export type DevelopeReg =  Partial<Developer> & Partial<User>
+export type DevelopeReg = Partial<Developer> & Partial<User>
