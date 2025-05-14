@@ -2,11 +2,12 @@ import db from '@infrastructure/database/knex'
 import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
-import { AuthInfo } from '../types/auth' // Adjust path if needed
+import { AuthInfo } from '../shared/utils/permission-policy' // Adjust path if needed
 import { Role } from '../domain/enums/rolesEmun'
 import { asyncMiddleware } from '@routes/index.t'
 import { ApplicationCustomError } from './errors/customError'
 import { UserOrganizationMember } from '@entities/UserOrganizationMember'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 interface AuthRequest extends Request {
   authInfo?: AuthInfo
@@ -59,10 +60,15 @@ const authenticate = asyncMiddleware(
 
       // 3. Fetch user's organization memberships
       const organizationMembership = await db<UserOrganizationMember>(
-        'user_organization_memberships',
+        'user_organization_memberships as uom',
       )
         .where({ user_id: userId })
-        .select('organization_id', 'role_id')
+        .leftJoin('organizations as o', 'o.id', 'uom.organization_id')
+        .select<{
+          organization_id: string
+          role_id: string
+          type: OrganizationType
+        }>('uom.organization_id', 'uom.role_id', 'o.type')
         .first() // Select organization_id and role_id
 
       // 4. Construct AuthInfo object.  Only include the first membership.
@@ -70,9 +76,10 @@ const authenticate = asyncMiddleware(
         userId: userRecord.id,
         globalRole: globalRole,
         organizationMembership: undefined,
-        // currentOrganizationId will be set by a later middleware if needed
         currentOrganizationId: undefined,
       }
+
+      console.log({ organizationMembership })
 
       if (organizationMembership) {
         const orgRoleRecord = await db('roles')
@@ -85,6 +92,10 @@ const authenticate = asyncMiddleware(
             organizationId: organizationMembership.organization_id,
             organizationRole: orgRoleRecord.name as Role,
           }
+
+          authInfo.organizationType = organizationMembership.type
+          authInfo.currentOrganizationId =
+            organizationMembership.organization_id
         }
       }
 
@@ -105,4 +116,20 @@ const authenticate = asyncMiddleware(
   },
 )
 
-export { authenticate, AuthRequest }
+const optionalAuth = asyncMiddleware(async (req, res, next) => {
+  const token = req.header('Authorization')?.replace('Bearer ', '')
+
+  if (!token) {
+    const authInfo: AuthInfo = {
+      userId: '',
+      currentOrganizationId: '',
+    }
+
+    req.authInfo = authInfo
+    return next()
+  }
+
+  return authenticate(req, res, next)
+})
+
+export { authenticate, optionalAuth, AuthRequest }

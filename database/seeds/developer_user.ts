@@ -124,12 +124,6 @@ export async function seed(knex: Knex): Promise<void> {
       updated_at: new Date(),
     })
 
-    // Find the organization-specific \'DEVELOPER\' role
-    // This role is the user\'s role *within* this organization
-
-    // Find the organization-specific 'DEVELOPER' role
-    // This role is the user's role *within* this organization
-
     // Assign user to the Developer Organization with the specified organization role
     const existingMembership = await knex('user_organization_memberships')
       .where({
@@ -277,3 +271,5 @@ export async function seed(knex: Knex): Promise<void> {
     `Developer seeding process finished for organization \'${developerOrganization.name}\'.`,
   )
 }
+
+export default seed

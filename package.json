@@ -15,7 +15,8 @@
     "make:seed": "knex seed:make roles_and_permissions -x ts --knexfile=database/knexfile.ts",
     "make:seed:review_requests": "knex seed:make review_requests -x ts --knexfile=database/knexfile.ts",
     "make:seed:hsf_org": "knex seed:make hsf_organization -x ts --knexfile=database/knexfile.ts",
-    "seed:run": " knex seed:run   ts --knexfile=database/knexfile.ts"
+    "seed:run": "knex seed:run --knexfile=database/knexfile.ts",
+    "seed:developer": "npm run seed:run --specific=developer_user.ts --knexfile=database/knexfile.ts"
   },
   "keywords": [],
   "author": "",

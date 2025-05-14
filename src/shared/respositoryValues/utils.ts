@@ -25,8 +25,8 @@ export const userValue = [
 ]
 
 export const exculedPasswordUserInfo = [
-  'u.id as id',
-  'u.id as user_id',
+  'u.id',
+  'u.id',
   'u.first_name',
   'u.last_name',
   'u.email',

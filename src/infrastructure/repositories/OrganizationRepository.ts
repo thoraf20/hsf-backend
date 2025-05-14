@@ -75,8 +75,9 @@ export class OrganizationRepository implements IOrganizationRepository {
         db.raw(`json_strip_nulls(json_build_object(
             ${exculedPasswordUserInfo.map((field) => `'${field.replace('u.', '')}', ${field}`).join(',\n            ')}
            )) as user`),
-        'r.name as role_name',
+        'r.name as role',
       )
+      .groupBy('uom.id', 'r.id', 'u.id')
 
     return paginate(query, paginateOption as any) // Cast to any due to generic paginate type
   }

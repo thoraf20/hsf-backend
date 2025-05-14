@@ -64,7 +64,7 @@ propertyPurchaseRoutes.get(
 
 propertyPurchaseRoutes.get(
   '/offer-letter/all',
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const offerLetter = await purchasePropertyController.getOfferLetter(user.id)

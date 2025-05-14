@@ -14,7 +14,7 @@ import {
   sharePropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
-import { optionalAuth } from '@middleware/authMiddleware'
+// import { optionalAuth } from '@middleware/authMiddleware'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 // import { limiter } from '@middleware/security'
 
@@ -26,7 +26,7 @@ const controller = new PropertyController(service)
 propertyRoute.post(
   '/create',
   authenticate,
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   // limiter,
   validateRequest(PropertySchema),
   asyncMiddleware(async (req, res) => {
@@ -38,7 +38,7 @@ propertyRoute.post(
 
 propertyRoute.get(
   '/all',
-  optionalAuth,
+  // optionalAuth,
   asyncMiddleware(async (req, res) => {
     const { query, user } = req as any
     const properties = await controller.getAllProperties(
@@ -53,7 +53,7 @@ propertyRoute.get(
 propertyRoute.get(
   '/developer-properties',
   authenticate,
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
@@ -77,7 +77,7 @@ propertyRoute.get(
 propertyRoute.get(
   '/:id',
   // limiter,
-  optionalAuth,
+  // optionalAuth,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req as any
     const property = await controller.getPropertyById(
@@ -92,7 +92,7 @@ propertyRoute.get(
 propertyRoute.put(
   '/update/:id',
   authenticate,
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   // limiter,
   validateRequest(UpdateSchema),
   asyncMiddleware(async (req, res) => {
@@ -105,7 +105,7 @@ propertyRoute.put(
 propertyRoute.delete(
   '/delete/:id',
   authenticate,
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req
@@ -131,7 +131,7 @@ propertyRoute.delete(
 propertyRoute.delete(
   '/soft-delete/:id',
   authenticate,
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   // limiter,
   asyncMiddleware(async (req, res) => {
     const { params, user } = req

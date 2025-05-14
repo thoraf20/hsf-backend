@@ -86,6 +86,7 @@ export const All = (...checks: PermissionCheck[]): PermissionCheck => {
 }
 
 export function isOrganizationUser(authInfo: AuthInfo) {
+  console.log({ a: authInfo.currentOrganizationId })
   return !!authInfo.currentOrganizationId
 }
 
