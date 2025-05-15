@@ -16,7 +16,13 @@ import {
 } from '@entities/prequalify/prequalify'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
+import {
+  ReviewRequestApprovalStatus,
+  ReviewRequestStatus,
+  ReviewRequestTypeKind,
+} from '@entities/Request'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
+import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
@@ -42,6 +48,7 @@ export class ApplicationService {
     private readonly purchaseRepository: PropertyPurchaseRepository,
     private readonly userRepository: UserRepository,
     private readonly OfferRepository: IOfferLetterRepository,
+    private readonly reviewRequestRepositoy: IReviewRequestRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -172,9 +179,12 @@ export class ApplicationService {
   }
 
   async requestOfferLetter(applicationId: string, userId: string) {
-    const application = await this.getById(applicationId)
+    const [user, application] = await Promise.all([
+      this.userRepository.findById(userId),
+      this.getById(applicationId),
+    ])
 
-    if (!(application && application.user_id === userId)) {
+    if (!(application && user && application.user_id === userId)) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
         'Application not found',
@@ -209,12 +219,57 @@ export class ApplicationService {
       )
     }
 
+    const outrightReviewType =
+      await this.reviewRequestRepositoy.getReviewRequestTypeByKind(
+        ReviewRequestTypeKind.OfferLetterOutright,
+      )
+
+    if (!outrightReviewType) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Sorry! We are unable to place your request',
+      )
+    }
+
+    let outrightReviewTypeStage =
+      await this.reviewRequestRepositoy.getReviewRequestTypeStagesByTypeID(
+        outrightReviewType.id,
+      )
+
+    if (!outrightReviewTypeStage.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Sorry! We are unable to place your request',
+      )
+    }
+
+    outrightReviewTypeStage = outrightReviewTypeStage.sort((stageA, stageB) =>
+      stageA.stage_order > stageB.stage_order ? 1 : -1,
+    )
+
+    const reviewRequest = await this.reviewRequestRepositoy.createReviewRequest(
+      {
+        initiator_id: application.user_id,
+        status: ReviewRequestStatus.Pending,
+        request_type_id: outrightReviewType.id,
+        submission_date: new Date(),
+        candidate_name: `${user.first_name} ${user.last_name}`,
+      },
+    )
+
+    await this.reviewRequestRepositoy.createReviewRequestApproval({
+      request_id: reviewRequest.id,
+      review_request_stage_type_id: outrightReviewTypeStage[0].id,
+      approval_status: ReviewRequestApprovalStatus.Pending,
+    })
+
     const offerLetter = await this.purchaseRepository.requestForOfferLetter({
       property_id: application.property_id,
       user_id: application.user_id,
       purchase_type: application.application_type,
       offer_letter_requested: true,
       offer_letter_status: OfferLetterStatus.Pending,
+      review_request_id: reviewRequest.id,
     })
 
     await this.applicationRepository.updateApplication({

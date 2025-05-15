@@ -28,6 +28,7 @@ import {
   propertyFiltersSchema,
 } from '@validators/propertyValidator'
 import { Router } from 'express'
+import { ReviewRequestRepository } from '@application/repositories/ReviewRequestRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -36,6 +37,7 @@ const applicationService = new ApplicationService(
   new PropertyPurchaseRepository(),
   new UserRepository(),
   new OfferLetterRepository(),
+  new ReviewRequestRepository(),
 )
 const applicationController = new ApplicationController(applicationService)
 const applicationRoutes = Router()

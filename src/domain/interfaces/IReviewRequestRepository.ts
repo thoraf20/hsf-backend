@@ -9,7 +9,7 @@ import {
   ReviewRequestTypeStage,
 } from '@entities/Request'
 
-export interface ReviewRequestRepository {
+export interface IReviewRequestRepository {
   getReviewRequestStageByKind(
     name: ReviewRequestStageKind,
   ): Promise<ReviewRequestStage>

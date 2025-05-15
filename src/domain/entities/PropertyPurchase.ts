@@ -15,6 +15,7 @@ export class OfferLetter {
   assigned_user_id?: string
   approved_at?: Date
   reference_id?: string
+  review_request_id?: string
   property_id: string
   user_id: string
   updated_at?: Date

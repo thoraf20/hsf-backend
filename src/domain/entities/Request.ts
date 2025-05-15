@@ -9,13 +9,17 @@ export enum ReviewRequestStageKind {
   DeveloperOfferLetterReview = 'Developer Offer Letter Review',
 }
 
-enum ReviewRequestStatus {
+export enum ReviewRequestStatus {
   Pending = 'Pending',
   Approved = 'Approved',
   Rejected = 'Rejected',
 }
 
-enum ReviewRequestApprovalStatus {}
+export enum ReviewRequestApprovalStatus {
+  Pending = 'Pending',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
+}
 
 export class ReviewRequestType {
   id: string
@@ -102,7 +106,7 @@ export class ReviewRequestStageApprover {
 export class ReviewRequestApproval {
   id: string
   request_id: string
-  stage_id: string
+  review_request_stage_type_id: string
   approval_id: string
   approval_date: Date
   approval_status: ReviewRequestApprovalStatus
