@@ -1,9 +1,3 @@
-export enum FinancialOptionsEnum {
-  MORTGAGE = 'Mortgage',
-  OUTRIGHT = 'Outright Purchase',
-  INSTALLMENT = 'Installment',
-}
-
 export enum PreQualifierEnum {
   MORTGAGE = 'Mortgage',
   INSTALLMENT = 'Installment',
@@ -32,10 +26,11 @@ export enum OfferLetterStatusEnum {
 }
 
 export enum ApplicationPurchaseType {
-  OUTRIGHT = 'Outright Purchase',
+  OUTRIGHT = 'Outright',
   INSTALLMENT = 'Installment',
-  Mortgage = 'Mortgage',
+  MORTGAGE = 'Mortgage',
 }
+
 export enum PropertyFeatureEnum {
   AIRCONDITION = 'Air Condition',
   PARKING_SPACE = 'Parking Space',

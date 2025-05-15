@@ -3,6 +3,7 @@ import { createResponse } from '@presentation/response/responseType'
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   CreateApplicationInput,
+  OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
   ScheduleEscrowMeetingInput,
@@ -36,15 +37,42 @@ export class ApplicationController {
     )
   }
 
+  async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
+    const applicationContents = await this.applicationService.getByDeveloperOrg(
+      organizationId,
+      filter,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application retrived successfully',
+      applicationContents,
+    )
+  }
+
+  async getByHSF(filter: PropertyFilters) {
+    const applicationContents = await this.applicationService.getByHSF(filter)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application retrived successfully',
+      applicationContents,
+    )
+  }
+
   async requestOfferLetter(applicationId: string, userId: string) {
     const offerLetter = await this.applicationService.requestOfferLetter(
       applicationId,
       userId,
     )
 
-    return createResponse(StatusCodes.CREATED, '', {
-      offer_letter: offerLetter,
-    })
+    return createResponse(
+      StatusCodes.CREATED,
+      'Request for offer letter successful',
+      {
+        offer_letter: offerLetter,
+      },
+    )
   }
 
   async getApplicationOfferLetter(applicationId: string, userId: string) {
@@ -139,5 +167,15 @@ export class ApplicationController {
     return createResponse(StatusCodes.FORBIDDEN, '', {
       escrow_meeting: escrowMeeting,
     })
+  }
+
+  async getOfferLetter(filters: OfferLetterFilters) {
+    const offerLetters = this.applicationService.getOfferLetters(filters)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Offer Letter retrieved successfully',
+      offerLetters,
+    )
   }
 }

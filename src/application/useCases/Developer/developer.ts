@@ -93,7 +93,8 @@ export class ManageDeveloper {
       property_id,
       developer_id,
     )
-    const property = await this.propertyRepository.findPropertyById(property_id)
+    const property =
+      await this.propertyRepository.findPropertyByUser(property_id)
 
     customerInfo = {
       first_name: user.first_name,

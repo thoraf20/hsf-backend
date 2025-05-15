@@ -14,7 +14,6 @@ import {
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
-import omit from '@shared/utils/omit'
 import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { applyPagination } from '@shared/utils/paginate'
@@ -151,53 +150,75 @@ export class PropertyRepository implements IPropertyRepository {
     userId?: string,
   ): Promise<SeekPaginationResult<Properties>> {
     let baseQuery = db('properties')
-      .where({ is_live: true })
-      .join('users', 'users.id', '=', 'properties.user_id')
-
-    let dataQuery = this.useFilter(
-      baseQuery.clone(),
-      omit(filters, ['sort_by']), // aggregate function count cant be sorted
-      'properties.',
-    )
-      .select('properties.*')
-      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
-
-    // Apply user-specific selects BEFORE pagination
-    if (userId) {
-      dataQuery = dataQuery.select(
-        db.raw(
-          `(SELECT EXISTS (\n            SELECT 1 FROM property_watchlist\n            WHERE property_watchlist.property_id = properties.id\n            AND property_watchlist.user_id = ?\n          )) AS is_whitelisted`,
-          [userId],
-        ),
+      .innerJoin(
+        'organizations',
+        'properties.organization_id',
+        'organizations.id',
       )
-    }
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'properties.organization_id',
+      )
 
-    if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-      dataQuery = dataQuery.select(db.raw('NULL as documents'))
-    }
+    // Apply filters using the useFilter function
+    let dataQuery = this.useFilter(baseQuery.clone(), filters, 'properties.')
 
-    // Use shared applyPagination for handling limit, offset, and total count
+    // Select the necessary fields
+    dataQuery = dataQuery.select(
+      'properties.*',
+      db.raw(
+        `(SELECT EXISTS (
+                   SELECT 1 FROM property_watchlist
+                   WHERE property_watchlist.property_id = properties.id
+                   AND property_watchlist.user_id = ?
+               )) AS is_whitelisted`,
+        [userId],
+      ),
+      db.raw(`
+              json_build_object(
+                  'id', organizations.id,
+                  'name', developers_profile.company_name,
+                  'type', organizations.type,
+                  'office_address', developers_profile.office_address,
+                  'company_email', developers_profile.company_email,
+                  'company_image', developers_profile.company_image,
+                  'specialization', developers_profile.specialization,
+                  'state', developers_profile.state,
+                  'city', developers_profile.city,
+                  'created_at', developers_profile.created_at,
+                  'updated_at', developers_profile.updated_at
+              ) as developer
+          `),
+    )
+
+    // Group by property id.
+    dataQuery = dataQuery.groupBy(
+      'properties.id',
+      'organizations.id',
+      'developers_profile.profile_id',
+    )
+    // Order the results
+    dataQuery = dataQuery.orderBy('properties.id', 'desc')
+
+    // Apply pagination
     const paginationResult = await applyPagination<Properties>(
       dataQuery,
       filters,
     )
 
-    // Map the raw data results within the paginationResult to Properties instances
-    const mappedResults = paginationResult.result.map((item: any) => {
-      // Apply custom mapping for is_whitelisted if needed, then map to Properties
-      const processedItem = {
-        ...item,
-        is_whitelisted:
-          item.is_whitelisted === true || item.is_whitelisted === 't',
-      }
-      return new Properties(processedItem)
-    })
-
+    // Map the results
+    const mappedResults = paginationResult.result.map((item: any) => ({
+      ...item,
+      is_whitelisted:
+        item.is_whitelisted === true || item.is_whitelisted === 't',
+    }))
     paginationResult.result = mappedResults
+
     return paginationResult
   }
 
-  async findPropertyById(
+  async findPropertyByUser(
     id: string,
     user_id?: string,
     userRole?: string,
@@ -205,33 +226,8 @@ export class PropertyRepository implements IPropertyRepository {
     let propertyQuery = db('properties')
       .select([
         'properties.*',
-        'offer_letter.offer_letter_status',
-        'offer_letter.purchase_type',
-        'offer_letter.offer_letter_doc',
-        'offer_letter.offer_letter_requested',
-        'offer_letter.offer_letter_approved',
-        'offer_letter.offer_letter_downloaded',
-        'offer_letter.closed as offer_letter_closed',
-        'property_closing.closing_status',
-
-        db.raw(`
-          COALESCE(
-            json_agg(DISTINCT payments.*) FILTER (WHERE payments.payment_id IS NOT NULL),
-            '[]'
-          ) AS payments
-        `),
-
-        db.raw('row_to_json(property_closing) as property_closing'),
-
         db.raw('row_to_json(inspection) as inspection'),
         db.raw('row_to_json(application) as application'),
-        db.raw(`
-          COALESCE(
-            json_agg(DISTINCT escrow.*) FILTER (WHERE escrow.escrow_id IS NOT NULL),
-            '[]'
-          ) AS escrow_info
-        `),
-
         db.raw(
           `DATE_PART('day', NOW() - properties.created_at) AS days_posted`,
         ),
@@ -247,21 +243,17 @@ export class PropertyRepository implements IPropertyRepository {
           FROM shares
           WHERE shares.property_id = properties.id
         ) AS share_count`),
+        db.raw(
+          `(SELECT EXISTS (
+              SELECT 1 FROM property_watchlist
+              WHERE property_watchlist.property_id = properties.id
+              AND property_watchlist.user_id = ?
+            )) AS is_whitelisted`,
+          [user_id ?? null],
+        ),
       ])
       .where('properties.id', id)
       .andWhere('properties.is_live', true)
-      .leftJoin('offer_letter', 'offer_letter.property_id', 'properties.id')
-      .leftJoin(
-        'property_closing',
-        'property_closing.property_id',
-        'properties.id',
-      )
-      .leftJoin('payments', 'payments.property_id', 'properties.id')
-      .leftJoin(
-        { escrow: 'escrow_information' },
-        'escrow.property_id',
-        'properties.id',
-      )
       .leftJoin('application', (qb) => {
         qb.on('application.property_id', 'properties.id').andOnVal(
           'application.user_id',
@@ -273,86 +265,11 @@ export class PropertyRepository implements IPropertyRepository {
           .on('inspection.property_id', 'properties.id')
           .andOnVal('inspection.user_id', user_id ?? null),
       )
-      .groupBy(
-        'properties.id',
-        'inspection.*',
-        'application.*',
-        'offer_letter.purchase_type',
-        'property_closing.*',
-        'offer_letter.offer_letter_status',
-        'offer_letter.offer_letter_requested',
-        'offer_letter.offer_letter_approved',
-        'offer_letter.offer_letter_doc',
-        'offer_letter.offer_letter_downloaded',
-        'offer_letter.closed',
-        'property_closing.closing_status',
-      )
+      .groupBy('properties.id', 'inspection.id', 'application.application_id')
       .orderBy('properties.id', 'desc')
-
-    // Hide sensitive documents if user isn't privileged
-    if (!['super_admin', 'admin', 'developer'].includes(userRole)) {
-      propertyQuery.select(db.raw('NULL AS documents'))
-    }
-
-    if (user_id) {
-      propertyQuery = propertyQuery.select(
-        db.raw(
-          `(SELECT EXISTS (
-              SELECT 1 FROM property_watchlist
-              WHERE property_watchlist.property_id = properties.id
-              AND property_watchlist.user_id = ?
-            )) AS is_whitelisted`,
-          [user_id],
-        ),
-      )
-    }
-
-    // Query for user eligibility
-    const eligibilityQuery = user_id
-      ? db('prequalify_status')
-          .leftJoin(
-            'eligibility',
-            'prequalify_status.status_id',
-            'eligibility.prequalify_status_id',
-          )
-          .leftJoin('properties', 'eligibility.property_id', 'properties.id')
-          .where('properties.id', id)
-          .andWhere('eligibility.user_id', user_id)
-          .select(
-            'prequalify_status.is_prequalify_requested',
-            'eligibility.is_eligible',
-            'eligibility.eligiblity_status',
-            'eligibility.eligibility_id',
-          )
-          .first()
-      : null
-
-    const escrowStatusQuery = db('escrow_status')
-      .select('escrow_status', 'is_escrow_set', 'escrow_status_id')
-      .where('property_id', id)
       .first()
 
-    let [propertyData, eligibilityData, escrowStatus] = await Promise.all([
-      propertyQuery.first(),
-      eligibilityQuery,
-      escrowStatusQuery,
-    ])
-
-    propertyData = {
-      ...propertyData,
-      is_whitelisted:
-        propertyData.is_whitelisted === true ||
-        propertyData.is_whitelisted === 't',
-    }
-
-    return {
-      ...propertyData,
-      is_prequalify_requested: eligibilityData?.is_prequalify_requested ?? null,
-      is_eligible: eligibilityData?.is_eligible ?? null,
-      eligiblity_status: eligibilityData?.eligiblity_status ?? null,
-      eligibility_id: eligibilityData?.eligibility_id ?? null,
-      escrow_status: escrowStatus ?? null,
-    }
+    return propertyQuery
   }
 
   async updateProperty(
@@ -421,15 +338,45 @@ export class PropertyRepository implements IPropertyRepository {
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
     let baseQuery = db('properties')
+      .innerJoin(
+        'organizations',
+        'properties.organization_id',
+        'organizations.id',
+      )
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'properties.organization_id',
+      )
+      .select(
+        'properties.*',
+        db.raw(
+          `json_build_object(
+          'id', organizations.id,
+          'name', developers_profile.company_name,
+          \'type\', organizations.type,
+          \'office_address\', developers_profile.office_address,
+          'company_email', developers_profile.company_email,
+          'company_image', developers_profile.company_image,
+          'specialization', developers_profile.specialization,
+          'state', developers_profile.state,
+          'city', developers_profile.city,
+          'created_at', developers_profile.created_at,
+          'updated_at', developers_profile.updated_at
+          )as developer`,
+        ),
+      )
       .where('properties.organization_id', organization_id)
-      .orderBy('properties.id', 'desc')
+      .groupBy(
+        'properties.id',
+        'organizations.id',
+        'developers_profile.profile_id',
+      )
 
-    let dataQuery = this.useFilter(
-      baseQuery.clone().groupBy('properties.id'),
-      filters,
-    )
-      .select('properties.*')
-      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
+    let dataQuery = this.useFilter(baseQuery.clone(), filters).orderBy(
+      'properties.id',
+      'desc',
+    ) // Apply initial selects and ordering
 
     const paginationResult = await applyPagination<Properties>(
       dataQuery,
@@ -442,13 +389,45 @@ export class PropertyRepository implements IPropertyRepository {
   async findPropertiesByHSFAdmin(
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<Properties>> {
-    let baseQuery = db('properties').orderBy('properties.id', 'desc')
+    let baseQuery = db('properties')
+      .innerJoin(
+        'organizations',
+        'properties.organization_id',
+        'organizations.id',
+      )
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'properties.organization_id',
+      )
+      .select(
+        'properties.*',
+        db.raw(
+          `json_build_object(
+          'id', organizations.id,
+          'name', developers_profile.company_name,
+          \'type\', organizations.type,
+          \'office_address\', developers_profile.office_address,
+          'company_email', developers_profile.company_email,
+          'company_image', developers_profile.company_image,
+          'specialization', developers_profile.specialization,
+          'state', developers_profile.state,
+          'city', developers_profile.city,
+          'created_at', developers_profile.created_at,
+          'updated_at', developers_profile.updated_at
+          )as developer`,
+        ),
+      )
+      .groupBy(
+        'properties.id',
+        'organizations.id',
+        'developers_profile.profile_id',
+      )
 
     let dataQuery = this.useFilter(
       baseQuery.clone().groupBy('properties.id'),
       filters,
     ) // Apply filters
-      .select('properties.*')
       .orderBy('properties.id', 'desc') // Apply initial selects and ordering
 
     // Call shared applyPagination which returns SeekPaginationResult<RawData>

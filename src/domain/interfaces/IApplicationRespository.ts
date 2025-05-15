@@ -1,6 +1,6 @@
 import { Application } from '@entities/Application'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import { PropertyFilters } from '@shared/types/repoTypes'
+import { PropertyFilters } from '@validators/propertyValidator'
 
 export interface IApplicationRespository {
   createApplication(input: Application): Promise<Application>

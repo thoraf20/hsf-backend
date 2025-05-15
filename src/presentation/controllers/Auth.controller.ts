@@ -47,7 +47,13 @@ export class AuthController {
   }
 
   public async login(input: loginType): Promise<ApiResponse<any>> {
-    const user = await this.authService.login(input)
+    const user = await this.authService.login(input, false)
+    delete user.password
+    return createResponse(StatusCodes.OK, 'user logged in successfully', user)
+  }
+
+  public async loginAdmin(input: loginType): Promise<ApiResponse<any>> {
+    const user = await this.authService.login(input, true)
     delete user.password
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
   }

@@ -1,10 +1,9 @@
 export enum ReviewRequestTypeKind {
-  LoanOffer = 'Offer Letter',
+  OfferLetterOutright = 'Offer Letter Outright',
 }
 
 export enum ReviewRequestStageKind {
   HsfOfferLetterReview = 'Hsf Offer Letter Review',
-  LenderBankOfferLetterReview = 'Lender Bank Offer Letter Review',
 }
 
 enum ReviewRequestStatus {

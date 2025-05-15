@@ -1,4 +1,4 @@
-import { RecoveryCode, User } from '../entities/User'
+import { RecoveryCode, User, UserRole } from '../entities/User'
 
 export interface IUserRepository {
   create(user: User): Promise<User>
@@ -20,6 +20,6 @@ export interface IUserRepository {
   findByIdentifier(identifier: string): Promise<User | null>
   getRoleByName(name: string): Promise<Record<string, any> | null>
   comparedPassword(input: string, hashed: string): Promise<string | boolean>
-  getRoleById(id: string): Promise<Record<string, any> | null>
+  getRoleById(id: string): Promise<UserRole | null>
   hashedPassword(input: string): Promise<string | any>
 }

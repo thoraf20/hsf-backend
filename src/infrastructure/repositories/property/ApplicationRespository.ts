@@ -2,11 +2,8 @@ import { Application } from '@entities/Application'
 import db from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import {
-  PropertyFilters,
-  SearchType,
-  SortDateBy,
-} from '@shared/types/repoTypes'
+import { SearchType, SortDateBy } from '@shared/types/repoTypes'
+import { PropertyFilters } from '@validators/propertyValidator'
 import { Knex } from 'knex'
 
 export class ApplicationRepository implements IApplicationRespository {
@@ -75,10 +72,6 @@ export class ApplicationRepository implements IApplicationRespository {
       )
     }
 
-    if (filters.user_id) {
-      add(q).whereRaw(`${tablename}user_id = ${filters.user_id}`)
-    }
-
     if (filters.bedrooms) {
       q = add(q).whereRaw(
         `${tablename}numbers_of_bedroom >= '${filters.bedrooms}'`,
@@ -105,6 +98,16 @@ export class ApplicationRepository implements IApplicationRespository {
       q = add(q).whereRaw(querystring)
     }
 
+    if (filters.organization_id) {
+      q = add(q).whereRaw(
+        `${tablename}organization_id = ${filters.organization_id}`,
+      )
+    }
+
+    if (filters.user_id) {
+      q = add(q).whereRaw(`${tablename}user_id = '${filters.user_id}'`)
+    }
+
     if (filters.financing_type) {
       const f_types = filters.financing_type
         .split(',')
@@ -124,10 +127,6 @@ export class ApplicationRepository implements IApplicationRespository {
         `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
       )
     }
-    // q = q.or.whereRaw(
-    //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
-    // )
-
     return q
   }
   async createApplication(input: Application): Promise<Application> {
@@ -147,7 +146,11 @@ export class ApplicationRepository implements IApplicationRespository {
       'a.property_id',
       'p.id',
     )
-    baseQuery = this.useFilter(baseQuery, filters)
+
+    baseQuery = this.useFilter(baseQuery, {
+      ...filters,
+      search_type: SearchType.EXCLUSIVE,
+    })
     const [{ count: total }] = await baseQuery
       .clone()
       .clearOrder()
@@ -162,12 +165,27 @@ export class ApplicationRepository implements IApplicationRespository {
             'first_name', u.first_name,
             'last_name', u.last_name,
             'image', u.image,
-            'role': u.role,
+            'role', r.name,
             'role_id', u.role_id,
             'email', u.email,
             'created_at', u.created_at
            ) as buyer
           `),
+        db.raw(`
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            `),
         'p.property_name',
         'p.property_price',
         'p.property_images',
@@ -181,7 +199,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'p.numbers_of_bathroom',
         'p.is_live',
         'p.is_sold',
-        'p.user_id as developer_id',
+        'p.organization_id',
         'p.property_size',
         'p.street_address',
         'p.city',
@@ -195,7 +213,16 @@ export class ApplicationRepository implements IApplicationRespository {
         'p.deleted_at',
         db.raw(`DATE_PART('day', NOW() - a.created_at) AS days_Applied`),
       )
-      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .innerJoin('organizations', 'p.organization_id', 'organizations.id')
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'p.organization_id',
+      )
+
+      .leftJoin('users as u', 'u.id', 'a.user_id')
+      .leftJoin('organizations as o', 'a.developer_organization_id', 'o.id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
       .limit(perPage)
       .offset(offset)
 
@@ -215,6 +242,12 @@ export class ApplicationRepository implements IApplicationRespository {
   async getApplicationById(application_id: string): Promise<Application> {
     const result = await db('application as a')
       .leftJoin('properties as p', 'a.property_id', 'p.id')
+      .innerJoin('organizations', 'p.organization_id', 'organizations.id')
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'p.organization_id',
+      )
       .leftJoin(
         'escrow_status as es',
         'a.escrow_status_id',
@@ -225,7 +258,8 @@ export class ApplicationRepository implements IApplicationRespository {
         'a.escrow_information_id',
         'ei.escrow_id',
       )
-      .leftJoin('users as u', 'u.id', 'user_id')
+      .leftJoin('users as u', 'u.id', 'a.user_id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
       .leftJoin(
         'property_closing as pc',
         'a.property_closing_id',
@@ -286,11 +320,38 @@ export class ApplicationRepository implements IApplicationRespository {
             'first_name', u.first_name,
             'last_name', u.last_name,
             'image', u.image,
-            'role': u.role,
+            'role', r.name,
             'role_id', u.role_id,
             'email', u.email,
             'created_at', u.created_at
-           )
+           ) as buyer
+          `),
+        db.raw(`
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            `),
+        db.raw(`
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
           `),
         'ps.*',
         'el.*',
@@ -303,6 +364,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'a.*',
       )
       .where('a.application_id', application_id)
+
       .first()
 
     return result
@@ -312,7 +374,6 @@ export class ApplicationRepository implements IApplicationRespository {
     await db('application')
       .update(input)
       .where('application_id', input.application_id)
-      .andWhere('user_id', input.user_id)
   }
 
   async getLastApplicationIfExist(

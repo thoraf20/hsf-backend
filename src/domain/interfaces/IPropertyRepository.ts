@@ -11,7 +11,7 @@ import { PropertyFilters } from '@validators/propertyValidator'
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
 
-  findPropertyById(
+  findPropertyByUser(
     id: string,
     user_id?: string,
     userRole?: string,

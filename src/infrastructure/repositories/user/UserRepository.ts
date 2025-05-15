@@ -13,7 +13,11 @@ export class UserRepository implements IUserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const user = await db('users').where({ email }).first()
+    const user = await db('users')
+      .innerJoin('roles', 'roles.id', 'users.role_id')
+      .select('users.*', 'roles.name as role')
+      .where({ email })
+      .first()
     return user ? new User(user) : null
   }
 
@@ -45,6 +49,8 @@ export class UserRepository implements IUserRepository {
     const user = await db('users')
       .where({ email: identifier })
       .orWhere({ phone_number: identifier })
+      .innerJoin('roles', 'roles.id', 'users.role_id')
+      .select('users.*', 'roles.name as role')
       .first()
     return user ?? null
   }
@@ -63,7 +69,7 @@ export class UserRepository implements IUserRepository {
   public async hashedPassword(input: string): Promise<string | void> {
     return await this.hashData.hashing(input)
   }
-  public async getRoleById(id: string): Promise<Record<string, any> | null> {
+  public async getRoleById(id: string): Promise<UserRole | null> {
     return db('roles').where('id', id).first()
   }
 

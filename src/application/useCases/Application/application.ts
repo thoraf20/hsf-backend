@@ -16,20 +16,22 @@ import {
 } from '@entities/prequalify/prequalify'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
+import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { PropertyFilters } from '@shared/types/repoTypes'
 import {
   CreateApplicationInput,
+  OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
 } from '@validators/applicationValidator'
+import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 
 export class ApplicationService {
@@ -39,6 +41,7 @@ export class ApplicationService {
     private readonly prequalifyRepository: PrequalifyRepository,
     private readonly purchaseRepository: PropertyPurchaseRepository,
     private readonly userRepository: UserRepository,
+    private readonly OfferRepository: IOfferLetterRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -100,8 +103,8 @@ export class ApplicationService {
     let eligibility: Eligibility | null = null
 
     if (
-      input.purchase_type === ApplicationPurchaseType.OUTRIGHT ||
-      input.purchase_type === ApplicationPurchaseType.Mortgage
+      input.purchase_type === ApplicationPurchaseType.INSTALLMENT ||
+      input.purchase_type === ApplicationPurchaseType.MORTGAGE
     ) {
       eligibility = await this.prequalifyRepository.addEligibility({
         property_id: property.id,
@@ -129,10 +132,10 @@ export class ApplicationService {
       user_id: userId,
       status: ApplicationStatus.PENDING,
       property_id: property.id,
-      prequalifier_id: preQualifier.status_id,
+      prequalifier_id: preQualifier?.status_id ?? null,
       application_type: input.purchase_type,
-      eligibility_id: eligibility.eligibility_id,
-      developer_organization_id: '',
+      eligibility_id: eligibility?.eligibility_id ?? null,
+      developer_organization_id: property.organization_id,
     })
 
     return newApplication
@@ -142,6 +145,19 @@ export class ApplicationService {
     return this.applicationRepository.getAllApplication({
       ...filter,
       user_id: userId,
+    })
+  }
+
+  async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
+    return this.applicationRepository.getAllApplication({
+      ...filter,
+      organization_id: organizationId,
+    })
+  }
+
+  async getByHSF(filter: PropertyFilters) {
+    return this.applicationRepository.getAllApplication({
+      ...filter,
     })
   }
 
@@ -186,7 +202,7 @@ export class ApplicationService {
       application.property_id,
     )
 
-    if (!(property && property.is_sold)) {
+    if (!property || property.is_sold) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         'Sorry you can place a request for offer letter to this property',
@@ -538,5 +554,10 @@ export class ApplicationService {
         ? EscrowMeetingStatus.CONFIRMED
         : EscrowMeetingStatus.DECLINED,
     )
+  }
+
+  async getOfferLetters(filters: OfferLetterFilters) {
+    const contents = await this.OfferRepository.getAll(filters)
+    return contents
   }
 }

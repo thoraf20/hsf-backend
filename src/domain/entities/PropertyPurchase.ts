@@ -12,6 +12,8 @@ export class OfferLetter {
   purchase_type: ApplicationPurchaseType
   closed?: string
   offer_letter_status?: string
+  assigned_user_id?: string
+  approved_at?: Date
   reference_id?: string
   property_id: string
   user_id: string

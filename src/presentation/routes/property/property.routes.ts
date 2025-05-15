@@ -113,8 +113,8 @@ propertyRoute.get(
     const { params, user } = req as any
     const property = await controller.getPropertyById(
       params.id,
-      user.id,
-      user.role,
+      user?.id,
+      user?.role,
     )
     res.status(property.statusCode).json(property)
   }),

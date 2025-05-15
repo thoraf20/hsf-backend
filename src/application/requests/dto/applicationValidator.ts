@@ -3,6 +3,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
 export const createApplicationSchema = z
@@ -79,3 +80,12 @@ export const scheduleEscrowMeetingRespondSchema = z.object({
 export type ScheduleEscrowMeetingRespondInput = z.infer<
   typeof scheduleEscrowMeetingRespondSchema
 >
+
+export const offerLetterFiltersSchema = withPaginateSchema(
+  z.object({
+    status: z.string().optional(),
+    user_id: z.string().nonempty().optional(),
+  }),
+)
+
+export type OfferLetterFilters = z.infer<typeof offerLetterFiltersSchema>

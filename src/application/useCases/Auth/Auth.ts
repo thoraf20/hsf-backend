@@ -16,7 +16,7 @@ import { IAccountRepository } from '@interfaces/IAccountRepository'
 import { ErrorCode } from '@shared/utils/error'
 import { MfaToken } from '@shared/utils/mfa_token'
 import { TimeSpan } from '@shared/utils/time-unit'
-import { MfaFlow } from '@domain/enums/userEum'
+import { MfaFlow, UserStatus } from '@domain/enums/userEum'
 import { decryptToString } from '@shared/utils/encrypt'
 import { decodeBase64 } from '@oslojs/encoding'
 import { verifyTOTP } from '@oslojs/otp'
@@ -60,13 +60,29 @@ export class AuthService {
         }
       }
 
+      const role = await this.userRepository.getRoleById(user.role_id)
+
+      if (!role) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'We are unable to verify your account',
+        )
+      }
+
+      if (role.name === Role.HOME_BUYER) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Email is already in use.',
+        )
+      }
+
       throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'Email is already in use.',
+        StatusCodes.FORBIDDEN,
+        'We are unable to verify your account',
       )
     }
+
     const otp = generateRandomSixNumbers()
-    console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = {
       email: input.email,
@@ -225,6 +241,7 @@ export class AuthService {
    */
   async login(
     input: loginType,
+    isAdminRequest?: boolean,
   ): Promise<({ token: string; mfa_required: boolean } & User) | never> {
     let user = (await this.userRepository.findByIdentifier(
       input.identifier,
@@ -257,6 +274,22 @@ export class AuthService {
           'This account was registered via OAuth. Please log in using your OAuth provider.',
         )
       }
+    }
+
+    const role = await this.userRepository.getRoleById(user.role_id)
+
+    if (!role) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Sorry!, We are unable to sign you into your account',
+      )
+    }
+
+    if (!(isAdminRequest || role.name === Role.HOME_BUYER)) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Sorry!, We are unable to sign you into your account',
+      )
     }
 
     if (user.is_mfa_enabled) {
@@ -304,13 +337,7 @@ export class AuthService {
         },
       )
     }
-    const role = await this.userRepository.getRoleById(user.role_id)
-    if (user.is_email_verified === false && role.name !== Role.HOME_BUYER) {
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Invite has not been accepted.',
-      )
-    }
+
     if (
       user.force_password_reset === true &&
       user.is_default_password === true
@@ -484,6 +511,13 @@ export class AuthService {
         delete account.refresh_token
         delete account.token_type
       })
+
+      if (!findUserById.is_email_verified) {
+        await this.userRepository.update(findUserById.id, {
+          is_email_verified: true,
+          status: UserStatus.Active,
+        })
+      }
 
       findUserById.membership =
         await this.manageOrganizations.getOrganizationsForUser(findUserById.id)

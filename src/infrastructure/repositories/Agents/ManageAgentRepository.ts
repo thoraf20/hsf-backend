@@ -34,19 +34,16 @@ export class ManageAgentRepository implements IManageAgentsRespository {
   async getAgentById(agent_id: string, role: Role): Promise<any> {
     let query = db('users as u')
       .leftJoin('roles as r', 'u.role_id', '=', 'r.id')
-      .select(
-        ...exculedPasswordUserInfo,
-        'r.name as role',
-      )
+      .select(...exculedPasswordUserInfo, 'r.name as role')
       .where('u.id', agent_id)
       .first()
     switch (role) {
-      case Role.DEVELOPER:
+      case Role.DEVELOPER_ADMIN:
         query = query
           .join('developers_profile as dp', 'u.id', 'dp.developers_profile_id')
           .select('dp.*')
         break
-      case Role.LENDER:
+      case Role.LENDER_ADMIN:
         query = query
           .join('lenders_profile as lp', 'u.id', 'lp.user_id')
           .select('lp.*')

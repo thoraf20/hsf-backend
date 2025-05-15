@@ -17,6 +17,7 @@ export const ErrorHandler: ErrorRequestHandler = (
       error.body,
       error.error_code,
     )
+    console.log({ error })
     res.status(response.statusCode).json(response)
     return next()
   } else {

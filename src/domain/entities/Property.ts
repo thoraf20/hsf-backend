@@ -15,6 +15,7 @@ export class Properties {
   property_images: string[]
   documents: any
   status?: propertyApprovalStatus
+
   organization_id: string
   is_sold?: boolean
   street_address: string

@@ -96,6 +96,7 @@ export async function seed(knex: Knex): Promise<void> {
         is_phone_verified: false,
         is_default_password: true,
         role_id: developerRole.id, // Link to the global role ID
+        role: developerRole.name,
         created_at: new Date(),
         updated_at: new Date(),
       })

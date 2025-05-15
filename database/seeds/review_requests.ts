@@ -22,10 +22,7 @@ export async function seed(knex: Knex) {
 }
 
 async function reviewRequestStageSeed(knex: Knex) {
-  for (const stage of [
-    ReviewRequestStageKind.HsfOfferLetterReview,
-    ReviewRequestStageKind.LenderBankOfferLetterReview,
-  ]) {
+  for (const stage of [ReviewRequestStageKind.HsfOfferLetterReview]) {
     const existingStage = await knex
       .table<ReviewRequestStage>('review_request_stages')
       .where({ name: stage })
@@ -55,14 +52,14 @@ async function reviewRequestStageSeed(knex: Knex) {
 async function offerLetterReviewRequestSeed(knex: Knex) {
   let offerLetterReviewType = await knex
     .table<ReviewRequestType>('review_request_types')
-    .where({ type: ReviewRequestTypeKind.LoanOffer })
+    .where({ type: ReviewRequestTypeKind.OfferLetterOutright })
     .first()
 
   if (!offerLetterReviewType) {
     ;[offerLetterReviewType] = await knex
       .table<ReviewRequestType>('review_request_types')
       .insert({
-        type: ReviewRequestTypeKind.LoanOffer,
+        type: ReviewRequestTypeKind.OfferLetterOutright,
         id: uuidv4(),
       })
       .returning('*')
@@ -70,7 +67,6 @@ async function offerLetterReviewRequestSeed(knex: Knex) {
 
   const offerLetterReviewStages: Array<ReviewRequestStageKind> = [
     ReviewRequestStageKind.HsfOfferLetterReview,
-    ReviewRequestStageKind.LenderBankOfferLetterReview,
   ]
 
   const reviewRequestTypeStageTable = knex.table<ReviewRequestTypeStage>(
@@ -97,8 +93,6 @@ async function offerLetterReviewRequestSeed(knex: Knex) {
         request_type_id: offerLetterReviewType.id,
       })
       .limit(1)
-
-    console.log({ existingTypeStage, stageOrder })
 
     if (!existingTypeStage) {
       await reviewRequestTypeStageTable.insert({

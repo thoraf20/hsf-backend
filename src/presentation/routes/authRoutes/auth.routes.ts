@@ -64,6 +64,17 @@ authRoutes.post(
 )
 
 authRoutes.post(
+  '/login/admin',
+  bruteforce.prevent,
+  validateRequest(loginSchema),
+  asyncMiddleware(async (req: Request, res: Response) => {
+    const { body } = req
+    const user = await controller.loginAdmin(body)
+    res.status(user.statusCode).json(user)
+  }),
+)
+
+authRoutes.post(
   '/verify-otp',
   validateRequest(verifyOtpSchema),
   asyncMiddleware(async (req: Request, res: Response) => {

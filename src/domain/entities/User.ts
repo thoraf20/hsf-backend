@@ -17,6 +17,7 @@ export class User extends BaseEntity {
   password: string
   image?: string
   user_agent?: string
+  is_admin: boolean
   user_id?: string
   role?: Role
   status: UserStatus

@@ -149,7 +149,7 @@ export class PropertyPurchase {
       if (
         !(
           purchase_type === ApplicationPurchaseType.INSTALLMENT ||
-          purchase_type === ApplicationPurchaseType.Mortgage
+          purchase_type === ApplicationPurchaseType.MORTGAGE
         )
       ) {
         throw new ApplicationCustomError(
@@ -218,7 +218,7 @@ export class PropertyPurchase {
     }
 
     // MORTGAGE flow
-    if (purchase_type === ApplicationPurchaseType.Mortgage) {
+    if (purchase_type === ApplicationPurchaseType.MORTGAGE) {
       switch (request_type) {
         case PropertyRequestTypeEnum.ACCEPT_DIP:
           const dip = await this.mortgageRespository.acceptDip({

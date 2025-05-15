@@ -37,7 +37,7 @@ export class ExistingUsers {
   }
 }
 
-export class DeveloperUtils { 
+export class DeveloperUtils {
   private developerRepository: IDeveloperRepository
 
   constructor(developerRepository: IDeveloperRepository) {
@@ -46,7 +46,7 @@ export class DeveloperUtils {
 
   public async findIfCompanyNameExist(company_name: string): Promise<void> {
     const company = await this.developerRepository.getCompanyName(company_name)
-      console.log(company_name) 
+    console.log(company_name)
     if (company) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
@@ -69,7 +69,8 @@ export class DeveloperUtils {
     }
   }
   public async findIfCompanyEmailExist(company_email: string): Promise<void> {
-    const company = await this.developerRepository.getCompanyEmail(company_email)
+    const company =
+      await this.developerRepository.getCompanyEmail(company_email)
 
     if (company) {
       throw new ApplicationCustomError(
@@ -78,10 +79,7 @@ export class DeveloperUtils {
       )
     }
   }
-  
 }
-
-
 
 export class PropertyBaseUtils {
   private propertyRepository: IPropertyRepository
@@ -90,9 +88,12 @@ export class PropertyBaseUtils {
     this.propertyRepository = propertyRepository
   }
 
-
-  public async findIfPropertyExist(id: string, user_id?: string, userRole?: string ): Promise<Properties> {
-    const properties = (await this.propertyRepository.findPropertyById(
+  public async findIfPropertyExist(
+    id: string,
+    user_id?: string,
+    userRole?: string,
+  ): Promise<Properties> {
+    const properties = (await this.propertyRepository.findPropertyByUser(
       id,
       user_id,
       userRole,
@@ -106,8 +107,9 @@ export class PropertyBaseUtils {
     return properties
   }
 
-  public async  getIfPropertyExist (property_id: string) {
-    const properties = await this.propertyRepository.getPropertyById(property_id)
+  public async getIfPropertyExist(property_id: string) {
+    const properties =
+      await this.propertyRepository.getPropertyById(property_id)
     if (!properties) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
@@ -133,9 +135,9 @@ export class PropertyBaseUtils {
 
   public async findIfPropertyBelongsToUser(
     property_id: string,
-    user_id: string
+    user_id: string,
   ): Promise<Properties> {
-    const properties = (await this.propertyRepository.findPropertyById(
+    const properties = (await this.propertyRepository.findPropertyByUser(
       property_id,
     )) as Properties
     if (properties) {
@@ -145,17 +147,8 @@ export class PropertyBaseUtils {
       )
     }
 
-    if (properties.user_id != user_id) {
-      throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'Property does not exist',
-      )
-    }
-
     return properties
   }
-
-
 
   public async findIfWatchListIsAdded(
     property_id: string,
@@ -262,7 +255,8 @@ export class EnquiryBaseUtils {
   }
 
   public async checkPropertyExist(property_id: string) {
-    const property = await this.propertyRepository.findPropertyById(property_id)
+    const property =
+      await this.propertyRepository.findPropertyByUser(property_id)
 
     if (property == null) {
       throw new ApplicationCustomError(
@@ -274,5 +268,3 @@ export class EnquiryBaseUtils {
     return property
   }
 }
-
-

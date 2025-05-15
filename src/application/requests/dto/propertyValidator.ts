@@ -1,6 +1,6 @@
 import {
+  ApplicationPurchaseType,
   DocumentTypeEnum,
-  FinancialOptionsEnum,
   propertyApprovalStatus,
   PropertyFeatureEnum,
 } from '@domain/enums/propertyEnum'
@@ -54,7 +54,7 @@ export const PropertySchema = z.object({
   property_condition: z
     .string()
     .min(3, 'Condition must be at least 3 characters long'),
-  financial_types: z.array(z.nativeEnum(FinancialOptionsEnum)),
+  financial_types: z.array(z.nativeEnum(ApplicationPurchaseType)),
   property_feature: z.array(z.nativeEnum(PropertyFeatureEnum)),
   property_images: z.array(z.string().url('Invalid image URL')),
   documents: z.array(DocumentSchema),
@@ -100,7 +100,7 @@ export const UpdateSchema = z.object({
     .string()
     .min(3, 'Condition must be at least 3 characters long')
     .optional(),
-  financial_types: z.array(z.nativeEnum(FinancialOptionsEnum)).optional(),
+  financial_types: z.array(z.nativeEnum(ApplicationPurchaseType)).optional(),
   property_feature: z.array(z.nativeEnum(PropertyFeatureEnum)).optional(),
   property_images: z.array(z.string().url('Invalid image URL')).optional(),
   documents: z.array(DocumentSchema).optional(), // ✅ Updated: documents should be an array of objects
@@ -141,6 +141,7 @@ export const propertyFiltersSchema = withPaginateSchema(
     financing_type: z.string().optional(),
     property_status: z.nativeEnum(propertyStatusFilter).optional(),
     property_features: z.string().optional(),
+    organization_id: z.string().optional(),
   }),
 )
 

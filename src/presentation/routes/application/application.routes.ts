@@ -1,4 +1,7 @@
+import { OfferLetterRepository } from '@application/repositories/OfferLetterRepository'
 import { ApplicationController } from '@controllers/property/application.controller'
+import { OrganizationType } from '@domain/enums/organizationEnum'
+import { authorize } from '@middleware/authorization'
 import { validateRequest } from '@middleware/validateRequest'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
@@ -6,15 +9,24 @@ import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurch
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware, requireRoles, Role } from '@routes/index.t'
+import { validateRequestQuery } from '@shared/utils/paginate'
+import {
+  isOrganizationUser,
+  requireOrganizationType,
+} from '@shared/utils/permission-policy'
 
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   createApplicationSchema,
+  offerLetterFiltersSchema,
   requestOfferLetterRespondSchema,
   scheduleEscrowMeetingRespondSchema,
   scheduleEscrowMeetingSchema,
 } from '@validators/applicationValidator'
-import { PropertyFilters } from '@validators/propertyValidator'
+import {
+  PropertyFilters,
+  propertyFiltersSchema,
+} from '@validators/propertyValidator'
 import { Router } from 'express'
 
 const applicationService = new ApplicationService(
@@ -23,13 +35,13 @@ const applicationService = new ApplicationService(
   new PrequalifyRepository(),
   new PropertyPurchaseRepository(),
   new UserRepository(),
+  new OfferLetterRepository(),
 )
 const applicationController = new ApplicationController(applicationService)
 const applicationRoutes = Router()
 
 applicationRoutes.post(
   '/',
-  requireRoles(Role.HOME_BUYER),
   validateRequest(createApplicationSchema),
   asyncMiddleware(async (req, res) => {
     const { user: claim, body } = req
@@ -39,7 +51,36 @@ applicationRoutes.post(
 )
 
 applicationRoutes.get(
+  '/developer',
+  validateRequestQuery(propertyFiltersSchema),
+  authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
+  asyncMiddleware(async (req, res) => {
+    const { query, authInfo } = req
+    const response = await applicationController.getByDeveloperOrg(
+      authInfo.currentOrganizationId,
+      query as PropertyFilters,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/hsf',
+  validateRequestQuery(propertyFiltersSchema),
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+
+    const response = await applicationController.getByHSF(
+      query as PropertyFilters,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
   '/user',
+  validateRequestQuery(propertyFiltersSchema),
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
     const { user: claim, query } = req
@@ -48,6 +89,17 @@ applicationRoutes.get(
       claim.id,
       query as PropertyFilters,
     )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/offer-letters',
+  validateRequestQuery(offerLetterFiltersSchema),
+  authorize(isOrganizationUser),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const response = await applicationController.getOfferLetter(query)
     res.status(response.statusCode).json(response)
   }),
 )
