@@ -1,4 +1,4 @@
-import { OfferLetterRepository } from '@application/repositories/OfferLetterRepository'
+import { OfferLetterRepository } from '@repositories/property/OfferLetterRepository'
 import { ApplicationController } from '@controllers/property/application.controller'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { authorize } from '@middleware/authorization'

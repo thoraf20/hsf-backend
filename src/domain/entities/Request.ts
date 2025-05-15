@@ -1,9 +1,12 @@
+import { OrganizationType } from '@domain/enums/organizationEnum'
+
 export enum ReviewRequestTypeKind {
   OfferLetterOutright = 'Offer Letter Outright',
 }
 
 export enum ReviewRequestStageKind {
   HsfOfferLetterReview = 'Hsf Offer Letter Review',
+  DeveloperOfferLetterReview = 'Developer Offer Letter Review',
 }
 
 enum ReviewRequestStatus {
@@ -49,6 +52,7 @@ export class ReviewRequest {
 export class ReviewRequestStage {
   id: string
   name: ReviewRequestStageKind
+  organization_type: OrganizationType
   description?: string
 
   constructor(d: Partial<ReviewRequestStage>) {
@@ -65,6 +69,7 @@ export class ReviewRequestTypeStage {
   id: string
   stage_id: string
   request_type_id: string
+  enabled: boolean
   stage_order: number
   description?: string
 
@@ -82,7 +87,7 @@ export class ReviewRequestStageApprover {
   id: string
   stage_id: string
   role_id: string
-  request_stage_id: string
+  request_stage_type_id: string
 
   constructor(d: Partial<ReviewRequestStageApprover>) {
     let data = {

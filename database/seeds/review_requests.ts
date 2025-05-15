@@ -9,105 +9,221 @@ import {
   ReviewRequestType,
   ReviewRequestStage,
   ReviewRequestTypeStage,
-} from '../../src/domain/entities/Request'
+  ReviewRequestStageApprover,
+} from '../../src/domain/entities/Request' // Assuming path is correct
+import { UserRole } from '../../src/domain/entities/User' // Assuming path is correct
+import { OrganizationType } from '../../src/domain/enums/organizationEnum' // Assuming path is correct
+import { Role } from '../../src/domain/enums/rolesEmun' // Assuming path is correct
 
-export async function seed(knex: Knex) {
+export async function seed(knex: Knex): Promise<void> {
   try {
     await reviewRequestStageSeed(knex)
     await offerLetterReviewRequestSeed(knex)
     console.log(`Review Requests Seeding Completed`)
   } catch (e) {
     console.error(`Review Requests Seeding Failed:`, e)
+    // Optional: rethrow the error if you want the seed run to fail explicitly
+    // throw e;
   }
 }
 
-async function reviewRequestStageSeed(knex: Knex) {
-  for (const stage of [ReviewRequestStageKind.HsfOfferLetterReview]) {
+async function reviewRequestStageSeed(knex: Knex): Promise<void> {
+  const stages = [
+    {
+      name: ReviewRequestStageKind.HsfOfferLetterReview,
+      organization_type: OrganizationType.HSF_INTERNAL,
+    },
+    {
+      name: ReviewRequestStageKind.DeveloperOfferLetterReview,
+      organization_type: OrganizationType.DEVELOPER_COMPANY,
+    },
+  ]
+
+  for (const stage of stages) {
     const existingStage = await knex
       .table<ReviewRequestStage>('review_request_stages')
-      .where({ name: stage })
+      .where({ name: stage.name })
       .first()
+
     if (existingStage) {
-      // If the stage exists, we don't need to do anything
+      console.log(`Stage '${stage.name}' already exists. Skipping insert.`)
       continue
     }
 
     try {
-      await knex
-        .table<ReviewRequestStage>('review_request_stages')
-        .insert({ name: stage })
+      await knex.table<ReviewRequestStage>('review_request_stages').insert({
+        id: uuidv4(), // It's good practice to add an ID if your table requires it
+        name: stage.name,
+        organization_type: stage.organization_type,
+      })
+      console.log(`Stage '${stage.name}' seeded successfully.`)
     } catch (error: any) {
-      // If the insert fails because of a conflict, we ignore the error
       if (error.code === '23505') {
-        // PostgreSQL error code for unique violation
-        console.log(`Stage '${stage}' already exists. Skipping insert.`)
+        console.warn(
+          `Attempted to insert duplicate stage '${stage.name}', but it was likely created concurrently. Skipping.`,
+        )
       } else {
-        // If it's another error, we throw it
+        console.error(`Error seeding stage '${stage.name}':`, error)
         throw error
       }
     }
   }
 }
 
-async function offerLetterReviewRequestSeed(knex: Knex) {
+async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
   let offerLetterReviewType = await knex
     .table<ReviewRequestType>('review_request_types')
     .where({ type: ReviewRequestTypeKind.OfferLetterOutright })
     .first()
 
   if (!offerLetterReviewType) {
-    ;[offerLetterReviewType] = await knex
+    const newTypeId = uuidv4()
+    console.log(
+      `ReviewRequestType '${ReviewRequestTypeKind.OfferLetterOutright}' not found, creating with ID: ${newTypeId}`,
+    )
+    const insertedTypes = await knex
       .table<ReviewRequestType>('review_request_types')
       .insert({
+        id: newTypeId,
         type: ReviewRequestTypeKind.OfferLetterOutright,
-        id: uuidv4(),
       })
       .returning('*')
+    if (insertedTypes && insertedTypes.length > 0) {
+      offerLetterReviewType = insertedTypes[0]
+    } else {
+      throw new Error(
+        `Failed to create or retrieve ReviewRequestType '${ReviewRequestTypeKind.OfferLetterOutright}'`,
+      )
+    }
+  } else {
+    console.log(
+      `Found existing ReviewRequestType '${ReviewRequestTypeKind.OfferLetterOutright}' with ID: ${offerLetterReviewType.id}`,
+    )
   }
 
-  const offerLetterReviewStages: Array<ReviewRequestStageKind> = [
-    ReviewRequestStageKind.HsfOfferLetterReview,
+  const offerLetterReviewStagesData: Array<{
+    id?: string
+    name: ReviewRequestStageKind
+    roles: Array<Role>
+  }> = [
+    {
+      name: ReviewRequestStageKind.DeveloperOfferLetterReview,
+      roles: [Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT],
+    },
   ]
+
+  const reviewRequestStageTable = knex.table<ReviewRequestStage>(
+    'review_request_stages',
+  )
+  for (const stageData of offerLetterReviewStagesData) {
+    const reviewStage = await reviewRequestStageTable
+      .select('id')
+      .where({ name: stageData.name })
+      .first()
+
+    if (!reviewStage) {
+      throw new Error(
+        `CRITICAL: Prerequisite review stage '${stageData.name}' not found in 'review_request_stages' table. Ensure 'reviewRequestStageSeed' ran successfully and the stage exists.`,
+      )
+    }
+    stageData.id = reviewStage.id
+  }
 
   const reviewRequestTypeStageTable = knex.table<ReviewRequestTypeStage>(
     'review_request_type_stages',
   )
+  const reviewRequestStageApproverTable =
+    knex.table<ReviewRequestStageApprover>('review_request_stage_approvers')
 
-  for (const stage of offerLetterReviewStages) {
-    const reviewStage = await knex
-      .table<ReviewRequestStage>('review_request_stages')
-      .select()
-      .where({ name: stage })
-      .first('*')
+  await reviewRequestTypeStageTable
+    .update({ enabled: false })
+    .where({ request_type_id: offerLetterReviewType.id })
+  console.log(
+    `Disabled existing stages for request_type_id: ${offerLetterReviewType.id}`,
+  )
 
-    if (!stage) {
-      throw new Error(`Review request stage \'${stage}\' not exist`)
+  for (const [index, stageData] of offerLetterReviewStagesData.entries()) {
+    const order = index + 1
+    if (!stageData.id) {
+      throw new Error(`Stage ID is missing for stage ${stageData.name}`)
     }
 
-    const stageOrder = offerLetterReviewStages.indexOf(stage) + 1
+    console.log(
+      `Processing stage: ${stageData.name} (ID: ${stageData.id}) for request_type_id: ${offerLetterReviewType.id} with order ${order}`,
+    )
 
-    let existingTypeStage = await reviewRequestTypeStageTable
+    let [reviewRequestTypeStageEntry] = await reviewRequestTypeStageTable
       .select()
       .where({
-        stage_id: reviewStage.id,
         request_type_id: offerLetterReviewType.id,
+        stage_id: stageData.id!,
       })
-      .limit(1)
+      .returning('*')
 
-    if (!existingTypeStage) {
-      await reviewRequestTypeStageTable.insert({
-        stage_id: reviewStage.id,
-        stage_order: stageOrder,
-        id: uuidv4(),
-        request_type_id: offerLetterReviewType.id,
-      })
-    } else {
-      await reviewRequestTypeStageTable
-        .where({
-          stage_id: reviewStage.id,
+    if (!reviewRequestTypeStageEntry) {
+      ;[reviewRequestTypeStageEntry] = await reviewRequestTypeStageTable
+        .insert({
+          stage_order: order,
+          enabled: true,
           request_type_id: offerLetterReviewType.id,
+          stage_id: stageData.id!,
         })
-        .update({ stage_order: stageOrder })
+
+        .returning('*')
     }
+
+    if (!reviewRequestTypeStageEntry) {
+      throw new Error(
+        `Failed to upsert review_request_type_stage for stage_id ${stageData.id} and request_type_id ${offerLetterReviewType.id}`,
+      )
+    }
+
+    console.log(
+      `Upserted review_request_type_stage (ID: ${reviewRequestTypeStageEntry.id}) for stage: ${stageData.name}`,
+    )
+
+    const roles = await knex<UserRole>('roles')
+      .select('id', 'name')
+      .whereIn('name', stageData.roles)
+
+    if (roles.length !== stageData.roles.length) {
+      const foundRoleNames = roles.map((r) => r.name)
+      const missingRoles = stageData.roles.filter(
+        (r) => !foundRoleNames.includes(r),
+      )
+      throw new Error(
+        `Found missing roles for stage '${
+          stageData.name
+        }'. Expected: ${stageData.roles.join(
+          ', ',
+        )}, Found: ${foundRoleNames.join(', ')}. Missing: ${missingRoles.join(
+          ', ',
+        )}. Ensure all roles are seeded in the 'roles' table.`,
+      )
+    }
+
+    console.log(
+      `Deleting existing approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
+    )
+    await reviewRequestStageApproverTable
+      .where({ request_stage_type_id: reviewRequestTypeStageEntry.id! })
+      .delete()
+
+    if (roles.length > 0) {
+      const approversToInsert = roles.map((role) => ({
+        id: uuidv4(),
+        request_stage_type_id: reviewRequestTypeStageEntry.id!,
+        role_id: role.id,
+        stage_id: stageData.id!,
+      }))
+      console.log(
+        `Inserting ${approversToInsert.length} approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
+      )
+      await reviewRequestStageApproverTable.insert(approversToInsert)
+    }
+
+    console.log(
+      `Seeding for review stage '${stageData.name}' (TypeStageID: ${reviewRequestTypeStageEntry.id}) completed.`,
+    )
   }
 }
