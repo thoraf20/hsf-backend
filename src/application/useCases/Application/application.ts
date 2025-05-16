@@ -29,6 +29,7 @@ import { ApplicationRepository } from '@repositories/property/ApplicationResposi
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { Role } from '@routes/index.t'
 import {
   CreateApplicationInput,
   OfferLetterFilters,
@@ -261,6 +262,7 @@ export class ApplicationService {
       request_id: reviewRequest.id,
       review_request_stage_type_id: outrightReviewTypeStage[0].id,
       approval_status: ReviewRequestApprovalStatus.Pending,
+      organization_id: application.developer_organization_id,
     })
 
     const offerLetter = await this.purchaseRepository.requestForOfferLetter({
@@ -458,6 +460,8 @@ export class ApplicationService {
   }
 
   async requestOfferLetterRespond(
+    organizationId: string,
+    userId: string,
     applicationId: string,
     input: RequestOfferLetterRespondInput,
   ) {
@@ -476,10 +480,76 @@ export class ApplicationService {
       )
     }
 
-    offerLetter = await this.purchaseRepository.updateOfferLetterStatus(
-      offerLetter.offer_letter_id,
-      { offer_letter_status: input.offer_letter_status },
-    )
+    const approval =
+      await this.reviewRequestRepositoy.getReviewRequestApprovalByRequestID(
+        input.request_id,
+        organizationId,
+      )
+
+    if (
+      !approval ||
+      approval.organization_id === organizationId ||
+      approval.approval_status !== ReviewRequestApprovalStatus.Pending
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to perform this action',
+      )
+    }
+
+    const currentUser = await this.userRepository.findById(userId)
+    if (approval.approval_id) {
+      const approver = await this.userRepository.findById(approval.approval_id)
+
+      if (approver && approver.id !== userId) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You are not allowed to perform this action',
+        )
+      }
+    } else if (
+      ![Role.HSF_ADMIN, Role.LENDER_ADMIN, Role.DEVELOPER_ADMIN].includes(
+        currentUser.role,
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to perform this action',
+      )
+    }
+
+    await this.reviewRequestRepositoy.updateReviewRequestApproval(approval.id, {
+      approval_date: new Date(),
+      approval_status:
+        input.offer_letter_status === OfferLetterStatus.Approved
+          ? ReviewRequestApprovalStatus.Approved
+          : ReviewRequestApprovalStatus.Rejected,
+
+      approval_id: userId,
+    })
+
+    const requestTypeStages =
+      await this.reviewRequestRepositoy.getReviewRequestTypeStagesByTypeID(
+        approval.review_request_stage_type_id,
+      )
+
+    const lastTypeStage = requestTypeStages.at(-1)
+
+    if (lastTypeStage.id === approval.review_request_stage_type_id) {
+      await this.purchaseRepository.updateOfferLetterStatus(
+        offerLetter.offer_letter_id,
+        { offer_letter_status: input.offer_letter_status },
+      )
+    }
+    // else {
+    //   const nextTypeStage = requestTypeStages.find(
+    //     (type) => type.stage_order > lastTypeStage.stage_order,
+    //   )
+
+    //   this.reviewRequestRepositoy.getReviewRequestStageByID(nextTypeStage.)
+
+    //   this.reviewRequestRepositoy.createReviewRequestApproval({})
+    // }
 
     return offerLetter
   }
@@ -611,8 +681,59 @@ export class ApplicationService {
     )
   }
 
-  async getOfferLetters(filters: OfferLetterFilters) {
+  async getOfferLetters(organizationId: string, filters: OfferLetterFilters) {
     const contents = await this.OfferRepository.getAll(filters)
+
+    contents.result = await Promise.all(
+      contents.result.map(async (item) => {
+        const applicationContents =
+          await this.applicationRepository.getAllApplication({
+            offer_letter_id: item.offer_letter_id,
+          })
+
+        if (!applicationContents.result[0]) return undefined
+
+        if (item.review_request_id) {
+          const [requestApproval, reviewRequest] = await Promise.all([
+            this.reviewRequestRepositoy
+              .getReviewRequestApprovalByRequestID(
+                item.review_request_id,
+                organizationId,
+              )
+              .then(async (approval) => {
+                if (!(approval && approval.approval_id)) return approval
+
+                const user = await this.userRepository.findById(
+                  approval.approval_id,
+                )
+
+                return {
+                  ...approval,
+                  ...(user && {
+                    approver: {
+                      id: user.id,
+                      first_name: user.first_name,
+                      last_name: user.last_name,
+                      email: user.email,
+                      role: user.role,
+                      role_id: user.role_id,
+                    },
+                  }),
+                }
+              }),
+            this.reviewRequestRepositoy.getReviewRequestID(
+              item.review_request_id,
+            ),
+          ])
+
+          item.review_request = reviewRequest
+          item.review_request_approval = requestApproval
+        }
+
+        item.application = applicationContents.result[0]
+        return item
+      }),
+    )
     return contents
   }
 }

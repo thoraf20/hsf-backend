@@ -100,8 +100,11 @@ applicationRoutes.get(
   validateRequestQuery(offerLetterFiltersSchema),
   authorize(isOrganizationUser),
   asyncMiddleware(async (req, res) => {
-    const { query } = req
-    const response = await applicationController.getOfferLetter(query)
+    const { query, authInfo } = req
+    const response = await applicationController.getOfferLetter(
+      authInfo.currentOrganizationId,
+      query,
+    )
     res.status(response.statusCode).json(response)
   }),
 )
@@ -148,12 +151,14 @@ applicationRoutes.post(
 )
 
 applicationRoutes.patch(
-  '/:application_id/offer-letter',
+  '/:application_id/offer-letter/respond',
   requireRoles(Role.SUPER_ADMIN),
   validateRequest(requestOfferLetterRespondSchema),
   asyncMiddleware(async (req, res) => {
-    const { params, body } = req
+    const { params, body, authInfo } = req
     const response = await applicationController.requestOfferLetterRespond(
+      authInfo.currentOrganizationId,
+      authInfo.userId,
       params.application_id,
       body,
     )

@@ -202,3 +202,13 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at Object.onceWrapper (node:events:633:26)
     at Socket.emit (node:events:518:28)
     at TCP.<anonymous> (node:net:351:12)
+2025-05-16 05:57:54 [ERROR]: error: select count(*) as "count" from "offer_letter" order by "offer_letter"."created_at" desc limit $1 - column "offer_letter.created_at" must appear in the GROUP BY clause or be used in an aggregate function
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)

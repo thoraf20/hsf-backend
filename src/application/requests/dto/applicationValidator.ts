@@ -50,6 +50,7 @@ export type RequestPropertyClosingInput = z.infer<
 >
 
 export const requestOfferLetterRespondSchema = z.object({
+  request_id: z.string().nonempty(),
   offer_letter_status: z.enum([
     OfferLetterStatus.Approved,
     OfferLetterStatus.Rejected,

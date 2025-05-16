@@ -114,10 +114,14 @@ export class ApplicationController {
   }
 
   async requestOfferLetterRespond(
+    organizationId: string,
+    userId: string,
     applicationId: string,
     input: RequestOfferLetterRespondInput,
   ) {
     const offerLetter = await this.applicationService.requestOfferLetterRespond(
+      organizationId,
+      userId,
       applicationId,
       input,
     )
@@ -169,8 +173,11 @@ export class ApplicationController {
     })
   }
 
-  async getOfferLetter(filters: OfferLetterFilters) {
-    const offerLetters = this.applicationService.getOfferLetters(filters)
+  async getOfferLetter(organizationId: string, filters: OfferLetterFilters) {
+    const offerLetters = await this.applicationService.getOfferLetters(
+      organizationId,
+      filters,
+    )
 
     return createResponse(
       StatusCodes.OK,

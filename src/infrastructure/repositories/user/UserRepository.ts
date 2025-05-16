@@ -27,7 +27,7 @@ export class UserRepository implements IUserRepository {
     return user ? new User(user) : null
   }
 
-  async findById(id: string): Promise<any> {
+  async findById(id: string): Promise<User> {
     const user = await db('users as u')
       .select(...userValue)
       .where({ id })

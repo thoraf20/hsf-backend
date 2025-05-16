@@ -145,4 +145,6 @@ export const propertyFiltersSchema = withPaginateSchema(
   }),
 )
 
-export type PropertyFilters = z.infer<typeof propertyFiltersSchema>
+export type PropertyFilters = z.infer<typeof propertyFiltersSchema> & {
+  offer_letter_id?: string
+}

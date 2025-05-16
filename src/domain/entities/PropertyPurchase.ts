@@ -2,6 +2,8 @@ import {
   ApplicationPurchaseType,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { Application } from './Application'
+import { ReviewRequest, ReviewRequestApproval } from './Request'
 
 export class OfferLetter {
   offer_letter_id?: string
@@ -10,12 +12,15 @@ export class OfferLetter {
   offer_letter_approved?: boolean
   offer_letter_downloaded?: boolean
   purchase_type: ApplicationPurchaseType
+  application?: Application
   closed?: string
   offer_letter_status?: string
   assigned_user_id?: string
   approved_at?: Date
   reference_id?: string
   review_request_id?: string
+  review_request?: ReviewRequest
+  review_request_approval?: ReviewRequestApproval
   property_id: string
   user_id: string
   updated_at?: Date

@@ -107,6 +107,7 @@ export class ReviewRequestApproval {
   id: string
   request_id: string
   review_request_stage_type_id: string
+  organization_id: string
   approval_id: string
   approval_date: Date
   approval_status: ReviewRequestApprovalStatus

@@ -34,7 +34,7 @@ export class OfferLetterRepository implements IOfferLetterRepository {
     let q = query
 
     if (filters == null || Object.keys(filters).length < 1) return q
-    const add = createUnion(SearchType.EXCLUSIVE)
+    const add = createUnion(SearchType.INCLUSIVE)
 
     if (filters.status) {
       const property_types = filters.status.split(',')
@@ -72,7 +72,9 @@ export class OfferLetterRepository implements IOfferLetterRepository {
     let baseQuery = db<OfferLetter>('offer_letter')
     baseQuery = this.useFilter(baseQuery, filters)
 
-    baseQuery = baseQuery.orderBy('offer_letter.created_at', 'desc')
+    baseQuery = baseQuery
+      .orderBy('offer_letter.created_at', 'desc')
+      .groupBy('offer_letter_id')
 
     const paginationResult = await applyPagination<OfferLetter>(
       baseQuery,

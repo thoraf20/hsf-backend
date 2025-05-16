@@ -13,6 +13,8 @@ export interface IReviewRequestRepository {
   getReviewRequestStageByKind(
     name: ReviewRequestStageKind,
   ): Promise<ReviewRequestStage>
+
+  getReviewRequestStageByID(id: string): Promise<ReviewRequestStage>
   getReviewRequestTypeByKind(
     type: ReviewRequestTypeKind,
   ): Promise<ReviewRequestType>
@@ -31,10 +33,13 @@ export interface IReviewRequestRepository {
 
   updateReviewRequestApproval(
     approverId: string,
-    update: ReviewRequestApproval,
+    update: Partial<ReviewRequestApproval>,
   ): Promise<ReviewRequestApproval>
 
   getReviewRequestApprovalByRequestID(
     requestId: string,
+    organizationId: string,
   ): Promise<ReviewRequestApproval>
+
+  getReviewRequestID(requestId: string): Promise<ReviewRequest>
 }

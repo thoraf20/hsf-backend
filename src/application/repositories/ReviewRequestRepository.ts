@@ -10,8 +10,9 @@ import {
   ReviewRequestTypeStage,
 } from '@entities/Request'
 import db from '@infrastructure/database/knex' // Assuming you have a database connection setup
+import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
 
-export class ReviewRequestRepository implements ReviewRequestRepository {
+export class ReviewRequestRepository implements IReviewRequestRepository {
   async getReviewRequestStageByKind(
     name: ReviewRequestStageKind,
   ): Promise<ReviewRequestStage> {
@@ -22,6 +23,13 @@ export class ReviewRequestRepository implements ReviewRequestRepository {
       console.error('Error getting review request stage by kind:', error)
       throw new Error('Failed to get review request stage by kind')
     }
+  }
+
+  async getReviewRequestStageByID(id: string): Promise<ReviewRequestStage> {
+    const stage = await db<ReviewRequestStage>('review_request_stages')
+      .where({ id })
+      .first()
+    return stage
   }
 
   async getReviewRequestTypeByKind(
@@ -59,9 +67,14 @@ export class ReviewRequestRepository implements ReviewRequestRepository {
     typeId: string,
   ): Promise<ReviewRequestTypeStage[]> {
     try {
-      const stages = await db('review_request_type_stages').where({
-        request_type_id: typeId,
-      })
+      const stages = await db<ReviewRequestTypeStage>(
+        'review_request_type_stages',
+      )
+        .where({
+          request_type_id: typeId,
+          enabled: true,
+        })
+        .orderBy('stage_order', 'asc')
       return stages
     } catch (error) {
       console.error(
@@ -118,10 +131,11 @@ export class ReviewRequestRepository implements ReviewRequestRepository {
 
   async getReviewRequestApprovalByRequestID(
     requestId: string,
+    organizationId: string,
   ): Promise<ReviewRequestApproval> {
     try {
       const approval = await db('review_request_approvals')
-        .where({ request_id: requestId })
+        .where({ request_id: requestId, organization_id: organizationId })
         .first()
       return approval
     } catch (error) {
@@ -131,5 +145,9 @@ export class ReviewRequestRepository implements ReviewRequestRepository {
       )
       throw new Error('Failed to get review request approval by request ID')
     }
+  }
+
+  async getReviewRequestID(id: string): Promise<ReviewRequest> {
+    return db('review_requests').select().where({ id }).first()
   }
 }

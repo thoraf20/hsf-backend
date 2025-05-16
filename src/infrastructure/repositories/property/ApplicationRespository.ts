@@ -118,6 +118,12 @@ export class ApplicationRepository implements IApplicationRespository {
       )
     }
 
+    if (filters.offer_letter_id) {
+      q = add(q).whereRaw(
+        `${tablename}offer_letter_id = '${filters.offer_letter_id}'`,
+      )
+    }
+
     if (filters.property_features) {
       const feat = filters.property_features
         .split(',')
