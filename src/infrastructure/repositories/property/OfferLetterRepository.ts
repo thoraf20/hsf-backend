@@ -13,17 +13,35 @@ export class OfferLetterRepository implements IOfferLetterRepository {
     this.db = db
   }
   async create(input: Partial<OfferLetter>): Promise<OfferLetter> {
-    const [newOfferLetter] = await this.db<OfferLetter>('offer_letters')
+    const [newOfferLetter] = await this.db<OfferLetter>('offer_letter')
       .insert(input)
       .returning('*')
     return newOfferLetter
   }
 
   async getByUserId(userId: string): Promise<OfferLetter[]> {
-    const offerLetters = await db<OfferLetter>('offer_letters').where({
+    const offerLetters = await db<OfferLetter>('offer_letter').where({
       user_id: userId,
     })
     return offerLetters
+  }
+
+  async getById(id: string): Promise<OfferLetter> {
+    return db<OfferLetter>('offer_letter')
+      .select()
+      .where({
+        offer_letter_id: id,
+      })
+      .first()
+  }
+
+  async getByRequestId(id: string): Promise<OfferLetter> {
+    return db<OfferLetter>('offer_letter')
+      .select()
+      .where({
+        review_request_id: id,
+      })
+      .first()
   }
 
   useFilter(
@@ -85,7 +103,7 @@ export class OfferLetterRepository implements IOfferLetterRepository {
   }
 
   async update(id: string, data: Partial<OfferLetter>): Promise<OfferLetter> {
-    const [updatedOfferLetter] = await db<OfferLetter>('offer_letters')
+    const [updatedOfferLetter] = await db<OfferLetter>('offer_letter')
       .where({ offer_letter_id: id })
       .update(data)
       .returning('*')
@@ -93,7 +111,7 @@ export class OfferLetterRepository implements IOfferLetterRepository {
   }
 
   async delete(id: string): Promise<OfferLetter> {
-    const [deletedOfferLetter] = await db<OfferLetter>('offer_letters')
+    const [deletedOfferLetter] = await db<OfferLetter>('offer_letter')
       .where({ offer_letter_id: id })
       .del()
       .returning('*')

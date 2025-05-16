@@ -1,5 +1,6 @@
 import { OfferLetterStatus } from '@domain/enums/propertyEnum'
 import { createResponse } from '@presentation/response/responseType'
+import { AuthInfo } from '@shared/utils/permission-policy'
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   CreateApplicationInput,
@@ -173,9 +174,9 @@ export class ApplicationController {
     })
   }
 
-  async getOfferLetter(organizationId: string, filters: OfferLetterFilters) {
+  async getOfferLetter(authInfo: AuthInfo, filters: OfferLetterFilters) {
     const offerLetters = await this.applicationService.getOfferLetters(
-      organizationId,
+      authInfo,
       filters,
     )
 

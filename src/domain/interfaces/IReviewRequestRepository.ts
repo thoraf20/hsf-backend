@@ -8,6 +8,8 @@ import {
   ReviewRequestTypeKind,
   ReviewRequestTypeStage,
 } from '@entities/Request'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { ReviewRequestFilters } from '@validators/reviewRequestValidator'
 
 export interface IReviewRequestRepository {
   getReviewRequestStageByKind(
@@ -40,6 +42,15 @@ export interface IReviewRequestRepository {
     requestId: string,
     organizationId: string,
   ): Promise<ReviewRequestApproval>
+
+  getHsfReviewRequests(
+    hsfOrgId: string,
+    filter: ReviewRequestFilters,
+  ): Promise<SeekPaginationResult<ReviewRequest>>
+
+  getOrgReviewRequests(
+    filter: ReviewRequestFilters,
+  ): Promise<SeekPaginationResult<ReviewRequest>>
 
   getReviewRequestID(requestId: string): Promise<ReviewRequest>
 }

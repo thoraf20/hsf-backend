@@ -1,3 +1,5 @@
+import { Knex } from 'knex'
+
 export function generateRandomSixNumbers(): number {
   return Math.floor(100000 + Math.random() * 900000)
 }
@@ -21,25 +23,42 @@ export function generateReferenceNumber(): string {
 }
 
 export async function syncToCalendar(details: {
-    platform: string,
-    meeting_link: string,
-    date: string,
-    time: string,
-    user_id: string,
-  }) {
-    // TODO: Integrate with Google Calendar, Zoom, Outlook etc.
-    console.log(`Syncing meeting to ${details.platform} calendar for user ${details.user_id}`)
-  }
-  
+  platform: string
+  meeting_link: string
+  date: string
+  time: string
+  user_id: string
+}) {
+  // TODO: Integrate with Google Calendar, Zoom, Outlook etc.
+  console.log(
+    `Syncing meeting to ${details.platform} calendar for user ${details.user_id}`,
+  )
+}
 
 export function generateInvitationToken(): string {
-    const randomString = Math.random().toString(36).substring(2, 12);
-    const timestamp = Date.now().toString(36);
-    return `INV-${randomString.toUpperCase()}-${timestamp}`;
+  const randomString = Math.random().toString(36).substring(2, 12)
+  const timestamp = Date.now().toString(36)
+  return `INV-${randomString.toUpperCase()}-${timestamp}`
 }
 // Removed redundant code block
 
 export enum QueryBoolean {
   YES = '1',
   NO = '0',
+}
+
+export function addQueryUnionFilter(
+  column: string,
+  values: Array<string>,
+  tablename = '',
+) {
+  const conditions = []
+
+  for (let i = 0; i < values.length; i++) {
+    const type = values[i].trim()
+    let condition = `${tablename}${column} ILIKE '${type}'`
+    conditions.push(condition)
+  }
+
+  return `( ${conditions.join(' OR ')} )`
 }

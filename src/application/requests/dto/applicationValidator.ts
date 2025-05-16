@@ -86,7 +86,11 @@ export const offerLetterFiltersSchema = withPaginateSchema(
   z.object({
     status: z.string().optional(),
     user_id: z.string().nonempty().optional(),
+    organization_id: z.string().nonempty().optional(),
   }),
 )
 
-export type OfferLetterFilters = z.infer<typeof offerLetterFiltersSchema>
+export type OfferLetterFilters = z.infer<typeof offerLetterFiltersSchema> &
+  Partial<{
+    approver_id: string
+  }>

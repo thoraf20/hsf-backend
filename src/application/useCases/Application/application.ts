@@ -1,3 +1,4 @@
+import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
   EligibilityStatus,
   preQualifyStatus,
@@ -19,6 +20,7 @@ import { EscrowInformation } from '@entities/PurchasePayment'
 import {
   ReviewRequestApprovalStatus,
   ReviewRequestStatus,
+  ReviewRequestType,
   ReviewRequestTypeKind,
 } from '@entities/Request'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
@@ -30,6 +32,7 @@ import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurch
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { Role } from '@routes/index.t'
+import { AuthInfo } from '@shared/utils/permission-policy'
 import {
   CreateApplicationInput,
   OfferLetterFilters,
@@ -49,7 +52,7 @@ export class ApplicationService {
     private readonly purchaseRepository: PropertyPurchaseRepository,
     private readonly userRepository: UserRepository,
     private readonly OfferRepository: IOfferLetterRepository,
-    private readonly reviewRequestRepositoy: IReviewRequestRepository,
+    private readonly reviewRequestRepository: IReviewRequestRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -221,7 +224,7 @@ export class ApplicationService {
     }
 
     const outrightReviewType =
-      await this.reviewRequestRepositoy.getReviewRequestTypeByKind(
+      await this.reviewRequestRepository.getReviewRequestTypeByKind(
         ReviewRequestTypeKind.OfferLetterOutright,
       )
 
@@ -233,7 +236,7 @@ export class ApplicationService {
     }
 
     let outrightReviewTypeStage =
-      await this.reviewRequestRepositoy.getReviewRequestTypeStagesByTypeID(
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
         outrightReviewType.id,
       )
 
@@ -248,17 +251,16 @@ export class ApplicationService {
       stageA.stage_order > stageB.stage_order ? 1 : -1,
     )
 
-    const reviewRequest = await this.reviewRequestRepositoy.createReviewRequest(
-      {
+    const reviewRequest =
+      await this.reviewRequestRepository.createReviewRequest({
         initiator_id: application.user_id,
         status: ReviewRequestStatus.Pending,
         request_type_id: outrightReviewType.id,
         submission_date: new Date(),
         candidate_name: `${user.first_name} ${user.last_name}`,
-      },
-    )
+      })
 
-    await this.reviewRequestRepositoy.createReviewRequestApproval({
+    await this.reviewRequestRepository.createReviewRequestApproval({
       request_id: reviewRequest.id,
       review_request_stage_type_id: outrightReviewTypeStage[0].id,
       approval_status: ReviewRequestApprovalStatus.Pending,
@@ -481,7 +483,7 @@ export class ApplicationService {
     }
 
     const approval =
-      await this.reviewRequestRepositoy.getReviewRequestApprovalByRequestID(
+      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
         input.request_id,
         organizationId,
       )
@@ -518,18 +520,21 @@ export class ApplicationService {
       )
     }
 
-    await this.reviewRequestRepositoy.updateReviewRequestApproval(approval.id, {
-      approval_date: new Date(),
-      approval_status:
-        input.offer_letter_status === OfferLetterStatus.Approved
-          ? ReviewRequestApprovalStatus.Approved
-          : ReviewRequestApprovalStatus.Rejected,
+    await this.reviewRequestRepository.updateReviewRequestApproval(
+      approval.id,
+      {
+        approval_date: new Date(),
+        approval_status:
+          input.offer_letter_status === OfferLetterStatus.Approved
+            ? ReviewRequestApprovalStatus.Approved
+            : ReviewRequestApprovalStatus.Rejected,
 
-      approval_id: userId,
-    })
+        approval_id: userId,
+      },
+    )
 
     const requestTypeStages =
-      await this.reviewRequestRepositoy.getReviewRequestTypeStagesByTypeID(
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
         approval.review_request_stage_type_id,
       )
 
@@ -681,59 +686,89 @@ export class ApplicationService {
     )
   }
 
-  async getOfferLetters(organizationId: string, filters: OfferLetterFilters) {
-    const contents = await this.OfferRepository.getAll(filters)
+  async getOfferLetters(authInfo: AuthInfo, filters: OfferLetterFilters) {
+    if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
+      filters.organization_id = authInfo.currentOrganizationId
 
-    contents.result = await Promise.all(
-      contents.result.map(async (item) => {
+      if (
+        ![Role.DEVELOPER_ADMIN, Role.LENDER_ADMIN].includes(authInfo.globalRole)
+      ) {
+        filters.approver_id = authInfo.userId
+      }
+    }
+
+    let reviewTypeKinds = await Promise.all(
+      [ReviewRequestTypeKind.OfferLetterOutright].map((kind) =>
+        this.reviewRequestRepository.getReviewRequestTypeByKind(kind),
+      ),
+    )
+
+    reviewTypeKinds = await Promise.all(
+      reviewTypeKinds.map(async (type) => {
+        const stageTypes =
+          await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
+            type.id,
+          )
+
+        const stages = await Promise.all(
+          stageTypes.map((stageType) =>
+            this.reviewRequestRepository.getReviewRequestStageByID(
+              stageType.stage_id,
+            ),
+          ),
+        )
+
+        return stages.find(
+          (stage) => stage.organization_type === authInfo.organizationType,
+        )
+          ? type
+          : null
+      }),
+    )
+
+    reviewTypeKinds = reviewTypeKinds.filter(
+      (typeKind): typeKind is ReviewRequestType => !!typeKind,
+    )
+
+    const reviewRequestContent = await (authInfo.organizationType ===
+    OrganizationType.HSF_INTERNAL
+      ? this.reviewRequestRepository.getHsfReviewRequests(
+          authInfo.currentOrganizationId,
+          {
+            ...filters,
+            request_stage_type_ids: reviewTypeKinds.map((type) => type.id),
+          },
+        )
+      : this.reviewRequestRepository.getOrgReviewRequests({ ...filters }))
+
+    reviewRequestContent.result = await Promise.all(
+      reviewRequestContent.result.map(async (request) => {
+        const offerLetter = await this.OfferRepository.getByRequestId(
+          request.id,
+        )
+
+        if (!offerLetter) return undefined
+
         const applicationContents =
           await this.applicationRepository.getAllApplication({
-            offer_letter_id: item.offer_letter_id,
+            offer_letter_id: offerLetter.offer_letter_id,
           })
 
         if (!applicationContents.result[0]) return undefined
-
-        if (item.review_request_id) {
-          const [requestApproval, reviewRequest] = await Promise.all([
-            this.reviewRequestRepositoy
-              .getReviewRequestApprovalByRequestID(
-                item.review_request_id,
-                organizationId,
-              )
-              .then(async (approval) => {
-                if (!(approval && approval.approval_id)) return approval
-
-                const user = await this.userRepository.findById(
-                  approval.approval_id,
-                )
-
-                return {
-                  ...approval,
-                  ...(user && {
-                    approver: {
-                      id: user.id,
-                      first_name: user.first_name,
-                      last_name: user.last_name,
-                      email: user.email,
-                      role: user.role,
-                      role_id: user.role_id,
-                    },
-                  }),
-                }
-              }),
-            this.reviewRequestRepositoy.getReviewRequestID(
-              item.review_request_id,
-            ),
-          ])
-
-          item.review_request = reviewRequest
-          item.review_request_approval = requestApproval
+        return {
+          ...request,
+          offer_letter: offerLetter,
+          application: applicationContents.result[0],
         }
-
-        item.application = applicationContents.result[0]
-        return item
       }),
     )
-    return contents
+
+    reviewRequestContent.result = reviewRequestContent.result.filter(
+      (item) => !!item,
+    )
+
+    reviewRequestContent.total_records = reviewRequestContent.result.length
+
+    return reviewRequestContent
   }
 }

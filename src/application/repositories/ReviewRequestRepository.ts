@@ -9,8 +9,14 @@ import {
   ReviewRequestTypeKind,
   ReviewRequestTypeStage,
 } from '@entities/Request'
-import db from '@infrastructure/database/knex' // Assuming you have a database connection setup
+import db, { createUnion } from '@infrastructure/database/knex' // Assuming you have a database connection setup
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { SearchType } from '@shared/types/repoTypes'
+import { addQueryUnionFilter } from '@shared/utils/helpers'
+import { applyPagination } from '@shared/utils/paginate'
+import { ReviewRequestFilters } from '@validators/reviewRequestValidator'
+import { Knex } from 'knex'
 
 export class ReviewRequestRepository implements IReviewRequestRepository {
   async getReviewRequestStageByKind(
@@ -149,5 +155,94 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
 
   async getReviewRequestID(id: string): Promise<ReviewRequest> {
     return db('review_requests').select().where({ id }).first()
+  }
+
+  useFilters(
+    query: Knex.QueryBuilder<any, any[]>,
+    filters: ReviewRequestFilters,
+    viewOnly = false,
+  ) {
+    let q = query
+    if (filters == null || Object.keys(filters).length < 1) return q
+
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.organization_id) {
+      q = add(q).whereRaw(`rra.organization_id = '${filters.organization_id}'`)
+    }
+
+    if (filters.user_id) {
+      q = add(q).whereRaw(`rr.initiator_id = '${filters.user_id}'`)
+    }
+
+    if (filters.approver_id) {
+      q = add(q).whereRaw(`rra.approval_id = '${filters.approver_id}'`)
+    }
+
+    if (filters.request_stage_type_ids?.length) {
+      if (viewOnly) {
+        q = add(q).whereRaw(
+          addQueryUnionFilter(
+            'rr.request_type_id',
+            filters.request_stage_type_ids,
+          ),
+        )
+      } else {
+        q = add(q).whereRaw(
+          addQueryUnionFilter(
+            'rra.review_request_stage_type_id',
+            filters.request_stage_type_ids,
+          ),
+        )
+      }
+    }
+
+    return q
+  }
+
+  async getHsfReviewRequests(
+    hsfOrgId: string,
+    filters: ReviewRequestFilters,
+  ): Promise<
+    SeekPaginationResult<ReviewRequest & { approval: ReviewRequestApproval }>
+  > {
+    let baseQuery = db<ReviewRequest>('review_requests as rr')
+      .leftJoin('review_request_approvals as rra', (qb) => {
+        qb.on('rr.id', 'rra.request_id').andOnVal(
+          'rra.organization_id',
+          hsfOrgId,
+        )
+      })
+      .groupBy('rr.id', 'rra.id')
+
+    baseQuery = this.useFilters(baseQuery, filters, true)
+    baseQuery = baseQuery.orderBy('rr.created_at', 'desc')
+
+    baseQuery = baseQuery
+      .select('rr.*', db.raw('row_to_json(rra) as approval'))
+      .orderBy('rra.created_at', 'desc')
+
+    return applyPagination<ReviewRequest & { approval: ReviewRequestApproval }>(
+      baseQuery,
+    )
+  }
+
+  async getOrgReviewRequests(
+    filters: ReviewRequestFilters,
+  ): Promise<
+    SeekPaginationResult<ReviewRequest & { approval: ReviewRequestApproval }>
+  > {
+    let baseQuery = db<ReviewRequestApproval>('review_request_approvals as rra')
+      .innerJoin('review_requests as rr', 'rr.id', 'rra.request_id')
+      .groupBy('rr.id', 'rra.id')
+
+    baseQuery = this.useFilters(baseQuery, filters, true)
+    baseQuery = baseQuery
+      .select('rr.*', db.raw('row_to_json(rra) as approval'))
+      .orderBy('rra.created_at', 'desc')
+
+    return applyPagination<ReviewRequest & { approval: ReviewRequestApproval }>(
+      baseQuery,
+    )
   }
 }

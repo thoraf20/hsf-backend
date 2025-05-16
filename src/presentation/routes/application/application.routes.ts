@@ -101,10 +101,7 @@ applicationRoutes.get(
   authorize(isOrganizationUser),
   asyncMiddleware(async (req, res) => {
     const { query, authInfo } = req
-    const response = await applicationController.getOfferLetter(
-      authInfo.currentOrganizationId,
-      query,
-    )
+    const response = await applicationController.getOfferLetter(authInfo, query)
     res.status(response.statusCode).json(response)
   }),
 )
