@@ -236,7 +236,7 @@ export class ApplicationService {
     }
 
     let outrightReviewTypeStage =
-      await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
         outrightReviewType.id,
       )
 
@@ -488,10 +488,14 @@ export class ApplicationService {
         organizationId,
       )
 
+    const currentUser = await this.userRepository.findById(userId)
+
     if (
-      !approval ||
-      approval.organization_id === organizationId ||
-      approval.approval_status !== ReviewRequestApprovalStatus.Pending
+      !(
+        approval &&
+        approval.organization_id === organizationId &&
+        approval.approval_status === ReviewRequestApprovalStatus.Pending
+      )
     ) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
@@ -499,7 +503,6 @@ export class ApplicationService {
       )
     }
 
-    const currentUser = await this.userRepository.findById(userId)
     if (approval.approval_id) {
       const approver = await this.userRepository.findById(approval.approval_id)
 
@@ -533,28 +536,32 @@ export class ApplicationService {
       },
     )
 
-    const requestTypeStages =
-      await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
+    const requestTypeStage =
+      await this.reviewRequestRepository.getReviewRequestTypeStageByID(
         approval.review_request_stage_type_id,
       )
 
-    const lastTypeStage = requestTypeStages.at(-1)
+    const requestTypeStageList =
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+        requestTypeStage.request_type_id,
+      )
 
+    const lastTypeStage = requestTypeStageList.at(-1)
     if (lastTypeStage.id === approval.review_request_stage_type_id) {
+      await this.reviewRequestRepository.updateReviewRequest(
+        approval.request_id,
+        {
+          status:
+            input.offer_letter_status === OfferLetterStatus.Approved
+              ? ReviewRequestStatus.Approved
+              : ReviewRequestStatus.Rejected,
+        },
+      )
       await this.purchaseRepository.updateOfferLetterStatus(
         offerLetter.offer_letter_id,
         { offer_letter_status: input.offer_letter_status },
       )
     }
-    // else {
-    //   const nextTypeStage = requestTypeStages.find(
-    //     (type) => type.stage_order > lastTypeStage.stage_order,
-    //   )
-
-    //   this.reviewRequestRepositoy.getReviewRequestStageByID(nextTypeStage.)
-
-    //   this.reviewRequestRepositoy.createReviewRequestApproval({})
-    // }
 
     return offerLetter
   }
@@ -706,7 +713,7 @@ export class ApplicationService {
     reviewTypeKinds = await Promise.all(
       reviewTypeKinds.map(async (type) => {
         const stageTypes =
-          await this.reviewRequestRepository.getReviewRequestTypeStagesByTypeID(
+          await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
             type.id,
           )
 

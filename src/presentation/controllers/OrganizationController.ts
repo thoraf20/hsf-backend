@@ -5,7 +5,8 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { createResponse } from '@presentation/response/responseType'
 import { UpdateOrganizationInput } from '@validators/organizationValidator'
-import { SeekPaginationOption } from '@shared/types/paginate' // Import pagination types
+import { AuthInfo } from '@shared/utils/permission-policy'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -13,6 +14,7 @@ export class OrganizationController {
   constructor() {
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
+      new UserRepository(),
     )
   }
 
@@ -85,6 +87,44 @@ export class OrganizationController {
       StatusCodes.OK,
       "User's organizations retrieved successfully",
       organizations,
+    )
+  }
+
+  async getCurrentOrgRoles(authInfo: AuthInfo) {
+    const roles = await this.manageOrganizations.getCurrentOrgRoles(
+      authInfo.organizationType,
+    )
+
+    if (!roles) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Roles  for organization '${authInfo.organizationType}' not found`,
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      "User's organization available roles retrieved successfully",
+      { roles },
+    )
+  }
+
+  async getRoles(authInfo: AuthInfo) {
+    const roles = await this.manageOrganizations.getCurrentOrgRoles(
+      authInfo.organizationType,
+    )
+
+    if (!roles) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Roles  for organization '${authInfo.organizationType}' not found`,
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      "User's organization available roles retrieved successfully",
+      { roles },
     )
   }
 }

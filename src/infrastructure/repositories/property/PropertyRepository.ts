@@ -166,30 +166,34 @@ export class PropertyRepository implements IPropertyRepository {
 
     // Select the necessary fields
     dataQuery = dataQuery.select(
-      'properties.*',
-      db.raw(
-        `(SELECT EXISTS (
+      [
+        'properties.*',
+        userId
+          ? db.raw(
+              `(SELECT EXISTS (
                    SELECT 1 FROM property_watchlist
                    WHERE property_watchlist.property_id = properties.id
                    AND property_watchlist.user_id = ?
                )) AS is_whitelisted`,
-        [userId],
-      ),
-      db.raw(`
-              json_build_object(
-                  'id', organizations.id,
-                  'name', developers_profile.company_name,
-                  'type', organizations.type,
-                  'office_address', developers_profile.office_address,
-                  'company_email', developers_profile.company_email,
-                  'company_image', developers_profile.company_image,
-                  'specialization', developers_profile.specialization,
-                  'state', developers_profile.state,
-                  'city', developers_profile.city,
-                  'created_at', developers_profile.created_at,
-                  'updated_at', developers_profile.updated_at
-              ) as developer
-          `),
+              [userId],
+            )
+          : undefined,
+        db.raw(`
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            `),
+      ].filter(Boolean),
     )
 
     // Group by property id.
@@ -210,8 +214,7 @@ export class PropertyRepository implements IPropertyRepository {
     // Map the results
     const mappedResults = paginationResult.result.map((item: any) => ({
       ...item,
-      is_whitelisted:
-        item.is_whitelisted === true || item.is_whitelisted === 't',
+      is_whitelisted: item?.is_whitelisted === true,
     }))
     paginationResult.result = mappedResults
 

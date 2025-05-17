@@ -4,6 +4,7 @@ import { RecoveryCode, User, UserRole } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { userValue } from '@shared/respositoryValues'
 import { Knex } from 'knex'
+import { Role } from '@routes/index.t'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
@@ -117,5 +118,11 @@ export class UserRepository implements IUserRepository {
 
   useFilters(query: Knex.QueryBuilder<any, any[]>) {}
 
-  async getAll() {}
+  async getRolesByType(types: Array<Role>): Promise<UserRole[]> {
+    return db.table<UserRole>('roles').select().whereIn('name', types)
+  }
+
+  async getRoles(): Promise<UserRole[]> {
+    return db.table<UserRole>('roles').select()
+  }
 }

@@ -19,10 +19,10 @@ export class AddressController {
   }
 
   async getByUser(userId: string) {
-    const addresses = await this.addressService.getByUser(userId)
+    const address = await this.addressService.getByUser(userId)
 
     return createResponse(StatusCodes.OK, 'Address retrieved succesfully', {
-      addresses,
+      address,
     })
   }
 
@@ -44,7 +44,7 @@ export class AddressController {
   async updateByUser(id: string, userId: string, input: UpdateAddressInput) {
     const foundAddress = await this.addressService.findByUser(id, userId)
 
-    if (foundAddress) {
+    if (!foundAddress) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
         'Address not found',

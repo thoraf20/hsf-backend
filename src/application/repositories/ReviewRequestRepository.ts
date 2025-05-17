@@ -68,8 +68,25 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
       throw new Error('Failed to get review stage approver by stage type ID')
     }
   }
+  async getReviewRequestTypeStageByID(
+    id: string,
+  ): Promise<ReviewRequestTypeStage> {
+    try {
+      const stages = await db<ReviewRequestTypeStage>(
+        'review_request_type_stages',
+      )
+        .where({
+          id: id,
+        })
+        .first()
+      return stages
+    } catch (error) {
+      console.error('Error getting review request type stage by ID:', error)
+      throw new Error('Failed to get review request type stage by type ID')
+    }
+  }
 
-  async getReviewRequestTypeStagesByTypeID(
+  async getReviewRequestTypeStagesByRequestTypeID(
     typeId: string,
   ): Promise<ReviewRequestTypeStage[]> {
     try {
@@ -129,6 +146,22 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
         .update(update)
         .returning('*')
       return updatedApproval
+    } catch (error) {
+      console.error('Error updating review request approval:', error)
+      throw new Error('Failed to update review request approval')
+    }
+  }
+
+  async updateReviewRequest(
+    id: string,
+    update: Partial<ReviewRequest>,
+  ): Promise<ReviewRequest> {
+    try {
+      const [updatedReviewRequest] = await db('review_requests')
+        .where({ id })
+        .update(update)
+        .returning('*')
+      return updatedReviewRequest
     } catch (error) {
       console.error('Error updating review request approval:', error)
       throw new Error('Failed to update review request approval')

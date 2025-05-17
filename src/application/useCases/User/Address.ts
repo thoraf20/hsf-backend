@@ -40,8 +40,7 @@ export class AddressService {
 
   async findByUser(id: string, userId: string) {
     const address = await this.addressRepository.findById(id)
-
-    if (!(address || address.user_id === userId)) {
+    if (!(address && address.user_id === userId)) {
       return null
     }
 

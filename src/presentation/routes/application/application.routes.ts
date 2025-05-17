@@ -148,8 +148,8 @@ applicationRoutes.post(
 )
 
 applicationRoutes.patch(
-  '/:application_id/offer-letter/respond',
-  requireRoles(Role.SUPER_ADMIN),
+  '/:application_id/offer-letter/response',
+  authorize(isOrganizationUser),
   validateRequest(requestOfferLetterRespondSchema),
   asyncMiddleware(async (req, res) => {
     const { params, body, authInfo } = req

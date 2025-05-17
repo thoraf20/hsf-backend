@@ -29,7 +29,7 @@ const userController = new UserController(userServices, accountRepository)
 const addressController = new AddressController(
   new AddressService(new AddressRepository()),
 )
-userRoutes.put(
+userRoutes.patch(
   '/update',
   validateRequest(updateProfileSchema),
   asyncMiddleware(async (req: Request, res: Response) => {
@@ -63,7 +63,6 @@ userRoutes.get(
   '/address',
   asyncMiddleware(async (req, res) => {
     const { user: claim } = req
-
     const response = await addressController.getByUser(claim.id)
     res.status(response.statusCode).json(response)
   }),
@@ -89,8 +88,8 @@ userRoutes.put(
     const { user: claim, body, params } = req
 
     const response = await addressController.updateByUser(
-      claim.id,
       params.address_id,
+      claim.id,
       body,
     )
     res.status(response.statusCode).json(response)
@@ -175,6 +174,14 @@ userRoutes.put(
     const { body, user } = req
     const updatePassword = await userController.resetPassword(body, user.id)
     res.status(updatePassword.statusCode).json(updatePassword)
+  }),
+)
+
+userRoutes.get(
+  '/roles',
+  asyncMiddleware(async (req, res) => {
+    const response = await userController.getRoles()
+    res.status(response.statusCode).json(response)
   }),
 )
 

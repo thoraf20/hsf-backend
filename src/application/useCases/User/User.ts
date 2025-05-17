@@ -37,7 +37,7 @@ export class UserService {
     return users
   }
 
-  public async update(input: Partial<User>, id: string): Promise<void> {
+  public async update(input: Partial<User>, id: string) {
     const user = await this.userRepository.findById(id)
     delete input.id //prevent id override
     const [existedEmail, existedPhone] = await Promise.all([
@@ -77,44 +77,53 @@ export class UserService {
       )
     }
 
-    if (input.email) {
-      if (!input.password) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'Password is required for email update',
-        )
-      }
+    const updatedUser = await this.userRepository.update(user.id, {
+      first_name: input.first_name,
+      last_name: input.last_name,
+      image: input.image,
+      phone_number: input.phone_number,
+    })
+    return getUserClientView(updatedUser!)
+  }
 
-      const validPassword = await this.userRepository.comparedPassword(
-        input.password,
-        user.password,
-      )
-      if (!validPassword) {
-        throw new ApplicationCustomError(
-          StatusCodes.BAD_REQUEST,
-          'Password is incorrect',
-        )
-      }
-
-      const token = uuidv4()
-      const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
-      const details = {
-        id,
-        token,
-        type: OtpEnum.EMAIL_UPADTE,
-        newEmail: input.email,
-      }
-
-      await this.client.setKey(key, details, 60 * 10)
-
-      const verificationLink = `${process.env.FRONTEND_URL}/user/verify-email-changes?token=${token}`
-      emailTemplates.changeEmail(input.email, verificationLink)
+  /*
+  if (input.email) {
+    if (!input.password) {
       throw new ApplicationCustomError(
-        StatusCodes.OK,
-        'A verification email has been sent. Please click the link to confirm the update.',
+        StatusCodes.BAD_REQUEST,
+        'Password is required for email update',
       )
     }
-  }
+
+    const validPassword = await this.userRepository.comparedPassword(
+      input.password,
+      user.password,
+    )
+    if (!validPassword) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Password is incorrect',
+      )
+    }
+
+    const token = uuidv4()
+    const key = `${CacheEnumKeys.EMAIL_CHANGE}-${token}`
+    const details = {
+      id,
+      token,
+      type: OtpEnum.EMAIL_UPADTE,
+      newEmail: input.email,
+    }
+
+    await this.client.setKey(key, details, 60 * 10)
+
+    const verificationLink = `${process.env.FRONTEND_URL}/user/verify-email-changes?token=${token}`
+    emailTemplates.changeEmail(input.email, verificationLink)
+    throw new ApplicationCustomError(
+      StatusCodes.OK,
+      'A verification email has been sent. Please click the link to confirm the update.',
+    )
+  } */
 
   public async updateProfileImage(id: string, input: UpdateProfileImageInput) {
     const updatedUser = await this.userRepository.update(id, {
@@ -477,5 +486,9 @@ export class UserService {
     await this.userRepository.update(userId, {
       password: sessionData.new_password,
     })
+  }
+
+  async getRoles() {
+    return this.userRepository.getRoles()
   }
 }

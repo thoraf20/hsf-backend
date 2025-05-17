@@ -1,3 +1,4 @@
+import { Role } from '@routes/index.t'
 import { RecoveryCode, User, UserRole } from '../entities/User'
 
 export interface IUserRepository {
@@ -21,5 +22,7 @@ export interface IUserRepository {
   getRoleByName(name: string): Promise<Record<string, any> | null>
   comparedPassword(input: string, hashed: string): Promise<string | boolean>
   getRoleById(id: string): Promise<UserRole | null>
+  getRolesByType(types: Array<Role>): Promise<UserRole[]>
+  getRoles(): Promise<UserRole[]>
   hashedPassword(input: string): Promise<string | any>
 }

@@ -103,23 +103,14 @@ export const updatePasswordSchema = z.object({
     ),
 })
 
-export const updateProfileSchema = z.object({
-  first_name: z
-    .string()
-    .min(2, 'Firstname must have at least 2 characters')
-    .optional(),
-  last_name: z
-    .string()
-    .min(2, 'Lastname must have at least 2 characters')
-    .optional(),
-  email: z.string().email('Invalid email format').optional(),
-  phone_number: z
-    .string()
-    .min(10, 'Phone number must have at least 10 digits')
-    .optional(),
-  profile: z.string().optional(),
-  image: z.string().url('Invalid image URL').optional(),
-})
+export const updateProfileSchema = z
+  .object({
+    first_name: z.string().min(2, 'Firstname must have at least 2 characters'),
+    last_name: z.string().min(2, 'Lastname must have at least 2 characters'),
+    phone_number: z.string().nullable().optional(),
+    image: z.string().url('Invalid image URL'),
+  })
+  .partial()
 
 export const updateProfileImageSchema = z.object({
   image: z.string().nonempty().url().nullable(),

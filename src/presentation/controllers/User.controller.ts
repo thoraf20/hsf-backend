@@ -14,6 +14,7 @@ import {
 import { MfaFlow } from '@domain/enums/userEum'
 import { OrganizationRepository } from '@repositories/OrganizationRepository' // Import OrganizationRepository
 import { ManageOrganizations } from '@application/useCases/ManageOrganizations' // Import ManageOrganizations
+import { UserRepository } from '@repositories/user/UserRepository'
 
 export class UserController {
   private manageOrganizations: ManageOrganizations // Add ManageOrganizations dependency
@@ -26,12 +27,17 @@ export class UserController {
     // Initialize ManageOrganizations
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
+      new UserRepository(),
     )
   }
 
   public async update(input: User, id: string): Promise<ApiResponse<any>> {
-    await this.userService.update(input, id)
-    return createResponse(StatusCodes.OK, 'User updated successfully', {})
+    const updatedUser = await this.userService.update(input, id)
+    return createResponse(
+      StatusCodes.OK,
+      'User updated successfully',
+      updatedUser,
+    )
   }
 
   public async updateProfileImage(id: string, input: UpdateProfileImageInput) {
@@ -129,5 +135,16 @@ export class UserController {
   ) {
     await this.userService.completeChangePassword(userId, input)
     return createResponse(StatusCodes.OK, 'Password changed successfully')
+  }
+
+  async getRoles() {
+    const roles = await this.userService.getRoles()
+    return createResponse(
+      StatusCodes.OK,
+      `User's role retrieved successfully`,
+      {
+        roles,
+      },
+    )
   }
 }

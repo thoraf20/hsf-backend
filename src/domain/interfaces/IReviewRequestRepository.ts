@@ -24,7 +24,7 @@ export interface IReviewRequestRepository {
   getReviewStageApproverByStageTypeId(
     typeId: string,
   ): Promise<ReviewRequestStageApprover>
-  getReviewRequestTypeStagesByTypeID(
+  getReviewRequestTypeStagesByRequestTypeID(
     typeId: string,
   ): Promise<Array<ReviewRequestTypeStage>>
 
@@ -37,6 +37,13 @@ export interface IReviewRequestRepository {
     approverId: string,
     update: Partial<ReviewRequestApproval>,
   ): Promise<ReviewRequestApproval>
+
+  updateReviewRequest(
+    id: string,
+    update: Partial<ReviewRequest>,
+  ): Promise<ReviewRequest>
+
+  getReviewRequestTypeStageByID(id: string): Promise<ReviewRequestTypeStage>
 
   getReviewRequestApprovalByRequestID(
     requestId: string,

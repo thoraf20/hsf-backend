@@ -32,7 +32,29 @@ router.get(
     const response = await organizationController.getOrganizationMembers(
       authInfo.currentOrganizationId,
       query,
-    ) // Pass req and res
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/members/current-org-roles',
+  authenticate,
+  authorize(isOrganizationUser),
+  asyncMiddleware(async (req, res) => {
+    const { authInfo } = req
+    const response = await organizationController.getCurrentOrgRoles(authInfo)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/members/roles',
+  authenticate,
+  authorize(isOrganizationUser),
+  asyncMiddleware(async (req, res) => {
+    const { authInfo } = req
+    const response = await organizationController.getCurrentOrgRoles(authInfo)
     res.status(response.statusCode).json(response)
   }),
 )

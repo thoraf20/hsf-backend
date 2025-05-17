@@ -56,8 +56,8 @@ propertyRoute.get(
     const { query, user } = req as any
     const properties = await controller.getAllProperties(
       query,
-      user.role,
-      user.id,
+      user?.role,
+      user?.id,
     )
     res.status(properties.statusCode).json(properties)
   }),
