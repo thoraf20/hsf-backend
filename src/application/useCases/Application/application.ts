@@ -10,6 +10,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { UserStatus } from '@domain/enums/userEum'
 import {
   Eligibility,
   payment_calculator,
@@ -24,6 +25,7 @@ import {
   ReviewRequestTypeKind,
 } from '@entities/Request'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
@@ -53,6 +55,7 @@ export class ApplicationService {
     private readonly userRepository: UserRepository,
     private readonly OfferRepository: IOfferLetterRepository,
     private readonly reviewRequestRepository: IReviewRequestRepository,
+    private readonly organizationRepository: IOrganizationRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -596,6 +599,83 @@ export class ApplicationService {
       )
     }
 
+    const applicantUser = await this.userRepository.findById(
+      application.user_id,
+    )
+
+    if (!(applicantUser && applicantUser.status === UserStatus.Active)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Applicant user not active',
+      )
+    }
+
+    const escrowMeetingRequestType =
+      await this.reviewRequestRepository.getReviewRequestTypeByKind(
+        ReviewRequestTypeKind.EscrowMeetingRequest,
+      )
+
+    if (!escrowMeetingRequestType) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Sorry! We are unable to place your request',
+      )
+    }
+
+    let escrowMeetingRequestStage =
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+        escrowMeetingRequestType.id,
+      )
+
+    if (!escrowMeetingRequestStage.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Sorry! We are unable to place your request',
+      )
+    }
+
+    escrowMeetingRequestStage = escrowMeetingRequestStage.sort(
+      (stageA, stageB) => (stageA.stage_order > stageB.stage_order ? 1 : -1),
+    )
+
+    const reviewRequest =
+      await this.reviewRequestRepository.createReviewRequest({
+        candidate_name: `${applicantUser.first_name} ${applicantUser.last_name}`,
+        initiator_id: application.user_id,
+        request_type_id: escrowMeetingRequestType.id,
+        submission_date: new Date(),
+        status: ReviewRequestStatus.Pending,
+      })
+
+    const firstRequestTypeStage = escrowMeetingRequestStage[0]
+
+    const firstStage =
+      await this.reviewRequestRepository.getReviewRequestStageByID(
+        firstRequestTypeStage.stage_id,
+      )
+
+    let organizationId = application.developer_organization_id
+
+    if (firstStage.organization_type === OrganizationType.HSF_INTERNAL) {
+      const org = await this.organizationRepository.getHsfOrganization()
+
+      if (!org) {
+        throw new ApplicationCustomError(
+          StatusCodes.INTERNAL_SERVER_ERROR,
+          'Sorry! We are unable to place your request',
+        )
+      }
+
+      organizationId = org.id
+    }
+
+    await this.reviewRequestRepository.createReviewRequestApproval({
+      request_id: reviewRequest.id,
+      review_request_stage_type_id: firstRequestTypeStage.id,
+      approval_status: ReviewRequestApprovalStatus.Pending,
+      organization_id: organizationId,
+    })
+
     const escrowAttendance = await this.purchaseRepository.setEscrowAttendance({
       date: new Date(input.date),
       time: input.time,
@@ -606,9 +686,9 @@ export class ApplicationService {
       location: input.location,
       attendancees: input.attendees.join(','),
       property_types: application.application_type,
+      review_request_id: reviewRequest.id,
+      application_id: application.application_id,
     })
-
-    // this.purchaseRepository.confirmPropertyEscrowMeeting(escrowId, status)
 
     await this.applicationRepository.updateApplication({
       application_id: application.application_id,

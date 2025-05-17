@@ -10,6 +10,7 @@ import {
 export interface IOrganizationRepository {
   createOrganization(organization: Organization): Promise<Organization>
   getOrganizationById(id: string): Promise<Organization | null>
+  getHsfOrganization(): Promise<Organization>
   updateOrganization(
     id: string,
     organization: Partial<Organization>,

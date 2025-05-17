@@ -29,6 +29,7 @@ import {
 } from '@validators/propertyValidator'
 import { Router } from 'express'
 import { ReviewRequestRepository } from '@application/repositories/ReviewRequestRepository'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -38,6 +39,7 @@ const applicationService = new ApplicationService(
   new UserRepository(),
   new OfferLetterRepository(),
   new ReviewRequestRepository(),
+  new OrganizationRepository(),
 )
 const applicationController = new ApplicationController(applicationService)
 const applicationRoutes = Router()
@@ -148,7 +150,7 @@ applicationRoutes.post(
 )
 
 applicationRoutes.patch(
-  '/:application_id/offer-letter/response',
+  '/:application_id/offer-letter/respond',
   authorize(isOrganizationUser),
   validateRequest(requestOfferLetterRespondSchema),
   asyncMiddleware(async (req, res) => {

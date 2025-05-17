@@ -10,6 +10,7 @@ import {
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { exculedPasswordUserInfo } from '@shared/respositoryValues'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export class OrganizationRepository implements IOrganizationRepository {
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -22,6 +23,12 @@ export class OrganizationRepository implements IOrganizationRepository {
   async getOrganizationById(id: string): Promise<Organization | null> {
     const organization = await db('organizations').where({ id }).first()
     return organization ? new Organization(organization) : null
+  }
+
+  async getHsfOrganization(): Promise<Organization> {
+    return db<Organization>('organizations')
+      .where({ type: OrganizationType.HSF_INTERNAL })
+      .first()
   }
 
   async updateOrganization(
