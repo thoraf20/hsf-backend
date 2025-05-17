@@ -38,6 +38,14 @@ export class ApplicationController {
     )
   }
 
+  async getById(id: string, authInfo: AuthInfo) {
+    const application = await this.applicationService.getById(id, authInfo)
+
+    return createResponse(StatusCodes.OK, 'Application retrived successfully', {
+      application,
+    })
+  }
+
   async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
     const applicationContents = await this.applicationService.getByDeveloperOrg(
       organizationId,

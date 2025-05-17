@@ -160,6 +160,32 @@ export class ApplicationService {
     })
   }
 
+  async getById(id: string, authInfo: AuthInfo) {
+    const application = await this.applicationRepository.getApplicationById(id)
+
+    if (
+      authInfo.globalRole === Role.HOME_BUYER &&
+      application.user_id !== authInfo.userId
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    if (
+      authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY &&
+      application.developer_organization_id !== authInfo.currentOrganizationId
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    return application
+  }
+
   async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
@@ -179,14 +205,10 @@ export class ApplicationService {
     })
   }
 
-  async getById(id: string) {
-    return this.applicationRepository.getApplicationById(id)
-  }
-
   async requestOfferLetter(applicationId: string, userId: string) {
     const [user, application] = await Promise.all([
       this.userRepository.findById(userId),
-      this.getById(applicationId),
+      this.applicationRepository.getApplicationById(applicationId),
     ])
 
     if (!(application && user && application.user_id === userId)) {
@@ -247,10 +269,6 @@ export class ApplicationService {
         'Sorry! We are unable to place your request',
       )
     }
-
-    outrightReviewTypeStage = outrightReviewTypeStage.sort((stageA, stageB) =>
-      stageA.stage_order > stageB.stage_order ? 1 : -1,
-    )
 
     const reviewRequest =
       await this.reviewRequestRepository.createReviewRequest({
@@ -329,7 +347,8 @@ export class ApplicationService {
   }
 
   async requestPropertyClosing(applicationId: string, userId: string) {
-    const application = await this.getById(applicationId)
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
 
     if (!(application && application.user_id === userId)) {
       throw new ApplicationCustomError(
@@ -400,7 +419,8 @@ export class ApplicationService {
     applicationId: string,
     input: RequestPropertyClosingInput,
   ) {
-    const application = await this.getById(applicationId)
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
 
     if (!application) {
       throw new ApplicationCustomError(
@@ -507,7 +527,7 @@ export class ApplicationService {
     if (approval.approval_id) {
       const approver = await this.userRepository.findById(approval.approval_id)
 
-      if (approver && approver.id !== userId) {
+      if (approver && approver.id !== approval.approval_id) {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'You are not allowed to perform this action',
@@ -572,7 +592,8 @@ export class ApplicationService {
     userId: string,
     input: ScheduleEscrowMeetingInput,
   ) {
-    const application = await this.getById(applicationId)
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
 
     if (!application) {
       throw new ApplicationCustomError(
@@ -703,7 +724,8 @@ export class ApplicationService {
     userId: string,
     input: ScheduleEscrowMeetingRespondInput,
   ) {
-    const application = await this.getById(applicationId)
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
 
     if (!application) {
       throw new ApplicationCustomError(

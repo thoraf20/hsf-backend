@@ -24,6 +24,7 @@ import { getEnv } from '@infrastructure/config/env/env.config'
 import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
 import { ManageOrganizations } from '@use-cases/ManageOrganizations'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -41,7 +42,10 @@ export class AuthService {
     this.userRepository = userRepository
     this.accountRepository = accountRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
-    this.manageOrganizations = new ManageOrganizations(organizationRepository)
+    this.manageOrganizations = new ManageOrganizations(
+      organizationRepository,
+      new UserRepository(),
+    )
   }
 
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {

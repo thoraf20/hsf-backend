@@ -9,9 +9,6 @@ interface AuthRequest extends Request {
   // organizationId is now handled within AuthInfo's currentOrganizationId property if needed
 }
 
-// PermissionService is now used within individual PermissionCheck functions if needed,
-// not directly by the authorize middleware itself.
-
 /**
  * Creates an authorization middleware that checks if the authenticated user
  * satisfies the provided permission checks.

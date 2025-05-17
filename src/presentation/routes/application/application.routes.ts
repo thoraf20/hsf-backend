@@ -11,6 +11,7 @@ import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware, requireRoles, Role } from '@routes/index.t'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import {
+  All,
   isOrganizationUser,
   requireOrganizationType,
 } from '@shared/utils/permission-policy'
@@ -108,6 +109,18 @@ applicationRoutes.get(
   }),
 )
 
+applicationRoutes.get('/:application_id', async (req, res) => {
+  const { authInfo, params } = req
+
+  const response = await applicationController.getById(
+    params.application_id,
+    authInfo,
+  )
+
+  console.log(response)
+  res.status(response.statusCode).json(response)
+})
+
 applicationRoutes.post(
   '/:application_id/offer-letter/request',
   requireRoles(Role.HOME_BUYER),
@@ -151,7 +164,15 @@ applicationRoutes.post(
 
 applicationRoutes.patch(
   '/:application_id/offer-letter/respond',
-  authorize(isOrganizationUser),
+  authorize(
+    All(
+      isOrganizationUser,
+      requireOrganizationType(
+        OrganizationType.HSF_INTERNAL,
+        OrganizationType.DEVELOPER_COMPANY,
+      ),
+    ),
+  ),
   validateRequest(requestOfferLetterRespondSchema),
   asyncMiddleware(async (req, res) => {
     const { params, body, authInfo } = req
