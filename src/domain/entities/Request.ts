@@ -2,11 +2,15 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export enum ReviewRequestTypeKind {
   OfferLetterOutright = 'Offer Letter Outright',
+  EscrowMeetingRequest = 'Escrow Metting Request',
 }
 
 export enum ReviewRequestStageKind {
   HsfOfferLetterReview = 'Hsf Offer Letter Review',
   DeveloperOfferLetterReview = 'Developer Offer Letter Review',
+
+  DeveloperEscrowMeetingRespond = 'Developer Escrow Meeting Respond',
+  HomeBuyerEscrowMeetingRespond = 'Home buyer Escrow Meeting Respond',
 }
 
 export enum ReviewRequestStatus {

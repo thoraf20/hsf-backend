@@ -208,4 +208,24 @@ applicationRoutes.patch(
   }),
 )
 
+applicationRoutes.post(
+  '/:application_id/escrow/propose-reschedule',
+  asyncMiddleware(async () => {}),
+)
+
+applicationRoutes.patch(
+  '/:application_id/escrow/reschedule/:id/respond',
+  asyncMiddleware(async () => {}),
+)
+
+applicationRoutes.post(
+  '/:application_id/outright-payment/invoice',
+  asyncMiddleware(async () => {}),
+)
+
+applicationRoutes.get(
+  '/:application_id/outright-payment/invoices',
+  asyncMiddleware(async () => {}),
+)
+
 export default applicationRoutes

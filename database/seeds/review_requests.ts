@@ -19,6 +19,7 @@ export async function seed(knex: Knex): Promise<void> {
   try {
     await reviewRequestStageSeed(knex)
     await offerLetterReviewRequestSeed(knex)
+    await escrowMeetingRequest(knex)
     console.log(`Review Requests Seeding Completed`)
   } catch (e) {
     console.error(`Review Requests Seeding Failed:`, e)
@@ -35,6 +36,16 @@ async function reviewRequestStageSeed(knex: Knex): Promise<void> {
     },
     {
       name: ReviewRequestStageKind.DeveloperOfferLetterReview,
+      organization_type: OrganizationType.DEVELOPER_COMPANY,
+    },
+
+    {
+      name: ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond,
+      organization_type: OrganizationType.HSF_INTERNAL,
+    },
+
+    {
+      name: ReviewRequestStageKind.DeveloperEscrowMeetingRespond,
       organization_type: OrganizationType.DEVELOPER_COMPANY,
     },
   ]
@@ -220,6 +231,167 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
         `Inserting ${approversToInsert.length} approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
       )
       await reviewRequestStageApproverTable.insert(approversToInsert)
+    }
+
+    console.log(
+      `Seeding for review stage '${stageData.name}' (TypeStageID: ${reviewRequestTypeStageEntry.id}) completed.`,
+    )
+  }
+}
+
+async function escrowMeetingRequest(knex: Knex): Promise<void> {
+  let escrowMettingRequestType = await knex
+    .table<ReviewRequestType>('review_request_types')
+    .where({ type: ReviewRequestTypeKind.EscrowMeetingRequest })
+    .first()
+
+  if (!escrowMettingRequestType) {
+    const newTypeId = uuidv4()
+    console.log(
+      `ReviewRequestType '${ReviewRequestTypeKind.EscrowMeetingRequest}' not found, creating with ID: ${newTypeId}`,
+    )
+    const insertedTypes = await knex
+      .table<ReviewRequestType>('review_request_types')
+      .insert({
+        id: newTypeId,
+        type: ReviewRequestTypeKind.EscrowMeetingRequest,
+      })
+      .returning('*')
+    if (insertedTypes && insertedTypes.length > 0) {
+      escrowMettingRequestType = insertedTypes[0]
+    } else {
+      throw new Error(
+        `Failed to create or retrieve ReviewRequestType '${ReviewRequestTypeKind.EscrowMeetingRequest}'`,
+      )
+    }
+  } else {
+    console.log(
+      `Found existing ReviewRequestType '${ReviewRequestTypeKind.EscrowMeetingRequest}' with ID: ${escrowMettingRequestType.id}`,
+    )
+  }
+
+  const escrowMeetingReviewStagesData: Array<{
+    id?: string
+    name: ReviewRequestStageKind
+    roles: Array<Role>
+  }> = [
+    {
+      name: ReviewRequestStageKind.DeveloperEscrowMeetingRespond,
+      roles: [Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT],
+    },
+
+    {
+      name: ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond,
+      roles: [Role.HOME_BUYER],
+    },
+  ]
+
+  for (const stageData of escrowMeetingReviewStagesData) {
+    const reviewStage = await knex
+      .table<ReviewRequestStage>('review_request_stages')
+      .select('id')
+      .where({ name: stageData.name })
+      .first()
+
+    if (!reviewStage) {
+      throw new Error(
+        `CRITICAL: Prerequisite review stage '${stageData.name}' not found in 'review_request_stages' table. Ensure 'reviewRequestStageSeed' ran successfully and the stage exists.`,
+      )
+    }
+    stageData.id = reviewStage.id
+  }
+
+  await knex
+    .table<ReviewRequestTypeStage>('review_request_type_stages')
+    .update({ enabled: false })
+    .where({ request_type_id: escrowMettingRequestType.id })
+  console.log(
+    `Disabled existing stages for request_type_id: ${escrowMettingRequestType.id}`,
+  )
+
+  for (const [index, stageData] of escrowMeetingReviewStagesData.entries()) {
+    const order = index + 1
+    if (!stageData.id) {
+      throw new Error(`Stage ID is missing for stage ${stageData.name}`)
+    }
+
+    console.log(
+      `Processing stage: ${stageData.name} (ID: ${stageData.id}) for request_type_id: ${escrowMettingRequestType.id} with order ${order}`,
+    )
+
+    let [reviewRequestTypeStageEntry] = await knex
+      .table<ReviewRequestTypeStage>('review_request_type_stages')
+      .select()
+      .where({
+        request_type_id: escrowMettingRequestType.id,
+        stage_id: stageData.id!,
+      })
+      .returning('*')
+
+    if (!reviewRequestTypeStageEntry) {
+      ;[reviewRequestTypeStageEntry] = await knex
+        .table<ReviewRequestTypeStage>('review_request_type_stages')
+        .insert({
+          stage_order: order,
+          enabled: true,
+          request_type_id: escrowMettingRequestType.id,
+          stage_id: stageData.id!,
+        })
+
+        .returning('*')
+    }
+
+    if (!reviewRequestTypeStageEntry) {
+      throw new Error(
+        `Failed to upsert review_request_type_stage for stage_id ${stageData.id} and request_type_id ${escrowMettingRequestType.id}`,
+      )
+    }
+
+    console.log(
+      `Upserted review_request_type_stage (ID: ${reviewRequestTypeStageEntry.id}) for stage: ${stageData.name}`,
+    )
+
+    const roles = await knex<UserRole>('roles')
+      .select('id', 'name')
+      .whereIn('name', stageData.roles)
+
+    if (roles.length !== stageData.roles.length) {
+      const foundRoleNames = roles.map((r) => r.name)
+      const missingRoles = stageData.roles.filter(
+        (r) => !foundRoleNames.includes(r),
+      )
+      throw new Error(
+        `Found missing roles for stage '${
+          stageData.name
+        }'. Expected: ${stageData.roles.join(
+          ', ',
+        )}, Found: ${foundRoleNames.join(', ')}. Missing: ${missingRoles.join(
+          ', ',
+        )}. Ensure all roles are seeded in the 'roles' table.`,
+      )
+    }
+
+    console.log(
+      `Deleting existing approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
+    )
+    await knex
+      .table<ReviewRequestStageApprover>('review_request_stage_approvers')
+      .where({ request_stage_type_id: reviewRequestTypeStageEntry.id! })
+      .delete()
+
+    if (roles.length > 0) {
+      const approversToInsert = roles.map((role) => ({
+        id: uuidv4(),
+        request_stage_type_id: reviewRequestTypeStageEntry.id!,
+        role_id: role.id,
+        stage_id: stageData.id!,
+      }))
+      console.log(
+        `Inserting ${approversToInsert.length} approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
+      )
+      await knex
+        .table<ReviewRequestStageApprover>('review_request_stage_approvers')
+        .insert(approversToInsert)
     }
 
     console.log(
