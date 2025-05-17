@@ -10,7 +10,8 @@ export type EnableNotificationMediumInput = z.infer<
 
 export const enabledNotificationTypeSchema = z.object({
   type_id: z.string().nonempty(),
-  frequency_id: z.string().nonempty().optional(),
+  frequency_id: z.string().nonempty().optional().nullable(),
+  unique: z.boolean().default(true),
 })
 
 export type EnableNotificationTypeInput = z.infer<

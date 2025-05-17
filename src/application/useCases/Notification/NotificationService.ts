@@ -126,6 +126,7 @@ export class NotificationService {
     userId: string,
     typeId: string,
     frequencyId?: string | null,
+    unique = true,
   ): Promise<void> {
     const user = await this.userRepository.findById(String(userId)) // Assuming userId is string in UserRepository
     if (!user) {
@@ -151,8 +152,31 @@ export class NotificationService {
           'Frequency not found',
         )
       }
+
+      if (unique) {
+        await this.notificationRepository
+          .getFrequencies()
+          .then(async (freqs) => {
+            const userSubscribedNotifications =
+              await this.notificationRepository.getUserSubscribedNotificationTypes(
+                userId,
+              )
+
+            await Promise.all(
+              userSubscribedNotifications
+                .filter((sub) => sub.notification_type_id === typeId)
+                .map((sub) =>
+                  this.notificationRepository.unsubscribeUserFromNotificationType(
+                    userId,
+                    sub.notification_type_id,
+                  ),
+                ),
+            )
+          })
+      }
     }
 
+    // this.notificationRepository.findUsersSubscribedToType(typeId)
     await this.notificationRepository.subscribeUserToNotificationType(
       userId,
       typeId,

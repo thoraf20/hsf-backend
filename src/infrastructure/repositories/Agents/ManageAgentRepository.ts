@@ -13,7 +13,6 @@ export class ManageAgentRepository implements IManageAgentsRespository {
     const query = db('users as u')
       .leftJoin('roles as r', 'u.role_id', '=', 'r.id')
       .select(...exculedPasswordUserInfo, 'r.name as role')
-    console.log(filters)
     if (filters?.role) {
       query.where('r.name', '=', filters.role)
     }

@@ -106,6 +106,7 @@ export class Agents {
       force_password_reset: true,
       is_default_password: true,
       status: UserStatus.Pending,
+      is_admin: true,
     })
     const adminProfile = await this.adminRepository.createAdminProfile({
       street_address: input.street_address,
@@ -261,6 +262,7 @@ export class Agents {
       role_id: findRole.id,
       is_default_password: true,
       status: UserStatus.Pending,
+      is_admin: true,
     })
     const adminProfile = await this.adminRepository.createAdminProfile({
       street_address: input.street_address,
@@ -386,6 +388,7 @@ export class Agents {
       force_password_reset: true,
       is_default_password: true,
       status: UserStatus.Pending,
+      is_admin: true,
     })
 
     await this.organizationRepository.addUserToOrganization({
@@ -473,6 +476,7 @@ export class Agents {
       status: UserStatus.Pending,
       force_password_reset: true,
       is_default_password: true,
+      is_admin: true,
     })
 
     const lenderProfile = await this.lenderRepository.createLender(
@@ -483,8 +487,10 @@ export class Agents {
         head_office_address: input.head_office_address,
         state: input.state,
         organization_id: lenderOrg.id,
+        user_id: user.user_id,
       }),
     )
+
     const token = generateInvitationToken()
     const encryptedtoken = await this.userRepository.hashedPassword(
       token.toString(),
@@ -526,7 +532,6 @@ export class Agents {
       is_default_password: true,
     })
     const otp = generateRandomSixNumbers()
-    console.log(otp)
     const key = `${CacheEnumKeys.EMAIL_VERIFICATION_KEY}-${otp}`
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)

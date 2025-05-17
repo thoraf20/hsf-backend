@@ -83,6 +83,11 @@ export async function seed(knex: Knex): Promise<void> {
       description:
         'Receive notifications for successful or failed payment transactions on the platform',
     },
+    {
+      name: NotificationTypeKind.NotificationMethod,
+      description:
+        'Select your preferred notification method—email, SMS, or in-app—to stay informed about your account and property activities.',
+    },
   ]
 
   await Promise.all(

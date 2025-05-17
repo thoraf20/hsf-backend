@@ -27,7 +27,6 @@ export class ExistingUsers {
   }
   public async beforeCreateEmail(email: string): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email)
-    console.log(email)
     if (existingUser) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
@@ -46,7 +45,6 @@ export class DeveloperUtils {
 
   public async findIfCompanyNameExist(company_name: string): Promise<void> {
     const company = await this.developerRepository.getCompanyName(company_name)
-    console.log(company_name)
     if (company) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,

@@ -7,6 +7,7 @@ export class Lender {
   cac: string
   head_office_address: string
   state: string
+  user_id: string
   organization_id: string
   created_at?: Date
   updated_at?: Date

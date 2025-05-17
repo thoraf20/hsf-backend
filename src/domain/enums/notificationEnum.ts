@@ -10,6 +10,7 @@ export enum NotificationTypeKind {
   AgentDeveloperActivityReport = 'Agent/Developer Activity Report',
   ClientInquiryAlerts = 'Client Inquiry Alerts',
   PaymentTransactionAlerts = 'Payment/Transaction Alerts',
+  NotificationMethod = 'Notification Method',
 }
 
 export enum NotificationFrequencyKind {

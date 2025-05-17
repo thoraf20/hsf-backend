@@ -17,11 +17,9 @@ export const ErrorHandler: ErrorRequestHandler = (
       error.body,
       error.error_code,
     )
-    console.log({ error })
     res.status(response.statusCode).json(response)
     return next()
   } else {
-    console.log(error)
     logger.error(error)
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
       status: StatusCodes.INTERNAL_SERVER_ERROR,

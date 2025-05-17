@@ -45,7 +45,6 @@ export class preQualifyController {
     const prequalification =
       await this.service.updatePrequalifierEligibility(input)
 
-    console.log({ prequalification, input })
     return createResponse(StatusCodes.OK, `Success`, prequalification)
   }
 }

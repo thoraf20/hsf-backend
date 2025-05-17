@@ -9,6 +9,7 @@ import {
   enabledNotificationTypeSchema,
   EnableNotificationMediumInput,
   enableNotificationMediumSchema,
+  EnableNotificationTypeInput,
 } from '@validators/notificationValidator'
 
 const router = Router()
@@ -109,12 +110,12 @@ router.post(
   validateRequest(enabledNotificationTypeSchema),
   asyncMiddleware(async (req, res) => {
     const userId = req.user.id
-    const { typeId, frequencyId } = req.body
+    const { type_id, frequency_id } = <EnableNotificationTypeInput>req.body
     const response =
       await notificationController.subscribeUserToNotificationType(
         userId,
-        typeId,
-        frequencyId !== undefined ? frequencyId : undefined,
+        type_id,
+        frequency_id !== undefined ? frequency_id : undefined,
       )
     res.status(response.statusCode).json(response)
   }),

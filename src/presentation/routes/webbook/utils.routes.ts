@@ -34,9 +34,7 @@ WebhookRouter.post(
       if (event.event === 'charge.success') {
         const metadata = event.data.metadata
 
-        console.log({ metadata })
         const transaction_id = metadata?.transaction_id
-        console.log('Transaction ID:', transaction_id)
         if (!transaction_id) {
           return res.status(400).json({ message: 'Invalid metadata' })
         }

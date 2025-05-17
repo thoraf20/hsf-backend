@@ -135,8 +135,6 @@ export class ApplicationService {
           personal_information_id: preQualifier.personal_information_id,
           type: input.purchase_type,
         })
-
-      console.log({ installmentPaymentCalculator })
     }
 
     const newApplication = await this.applicationRepository.createApplication({
