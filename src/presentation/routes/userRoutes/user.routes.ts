@@ -9,8 +9,8 @@ import {
   updatePasswordSchema,
   updateProfileImageSchema,
   updateProfileSchema,
-  VerifyMfaInput,
-  verifyMfaSchema,
+  VerifyLoginMfaInput,
+  verifyLoginMfaSchema,
   verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
 import { AccountRepository } from '@repositories/user/AccountRepository'
@@ -129,28 +129,10 @@ userRoutes.post(
 )
 
 userRoutes.post(
-  '/password/verify-mfa',
-  validateRequest(verifyMfaSchema),
-  asyncMiddleware(async (req, res) => {
-    const { user: claim, body } = req
-    const { code, flow, token } = <VerifyMfaInput>body
-    const response = await userController.verifyChangePasswordMfa(
-      claim.id,
-      flow,
-      token,
-      code,
-    )
-
-    res.status(response.statusCode).json(response)
-  }),
-)
-
-userRoutes.post(
   '/password/complete',
   validateRequest(changePasswordCompleteSchema),
   asyncMiddleware(async (req, res) => {
     const { user: claim, body } = req
-
     const response = await userController.completeChangePassword(claim.id, body)
     res.status(response.statusCode).json(response)
   }),

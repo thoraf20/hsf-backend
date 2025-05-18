@@ -98,35 +98,14 @@ export class UserController {
 
     let message = ''
     if (data?.mfa_required) {
-      if (data.mfa_type === MfaFlow.EMAIL_OTP) {
-        message =
-          'Password change initiated. An OTP has been sent to your registered email to complete the process.'
-      } else {
-        // MfaFlow.TOTP
-        message =
-          'Password change initiated. Please enter the code from your authenticator app to complete the process.'
-      }
+      message =
+        'Password change initiated. Please enter the code from your authenticator app to complete the process.'
     } else {
       message =
         'Password change process initiated. Please use the provided token to confirm the change.'
     }
 
     return createResponse(StatusCodes.OK, message, data)
-  }
-
-  async verifyChangePasswordMfa(
-    userId: string,
-    flow: MfaFlow,
-    token: string,
-    code: string,
-  ) {
-    const response = await this.userService.verifyChangePasswordMfa(
-      userId,
-      flow,
-      token,
-      code,
-    )
-    return createResponse(StatusCodes.OK, '', response)
   }
 
   async completeChangePassword(

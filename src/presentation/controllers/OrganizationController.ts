@@ -4,9 +4,14 @@ import { OrganizationRepository } from '@infrastructure/repositories/Organizatio
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { createResponse } from '@presentation/response/responseType'
-import { UpdateOrganizationInput } from '@validators/organizationValidator'
+import {
+  OrgMemberRoleFilters,
+  UpdateOrganizationInput,
+} from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { QueryBoolean } from '@shared/utils/helpers'
+import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -90,8 +95,8 @@ export class OrganizationController {
     )
   }
 
-  async getCurrentOrgRoles(authInfo: AuthInfo) {
-    const roles = await this.manageOrganizations.getCurrentOrgRoles(
+  async getCurrentOrgRoles(authInfo: AuthInfo, query: OrgMemberRoleFilters) {
+    let roles = await this.manageOrganizations.getCurrentOrgRoles(
       authInfo.organizationType,
     )
 
@@ -101,6 +106,14 @@ export class OrganizationController {
         `Roles  for organization '${authInfo.organizationType}' not found`,
       )
     }
+
+    roles = roles.filter((role) =>
+      query.select === RoleSelect.SubAdmin
+        ? !ADMIN_LEVEL_ROLES.includes(role.name as Role)
+        : query.select === RoleSelect.Admin
+          ? ADMIN_LEVEL_ROLES.includes(role.name as Role)
+          : true,
+    )
 
     return createResponse(
       StatusCodes.OK,

@@ -67,7 +67,7 @@ export const verifyInitMfaSetupSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits'),
 })
 
-export const verifyMfaSchema = z.object({
+export const verifyLoginMfaSchema = z.object({
   code: z.string().nonempty(),
   flow: z.nativeEnum(MfaFlow),
   token: z.string().nonempty(),
@@ -81,7 +81,7 @@ export type ChangePasswordCompleteInput = z.infer<
   typeof changePasswordCompleteSchema
 >
 
-export type VerifyMfaInput = z.infer<typeof verifyMfaSchema>
+export type VerifyLoginMfaInput = z.infer<typeof verifyLoginMfaSchema>
 
 export const sendMfaOtpSchema = z.object({
   token: z.string().nonempty(),

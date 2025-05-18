@@ -4,8 +4,9 @@ import { authorize } from '@middleware/authorization'
 import { OrganizationController } from '@presentation/controllers/OrganizationController'
 import { asyncMiddleware, authenticate } from '@routes/index.t' // Import authenticate
 // import { validateRequest } from '@middleware/validateRequest'
-// import { updateOrganizationSchema } from '@validators/organizationValidator'
 import { isOrganizationUser } from '@shared/utils/permission-policy'
+import { validateRequestQuery } from '@shared/utils/paginate'
+import { getOrgMemberRoleFilterSchema } from '@validators/organizationValidator'
 
 const router = express.Router()
 const organizationController = new OrganizationController()
@@ -39,22 +40,30 @@ router.get(
 
 router.get(
   '/members/current-org-roles',
+  validateRequestQuery(getOrgMemberRoleFilterSchema),
   authenticate,
   authorize(isOrganizationUser),
   asyncMiddleware(async (req, res) => {
-    const { authInfo } = req
-    const response = await organizationController.getCurrentOrgRoles(authInfo)
+    const { authInfo, query } = req
+    const response = await organizationController.getCurrentOrgRoles(
+      authInfo,
+      query,
+    )
     res.status(response.statusCode).json(response)
   }),
 )
 
 router.get(
   '/members/roles',
+  validateRequestQuery(getOrgMemberRoleFilterSchema),
   authenticate,
   authorize(isOrganizationUser),
   asyncMiddleware(async (req, res) => {
-    const { authInfo } = req
-    const response = await organizationController.getCurrentOrgRoles(authInfo)
+    const { authInfo, query } = req
+    const response = await organizationController.getCurrentOrgRoles(
+      authInfo,
+      query,
+    )
     res.status(response.statusCode).json(response)
   }),
 )

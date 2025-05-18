@@ -117,7 +117,7 @@ applicationRoutes.get('/:application_id', async (req, res) => {
     authInfo,
   )
 
-  console.log(response)
+  console.log(JSON.stringify(response.body))
   res.status(response.statusCode).json(response)
 })
 

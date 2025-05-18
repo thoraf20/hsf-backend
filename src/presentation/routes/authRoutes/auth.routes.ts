@@ -8,8 +8,8 @@ import {
   RequestPasswordResetOtpSchema,
   ResetPasswordOtpSchema,
   RegisterEmail,
-  verifyMfaSchema,
-  VerifyMfaInput,
+  verifyLoginMfaSchema,
+  VerifyLoginMfaInput,
   sendMfaOtpSchema,
 } from '@application/requests/dto/userValidator'
 import { AuthService } from '@application/useCases/Auth/Auth'
@@ -106,9 +106,9 @@ authRoutes.post(
 
 authRoutes.post(
   '/verify-mfa',
-  validateRequest(verifyMfaSchema),
+  validateRequest(verifyLoginMfaSchema),
   asyncMiddleware(async (req: Request, res: Response) => {
-    const { body }: { body: VerifyMfaInput } = req
+    const { body }: { body: VerifyLoginMfaInput } = req
     const tokenValid = await mfaTokenGen.verifyCode(body.token)
 
     if (!tokenValid) {
@@ -126,7 +126,7 @@ authRoutes.post(
   '/mfa/send-otp',
   validateRequest(sendMfaOtpSchema),
   async (req, res) => {
-    const { body }: { body: VerifyMfaInput } = req
+    const { body }: { body: VerifyLoginMfaInput } = req
     const tokenValid = await mfaTokenGen.verifyCode(body.token)
 
     if (!tokenValid) {

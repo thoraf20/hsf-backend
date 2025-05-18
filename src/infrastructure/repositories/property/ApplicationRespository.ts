@@ -172,6 +172,7 @@ export class ApplicationRepository implements IApplicationRespository {
             'last_name', u.last_name,
             'image', u.image,
             'role', r.name,
+            'status', u.status,
             'role_id', u.role_id,
             'email', u.email,
             'created_at', u.created_at
@@ -320,18 +321,7 @@ export class ApplicationRepository implements IApplicationRespository {
             ELSE NULL
         END as escrow_status_info
         `),
-        db.raw(`
-            json_build_object(
-            'id', u.id,
-            'first_name', u.first_name,
-            'last_name', u.last_name,
-            'image', u.image,
-            'role', r.name,
-            'role_id', u.role_id,
-            'email', u.email,
-            'created_at', u.created_at
-           ) as buyer
-          `),
+
         db.raw(`
                 json_build_object(
                     'id', organizations.id,
@@ -354,11 +344,16 @@ export class ApplicationRepository implements IApplicationRespository {
             'last_name', u.last_name,
             'image', u.image,
             'role', r.name,
+            'status', u.status,
             'role_id', u.role_id,
             'email', u.email,
             'created_at', u.created_at
            ) as buyer
           `),
+        db.raw(`row_to_json(lo) as loan_offer`),
+        db.raw(`row_to_json(ol) as offer_letter`),
+        db.raw(`row_to_json(pc) as property_closing`),
+        db.raw(`row_to_json(dp) as dip`),
         'ps.*',
         'el.*',
         'ol.*',
