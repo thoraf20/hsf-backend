@@ -17,8 +17,9 @@ export interface IUserRepository {
     data: Partial<RecoveryCode>,
   ): Promise<RecoveryCode>
 
-  getAllUsers(filters: UserFilters): Promise<SeekPaginationResult<User>>
-
+  getAllUsers(
+    filters: UserFilters & { type?: 'admin' | 'sub-admin' },
+  ): Promise<SeekPaginationResult<User>>
   clearRecoveryCodesByUserId(userId: string): Promise<void>
   findById(id: string): Promise<User | null>
   update(id: string, user: Partial<User>): Promise<User | null>

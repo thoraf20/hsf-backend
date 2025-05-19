@@ -16,6 +16,7 @@ import { UserRepository } from '@repositories/user/UserRepository'
 import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
+import { UserFilters } from '@validators/userValidator'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -156,12 +157,53 @@ export class OrganizationController {
     )
   }
 
+  async getSubAdmins(filters: UserFilters) {
+    const subAdminContents = await this.manageOrganizations.getAdmins(
+      filters,
+      'sub-admin',
+    )
+    return createResponse(
+      StatusCodes.OK,
+      'Sub admin retrieved successfully',
+      subAdminContents,
+    )
+  }
+
+  async getAdmin(filters: UserFilters) {
+    const adminContents = await this.manageOrganizations.getAdmins(
+      filters,
+      'admin',
+    )
+    return createResponse(
+      StatusCodes.OK,
+      'Admins retrieved successfully',
+      adminContents,
+    )
+  }
+
   async createLender(data: CreateLenderInput) {
     const lender = await this.manageOrganizations.createLender(data)
     return createResponse(StatusCodes.CREATED, 'Lender created', { lender })
   }
 
   async createHsfSubAdmin(auth: AuthInfo, data: CreateHSFAdminInput) {
-    this.manageOrganizations.createHSFSubAdmin(auth, data)
+    const subAdmin = await this.manageOrganizations.createHSFSubAdmin(
+      auth,
+      data,
+    )
+
+    return createResponse(
+      StatusCodes.CREATED,
+      'Sub admin created successfully',
+      { sub_admin: subAdmin },
+    )
+  }
+
+  async createHsfAdmin(auth: AuthInfo, data: CreateHSFAdminInput) {
+    const admin = await this.manageOrganizations.createHSFAdmin(auth, data)
+
+    return createResponse(StatusCodes.CREATED, 'Admin created successfully', {
+      admin: admin,
+    })
   }
 }

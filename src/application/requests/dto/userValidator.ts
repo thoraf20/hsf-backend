@@ -2,6 +2,7 @@ import { MfaFlow } from '@domain/enums/userEum'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
+import { Role } from '@domain/enums/rolesEmun' // Import Role enum
 
 export const UserSchema = z.object({
   tempId: z.string(),

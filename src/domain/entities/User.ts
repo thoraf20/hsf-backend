@@ -112,6 +112,8 @@ export function getUserClientView(
   | 'user_agent'
   | 'os'
   | 'force_password_reset'
+  | 'created_at'
+  | 'updated_at'
 > {
   return {
     id: user.id,
@@ -136,6 +138,8 @@ export function getUserClientView(
     failed_login_attempts: user.failed_login_attempts,
     user_agent: user.user_agent,
     os: user.os,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
   }
 }
 

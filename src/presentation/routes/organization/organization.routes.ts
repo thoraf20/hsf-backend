@@ -27,16 +27,31 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 const router = express.Router()
 const organizationController = new OrganizationController()
 
+router.get(
+  '/hsf-admins',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const response = await organizationController.getAdmin(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 router.post(
-  '/hsf-admin',
+  '/hsf-admins',
   validateRequest(createHsfAdminSchema),
   authorize(
     All(
       requireOrganizationType(OrganizationType.HSF_INTERNAL),
-      requireOrganizationRole([Role.HSF_ADMIN, Role.SUPER_ADMIN]),
+      requireOrganizationRole([Role.SUPER_ADMIN]),
     ),
   ),
-  asyncMiddleware(async (req, res) => {}),
+  asyncMiddleware(async (req, res) => {
+    const { body, authInfo } = req
+    const response = await organizationController.createHsfAdmin(authInfo, body)
+
+    res.status(response.statusCode).json(response)
+  }),
 )
 
 router.post(
@@ -50,7 +65,22 @@ router.post(
   ),
   asyncMiddleware(async (req, res) => {
     const { body, authInfo } = req
-    organizationController.createHsfSubAdmin(authInfo, body)
+    const response = await organizationController.createHsfSubAdmin(
+      authInfo,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/sub-admins',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const response = await organizationController.getSubAdmins(query)
+    res.status(response.statusCode).json(response)
   }),
 )
 
