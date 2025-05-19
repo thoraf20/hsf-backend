@@ -27,6 +27,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
     "@oslojs/binary": "^1.0.0",
+    "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
     "@oslojs/otp": "^1.1.0",
     "@sendgrid/mail": "^8.1.4",
@@ -39,6 +40,7 @@
     "bullmq": "^5.51.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-brute": "^1.0.1",

@@ -9,8 +9,6 @@ import {
   updatePasswordSchema,
   updateProfileImageSchema,
   updateProfileSchema,
-  VerifyLoginMfaInput,
-  verifyLoginMfaSchema,
   verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
 import { AccountRepository } from '@repositories/user/AccountRepository'

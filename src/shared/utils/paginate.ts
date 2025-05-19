@@ -67,10 +67,12 @@ export async function applyPagination<T>(
   const totalRecordsQuery = baseQuery
     .clone()
     .clearSelect()
+    .clearOrder()
     .count('* as count')
     .first()
 
-  const [{ count: total }] = await Promise.all([totalRecordsQuery])
+  const [{ count }] = await Promise.all([totalRecordsQuery])
+  const total = Number(count)
 
   // Apply limit and offset to the data query
   const dataQuery = baseQuery.limit(perPage).offset(offset)

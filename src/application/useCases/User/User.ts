@@ -1,4 +1,4 @@
-import { getUserClientView, RecoveryCode, User } from '@domain/entities/User'
+import { getUserClientView, User } from '@domain/entities/User'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
@@ -13,12 +13,10 @@ import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
   UpdateProfileImageInput,
+  UserFilters,
 } from '@validators/userValidator'
 import { TimeSpan } from '@shared/utils/time-unit'
-import {
-  generateRandomOTP,
-  verifyCodeFromRecoveryCodeList,
-} from '@shared/utils/totp'
+import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
 import { verifyTOTP } from '@oslojs/otp'
 import { decodeBase64 } from '@oslojs/encoding'
 import { getEnv } from '@infrastructure/config/env/env.config'
@@ -34,6 +32,10 @@ export class UserService {
   public async getUserProfile(user: string): Promise<User> {
     const users = await this.userRepository.findById(user)
     return users
+  }
+
+  public async getUsers(query: UserFilters) {
+    return this.userRepository.getAllUsers(query)
   }
 
   public async update(input: Partial<User>, id: string) {

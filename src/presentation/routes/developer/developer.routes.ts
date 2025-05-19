@@ -16,14 +16,14 @@ const managePropertyservice = new ManageDeveloper(
   new InspectionRepository(),
   new EnquiryRepository(),
   new UserRepository(),
-  new TransactionRepository()
+  new TransactionRepository(),
 )
 
 const controller = new DeveloperController(managePropertyservice)
 
 developerRoutes.post(
   '/property/sold/:id',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
     const response = await controller.propertySold(user.id, params.id)
@@ -33,7 +33,7 @@ developerRoutes.post(
 
 developerRoutes.get(
   '/property/stats',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const response = await controller.allPropertyStats(user.id)
@@ -43,7 +43,7 @@ developerRoutes.get(
 
 developerRoutes.get(
   '/leads',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
     const response = await controller.getPropertyLeads(user.id, query)
@@ -53,7 +53,7 @@ developerRoutes.get(
 
 developerRoutes.get(
   '/leads/info',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
     const query_id = query.id as string
@@ -69,39 +69,30 @@ developerRoutes.get(
 
 developerRoutes.get(
   '/clients',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
-    const response = await controller.getAllClients(
-      user.id,
-      query
-    )
+    const response = await controller.getAllClients(user.id, query)
     res.status(response.statusCode).json(response)
   }),
 )
 
 developerRoutes.get(
   '/payments',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
-    const response = await controller.getAllPayments(
-      user.id,
-      query
-    )
+    const response = await controller.getAllPayments(user.id, query)
     res.status(response.statusCode).json(response)
   }),
 )
 
 developerRoutes.get(
   '/payment/:id',
-  requireRoles([Role.DEVELOPER]),
+  requireRoles([Role.DEVELOPER_ADMIN]),
   asyncMiddleware(async (req, res) => {
     const { user, params } = req
-    const response = await controller.getPaymentsInfo(
-      user.id,
-      params.id
-    )
+    const response = await controller.getPaymentsInfo(user.id, params.id)
     res.status(response.statusCode).json(response)
   }),
 )

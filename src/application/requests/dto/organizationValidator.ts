@@ -1,7 +1,8 @@
 import { z } from 'zod'
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { QueryBoolean } from '@shared/utils/helpers'
 import { RoleSelect } from '@domain/enums/rolesEmun'
+import { withPaginateSchema } from '@shared/utils/paginate'
+import { parse } from 'date-fns'
 
 export const createOrganizationSchema = z.object({
   name: z.string().min(3).max(255),
@@ -30,3 +31,57 @@ export const getOrgMemberRoleFilterSchema = z.object({
 })
 
 export type OrgMemberRoleFilters = z.infer<typeof getOrgMemberRoleFilterSchema>
+
+export const getLenderFilterSchema = withPaginateSchema(
+  z.object({
+    lender_name: z.string().optional(),
+    cac: z.string().optional(),
+  }),
+)
+
+export type LenderFilters = z.infer<typeof getLenderFilterSchema>
+
+export const createLenderAdminSchema = z.object({
+  first_name: z.string().min(2).max(100),
+  last_name: z.string().min(2).max(100),
+  phone_number: z.string().nonempty(),
+  email: z.string().email().max(255),
+  date_of_birth: z
+    .string()
+    .refine((datestr) => parse(datestr, 'dd/MM/yyyy', '05/02/2025'), {
+      message: 'Invalid date format',
+    }),
+  is_active: z.boolean().default(false),
+
+  lender_name: z.string().nonempty(),
+  lender_institution_type: z.string().nonempty(),
+  lender_registration_number: z.string().nonempty(),
+  lender_address_line: z.string().nonempty(),
+  lender_logo: z.string().url(),
+  lender_state: z.string().nonempty(),
+  lender_city: z.string().nonempty(),
+})
+
+export type CreateLenderInput = z.infer<typeof createLenderAdminSchema>
+
+export const createHsfAdminSchema = z.object({
+  first_name: z.string().min(2).max(100),
+  last_name: z.string().min(2).max(100),
+  phone_number: z.string().nonempty(),
+  email: z.string().email().max(255),
+  date_of_birth: z
+    .string()
+    .refine((datestr) => parse(datestr, 'dd/MM/yyyy', '05/02/2025'), {
+      message: 'Invalid date format',
+    }),
+  role_id: z.string().nonempty(),
+  country: z.string().nonempty().max(50),
+  is_active: z.boolean().default(false),
+  state: z.string().nonempty().max(50),
+  city: z.string().nonempty().max(50),
+  street_address: z.string().nonempty().max(500),
+  state_code: z.string().optional(),
+  country_code: z.string().optional(),
+})
+
+export type CreateHSFAdminInput = z.infer<typeof createHsfAdminSchema>

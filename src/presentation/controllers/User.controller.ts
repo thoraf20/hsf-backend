@@ -10,24 +10,25 @@ import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
   UpdateProfileImageInput,
+  UserFilters,
 } from '@validators/userValidator'
-import { MfaFlow } from '@domain/enums/userEum'
-import { OrganizationRepository } from '@repositories/OrganizationRepository' // Import OrganizationRepository
-import { ManageOrganizations } from '@application/useCases/ManageOrganizations' // Import ManageOrganizations
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { ManageOrganizations } from '@application/useCases/ManageOrganizations'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { AddressRepository } from '@repositories/user/AddressRepository'
 
 export class UserController {
-  private manageOrganizations: ManageOrganizations // Add ManageOrganizations dependency
-
+  private manageOrganizations: ManageOrganizations
   constructor(
     private readonly userService: UserService,
     private readonly accountRepository: IAccountRepository,
-    // private readonly organizationRepository: OrganizationRepository, // Keep this if needed for other methods
   ) {
-    // Initialize ManageOrganizations
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
       new UserRepository(),
+      new LenderRepository(),
+      new AddressRepository(),
     )
   }
 
@@ -60,10 +61,9 @@ export class UserController {
     const user: User & {
       accounts?: Account[]
       allow_email_change?: boolean
-    } = await this.userService.getUserProfile(id) // Add organizations to the type definition
+    } = await this.userService.getUserProfile(id)
 
     if (user) {
-      // Fetch user accounts
       user.accounts = await this.accountRepository.findByUserID(user.id)
       user.accounts.forEach((account) => {
         delete account.access_token
@@ -76,12 +76,10 @@ export class UserController {
       )
     }
 
-    user.allow_email_change = Boolean(
-      user.password && user.password.length > 0, // Check if password field exists and has content
-    )
+    user.allow_email_change = Boolean(user.password && user.password.length > 0)
 
     delete user.password
-    delete user.mfa_totp_secret // Ensure sensitive fields are removed
+    delete user.mfa_totp_secret
     return createResponse(StatusCodes.OK, 'User retrieved successfully', user)
   }
 
@@ -124,6 +122,15 @@ export class UserController {
       {
         roles,
       },
+    )
+  }
+
+  async getUsers(filters: UserFilters) {
+    const userContents = await this.userService.getUsers(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'User retrieved successfully',
+      userContents,
     )
   }
 }

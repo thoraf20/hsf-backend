@@ -1,4 +1,6 @@
 import { MfaFlow } from '@domain/enums/userEum'
+import { QueryBoolean } from '@shared/utils/helpers'
+import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
 export const UserSchema = z.object({
@@ -131,4 +133,10 @@ export const changeUserPasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changeUserPasswordSchema>
 
-export const getUserFiltersSchema = z.object({})
+export const getUserFiltersSchema = withPaginateSchema(
+  z.object({
+    deleted: z.nativeEnum(QueryBoolean).default(QueryBoolean.NO),
+  }),
+)
+
+export type UserFilters = z.infer<typeof getUserFiltersSchema>

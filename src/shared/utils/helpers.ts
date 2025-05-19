@@ -1,4 +1,17 @@
-import { Knex } from 'knex'
+import { generateRandomString, type RandomReader } from '@oslojs/crypto/random'
+import crypto from 'crypto'
+
+const random: RandomReader = {
+  read(bytes) {
+    crypto.getRandomValues(bytes)
+  },
+}
+
+const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
+export function generateRandomPassword() {
+  return generateRandomString(random, alphabet, 8)
+}
 
 export function generateRandomSixNumbers(): number {
   return Math.floor(100000 + Math.random() * 900000)

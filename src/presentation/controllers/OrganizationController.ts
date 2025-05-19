@@ -5,13 +5,17 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { createResponse } from '@presentation/response/responseType'
 import {
+  CreateHSFAdminInput,
+  CreateLenderInput,
+  LenderFilters,
   OrgMemberRoleFilters,
   UpdateOrganizationInput,
 } from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { QueryBoolean } from '@shared/utils/helpers'
 import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { AddressRepository } from '@repositories/user/AddressRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -20,6 +24,8 @@ export class OrganizationController {
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
       new UserRepository(),
+      new LenderRepository(),
+      new AddressRepository(),
     )
   }
 
@@ -139,5 +145,23 @@ export class OrganizationController {
       "User's organization available roles retrieved successfully",
       { roles },
     )
+  }
+
+  async getLenders(filters: LenderFilters) {
+    const lenderContents = await this.manageOrganizations.getLenders(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'Lenders retrieved successfully',
+      lenderContents,
+    )
+  }
+
+  async createLender(data: CreateLenderInput) {
+    const lender = await this.manageOrganizations.createLender(data)
+    return createResponse(StatusCodes.CREATED, 'Lender created', { lender })
+  }
+
+  async createHsfSubAdmin(auth: AuthInfo, data: CreateHSFAdminInput) {
+    this.manageOrganizations.createHSFSubAdmin(auth, data)
   }
 }
