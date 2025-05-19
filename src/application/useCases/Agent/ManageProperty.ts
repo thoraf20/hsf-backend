@@ -72,7 +72,7 @@ export class manageProperty {
         input.property_id,
         input.property_buyer_id,
         EscrowMeetingStatus.AWAITING_ACCEPTANCE,
-      ),
+      ), 
     ])
 
     const application =

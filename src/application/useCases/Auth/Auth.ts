@@ -191,6 +191,7 @@ export class AuthService {
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
     emailTemplates.emailVerificationEmail(email, otp.toString())
+    console.log("hey")
   }
 
   /**
