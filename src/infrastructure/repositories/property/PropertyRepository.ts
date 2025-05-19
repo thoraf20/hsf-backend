@@ -316,10 +316,12 @@ export class PropertyRepository implements IPropertyRepository {
     return property ? new Properties(property) : null
   }
 
-  async getAllUserPropertyCount(user_id: string): Promise<PropertyCount> {
+  async getAllUserPropertyCount(
+    organization_id: string,
+  ): Promise<PropertyCount> {
     let properties = (await db('properties')
       .select('properties.*')
-      .where('properties.user_id', user_id)
+      .where('properties.organization_id', organization_id)
       .orderBy('properties.id', 'desc')) as Properties[]
 
     const queryresp = properties.reduce(
@@ -497,7 +499,7 @@ export class PropertyRepository implements IPropertyRepository {
         'properties.numbers_of_bathroom',
         'properties.is_live',
         'properties.is_sold',
-        'properties.user_id as developer_id',
+        'properties.organization_id as developer_organization_id',
         'properties.property_size',
         'properties.street_address',
         'properties.city',
@@ -657,7 +659,7 @@ export class PropertyRepository implements IPropertyRepository {
         'properties.numbers_of_bathroom',
         'properties.is_live',
         'properties.is_sold',
-        'properties.user_id as developer_id',
+        'properties.organization_id as developer_organization_id',
         'properties.property_size',
         'properties.street_address',
         'properties.city',

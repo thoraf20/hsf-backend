@@ -178,3 +178,9 @@ export function isDeveloperCompanyRole(role: Role): boolean {
 export function isLenderInstitutionRole(role: Role): boolean {
   return LENDER_INSTITUTION_ROLES.includes(role)
 }
+
+export enum RoleSelect {
+  All = 'All',
+  SubAdmin = 'Sub Admin',
+  Admin = 'Admin',
+}

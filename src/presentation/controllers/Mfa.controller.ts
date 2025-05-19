@@ -13,10 +13,14 @@ import qrcode from 'qrcode'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { TimeSpan } from '@shared/utils/time-unit'
-import { DisableMfaInput, VerifyMFASetupInput } from '@validators/mfaValidator'
+import {
+  DisableMfaInput,
+  VerifyMfaAccessInput,
+  VerifyMFASetupInput,
+} from '@validators/mfaValidator'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { decryptToString, encryptString } from '@shared/utils/encrypt'
-import { MfaFlow } from '@domain/enums/userEum'
+import { MfaFlow, MfaPurpose } from '@domain/enums/userEum'
 import { UserRepository } from '@repositories/user/UserRepository'
 
 const MFA_SETUP_KEY = 'mfa_setup_key'
@@ -31,11 +35,14 @@ export class MfaController {
   async setup(userId: string) {
     const user = await this.userService.getUserProfile(userId)
     if (!user) {
-      throw createResponse(StatusCodes.NOT_FOUND, 'User not found')
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
     }
 
     if (user.require_authenticator_mfa) {
-      throw createResponse(StatusCodes.FORBIDDEN, 'Mfa setup already')
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Mfa setup already',
+      )
     }
 
     const [mfaSecretStr, mfaSecretBytes] = generate2faSecret()
@@ -152,8 +159,7 @@ export class MfaController {
       getEnv('MFA_RECOVERY_CODES_SIZE'),
     )
 
-    this.userService.resetRecoveryCodes(userId, hashedRecoveryCodes)
-
+    await this.userService.resetRecoveryCodes(userId, hashedRecoveryCodes)
     return recoveryCodes
   }
 
@@ -170,53 +176,60 @@ export class MfaController {
       )
     }
 
-    if (findUserById.require_authenticator_mfa) {
+    if (!findUserById.require_authenticator_mfa) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        'Authenticator not set.  You must set up an authenticator app before disabling MFA.',
+        'Authenticator not set. You must set up an authenticator app before disabling MFA.',
       )
     }
 
     const flow = input.flow
 
-    if (flow === MfaFlow.TOTP) {
-      const decryptedSecret = decryptToString(
-        decodeBase64(findUserById.mfa_totp_secret),
+    const usedRecoveryCode = await this.userService.verifyTOTP(
+      findUserById,
+      flow,
+      input.code,
+    )
+
+    if (!usedRecoveryCode) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Invalid Authenicator Flow',
       )
-
-      const isValidGeneratedSecretCode = verifyTOTP(
-        decodeBase64(decryptedSecret),
-        getEnv('TOTP_EXPIRES_IN'),
-        getEnv('TOTP_LENGTH'),
-        input.code,
-      )
-
-      if (!isValidGeneratedSecretCode) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Invalid otp code',
-        )
-      }
-    } else if (flow === MfaFlow.RecoveryCode) {
-      const recoveryCodes = (
-        await this.userRepository.getRecoveryCodes(userId)
-      ).filter((code) => !code.used)
-
-      const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
-      const match = verifyCodeFromRecoveryCodeList(
-        input.code,
-        plainRecoveryCodes,
-      )
-
-      if (!match) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Invalid recovery code',
-        )
-      }
     }
-    const data = this.userService.DisableMfa(userId, MfaFlow.TOTP)
+    const data = await this.userService.DisableMfa(userId, MfaFlow.TOTP)
 
     return createResponse(StatusCodes.OK, 'MFA disabled for the user.', data)
+  }
+
+  async verifyMFaAccess(userId: string, input: VerifyMfaAccessInput) {
+    const user = await this.userRepository.findById(userId)
+    if (!user.is_mfa_enabled) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        "You don't have MFA enabled on this account.",
+      )
+    }
+
+    if (!user.require_authenticator_mfa) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Authenticator not set. You must set up an authenticator app before disabling MFA.',
+      )
+    }
+
+    if (input.purpose === MfaPurpose.ChangePassword) {
+      return this.userService.verifyChangePasswordMfa(
+        user,
+        input.flow,
+        input.token,
+        input.code,
+      )
+    }
+
+    throw new ApplicationCustomError(
+      StatusCodes.FORBIDDEN,
+      'Invalid MFA purpose',
+    )
   }
 }

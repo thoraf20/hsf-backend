@@ -16,11 +16,12 @@ import {
 } from '@validators/agentsValidator'
 import { AgentsController } from '@controllers/Agent/Agent.controller'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
-import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 import { AdminRepository } from '@repositories/Agents/AdminRepository'
 import { optionalAuth } from '@middleware/authMiddleware'
 import { DefaulPasswordAccess } from '@domain/enums/rolesEmun'
 import { Agents } from '@use-cases/Agent/agent'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
 
 const agentsRoute: Router = Router()
 
@@ -28,7 +29,14 @@ const developerRepo = new DeveloperRespository()
 const userRepo = new UserRepository()
 const lenderRepo = new LenderRepository()
 const adminRepo = new AdminRepository()
-const service = new Agents(userRepo, developerRepo, adminRepo, lenderRepo)
+const orgRepo = new OrganizationRepository()
+const service = new Agents(
+  userRepo,
+  developerRepo,
+  adminRepo,
+  lenderRepo,
+  orgRepo,
+)
 const controller = new AgentsController(service)
 
 // agentsRoute.post(

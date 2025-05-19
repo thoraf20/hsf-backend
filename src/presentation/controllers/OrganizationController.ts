@@ -4,9 +4,18 @@ import { OrganizationRepository } from '@infrastructure/repositories/Organizatio
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { createResponse } from '@presentation/response/responseType'
-import { UpdateOrganizationInput } from '@validators/organizationValidator'
+import {
+  CreateHSFAdminInput,
+  CreateLenderInput,
+  LenderFilters,
+  OrgMemberRoleFilters,
+  UpdateOrganizationInput,
+} from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { AddressRepository } from '@repositories/user/AddressRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -15,6 +24,8 @@ export class OrganizationController {
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
       new UserRepository(),
+      new LenderRepository(),
+      new AddressRepository(),
     )
   }
 
@@ -90,8 +101,8 @@ export class OrganizationController {
     )
   }
 
-  async getCurrentOrgRoles(authInfo: AuthInfo) {
-    const roles = await this.manageOrganizations.getCurrentOrgRoles(
+  async getCurrentOrgRoles(authInfo: AuthInfo, query: OrgMemberRoleFilters) {
+    let roles = await this.manageOrganizations.getCurrentOrgRoles(
       authInfo.organizationType,
     )
 
@@ -101,6 +112,14 @@ export class OrganizationController {
         `Roles  for organization '${authInfo.organizationType}' not found`,
       )
     }
+
+    roles = roles.filter((role) =>
+      query.select === RoleSelect.SubAdmin
+        ? !ADMIN_LEVEL_ROLES.includes(role.name as Role)
+        : query.select === RoleSelect.Admin
+          ? ADMIN_LEVEL_ROLES.includes(role.name as Role)
+          : true,
+    )
 
     return createResponse(
       StatusCodes.OK,
@@ -126,5 +145,23 @@ export class OrganizationController {
       "User's organization available roles retrieved successfully",
       { roles },
     )
+  }
+
+  async getLenders(filters: LenderFilters) {
+    const lenderContents = await this.manageOrganizations.getLenders(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'Lenders retrieved successfully',
+      lenderContents,
+    )
+  }
+
+  async createLender(data: CreateLenderInput) {
+    const lender = await this.manageOrganizations.createLender(data)
+    return createResponse(StatusCodes.CREATED, 'Lender created', { lender })
+  }
+
+  async createHsfSubAdmin(auth: AuthInfo, data: CreateHSFAdminInput) {
+    this.manageOrganizations.createHSFSubAdmin(auth, data)
   }
 }

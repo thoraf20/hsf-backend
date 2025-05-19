@@ -1,10 +1,16 @@
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
 import { RecoveryCode, User, UserRole } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { userValue } from '@shared/respositoryValues'
 import { Knex } from 'knex'
 import { Role } from '@routes/index.t'
+import { UserFilters } from '@validators/userValidator'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { applyPagination } from '@shared/utils/paginate'
+import { SearchType } from '@shared/types/repoTypes'
+import { QueryBoolean } from '@shared/utils/helpers'
+import { UserStatus } from '@domain/enums/userEum'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
@@ -116,7 +122,32 @@ export class UserRepository implements IUserRepository {
       .where({ user_id: userId })
   }
 
-  useFilters(query: Knex.QueryBuilder<any, any[]>) {}
+  useFilters(query: Knex.QueryBuilder<any, any[]>, filters: UserFilters) {
+    let q = query
+
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.deleted) {
+      add(q).whereRaw(
+        filters.deleted === QueryBoolean.YES
+          ? `u.status = '${UserStatus.Deleted}'`
+          : `u.status != '${UserStatus.Deleted}'`,
+      )
+    }
+
+    return q
+  }
+
+  async getAllUsers(filters: UserFilters): Promise<SeekPaginationResult<User>> {
+    let baseQuery = db('users as u')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .orderBy('created_at', 'desc')
+
+    baseQuery = this.useFilters(baseQuery, filters)
+    baseQuery = baseQuery.select('u.*', 'r.name as role')
+
+    return applyPagination<User>(baseQuery)
+  }
 
   async getRolesByType(types: Array<Role>): Promise<UserRole[]> {
     return db.table<UserRole>('roles').select().whereIn('name', types)

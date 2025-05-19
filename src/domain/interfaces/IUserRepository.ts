@@ -1,5 +1,7 @@
 import { Role } from '@routes/index.t'
 import { RecoveryCode, User, UserRole } from '../entities/User'
+import { UserFilters } from '@validators/userValidator'
+import { SeekPaginationResult } from '@shared/types/paginate'
 
 export interface IUserRepository {
   create(user: User): Promise<User>
@@ -14,6 +16,8 @@ export interface IUserRepository {
     id: string,
     data: Partial<RecoveryCode>,
   ): Promise<RecoveryCode>
+
+  getAllUsers(filters: UserFilters): Promise<SeekPaginationResult<User>>
 
   clearRecoveryCodesByUserId(userId: string): Promise<void>
   findById(id: string): Promise<User | null>

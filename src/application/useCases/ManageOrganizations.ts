@@ -8,18 +8,35 @@ import {
   LENDER_INSTITUTION_ROLES,
   Role,
 } from '@domain/enums/rolesEmun'
+import { AddressType, UserStatus } from '@domain/enums/userEum'
 import { IOrganizationRepository } from '@domain/interfaces/IOrganizationRepository'
-import { User } from '@entities/User' // Import User
+import { getUserClientView, User } from '@entities/User' // Import User
+import { IAddressRepository } from '@interfaces/IAddressRepository'
+import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate' // Import pagination types
+import {
+  generateRandomPassword,
+  generateRandomSixNumbers,
+} from '@shared/utils/helpers'
+import { AuthInfo, isHigherRoleLevel } from '@shared/utils/permission-policy'
+import {
+  CreateHSFAdminInput,
+  CreateLenderInput,
+  LenderFilters,
+} from '@validators/organizationValidator'
+import { StatusCodes } from 'http-status-codes'
 
 export class ManageOrganizations {
   constructor(
     private readonly organizationRepository: IOrganizationRepository,
     private readonly userRepository: IUserRepository,
+    private readonly lenderRepository: ILenderRepository,
+    private readonly addressRepository: IAddressRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -101,23 +118,155 @@ export class ManageOrganizations {
   async getRoles() {
     return this.userRepository.getRoles()
   }
+
+  async getLenders(filters: LenderFilters) {
+    const lenderContents = await this.lenderRepository.getAllLenders(filters)
+    lenderContents.result = await Promise.all(
+      lenderContents.result.map(async (lender) => {
+        const organization =
+          await this.organizationRepository.getOrganizationById(
+            lender.organization_id,
+          )
+
+        let owner: User
+        if (organization.owner_user_id) {
+          owner = await this.userRepository.findById(organization.owner_user_id)
+        }
+        return { ...lender, organization, owner: getUserClientView(owner) }
+      }),
+    )
+    return lenderContents
+  }
+
+  async createLender(data: CreateLenderInput) {
+    const [lenderRole] = await this.userRepository.getRolesByType([
+      Role.LENDER_ADMIN,
+    ])
+
+    if (!lenderRole) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'We are unable to create lender',
+      )
+    }
+
+    const generatedPass = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(generatedPass)
+    const lenderOwner = await this.userRepository.create({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      status: UserStatus.Pending,
+      password: hashedPassword,
+      phone_number: data.phone_number,
+      is_admin: true,
+      force_password_reset: true,
+      role_id: lenderRole.id,
+    })
+
+    const lenderOrg = await this.organizationRepository.createOrganization({
+      name: data.lender_name,
+      owner_user_id: lenderOwner.id,
+      type: OrganizationType.LENDER_INSTITUTION,
+    })
+
+    await this.organizationRepository.addUserToOrganization({
+      role_id: lenderOwner.role_id,
+      organization_id: lenderOrg.id,
+      user_id: lenderOwner.id,
+    })
+
+    const lender = await this.lenderRepository.createLender({
+      lender_name: data.lender_name,
+      lender_type: data.lender_institution_type,
+      cac: data.lender_registration_number,
+      state: data.lender_state,
+      head_office_address: data.lender_address_line,
+      organization_id: lenderOrg.id,
+    })
+
+    return {
+      ...lender,
+      organization: lenderOrg,
+      owner: {
+        ...getUserClientView(
+          await this.userRepository.findById(lenderOwner.id),
+        ),
+        password: generatedPass,
+      },
+    }
+  }
+
+  async createHSFSubAdmin(auth: AuthInfo, input: CreateHSFAdminInput) {
+    const newAdminRole = await this.userRepository.getRoleById(input.role_id)
+    if (!newAdminRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    if (!isHigherRoleLevel(auth.globalRole!, newAdminRole.name as Role)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not permitted to add someone of higher role than yours',
+      )
+    }
+
+    const [existingEmailUser, existingPhoneUser] = await Promise.all([
+      this.userRepository.findByEmail(input.email),
+      this.userRepository.findByPhone(input.phone_number),
+    ])
+
+    if (existingEmailUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email not available',
+      )
+    }
+
+    if (existingPhoneUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Phone number not available',
+      )
+    }
+
+    const generatedPass = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(generatedPass)
+
+    const newAdminUser = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      status: UserStatus.Pending,
+      password: hashedPassword,
+      phone_number: input.phone_number,
+      is_admin: true,
+      force_password_reset: true,
+      role_id: newAdminRole.id,
+    })
+
+    await this.addressRepository.create({
+      user_id: newAdminUser.id,
+      city: input.city,
+      state: input.state,
+      country: input.country,
+      street_address: input.street_address,
+      address_type: AddressType.Home,
+    })
+
+    const membership = await this.organizationRepository.addUserToOrganization({
+      organization_id: auth.currentOrganizationId,
+      role_id: newAdminRole.id,
+      user_id: newAdminUser.id,
+    })
+
+    return {
+      ...getUserClientView({
+        ...newAdminUser,
+        role: newAdminRole.name as Role,
+      }),
+      membership,
+    }
+  }
 }
-
-/*
-
-let types: Array<Role> = []
-switch (organizationType) {
-  case OrganizationType.HSF_INTERNAL:
-    types = HSF_INTERNAL_ROLES
-    break
-
-  case OrganizationType.DEVELOPER_COMPANY:
-    types = DEVELOPER_COMPANY_ROLES
-    break
-
-  case OrganizationType.LENDER_INSTITUTION:
-    types = LENDER_INSTITUTION_ROLES
-
-  default:
-    return null
-}*/

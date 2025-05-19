@@ -20,3 +20,7 @@ export enum AddressType {
   Shipping = 'Shipping',
   Other = 'Other',
 }
+
+export enum MfaPurpose {
+  ChangePassword = 'Change Password',
+}

@@ -3,7 +3,6 @@ import type { Knex } from 'knex'
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.alterTable('lenders_profile', (table) => {
     // Drop the old foreign key that references users table
-    // table.dropForeign(['user_id']); // Knex might need specific constraint name
     table.dropColumn('user_id')
   })
 

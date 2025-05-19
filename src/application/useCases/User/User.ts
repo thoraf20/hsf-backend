@@ -13,12 +13,10 @@ import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
   UpdateProfileImageInput,
+  UserFilters,
 } from '@validators/userValidator'
 import { TimeSpan } from '@shared/utils/time-unit'
-import {
-  generateRandomOTP,
-  verifyCodeFromRecoveryCodeList,
-} from '@shared/utils/totp'
+import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
 import { verifyTOTP } from '@oslojs/otp'
 import { decodeBase64 } from '@oslojs/encoding'
 import { getEnv } from '@infrastructure/config/env/env.config'
@@ -34,6 +32,10 @@ export class UserService {
   public async getUserProfile(user: string): Promise<User> {
     const users = await this.userRepository.findById(user)
     return users
+  }
+
+  public async getUsers(query: UserFilters) {
+    return this.userRepository.getAllUsers(query)
   }
 
   public async update(input: Partial<User>, id: string) {
@@ -215,10 +217,6 @@ export class UserService {
       )
     }
 
-    if (flow === MfaFlow.TOTP && user.role !== Role.HOME_BUYER) {
-      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
-    }
-
     if (flow === MfaFlow.EMAIL_OTP) {
       if (user.role === Role.HOME_BUYER) {
         throw new ApplicationCustomError(
@@ -234,7 +232,7 @@ export class UserService {
     }
 
     user = await this.userRepository.update(id, {
-      is_mfa_enabled: true,
+      is_mfa_enabled: user.role !== Role.HOME_BUYER,
       require_authenticator_mfa: false,
       mfa_totp_secret: null,
     })
@@ -268,6 +266,20 @@ export class UserService {
       )
     }
 
+    const isMatchPassword = await this.userRepository.comparedPassword(
+      input.current_password,
+      user.password,
+    )
+
+    console.log({ isMatchPassword })
+
+    if (!isMatchPassword) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Current password not a match',
+      )
+    }
+
     const isSameWithOldPassword = await this.userRepository.comparedPassword(
       input.new_password,
       user.password,
@@ -280,11 +292,11 @@ export class UserService {
       )
     }
 
-    const hashedPassword = this.userRepository.hashedPassword(
+    const hashedPassword = await this.userRepository.hashedPassword(
       input.new_password,
     )
 
-    if (user.is_mfa_enabled) {
+    if (user.require_authenticator_mfa) {
       const id = uuidv4()
       await this.client.setKey(
         `${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${id}`,
@@ -296,21 +308,9 @@ export class UserService {
         new TimeSpan(1, 'h').toMilliseconds(),
       )
 
-      if (!user.require_authenticator_mfa) {
-        const totpForEmailMfa = generateRandomOTP()
-        await this.client.setKey(
-          `${CacheEnumKeys.PASSWORD_CHANGE_MFA_TOTP}-${totpForEmailMfa}`,
-          id,
-          new TimeSpan(10, 'm').toMilliseconds(),
-        )
-      }
-
       return {
         token: id,
         mfa_required: true,
-        mfa_type: user.require_authenticator_mfa
-          ? MfaFlow.TOTP
-          : MfaFlow.EMAIL_OTP,
       }
     }
 
@@ -332,27 +332,11 @@ export class UserService {
   }
 
   async verifyChangePasswordMfa(
-    userId: string,
+    user: User,
     flow: MfaFlow,
     token: string,
     code: string,
   ) {
-    const user = await this.userRepository.findById(userId)
-    if (!user || user.status === UserStatus.Deleted) {
-      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
-    }
-
-    if (
-      !(
-        user.status === UserStatus.Active || user.status === UserStatus.Inactive
-      )
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        `Password change not allowed for user with status: ${user.status}. Account must be active or inactive.`,
-      )
-    }
-
     if (flow === MfaFlow.EMAIL_OTP) {
       const totpKey = `${CacheEnumKeys.PASSWORD_CHANGE_MFA_TOTP}-${code}`
       const totpSecret = await (<Promise<string | null>>(
@@ -374,8 +358,13 @@ export class UserService {
       `${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${token}`,
     )
 
-    if (!sessionData || sessionData.user_id === userId) {
-      throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+    console.log({ sessionData })
+
+    if (!(sessionData && sessionData.user_id === user.id)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Invalid or expired session',
+      )
     }
 
     await this.verifyTOTP(user, flow, code) //throw error incase of invalid code
@@ -394,7 +383,12 @@ export class UserService {
     }
   }
 
-  async verifyTOTP(user: User, flow: MfaFlow, code: string) {
+  async verifyTOTP(
+    user: User,
+    flow: MfaFlow,
+    code: string,
+    markAsUsed?: boolean,
+  ) {
     if (!user.require_authenticator_mfa) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
@@ -423,9 +417,9 @@ export class UserService {
     }
 
     if (flow === MfaFlow.RecoveryCode) {
-      const recoveryCodes = (
-        await this.userRepository.getRecoveryCodes(user.id ?? user.user_id)
-      ).filter((code) => !code.used)
+      const recoveryCodes = await this.userRepository.getRecoveryCodes(
+        user.id ?? user.user_id,
+      )
 
       const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
       const match = verifyCodeFromRecoveryCodeList(code, plainRecoveryCodes)
@@ -438,10 +432,23 @@ export class UserService {
       }
 
       const usedCode = recoveryCodes.find(({ code: hash }) => hash === match)
-      await this.userRepository.updateRecoveryCodeById(usedCode.id, {
-        used: true,
-      })
+
+      if (usedCode.used) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'This recovery code has been previously used.',
+        )
+      }
+
+      if (markAsUsed) {
+        await this.userRepository.updateRecoveryCodeById(usedCode.id, {
+          used: true,
+        })
+      }
+      return usedCode
     }
+
+    return null
   }
 
   async completeChangePassword(

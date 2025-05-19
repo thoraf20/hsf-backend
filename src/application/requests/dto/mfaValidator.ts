@@ -1,4 +1,4 @@
-import { MfaFlow } from '@domain/enums/userEum'
+import { MfaFlow, MfaPurpose } from '@domain/enums/userEum'
 import { z } from 'zod'
 
 export const verifyMfaSetupSchema = z.object({
@@ -22,3 +22,12 @@ export const disableMfaSchema = z
   )
 
 export type DisableMfaInput = z.infer<typeof disableMfaSchema>
+
+export const verifyMFaAccessSchema = z.object({
+  code: z.string().nonempty(),
+  flow: z.nativeEnum(MfaFlow),
+  token: z.string().nonempty(),
+  purpose: z.nativeEnum(MfaPurpose),
+})
+
+export type VerifyMfaAccessInput = z.infer<typeof verifyMFaAccessSchema>

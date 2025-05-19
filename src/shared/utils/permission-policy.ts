@@ -25,6 +25,22 @@ export interface AuthInfo {
   organizationType?: OrganizationType
 }
 
+const ROLE_LEVELS: Partial<Record<Role, number>> = {
+  [Role.SUPER_ADMIN]: 3, // Highest level, can manage all lower-level admins
+  [Role.HSF_ADMIN]: 2, // Can manage organization admins and potentially other HSF staff
+  [Role.DEVELOPER_ADMIN]: 1, // Organization admin, level 1
+  [Role.LENDER_ADMIN]: 1, // Organization admin, level 1
+  [Role.HSF_LOAN_OFFICER]: 0, // HSF internal staff level 0
+  [Role.HSF_COMPLIANCE_OFFICER]: 0, // HSF internal staff level 0
+  [Role.HSF_INSPECTION_MANAGER]: 0, // HSF internal staff level 0
+  [Role.HSF_DISPUTE_MANAGER]: 0, // HSF internal staff level 0
+  [Role.HSF_CUSTOMER_SUPPORT]: 0, // HSF internal staff level 0
+}
+
+export function getRoleLevel(role: Role): number {
+  return ROLE_LEVELS[role] ?? 0
+}
+
 /**
  * Defines the signature for a function that checks a specific permission
  * based on the provided AuthInfo.
@@ -102,4 +118,18 @@ export function requireOrganizationType(...types: Array<OrganizationType>) {
       types.some((type) => authInfo.organizationType === type)
     )
   }
+}
+
+export const requireRoleLevel = (minimumLevel: number): PermissionCheck => {
+  return (authInfo: AuthInfo) => {
+    const userLevel = getRoleLevel(authInfo.globalRole!)
+    return userLevel >= minimumLevel
+  }
+}
+
+export function isHigherRoleLevel(
+  requesterRole: Role,
+  targetRole: Role,
+): boolean {
+  return getRoleLevel(requesterRole) > getRoleLevel(targetRole)
 }

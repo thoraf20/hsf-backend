@@ -1,4 +1,6 @@
 import { MfaFlow } from '@domain/enums/userEum'
+import { QueryBoolean } from '@shared/utils/helpers'
+import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
 export const UserSchema = z.object({
@@ -67,7 +69,7 @@ export const verifyInitMfaSetupSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits'),
 })
 
-export const verifyMfaSchema = z.object({
+export const verifyLoginMfaSchema = z.object({
   code: z.string().nonempty(),
   flow: z.nativeEnum(MfaFlow),
   token: z.string().nonempty(),
@@ -81,7 +83,7 @@ export type ChangePasswordCompleteInput = z.infer<
   typeof changePasswordCompleteSchema
 >
 
-export type VerifyMfaInput = z.infer<typeof verifyMfaSchema>
+export type VerifyLoginMfaInput = z.infer<typeof verifyLoginMfaSchema>
 
 export const sendMfaOtpSchema = z.object({
   token: z.string().nonempty(),
@@ -131,4 +133,10 @@ export const changeUserPasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changeUserPasswordSchema>
 
-export const getUserFiltersSchema = z.object({})
+export const getUserFiltersSchema = withPaginateSchema(
+  z.object({
+    deleted: z.nativeEnum(QueryBoolean).default(QueryBoolean.NO),
+  }),
+)
+
+export type UserFilters = z.infer<typeof getUserFiltersSchema>
