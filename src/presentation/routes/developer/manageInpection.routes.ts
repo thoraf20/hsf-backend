@@ -79,7 +79,7 @@ manageInpespectionRouter.post(
 )
 
 manageInpespectionRouter.get(
-  '/inspection/single/:inspection_id',
+  '/single/:inspection_id',
   authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
   asyncMiddleware(async (req, res) => {
     const { inspection_id } = req.params
