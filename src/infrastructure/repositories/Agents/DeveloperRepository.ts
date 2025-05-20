@@ -1,6 +1,10 @@
 import { Developer, DevelopeReg } from '@entities/Developer'
 import db from '@infrastructure/database/knex'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { applyPagination } from '@shared/utils/paginate'
+import { DeveloperFilters } from '@validators/developerValidator'
+import { Knex } from 'knex'
 
 export class DeveloperRespository implements IDeveloperRepository {
   private readonly tableName = 'developers_profile'
@@ -33,5 +37,46 @@ export class DeveloperRespository implements IDeveloperRepository {
       .first()
 
     return developer ? new Developer(developer) : null
+  }
+
+  useFilters(
+    query: Knex.QueryBuilder<Developer, Developer[]>,
+    filters: DeveloperFilters,
+  ): Knex.QueryBuilder<Developer, Developer[]> {
+    let q = query
+
+    if (!filters || Object.keys(filters).length < 1) {
+      return q
+    }
+
+    if (filters.first_name) {
+      q = q.where('first_name', 'ilike', `%${filters.first_name}%`)
+    }
+    if (filters.last_name) {
+      q = q.where('last_name', 'ilike', `%${filters.last_name}%`)
+    }
+    if (filters.email) {
+      q = q.where('email', 'ilike', `%${filters.email}%`)
+    }
+    if (filters.company_name) {
+      q = q.where('company_name', 'ilike', `%${filters.company_name}%`)
+    }
+    if (filters.specialization) {
+      q = q.where('specialization', 'ilike', `%${filters.specialization}%`)
+    }
+
+    return q
+  }
+
+  async getDevelopers(
+    filters: DeveloperFilters,
+  ): Promise<SeekPaginationResult<Developer>> {
+    let baseQuery = db<Developer>('developers_profile')
+
+    baseQuery = this.useFilters(baseQuery, filters)
+
+    baseQuery = baseQuery.orderBy('created_at', 'asc')
+
+    return applyPagination<Developer>(baseQuery, filters)
   }
 }

@@ -25,6 +25,10 @@ import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
 import { ManageOrganizations } from '@use-cases/ManageOrganizations'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { AddressRepository } from '@repositories/user/AddressRepository'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -45,6 +49,10 @@ export class AuthService {
     this.manageOrganizations = new ManageOrganizations(
       organizationRepository,
       new UserRepository(),
+      new LenderRepository(),
+      new AddressRepository(),
+      new DeveloperRespository(),
+      new PropertyRepository(),
     )
   }
 
@@ -73,16 +81,16 @@ export class AuthService {
         )
       }
 
-      if (role.name === Role.HOME_BUYER) {
+      if (user.role !== Role.HOME_BUYER) {
         throw new ApplicationCustomError(
-          StatusCodes.CONFLICT,
-          'Email is already in use.',
+          StatusCodes.FORBIDDEN,
+          'There was a problem validating your email. Please check the address and try again or contact support',
         )
       }
 
       throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'We are unable to verify your account',
+        StatusCodes.CONFLICT,
+        'Email is already in use.',
       )
     }
 

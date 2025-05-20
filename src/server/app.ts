@@ -30,7 +30,11 @@ app.use(
   cors({
     origin:
       getEnv('NODE_ENV') === 'development'
-        ? ['http://localhost:3000', 'http://localhost:3001']
+        ? [
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002',
+          ]
         : getEnv('ORIGINS'),
 
     credentials: true,

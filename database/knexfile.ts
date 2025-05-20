@@ -3,14 +3,6 @@ import path from 'path'
 import dotenv from 'dotenv'
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
 
-console.log({
-  host: process.env.DB_HOST as string,
-  port: parseInt(String(process.env.DB_PORT)),
-  // user: process.env.DB_USER as string,
-  // password: process.env.DB_PASSWORD as string,
-  database: process.env.DB_NAME as string,
-})
-
 console.log(process.env.PORT)
 const config: { [key: string]: Knex.Config } = {
   development: {
@@ -18,8 +10,8 @@ const config: { [key: string]: Knex.Config } = {
     connection: {
       host: process.env.DB_HOST as string,
       port: parseInt(String(process.env.DB_PORT)),
-      // user: process.env.DB_USER as string,
-      // password: process.env.DB_PASSWORD as string,
+      user: process.env.DB_USER as string,
+      password: process.env.DB_PASSWORD as string,
       database: process.env.DB_NAME as string,
     },
     pool: {

@@ -30,6 +30,9 @@ import {
 } from '@validators/organizationValidator'
 import { StatusCodes } from 'http-status-codes'
 import { UserFilters } from '@validators/userValidator'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { DeveloperFilters } from '@validators/developerValidator'
+import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 
 export class ManageOrganizations {
   constructor(
@@ -37,6 +40,8 @@ export class ManageOrganizations {
     private readonly userRepository: IUserRepository,
     private readonly lenderRepository: ILenderRepository,
     private readonly addressRepository: IAddressRepository,
+    private readonly developerRepository: IDeveloperRepository,
+    private readonly propertyRepository: IPropertyRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -399,5 +404,44 @@ export class ManageOrganizations {
         role: newAdminRole,
       },
     }
+  }
+
+  async getDevelopers(filters: DeveloperFilters) {
+    const developerContents =
+      await this.developerRepository.getDevelopers(filters)
+
+    developerContents.result = await Promise.all(
+      developerContents.result.map(async (developer) => {
+        const organization =
+          await this.organizationRepository.getOrganizationById(
+            developer.organization_id,
+          )
+
+        if (!organization) {
+          return developer
+        }
+
+        const owner = await this.userRepository.findById(
+          organization.owner_user_id,
+        )
+
+        const { total_records } =
+          await this.propertyRepository.findPropertiesByDeveloperOrg(
+            developer.organization_id,
+            { result_per_page: 1 },
+          )
+
+        return {
+          ...developer,
+          owner: getUserClientView(owner),
+          property_listing_counts: total_records,
+          organization: {
+            ...organization,
+          },
+        }
+      }),
+    )
+
+    return developerContents
   }
 }
