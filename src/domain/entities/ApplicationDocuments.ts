@@ -1,95 +1,8 @@
-import { DocumentApprovalEnum } from '@domain/enums/documentEnum'
-
-export class Document {
-  id: string
-  application_id?: string
-  file_url: string // URL to the stored file (S3, local, etc.)
-  file_name: string // Original file name
-  uploaded_by_user_id?: string
-  document_group_type_id?: string
-  version?: number // To handle re-uploads/corrections
-  constructor(d: Partial<Document>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
-export class DocumentApprovalStage {
-  id: string
-  name: string // e.g., 'HSF Initial Review', 'Lender Document Verification', 'Third-Party Compliance'
-  description: string
-  sequence_order?: number
-  next_approval_stage_id?: string
-  constructor(d: Partial<DocumentApprovalStage>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
-export class StageRequriedDocument {
-  id: string
-  stage_id: string
-  document_type: string
-  is_required: boolean
-  constructor(d: Partial<StageRequriedDocument>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
-export class StageApproverRole {
-  id: string
-  stage_id: string
-  role_id: string // Role required for this stage (e.g., 'admin', 'lender', 'compliance officer')
-  // -- required_approvals INTEGER DEFAULT 1, -- Future: If multiple people of the same role need to approve
-  constructor(d: Partial<StageApproverRole>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
-export class DocumentApproval {
-  id: string
-  application_document_id: string
-  stage_id: string
-  approver_user_id: string //User who performed the action (can be NULL if just tracking stage entry)
-  status: DocumentApprovalEnum //Status for this doc at this stage
-  comments: string // Optional comments, especially for rejection
-  action_timestamp: Date
-
-  constructor(d: Partial<DocumentApproval>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
 export class DocumentGroup {
   id: string
   name: string
   tag: string
   description?: string
-  display_order?: number
-  trigger_approval_stage_id?: string
 
   constructor(d: Partial<DocumentGroup>) {
     let data = {
@@ -101,7 +14,7 @@ export class DocumentGroup {
   }
 }
 
-export class DocumentGroupType {
+export class GroupDocumentType {
   id: string
   group_id: string
   document_type: string
@@ -110,7 +23,49 @@ export class DocumentGroupType {
   uploaded_by_role_id: string
   is_required_for_group: boolean
 
-  constructor(d: Partial<DocumentGroupType>) {
+  constructor(d: Partial<GroupDocumentType>) {
+    let data = {
+      ...d,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    Object.assign(this, data)
+  }
+}
+
+export class ApplicationDocument {
+  id: string
+  application_id: string
+  document_group_type_id: string
+  document_url: string
+  document_name: string
+  document_size?: string
+  review_request_id: string
+  created_at: Date
+  updated_at: Date
+
+  constructor(d: Partial<ApplicationDocument>) {
+    let data = {
+      ...d,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    Object.assign(this, data)
+  }
+}
+
+export class ApplicationDocumentEntry {
+  id: string
+  application_id: string
+  document_group_type_id: string
+  document_url: string
+  document_name: string
+  document_type: string
+  document_status: string
+  created_at: Date
+  updated_at: Date
+
+  constructor(d: Partial<ApplicationDocumentEntry>) {
     let data = {
       ...d,
       created_at: new Date(),

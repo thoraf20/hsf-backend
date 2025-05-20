@@ -16,6 +16,7 @@ import path from 'path'
 import http from 'http'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import '@infrastructure/worker/inspectionWorker'
+import { asyncMiddleware } from '@routes/index.t'
 // import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 // import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 // import { AdminRepository } from '@repositories/Agents/AdminRepository'
@@ -82,7 +83,7 @@ app.get('/', (req: Request, res: Response) => {
 
 const uploadDir = path.join(process.cwd(), 'uploads') // Adjust path as needed
 
-app.use('/uploads', express.static(uploadDir))
+app.use('/uploads', asyncMiddleware(express.static(uploadDir)))
 app.use('/api/v1', IndexRouters)
 app.all('*', (req: Request, res: Response) => {
   res.status(StatusCodes.NOT_FOUND).json({
