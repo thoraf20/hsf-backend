@@ -54,3 +54,4 @@ export class InspectionRescheduleRequest {
     Object.assign(this, data)
   }
 }
+

@@ -9,7 +9,6 @@ import authRoutes from '@routes/authRoutes/auth.routes'
 import { limiter } from '@middleware/security'
 import managePropertyRoute from '@routes/Agents/ManageProperty.routes'
 import enquiryRoutes from '@routes/property/enquiry.routes'
-import developerRoutes from '@routes/developer/developer.routes'
 import preQualifierRoutes from '@routes/property/preQualifiier/prequalify.routes'
 import propertyPurchaseRoutes from './property/purchaseProperty.routes'
 import serviceOfferingRoutes from '@routes/Agents/serviceOffering.routes'
@@ -22,10 +21,11 @@ import manageApplicationRoutes from './application/application.manage.routes'
 import organizationRoutes from './organization/organization.routes'
 import notificationRoutes from './userRoutes/notificationRoutes'
 import manageUserRoutes from './userRoutes/user.manage.routes'
+import developerIndexRoutes from './developer/developerIndex.routes'
 
 const routes: Router = Router()
 
-routes.use('/developer', authenticate, limiter, developerRoutes)
+routes.use('/developer', authenticate, limiter, developerIndexRoutes)
 routes.use('/pre-qualifier', authenticate, preQualifierRoutes)
 routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoute)

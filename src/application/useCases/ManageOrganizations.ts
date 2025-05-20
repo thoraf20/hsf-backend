@@ -35,8 +35,8 @@ export class ManageOrganizations {
   constructor(
     private readonly organizationRepository: IOrganizationRepository,
     private readonly userRepository: IUserRepository,
-    private readonly lenderRepository: ILenderRepository,
-    private readonly addressRepository: IAddressRepository,
+    private readonly lenderRepository?: ILenderRepository,
+    private readonly addressRepository?: IAddressRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {

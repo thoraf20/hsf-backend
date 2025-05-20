@@ -315,7 +315,7 @@ export class AuthService {
       }
 
       const otp = generateRandomSixNumbers()
-
+      console.log(otp)
       const cacheKey = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${user.id ?? user.user_id}`
       await this.client.setKey(
         cacheKey,
@@ -418,7 +418,7 @@ export class AuthService {
     }
 
     const otp = generateRandomSixNumbers()
-
+  
     const cacheKey = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${user.id ?? user.user_id}`
     await this.client.setKey(
       cacheKey,

@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import { PropertyRepository } from '@infrastructure/repositories/property/PropertyRepository'
 import { ManageDeveloper } from '@use-cases/Developer/developer'
-import { DeveloperController } from '@controllers/Developer.controller'
+import { DeveloperController } from '@controllers/Developer/Developer.controller'
 import { requireRoles } from '@middleware/permissionMiddleware'
 import { asyncMiddleware, Role } from '@routes/index.t'
 import { InspectionRepository } from '@repositories/property/Inspection'

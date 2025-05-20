@@ -1,7 +1,7 @@
 import { createResponse } from "@presentation/response/responseType";
 import { SeekPaginationOption } from "@shared/types/paginate";
-import { PropertyFilters } from "@shared/types/repoTypes";
 import { ManageDeveloper } from "@use-cases/Developer/developer";
+import { PropertyFilters } from "@validators/propertyValidator";
 import { StatusCodes } from "http-status-codes";
 
 
