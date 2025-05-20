@@ -68,6 +68,7 @@ export async function applyPagination<T>(
     .clone()
     .clearSelect()
     .clearOrder()
+    .clearGroup()
     .count('* as count')
     .first()
 

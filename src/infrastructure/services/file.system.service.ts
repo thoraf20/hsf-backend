@@ -1,6 +1,7 @@
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { IFileRepository } from '@interfaces/IFileRespository'
 import { File, UploadedFile } from '@providers/fileupload'
+import tryit from '@shared/utils/tryit'
 import fs from 'fs/promises'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
@@ -30,9 +31,9 @@ export class FileRepository implements IFileRepository {
       const filePath = path.join(this.uploadDirectory, filename)
 
       try {
-        const stat = await fs.stat(this.uploadDirectory)
+        const [, statErr] = await tryit(fs.stat(this.uploadDirectory))
 
-        if (!stat) {
+        if (statErr) {
           await fs.mkdir(this.uploadDirectory, { mode: 777 })
         }
         await fs.writeFile(filePath, file.content)

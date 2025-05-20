@@ -17,6 +17,9 @@ import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserFilters } from '@validators/userValidator'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
+import { DeveloperFilters } from '@validators/developerValidator'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -27,6 +30,8 @@ export class OrganizationController {
       new UserRepository(),
       new LenderRepository(),
       new AddressRepository(),
+      new DeveloperRespository(),
+      new PropertyRepository(),
     )
   }
 
@@ -205,5 +210,16 @@ export class OrganizationController {
     return createResponse(StatusCodes.CREATED, 'Admin created successfully', {
       admin: admin,
     })
+  }
+
+  async getDevelopers(filters: DeveloperFilters) {
+    const developerContents =
+      await this.manageOrganizations.getDevelopers(filters)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Developers retrived successfully',
+      developerContents,
+    )
   }
 }

@@ -476,3 +476,20 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
 2025-05-19 11:50:17 [ERROR]: Error: Email not available
     at ManageOrganizations.createHSFSubAdmin (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/ManageOrganizations.ts:220:13)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-05-20 11:27:11 [ERROR]: Error: ENOENT: no such file or directory, stat '/home/buildthings/Documents/projects/actives/HSF-Backend-New/uploads'
+    at Object.stat (node:internal/fs/promises:1036:18)
+    at FileRepository.upload (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/infrastructure/services/file.system.service.ts:33:22)
+    at FileController.uploadSingleFile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/File.controller.ts:10:26)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/file/file.routes.ts:44:24
+2025-05-20 14:00:24 [ERROR]: Error: EACCES: permission denied, open '/home/buildthings/Documents/projects/actives/HSF-Backend-New/uploads/6004c5a3-eddb-4440-8a24-44745d48f1c6.png'
+    at open (node:internal/fs/promises:638:25)
+    at Object.writeFile (node:internal/fs/promises:1212:14)
+    at FileRepository.upload (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/infrastructure/services/file.system.service.ts:39:9)
+    at FileController.uploadSingleFile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/File.controller.ts:10:26)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/file/file.routes.ts:44:24
+2025-05-20 14:03:14 [ERROR]: Error: EACCES: permission denied, open '/home/buildthings/Documents/projects/actives/HSF-Backend-New/uploads/7ed5301e-caef-4f54-82e1-55562ef6eb66.png'
+    at open (node:internal/fs/promises:638:25)
+    at Object.writeFile (node:internal/fs/promises:1212:14)
+    at FileRepository.upload (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/infrastructure/services/file.system.service.ts:39:9)
+    at FileController.uploadSingleFile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/File.controller.ts:10:26)
+    at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/file/file.routes.ts:44:24

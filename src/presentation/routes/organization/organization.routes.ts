@@ -108,7 +108,11 @@ router.post(
 router.get(
   '/developers',
   authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
-  asyncMiddleware(async () => {}),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const response = await organizationController.getDevelopers(query)
+    res.status(response.statusCode).json(response)
+  }),
 )
 
 router.get(
