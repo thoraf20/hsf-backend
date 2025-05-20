@@ -473,3 +473,6 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
 2025-05-17 23:51:39 [ERROR]: Error: 
     at UserService.DisableMfa (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/User/User.ts:219:13)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-05-19 11:50:17 [ERROR]: Error: Email not available
+    at ManageOrganizations.createHSFSubAdmin (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/ManageOrganizations.ts:220:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)

@@ -11,6 +11,7 @@ import { applyPagination } from '@shared/utils/paginate'
 import { SearchType } from '@shared/types/repoTypes'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { UserStatus } from '@domain/enums/userEum'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export class UserRepository implements IUserRepository {
   private readonly hashData = new Hashing()
@@ -122,17 +123,30 @@ export class UserRepository implements IUserRepository {
       .where({ user_id: userId })
   }
 
-  useFilters(query: Knex.QueryBuilder<any, any[]>, filters: UserFilters) {
+  useFilters(
+    query: Knex.QueryBuilder<any, any[]>,
+    filters: UserFilters & { type?: 'admin' | 'sub-admin' },
+  ) {
     let q = query
 
     const add = createUnion(SearchType.EXCLUSIVE)
 
     if (filters.deleted) {
-      add(q).whereRaw(
+      q = add(q).whereRaw(
         filters.deleted === QueryBoolean.YES
           ? `u.status = '${UserStatus.Deleted}'`
           : `u.status != '${UserStatus.Deleted}'`,
       )
+    }
+
+    if (filters.type) {
+      q = add(q).where('o.type', OrganizationType.HSF_INTERNAL)
+      console.log(filters)
+      if (filters.type === 'admin') {
+        q = add(q).whereIn('r.name', [Role.SUPER_ADMIN, Role.HSF_ADMIN])
+      } else {
+        q = add(q).and.whereNotIn('r.name', [Role.SUPER_ADMIN, Role.HSF_ADMIN])
+      }
     }
 
     return q
@@ -141,10 +155,18 @@ export class UserRepository implements IUserRepository {
   async getAllUsers(filters: UserFilters): Promise<SeekPaginationResult<User>> {
     let baseQuery = db('users as u')
       .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .leftJoin('user_organization_memberships as uom', 'uom.user_id', 'u.id')
+      .leftJoin('organizations as o', 'o.id', 'uom.organization_id')
       .orderBy('created_at', 'desc')
 
     baseQuery = this.useFilters(baseQuery, filters)
-    baseQuery = baseQuery.select('u.*', 'r.name as role')
+    baseQuery = baseQuery.select(
+      'u.*',
+      'r.name as role',
+      db.raw('row_to_json(uom) as membership'),
+    )
+
+    console.log({ sql: baseQuery.toSQL().sql })
 
     return applyPagination<User>(baseQuery)
   }

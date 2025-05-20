@@ -3,6 +3,7 @@ import { Organization } from '@domain/entities/Organization'
 import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
+  ADMIN_LEVEL_ROLES,
   DEVELOPER_COMPANY_ROLES,
   HSF_INTERNAL_ROLES,
   LENDER_INSTITUTION_ROLES,
@@ -19,10 +20,8 @@ import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate' // Import pagination types
-import {
-  generateRandomPassword,
-  generateRandomSixNumbers,
-} from '@shared/utils/helpers'
+import { generateRandomPassword } from '@shared/utils/helpers'
+import emailHelper from '@infrastructure/email/template/constant' // Import email helper
 import { AuthInfo, isHigherRoleLevel } from '@shared/utils/permission-policy'
 import {
   CreateHSFAdminInput,
@@ -30,13 +29,14 @@ import {
   LenderFilters,
 } from '@validators/organizationValidator'
 import { StatusCodes } from 'http-status-codes'
+import { UserFilters } from '@validators/userValidator'
 
 export class ManageOrganizations {
   constructor(
     private readonly organizationRepository: IOrganizationRepository,
     private readonly userRepository: IUserRepository,
-    private readonly lenderRepository?: ILenderRepository,
-    private readonly addressRepository?: IAddressRepository,
+    private readonly lenderRepository: ILenderRepository,
+    private readonly addressRepository: IAddressRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -138,6 +138,13 @@ export class ManageOrganizations {
     return lenderContents
   }
 
+  async getAdmins(filters: UserFilters, type: 'admin' | 'sub-admin') {
+    return this.userRepository.getAllUsers({
+      ...filters,
+      type,
+    })
+  }
+
   async createLender(data: CreateLenderInput) {
     const [lenderRole] = await this.userRepository.getRolesByType([
       Role.LENDER_ADMIN,
@@ -177,6 +184,16 @@ export class ManageOrganizations {
       user_id: lenderOwner.id,
     })
 
+    // Send invitation email with credentials
+    const fullName = `${data.first_name} ${data.last_name}`
+    emailHelper.InvitationEmail(
+      lenderOwner.email,
+      fullName,
+      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
+      lenderRole.name,
+      generatedPass,
+    )
+
     const lender = await this.lenderRepository.createLender({
       lender_name: data.lender_name,
       lender_type: data.lender_institution_type,
@@ -204,7 +221,17 @@ export class ManageOrganizations {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
 
-    if (!isHigherRoleLevel(auth.globalRole!, newAdminRole.name as Role)) {
+    if (HSF_INTERNAL_ROLES.includes(newAdminRole.name as Role)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Invalid HSF role',
+      )
+    }
+
+    if (
+      ADMIN_LEVEL_ROLES.includes(newAdminRole.name as Role) ||
+      !isHigherRoleLevel(auth.globalRole, newAdminRole.name as Role)
+    ) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         'You are not permitted to add someone of higher role than yours',
@@ -255,6 +282,16 @@ export class ManageOrganizations {
       address_type: AddressType.Home,
     })
 
+    // Send invitation email with credentials
+    const fullName = `${input.first_name} ${input.last_name}`
+    emailHelper.InvitationEmail(
+      newAdminUser.email,
+      fullName,
+      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
+      newAdminRole.name,
+      generatedPass,
+    )
+
     const membership = await this.organizationRepository.addUserToOrganization({
       organization_id: auth.currentOrganizationId,
       role_id: newAdminRole.id,
@@ -266,7 +303,101 @@ export class ManageOrganizations {
         ...newAdminUser,
         role: newAdminRole.name as Role,
       }),
-      membership,
+      membership: {
+        ...membership,
+        role: newAdminRole,
+      },
+    }
+  }
+
+  async createHSFAdmin(auth: AuthInfo, input: CreateHSFAdminInput) {
+    const newAdminRole = await this.userRepository.getRoleById(input.role_id)
+    if (!newAdminRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    if (
+      !(
+        ADMIN_LEVEL_ROLES.includes(newAdminRole.name as Role) &&
+        (auth.globalRole === Role.SUPER_ADMIN ||
+          isHigherRoleLevel(auth.globalRole!, newAdminRole.name as Role))
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not permitted to add someone of higher role than yours',
+      )
+    }
+
+    const [existingEmailUser, existingPhoneUser] = await Promise.all([
+      this.userRepository.findByEmail(input.email),
+      this.userRepository.findByPhone(input.phone_number),
+    ])
+
+    if (existingEmailUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email not available',
+      )
+    }
+
+    if (existingPhoneUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Phone number not available',
+      )
+    }
+
+    const generatedPass = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(generatedPass)
+
+    const newAdminUser = await this.userRepository.create({
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      status: UserStatus.Pending,
+      password: hashedPassword,
+      phone_number: input.phone_number,
+      is_admin: true,
+      force_password_reset: true,
+      role_id: newAdminRole.id,
+    })
+
+    await this.addressRepository.create({
+      user_id: newAdminUser.id,
+      city: input.city,
+      state: input.state,
+      country: input.country,
+      street_address: input.street_address,
+      address_type: AddressType.Home,
+    })
+
+    // Send invitation email with credentials
+    const fullName = `${input.first_name} ${input.last_name}`
+    emailHelper.InvitationEmail(
+      newAdminUser.email,
+      fullName,
+      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
+      newAdminRole.name,
+      generatedPass,
+    )
+
+    const membership = await this.organizationRepository.addUserToOrganization({
+      organization_id: auth.currentOrganizationId,
+      role_id: newAdminRole.id,
+      user_id: newAdminUser.id,
+    })
+
+    return {
+      ...getUserClientView({
+        ...newAdminUser,
+        role: newAdminRole.name as Role,
+      }),
+      membership: {
+        ...membership,
+        role: newAdminRole,
+      },
     }
   }
 }

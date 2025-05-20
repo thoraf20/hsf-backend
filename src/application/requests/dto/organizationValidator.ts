@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { RoleSelect } from '@domain/enums/rolesEmun'
+import { Role, RoleSelect } from '@domain/enums/rolesEmun'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { parse } from 'date-fns'
 
@@ -85,3 +85,29 @@ export const createHsfAdminSchema = z.object({
 })
 
 export type CreateHSFAdminInput = z.infer<typeof createHsfAdminSchema>
+
+export const getHsfAdminFiltersSchema = withPaginateSchema(
+  z.object({
+    role: z.array(z.literal(Role.HSF_ADMIN)).optional(),
+  }),
+)
+
+export type HSFAdminFilters = z.infer<typeof getHsfAdminFiltersSchema>
+
+export const getHsfSubAdminFiltersSchema = withPaginateSchema(
+  z.object({
+    role: z
+      .array(
+        z.enum([
+          Role.HSF_LOAN_OFFICER,
+          Role.HSF_COMPLIANCE_OFFICER,
+          Role.HSF_INSPECTION_MANAGER,
+          Role.HSF_DISPUTE_MANAGER,
+          Role.HSF_CUSTOMER_SUPPORT,
+        ]),
+      )
+      .optional(),
+  }),
+)
+
+export type HSFSubAdminFilters = z.infer<typeof getHsfSubAdminFiltersSchema>
