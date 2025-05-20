@@ -11,12 +11,19 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
 
 async getOrganizationAvailability(
     organization_id: string,
-  ): Promise<schduleTime> {
+  ): Promise<schduleTime[]> {
     const availability = await db<schduleTime>('day_availability as da')
       .leftJoin('day_availability_slot as das', 'da.day_availability_id', 'das.day_availability_id')
       .leftJoin('properties as p', 'da.organization_id', 'p.organization_id')
       .where('da.organization_id', '=', organization_id)
-      .first()
+      .distinct(
+        'da.day_availability_id',
+        'da.time_slot',
+        'das.day',
+        'das.start_time',
+        'das.end_time',
+        'das.is_available'
+      )
     if (!availability) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,

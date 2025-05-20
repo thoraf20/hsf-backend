@@ -9,7 +9,7 @@ export interface IManageInspectionRepository {
     getAllInspectionToBeApproved: (organization_id: string, filter?: any) => Promise<SeekPaginationResult<Inspection>>
     getInspectionById: (inspection_id: string) => Promise<Inspection>
     rescheduleInspection: (payload: InspectionRescheduleRequest) => Promise<InspectionRescheduleRequest>
-    getOrganizationAvailability: (organization_id: string) => Promise<schduleTime>
+    getOrganizationAvailability: (organization_id: string) => Promise<schduleTime[]>
     // resheduleInspection: (res) => Promise<InspectionRescheduleRequest>
     updateInspectionDetails: (
         inspection_id: string,

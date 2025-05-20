@@ -46,17 +46,17 @@ manageInpespectionRouter.get(
 )
 
 manageInpespectionRouter.get(
-  '/availability/:organization_id',
+  '/availability/fetch-all',
   authenticate,
   authorize(
     requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
     requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT]),
   ),
   asyncMiddleware(async (req, res) => {
-    const { organization_id } = req.params
+    const { authInfo } = req
     const response =
       await manageInspectionController.getOrganizationAvailability(
-        organization_id,
+        authInfo.currentOrganizationId,
       )
     res.status(response.statusCode).json(response)
   }),

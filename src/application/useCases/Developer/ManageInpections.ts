@@ -39,7 +39,7 @@ export class ManageInspectionUseCase {
 
     async getOrganizationAvailability(
         organization_id: string,
-    ): Promise<schduleTime> {
+    ): Promise<schduleTime[]> {
         const organization = await this.organizationRepository.getOrganizationById(
             organization_id,
         );
