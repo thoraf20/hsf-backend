@@ -1,4 +1,4 @@
-import { InspectionMeetingType } from '@domain/enums/propertyEnum'
+import { InspectionMeetingType, InspectionStatus } from '@domain/enums/propertyEnum'
 import { Inspection } from '@domain/entities/Inspection'
 import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
 import { InspectionBaseUtils } from '../utils'
@@ -20,6 +20,7 @@ import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingReposito
 import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
 import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectionQueue'
 import { serviceProductFeeCodes } from '@infrastructure/config/serviceProductFeeCodes'
+import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private serviceRepository: IServiceOfferingRepository
@@ -32,10 +33,12 @@ export class InspectionService {
     inspectionRepository: IInspectionRepository,
     serviceRepository: IServiceOfferingRepository,
     transactions: ITransaction,
+    private readonly manageInspectionRepository: IManageInspectionRepository,
   ) {
     this.inspectionRepository = inspectionRepository
     this.serviceRepository = serviceRepository
     this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
+    this.manageInspectionRepository = manageInspectionRepository
 
     if (!transactions) {
       throw new Error('Transaction repository is required.')
@@ -55,8 +58,12 @@ export class InspectionService {
     const trx = await db.transaction()
 
     const { ...inspectionData } = input
+    const availability= await this.manageInspectionRepository.getDayAvailablitySlotById(
+      input.availability_slot_id,
+    )
     try {
-      const pendingInspection: Partial<Inspection> = {
+      const
+       pendingInspection: Partial<Inspection> = {
         contact_number: inspectionData.contact_number,
         inspection_date: inspectionData.inspection_date,
         inspection_time: inspectionData.inspection_time,
@@ -66,7 +73,9 @@ export class InspectionService {
         email: inspectionData.email,
         meeting_platform: inspectionData.meeting_platform,
         property_id: inspectionData.property_id,
+        day_availability_slot_id: availability.day_availability_slot_id,
         inspection_meeting_type: inspectionData.inspection_meeting_type,
+        inspection_status: InspectionStatus.PENDING,
       }
 
       if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {

@@ -1,6 +1,6 @@
 export class DeveloperInspectionSlot {
   id: string
-  developer_id: string
+  organisation_id: string
   property_id: string
   start_time: Date
   end_time: Date
@@ -20,7 +20,7 @@ export class DeveloperInspectionSlot {
 export class DeveloperAvailability {
   id: string
   timeGap: number
-  developer_id: string
+  organisation_id: string
 
   constructor(d: Partial<DeveloperAvailability>) {
     let data = {

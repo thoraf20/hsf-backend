@@ -5,8 +5,8 @@ import developerRoutes from "./developer.routes";
 
 export const developerIndexRoutes : Router = Router()
 
-developerIndexRoutes.use('/', manageInpespectionRouter)
-developerIndexRoutes.use('/', developerRoutes)
+developerIndexRoutes.use('/manage/inspection', manageInpespectionRouter)
+developerIndexRoutes.use('/developer', developerRoutes)
 
 export default developerIndexRoutes
 

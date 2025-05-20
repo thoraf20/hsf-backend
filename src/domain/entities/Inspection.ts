@@ -18,7 +18,7 @@ export class Inspection {
   inspection_meeting_type: InspectionMeetingType
   inspection_fee_paid: boolean
   inspection_status: InspectionStatus
-  availability_slot_id?: string
+  day_availability_slot_id?: string
   meet_link?: string
   // amount?: string
   user_id: string

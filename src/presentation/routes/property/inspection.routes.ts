@@ -15,12 +15,14 @@ import {
 } from '@application/requests/dto/inspectionVaidator'
 import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
+import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
   new InspectionRepository(),
   new ServiceOfferingRepository(),
   new TransactionRepository(),
+  new ManageInspectionRepository(),
 )
 
 const inspectionController = new InspectionController(service)
@@ -41,7 +43,7 @@ inspectionRoutes.post(
 
 inspectionRoutes.patch(
   '/:inspection_id/status',
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   validateRequest(updateInspectionStatusSchema),
   asyncMiddleware(async (req, res) => {
     const { inspection_id } = req.params
@@ -66,7 +68,7 @@ inspectionRoutes.get(
 )
 inspectionRoutes.get(
   '/developer/fetch-all',
-  requireRoles(Role.DEVELOPER),
+  // requireRoles(Role.DEVELOPER),
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const inspection = await inspectionController.getDevScheduleInspection(

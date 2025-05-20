@@ -25,7 +25,7 @@ import developerIndexRoutes from './developer/developerIndex.routes'
 
 const routes: Router = Router()
 
-routes.use('/developer', authenticate, limiter, developerIndexRoutes)
+routes.use('/', authenticate, limiter, developerIndexRoutes)
 routes.use('/pre-qualifier', authenticate, preQualifierRoutes)
 routes.use('/enquiry', authenticate, limiter, enquiryRoutes)
 routes.use('/property', propertyRoute)

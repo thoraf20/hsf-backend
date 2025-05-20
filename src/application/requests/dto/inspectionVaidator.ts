@@ -79,6 +79,8 @@ export const inspectionSchema = z.object({
   amount: z.coerce.number().positive().optional(),
 
   property_id: z.string(),
+
+  availability_slot_id: z.string().nonempty()
 })
 
 export type ScheduleInspectionInput = z.infer<typeof inspectionSchema>

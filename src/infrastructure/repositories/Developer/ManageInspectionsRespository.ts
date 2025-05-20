@@ -4,9 +4,67 @@ import { SeekPaginationResult } from '@shared/types/paginate'
 import db from '@infrastructure/database/knex'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
+import { DayAvailability, DayAvailabilitySlot, schduleTime } from '@entities/Availabilities'
 
 export class ManageInspectionRepository implements IManageInspectionRepository {
   constructor() {}
+
+async getOrganizationAvailability(
+    organization_id: string,
+  ): Promise<schduleTime> {
+    const availability = await db<schduleTime>('day_availability as da')
+      .leftJoin('day_availability_slot as das', 'da.day_availability_id', 'das.day_availability_id')
+      .leftJoin('properties as p', 'da.organization_id', 'p.organization_id')
+      .where('da.organization_id', '=', organization_id)
+      .first()
+    if (!availability) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Availability not found',
+      )
+    }
+    return availability
+  }
+
+async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
+  const [dayAvailability] = await db<DayAvailability>('day_availability')
+    .insert(payload)
+    .onConflict(['organization_id', 'time_slot']) 
+    .merge({
+      time_slot: payload.time_slot,
+      organization_id: payload.organization_id,
+    })
+    .returning('*');
+    return new DayAvailability(dayAvailability);
+}
+
+  async dayAvailabilitySlot(
+    payload: DayAvailabilitySlot,
+  ): Promise<DayAvailabilitySlot> {
+    const [dayAvailabilitySlot] = await db<DayAvailabilitySlot>(
+      'day_availability_slot',
+    )
+      .insert(payload)
+      .onConflict(['day_availability_id', 'day']) 
+      .merge({
+        start_time: payload.start_time,
+        end_time: payload.end_time,
+        day: payload.day
+      })
+      .returning('*')
+    return new DayAvailabilitySlot(dayAvailabilitySlot)
+  }
+
+
+  async getDayAvailablitySlotById (day_availablity_slot_id: string) : Promise<schduleTime> {
+      const availabilities = db<schduleTime>('day_availability_slot as da')
+      .where('day_availability_slot_id', day_availablity_slot_id)
+      .first()
+      if(!availabilities) {
+        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Availability not found')
+      }
+      return availabilities
+  }
 
   async getAllInspectionToBeApproved(
     organization_id: string,

@@ -61,6 +61,8 @@ export enum InspectionMeetingType {
   VIDEO_CHAT = 'Video Chat',
 }
 
+
+
 export enum propertyApprovalStatus {
   PENDING = 'Pending',
   APPROVED = 'Approved',
