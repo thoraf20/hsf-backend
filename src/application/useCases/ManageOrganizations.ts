@@ -425,16 +425,15 @@ export class ManageOrganizations {
           organization.owner_user_id,
         )
 
-        const { total_records } =
-          await this.propertyRepository.findPropertiesByDeveloperOrg(
-            developer.organization_id,
-            { result_per_page: 1 },
-          )
+        const meta = await this.propertyRepository.findPropertiesByDeveloperOrg(
+          developer.organization_id,
+          { result_per_page: 1 },
+        )
 
         return {
           ...developer,
           owner: getUserClientView(owner),
-          property_listing_counts: total_records,
+          property_listing_counts: meta.total_records,
           organization: {
             ...organization,
           },
