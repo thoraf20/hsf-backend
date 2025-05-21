@@ -16,17 +16,15 @@ import {
 import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 import { authorize } from '@middleware/authorization'
-import {
-  isHomeBuyer,
-  requireOrganizationType,
-} from '@shared/utils/permission-policy'
-import { OrganizationType } from '@domain/enums/organizationEnum'
+import { isHomeBuyer } from '@shared/utils/permission-policy'
+import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
   new InspectionRepository(),
   new ServiceOfferingRepository(),
   new TransactionRepository(),
+  new ManageInspectionRepository(),
 )
 
 const inspectionController = new InspectionController(service)
@@ -45,8 +43,23 @@ inspectionRoutes.post(
   }),
 )
 
+inspectionRoutes.post(
+  '/property/reschedule/:inspection_id',
+  requireRoles(Role.HOME_BUYER),
+  validateRequest(inspectionSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body, params } = req
+    const schedule = await inspectionController.responseToReschedule(
+      params.inspection_id,
+      body,
+    )
+    res.status(schedule.statusCode).json(schedule)
+  }),
+)
+
 inspectionRoutes.patch(
   '/:inspection_id/status',
+  // requireRoles(Role.DEVELOPER),
   validateRequest(updateInspectionStatusSchema),
   asyncMiddleware(async (req, res) => {
     const { inspection_id } = req.params
@@ -64,19 +77,9 @@ inspectionRoutes.get(
   '/fetch-all',
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
-    const { user } = req
+    const { user, query } = req
+    console.log('query', query)
     const inspection = await inspectionController.getScheduleInspection(user.id)
-    res.status(inspection.statusCode).json(inspection)
-  }),
-)
-inspectionRoutes.get(
-  '/developer/fetch-all',
-  authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
-  asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const inspection = await inspectionController.getDevScheduleInspection(
-      user.id,
-    )
     res.status(inspection.statusCode).json(inspection)
   }),
 )

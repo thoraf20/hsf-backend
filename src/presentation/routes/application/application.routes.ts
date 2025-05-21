@@ -35,6 +35,7 @@ import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { InspectionRepository } from '@repositories/property/Inspection'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -58,6 +59,7 @@ const applicationController = new ApplicationController(
     new PropertyRepository(),
     new UserRepository(),
     new DeveloperRespository(),
+    new InspectionRepository(),
   ),
 )
 const applicationRoutes = Router()

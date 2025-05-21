@@ -1,13 +1,123 @@
-import { Inspection, InspectionRescheduleRequest } from '@entities/Inspection'
+import { Inspection } from '@entities/Inspection'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import db from '@infrastructure/database/knex'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { applyPagination } from '@shared/utils/paginate'
+import {
+  DayAvailability,
+  DayAvailabilitySlot,
+  schduleTime,
+} from '@entities/Availabilities'
+import { InspectionStatus } from '@domain/enums/propertyEnum'
 
 export class ManageInspectionRepository implements IManageInspectionRepository {
   constructor() {}
+
+  async getOrganizationAvailability(
+    organization_id: string,
+  ): Promise<schduleTime[]> {
+    const availability = await db<schduleTime>('day_availability as da')
+      .leftJoin(
+        'day_availability_slot as das',
+        'da.day_availability_id',
+        'das.day_availability_id',
+      )
+      .leftJoin('properties as p', 'da.organization_id', 'p.organization_id')
+      .where('da.organization_id', '=', organization_id)
+      .distinct(
+        'da.day_availability_id',
+        'da.time_slot',
+        'da.organization_id',
+        'das.day',
+        'das.start_time',
+        'das.end_time',
+        'das.is_available',
+        'das.day_availability_slot_id',
+      )
+    if (!availability) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Availability not found',
+      )
+    }
+    return availability
+  }
+
+  async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
+    const [dayAvailability] = await db<DayAvailability>('day_availability')
+      .insert(payload)
+      .onConflict(['organization_id', 'time_slot'])
+      .merge({
+        time_slot: payload.time_slot,
+        organization_id: payload.organization_id,
+      })
+      .returning('*')
+    return new DayAvailability(dayAvailability)
+  }
+
+  async getdayAvailabilityById(
+    day_availablity_id: string,
+  ): Promise<schduleTime> {
+    const availability = await db<schduleTime>('day_availability as da')
+      .leftJoin(
+        'day_availability_slot as das',
+        'da.day_availability_id',
+        'das.day_availability_id',
+      )
+      .leftJoin('properties as p', 'da.organization_id', 'p.organization_id')
+      .where('da.day_availability_id', '=', day_availablity_id)
+      .select(
+        'da.day_availability_id',
+        'da.time_slot',
+        'da.organization_id',
+        'das.day',
+        'das.start_time',
+        'das.end_time',
+        'das.is_available',
+        'das.day_availability_slot_id',
+      )
+      .first()
+    if (!availability) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Availability not found',
+      )
+    }
+    return availability
+  }
+  async dayAvailabilitySlot(
+    payload: DayAvailabilitySlot,
+  ): Promise<DayAvailabilitySlot> {
+    const [dayAvailabilitySlot] = await db<DayAvailabilitySlot>(
+      'day_availability_slot',
+    )
+      .insert(payload)
+      .onConflict(['day_availability_id', 'day'])
+      .merge({
+        start_time: payload.start_time,
+        end_time: payload.end_time,
+        day: payload.day,
+      })
+      .returning('*')
+    return new DayAvailabilitySlot(dayAvailabilitySlot)
+  }
+
+  async getDayAvailablitySlotById(
+    day_availablity_slot_id: string,
+  ): Promise<schduleTime> {
+    const availabilities = db<schduleTime>('day_availability_slot as da')
+      .where('day_availability_slot_id', day_availablity_slot_id)
+      .first()
+    if (!availabilities) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Availability not found',
+      )
+    }
+    return availabilities
+  }
 
   async getAllInspectionToBeApproved(
     organization_id: string,
@@ -22,6 +132,7 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
       .where('properties.organization_id', organization_id)
       .select(
         'inspection.id',
+        'inspection.confirm_avaliability_for_reschedule',
         'inspection.full_name',
         'inspection.created_at',
         'inspection.inspection_status',
@@ -63,6 +174,18 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
     return applyPagination(baseQuery)
   }
 
+  async rescheduleInspectionToUpdateInspectionTable(
+    payload: DayAvailabilitySlot,
+    inspection_id: string,
+  ): Promise<schduleTime> {
+    const [reschedule] = await db<schduleTime>('inspection')
+      .update(payload)
+      .where('inspection_id', inspection_id)
+      .andWhere('day_availability_slot_id', payload.day_availability_slot_id)
+      .returning('*')
+    return reschedule
+  }
+
   async getInspectionById(inspection_id: string): Promise<Inspection> {
     const inspection = await db<Inspection>('inspection as i')
       .where('i.id', inspection_id)
@@ -70,13 +193,8 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
       .leftJoin('users as u', 'i.user_id', 'u.id')
       .leftJoin('roles as r', 'u.role_id', 'r.id')
       .select(
-        'i.id',
-        'i.full_name',
-        'i.email',
-        'i.contact_number',
-        'i.created_at',
         'r.name as role_name',
-        'i.inspection_status',
+        'i.*',
         'p.property_name',
         'p.street_address',
       )
@@ -90,16 +208,21 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
     return inspection
   }
 
-  async rescheduleInspection(
-    payload: InspectionRescheduleRequest,
-  ): Promise<InspectionRescheduleRequest> {
-    const [rescheduleRequest] = await db<InspectionRescheduleRequest>(
-      'inspection_reschedule_requests',
-    )
-      .insert(payload)
+  async updateInspectionStatus(
+    inspection_id: string,
+    status: InspectionStatus,
+  ): Promise<Inspection> {
+    const [updatedInspection] = await db<Inspection>('inspection')
+      .where('id', inspection_id)
+      .update({ inspection_status: status })
       .returning('*')
-
-    return new InspectionRescheduleRequest(rescheduleRequest)
+    if (!updatedInspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Inspection not found',
+      )
+    }
+    return updatedInspection
   }
 
   async updateInspectionDetails(
