@@ -1,3 +1,4 @@
+import { InspectionResponseRequestStatusEnum } from '@domain/enums/inspectionEnum';
 import { z } from 'zod';
 
 export const DayOfWeekEnum = z.enum([
@@ -26,5 +27,10 @@ export const DayAvailabilitySchema = z.object({
   time_slot: z.string(),
 });
 
+export const updateInspectionStatus =  z.object({
+  status: z.nativeEnum(InspectionResponseRequestStatusEnum)
+})
+
 export const SchduleTimeSchema = DayAvailabilitySchema.merge(DayAvailabilitySlotSchema);
 export type DayAvailabilitySlot = z.infer<typeof DayAvailabilitySlotSchema>;
+export type rescheduleSchema = z.infer<typeof reschedule>

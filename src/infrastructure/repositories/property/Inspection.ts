@@ -75,7 +75,7 @@ export class InspectionRepository implements IInspectionRepository {
 
   async getAllScheduleInspection(
     user_id: string,
-    query_param: string,
+    query_param?: string,
     filter?: Record<string, any>,
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Record<string, any>>> {
@@ -94,7 +94,7 @@ export class InspectionRepository implements IInspectionRepository {
       .join('properties', 'inspection.property_id', 'properties.id')
       .join('users', 'inspection.user_id', 'users.id')
       .where('inspection.user_id', user_id)
-      .andWhere('inspection.action', '=', query_param)
+      // .andWhere('inspection.action', '=', query_param)
 
     if (paginate) {
       const offset = (paginate.page_number - 1) * paginate.result_per_page

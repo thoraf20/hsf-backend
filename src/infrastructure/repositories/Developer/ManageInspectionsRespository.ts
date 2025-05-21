@@ -55,7 +55,6 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
       .where('da.day_availability_id', '=', day_availablity_id)
       .select(
         'da.day_availability_id',
-        'inspection.confirm_avaliability_for_reschedule',
         'da.time_slot',
         'da.organization_id',
         'das.day',
@@ -146,7 +145,7 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
   }
 
   async rescheduleInspectionToUpdateInspectionTable(
-    payload: schduleTime,
+    payload: DayAvailabilitySlot,
     inspection_id: string,
   ): Promise<schduleTime> {
     const [reschedule] = await db<schduleTime>('inspection')
@@ -164,13 +163,8 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
       .leftJoin('users as u', 'i.user_id', 'u.id')
       .leftJoin('roles as r', 'u.role_id', 'r.id')
       .select(
-        'i.id',
-        'i.full_name',
-        'i.email',
-        'i.contact_number',
-        'i.created_at',
         'r.name as role_name',
-        'i.inspection_status',
+        'i.*',
         'p.property_name',
         'p.street_address',
       )

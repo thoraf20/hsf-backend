@@ -15,7 +15,7 @@ import {
   Role,
   validateRequest,
 } from '@routes/index.t'
-import { SchduleTimeSchema } from '@validators/ManageInspectionValidator'
+import { reschedule, SchduleTimeSchema, updateInspectionStatus } from '@validators/ManageInspectionValidator'
 import { InspectionRepository } from '@repositories/property/Inspection'
 const manageInpespectionRouter: Router = Router()
 const manageInspectionRepository = new ManageInspectionRepository()
@@ -70,13 +70,25 @@ manageInpespectionRouter.post(
   validateRequest(SchduleTimeSchema),
   authenticate,
   authorize(
-    requireOrganizationType(OrganizationType.DEVELOPER_COMPANY, OrganizationType.HSF_INTERNAL),
-    requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT, Role.HSF_ADMIN, Role.HSF_INSPECTION_MANAGER, Role.SUPER_ADMIN]),
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+    requireOrganizationRole([
+      Role.DEVELOPER_ADMIN,
+      Role.DEVELOPER_AGENT,
+      Role.HSF_ADMIN,
+      Role.HSF_INSPECTION_MANAGER,
+      Role.SUPER_ADMIN,
+    ]),
   ),
   asyncMiddleware(async (req, res) => {
-    const {body, authInfo} = req
+    const { body, authInfo } = req
     const response =
-      await manageInspectionController.createDayAvailabilityAndSlot(body, authInfo.currentOrganizationId)
+      await manageInspectionController.createDayAvailabilityAndSlot(
+        body,
+        authInfo.currentOrganizationId,
+      )
     res.status(response.statusCode).json(response)
   }),
 )
@@ -101,6 +113,63 @@ manageInpespectionRouter.get(
       await manageInspectionController.getDayAvailabilityById(
         day_availablity_id,
       )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+manageInpespectionRouter.put(
+  '/:inspection_id/status',
+  validateRequest(updateInspectionStatus),
+  authenticate,
+  authorize(
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+    requireOrganizationRole([
+      Role.DEVELOPER_ADMIN,
+      Role.DEVELOPER_AGENT,
+      Role.HSF_ADMIN,
+      Role.HSF_INSPECTION_MANAGER,
+      Role.SUPER_ADMIN,
+    ])
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { params, authInfo, body } = req
+    const response = await manageInspectionController.updateInspectionStatus(
+      params.inspection_id,
+      body.status,
+      authInfo.currentOrganizationId,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+
+manageInpespectionRouter.put(
+  '/:inspection_id/propose-reschedule',
+  validateRequest(reschedule),
+  authenticate,
+  authorize(
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+    requireOrganizationRole([
+      Role.DEVELOPER_ADMIN,
+      Role.DEVELOPER_AGENT,
+      Role.HSF_ADMIN,
+      Role.HSF_INSPECTION_MANAGER,
+      Role.SUPER_ADMIN,
+    ])
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { params, authInfo, body } = req
+    const response = await manageInspectionController.rescheduleInspection(
+      body,
+      params.inspection_id,
+      authInfo.currentOrganizationId,
+    )
     res.status(response.statusCode).json(response)
   }),
 )

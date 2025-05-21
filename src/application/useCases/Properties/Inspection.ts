@@ -212,7 +212,7 @@ export class InspectionService {
     }
   }
 
-  public async getInspectionSchedule(user_id: string, action: string): Promise<SeekPaginationResult<Record<string, any>>>{
+  public async getInspectionSchedule(user_id: string, action?: string): Promise<SeekPaginationResult<Record<string, any>>>{
     const Inspection =
       await this.inspectionRepository.getAllScheduleInspection(user_id, action)
     return Inspection

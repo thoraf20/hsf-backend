@@ -1,3 +1,5 @@
+import { InspectionRescheduleRequestStatusEnum } from "@domain/enums/inspectionEnum";
+
 export enum DayOfWeekEnum {
   SUNDAY = 'Sunday',
   MONDAY = 'Monday',
@@ -13,6 +15,8 @@ export class DayAvailabilitySlot {
   day: DayOfWeekEnum
   start_time: Date
   end_time: Date
+  confirm_avaliability_for_reschedule?: InspectionRescheduleRequestStatusEnum;
+  action?: 'scheduled' | 'rescheduled'
   is_available: boolean
  day_availability_id: string
   constructor(d: Partial<DayAvailabilitySlot >) {

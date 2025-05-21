@@ -1,4 +1,4 @@
-import { schduleTime } from '@entities/Availabilities'
+import { DayAvailabilitySlot, schduleTime } from '@entities/Availabilities'
 import {
   ApiResponse,
   createResponse,
@@ -54,5 +54,20 @@ export class ManageInspectionController {
         organization_id,
       )
     return createResponse(StatusCodes.OK, 'success', response)
+  }
+
+    async rescheduleInspection(payload: DayAvailabilitySlot,inspection_id: string, organization_id: string): Promise<ApiResponse<any>> {
+    const response =
+      await this.manageInspectionService.rescheduleInspectionToUpdateInspectionTable(
+        payload,
+        inspection_id,
+        organization_id,
+      )
+    return createResponse(StatusCodes.OK, 'success', response)
+  }
+
+  async updateInspectionStatus(inspection_id: string, status: string, organization_id:string  ): Promise<ApiResponse<any>> {
+     const response = await this.manageInspectionService.updateInspectionStatus(inspection_id, status, organization_id)
+     return createResponse(StatusCodes.OK, 'success', response)
   }
 }
