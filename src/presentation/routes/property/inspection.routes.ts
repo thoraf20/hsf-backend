@@ -41,6 +41,22 @@ inspectionRoutes.post(
   }),
 )
 
+inspectionRoutes.post(
+  '/property/reschedule/:inspection_id',
+  requireRoles(Role.HOME_BUYER),
+  validateRequest(inspectionSchema),
+  asyncMiddleware(async (req, res) => {
+    const {body, params } = req
+    const schedule = await inspectionController.responseToReschedule(
+      params.inspection_id,
+      body
+    )
+    res.status(schedule.statusCode).json(schedule)
+  }),
+)
+
+
+
 inspectionRoutes.patch(
   '/:inspection_id/status',
   // requireRoles(Role.DEVELOPER),
@@ -61,23 +77,12 @@ inspectionRoutes.get(
   '/fetch-all',
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const inspection = await inspectionController.getScheduleInspection(user.id)
+    const { user, query } = req
+    console.log('query', query)
+    const inspection = await inspectionController.getScheduleInspection(user.id, query.action.toString())
     res.status(inspection.statusCode).json(inspection)
   }),
 )
-inspectionRoutes.get(
-  '/developer/fetch-all',
-  // requireRoles(Role.DEVELOPER),
-  asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const inspection = await inspectionController.getDevScheduleInspection(
-      user.id,
-    )
-    res.status(inspection.statusCode).json(inspection)
-  }),
-)
-
 inspectionRoutes.get(
   '/single/:inspection_id',
   asyncMiddleware(async (req, res) => {

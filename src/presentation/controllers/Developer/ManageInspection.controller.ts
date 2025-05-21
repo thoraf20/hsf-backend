@@ -28,6 +28,15 @@ export class ManageInspectionController {
     return createResponse(StatusCodes.OK, 'success', response)
   }
 
+  async getDayAvailabilityById(
+    day_availablity_id: string,
+  ): Promise<ApiResponse<any>> {
+    const response =
+      await this.manageInspectionService.getDayAvailabilityById(
+        day_availablity_id,
+      )
+    return createResponse(StatusCodes.OK, 'success', response)
+  }
 
   async createDayAvailabilityAndSlot(
     payload: schduleTime,

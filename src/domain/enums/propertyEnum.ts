@@ -62,6 +62,10 @@ export enum InspectionMeetingType {
 }
 
 
+export enum InspectionRescheduleStatusEnum {
+  Rejected = 'Rejected',
+  Accepted = 'Accepted',
+}
 
 export enum propertyApprovalStatus {
   PENDING = 'Pending',

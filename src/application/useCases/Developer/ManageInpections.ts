@@ -1,8 +1,9 @@
 import { schduleTime } from "@entities/Availabilities";
-import { Inspection, InspectionRescheduleRequest } from "@entities/Inspection";
+import { Inspection } from "@entities/Inspection";
 import { IManageInspectionRepository } from "@interfaces/Developer/IManageInspectionRepository";
 import { ApplicationCustomError } from "@middleware/errors/customError";
 import { OrganizationRepository } from "@repositories/OrganizationRepository";
+import { InspectionRepository } from "@repositories/property/Inspection";
 import { SeekPaginationResult } from "@shared/types/paginate";
 import { StatusCodes } from "http-status-codes";
 
@@ -10,9 +11,11 @@ export class ManageInspectionUseCase {
     constructor(
         private readonly manageInspectionRepository: IManageInspectionRepository,
         private readonly organizationRepository: OrganizationRepository,
+        private readonly inspectionRespository : InspectionRepository
     ) {
         this.manageInspectionRepository = manageInspectionRepository;
         this.organizationRepository = organizationRepository;
+        this.inspectionRespository = inspectionRespository
     }
 
     async createDayAvailabilityAndSlot(
@@ -37,6 +40,15 @@ export class ManageInspectionUseCase {
           };
     }
 
+    async getDayAvailabilityById(
+        day_availablity_id: string,
+    ): Promise<schduleTime> {
+        return this.manageInspectionRepository.getdayAvailabilityById(
+            day_availablity_id,
+        );
+    }
+
+    
     async getOrganizationAvailability(
         organization_id: string,
     ): Promise<schduleTime[]> {
@@ -82,12 +94,57 @@ export class ManageInspectionUseCase {
         return this.manageInspectionRepository.getInspectionById(inspection_id);
     }
 
-    async rescheduleInspection(
-        payload: InspectionRescheduleRequest,
-    ): Promise<InspectionRescheduleRequest> {
+    async rescheduleInspectionToUpdateInspectionTable(
+        payload: schduleTime,
+        inspection_id: string,
+        organization_id: string,
+    ): Promise<schduleTime> {
+        const inspection = await this.manageInspectionRepository.getInspectionById(
+            inspection_id,
+        );
+        if(!inspection) {
+            throw new ApplicationCustomError(StatusCodes.NOT_FOUND, "Inspection not found");
+        }
 
-        return this.manageInspectionRepository.rescheduleInspection(payload);
+        const availabilities = await this.manageInspectionRepository.getdayAvailabilityById(
+            payload.day_availability_id,
+        );
+        if(availabilities.organization_id !== organization_id) {
+            throw new ApplicationCustomError(StatusCodes.UNAUTHORIZED, "You are not authorized to access this resource");
+        }
+        
+        if(availabilities.day_availability_slot_id !== payload.day_availability_slot_id) {
+            throw new ApplicationCustomError(StatusCodes.BAD_REQUEST, "Invalid day availability slot");
+        }
+
+        
+        const reschedule = this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable(
+            payload,
+            inspection_id,
+        );
+
+        await this.inspectionRespository.updateScheduleInpection(inspection_id, {action: "reshedule"})
+        return reschedule
     }
+
+    async updateInspectionStatus(
+        inspection_id: string,
+        status: string,
+    ): Promise<Inspection> {
+         const inspection = await this.manageInspectionRepository.getInspectionById(
+            inspection_id,
+        );
+        if(!inspection) {
+            throw new ApplicationCustomError(StatusCodes.NOT_FOUND, "Inspection not found");
+        }
+
+        const updatedInspection = await this.manageInspectionRepository.updateInspectionStatus(
+            inspection_id,
+            status,
+        );
+        return updatedInspection
+    }
+
     //
     //  async updateInspectionDetails(
     //     inspection_id: string,

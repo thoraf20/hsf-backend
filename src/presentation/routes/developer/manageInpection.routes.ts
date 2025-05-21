@@ -16,12 +16,15 @@ import {
   validateRequest,
 } from '@routes/index.t'
 import { SchduleTimeSchema } from '@validators/ManageInspectionValidator'
+import { InspectionRepository } from '@repositories/property/Inspection'
 const manageInpespectionRouter: Router = Router()
 const manageInspectionRepository = new ManageInspectionRepository()
 const organizationRepository = new OrganizationRepository()
+const inspectionRepository = new InspectionRepository()
 const manageInpespectionUseCase = new ManageInspectionUseCase(
   manageInspectionRepository,
   organizationRepository,
+  inspectionRepository,
 )
 const manageInspectionController = new ManageInspectionController(
   manageInpespectionUseCase,
@@ -85,6 +88,19 @@ manageInpespectionRouter.get(
     const { inspection_id } = req.params
     const response =
       await manageInspectionController.getInspectionById(inspection_id)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+manageInpespectionRouter.get(
+  '/availability/:day_availablity_id',
+  authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
+  asyncMiddleware(async (req, res) => {
+    const { day_availablity_id } = req.params
+    const response =
+      await manageInspectionController.getDayAvailabilityById(
+        day_availablity_id,
+      )
     res.status(response.statusCode).json(response)
   }),
 )

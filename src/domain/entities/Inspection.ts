@@ -17,8 +17,9 @@ export class Inspection {
   meeting_platform?: MeetingPlatform
   inspection_meeting_type: InspectionMeetingType
   inspection_fee_paid: boolean
-  inspection_status: InspectionStatus
+  inspection_status?: InspectionStatus
   day_availability_slot_id?: string
+  action?: string
   meet_link?: string
   // amount?: string
   user_id: string

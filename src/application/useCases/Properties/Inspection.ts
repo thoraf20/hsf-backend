@@ -212,19 +212,23 @@ export class InspectionService {
     }
   }
 
-  public async getInspectionSchedule(user_id: string): Promise<Inspection[]> {
+  public async getInspectionSchedule(user_id: string, action: string): Promise<SeekPaginationResult<Record<string, any>>>{
     const Inspection =
-      await this.inspectionRepository.getScheduleInspection(user_id)
+      await this.inspectionRepository.getAllScheduleInspection(user_id, action)
     return Inspection
   }
 
-  public async getAllInspectionByDeveloperId(
-    dev_id: string,
-  ): Promise<SeekPaginationResult<Record<string, any>>> {
-    const Inspection =
-      await this.inspectionRepository.getAllScheduleInspection(dev_id)
-    return Inspection
+  public async reponseToReschedule(
+    inspection_id: string,
+    payload: Partial<Inspection> | any,
+  ): Promise<Inspection> {
+    const reschedule = await this.inspectionRepository.responseToReschedule(
+      inspection_id,
+      {...payload, inspection_status: payload.inspection_status},
+    )
+    return reschedule
   }
+
 
   public async getInspectionById(schedule_id: string): Promise<Inspection> {
     const inspection =

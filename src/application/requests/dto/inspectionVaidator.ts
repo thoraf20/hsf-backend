@@ -3,6 +3,7 @@ import {
   MeetingPlatform,
   InspectionMeetingType,
   InspectionStatus,
+  InspectionRescheduleStatusEnum,
 } from '@domain/enums/propertyEnum'
 // import { DateTime } from 'luxon';
 
@@ -83,6 +84,15 @@ export const inspectionSchema = z.object({
   availability_slot_id: z.string().nonempty()
 })
 
+
+export const reponseToReschedule = z.object({
+  inspection_id: z.string().uuid(),
+  status: z.enum([
+    InspectionRescheduleStatusEnum.Accepted,
+    InspectionRescheduleStatusEnum.Rejected,
+  ]),
+  user_rejection_reason: z.string().optional(),
+})
 export type ScheduleInspectionInput = z.infer<typeof inspectionSchema>
 
 export const updateInspectionStatusSchema = z.object({

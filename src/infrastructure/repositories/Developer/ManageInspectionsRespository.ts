@@ -1,10 +1,11 @@
-import { Inspection, InspectionRescheduleRequest } from '@entities/Inspection'
+import { Inspection } from '@entities/Inspection'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import db from '@infrastructure/database/knex'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { DayAvailability, DayAvailabilitySlot, schduleTime } from '@entities/Availabilities'
+import { InspectionStatus } from '@domain/enums/propertyEnum'
 
 export class ManageInspectionRepository implements IManageInspectionRepository {
   constructor() {}
@@ -19,10 +20,12 @@ async getOrganizationAvailability(
       .distinct(
         'da.day_availability_id',
         'da.time_slot',
+        'da.organization_id',
         'das.day',
         'das.start_time',
         'das.end_time',
-        'das.is_available'
+        'das.is_available',
+        'das.day_availability_slot_id',
       )
     if (!availability) {
       throw new ApplicationCustomError(
@@ -45,6 +48,31 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
     return new DayAvailability(dayAvailability);
 }
 
+  async getdayAvailabilityById(day_availablity_id: string): Promise<schduleTime> {
+   const availability = await db<schduleTime>('day_availability as da')
+      .leftJoin('day_availability_slot as das', 'da.day_availability_id', 'das.day_availability_id')
+      .leftJoin('properties as p', 'da.organization_id', 'p.organization_id')
+      .where('da.day_availability_id', '=', day_availablity_id)
+      .select(
+        'da.day_availability_id',
+        'inspection.confirm_avaliability_for_reschedule',
+        'da.time_slot',
+        'da.organization_id',
+        'das.day',
+        'das.start_time',
+        'das.end_time',
+        'das.is_available',
+        'das.day_availability_slot_id',
+      )
+      .first()
+    if (!availability) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Availability not found',
+      )
+    }
+    return availability
+  }
   async dayAvailabilitySlot(
     payload: DayAvailabilitySlot,
   ): Promise<DayAvailabilitySlot> {
@@ -86,6 +114,7 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
       .where('properties.organization_id', organization_id)
       .select(
         'inspection.id',
+        'inspection.confirm_avaliability_for_reschedule',
         'inspection.full_name',
         'inspection.created_at',
         'inspection.inspection_status',
@@ -116,6 +145,18 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
     })
   }
 
+  async rescheduleInspectionToUpdateInspectionTable(
+    payload: schduleTime,
+    inspection_id: string,
+  ): Promise<schduleTime> {
+    const [reschedule] = await db<schduleTime>('inspection')
+      .update(payload)
+      .where('inspection_id', inspection_id)
+      .andWhere('day_availability_slot_id', payload.day_availability_slot_id)
+      .returning('*')
+    return reschedule
+  }
+  
   async getInspectionById(inspection_id: string): Promise<Inspection> {
     const inspection = await db<Inspection>('inspection as i')
       .where('i.id', inspection_id)
@@ -143,16 +184,22 @@ async dayAvailability(payload: DayAvailability): Promise<DayAvailability> {
     return inspection
   }
 
-  async rescheduleInspection(
-    payload: InspectionRescheduleRequest,
-  ): Promise<InspectionRescheduleRequest> {
-    const [rescheduleRequest] = await db<InspectionRescheduleRequest>(
-      'inspection_reschedule_requests',
-    )
-      .insert(payload)
-      .returning('*')
 
-    return new InspectionRescheduleRequest(rescheduleRequest)
+  async updateInspectionStatus(
+    inspection_id: string,
+    status: InspectionStatus,
+  ): Promise<Inspection> {
+    const [updatedInspection] = await db<Inspection>('inspection')
+      .where('id', inspection_id)
+      .update({ inspection_status: status })
+      .returning('*')
+    if (!updatedInspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Inspection not found',
+      )
+    }
+    return updatedInspection
   }
 
   async updateInspectionDetails(

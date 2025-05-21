@@ -15,7 +15,11 @@ export interface IInspectionRepository {
     property_id: string,
     user_id: string,
   ): Promise<Inspection>
-  getScheduleInspection(user_id: string): Promise<Inspection[] & Properties[]>
+
+ responseToReschedule(
+    inspection_id: string,
+    status: Partial<Inspection>,
+  ): Promise<Inspection>
 
   updateScheduleInpection(
     inspectionId: string,
@@ -23,6 +27,7 @@ export interface IInspectionRepository {
   ): Promise<Inspection>
   getAllScheduleInspection(
     user_id: string,
+    query: string,
     filter?: Record<string, any>,
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Record<string, any>>>
@@ -33,4 +38,6 @@ export interface IInspectionRepository {
     property_ids: string[],
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Inspection>>
+  
+
 }

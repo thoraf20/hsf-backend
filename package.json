@@ -11,17 +11,8 @@
     "build": "tsc && tsc-alias",
     "migrate:dev": "knex migrate:latest --env development --knexfile=database/knexfile.ts",
     "migrate:prod": "knex migrate:latest --env production --knexfile=database/knexfile.ts",
-<<<<<<< HEAD
-    "make": "knex migrate:make update_inspection -x ts --knexfile=database/knexfile.ts",
-    "make:seed": "knex seed:make roles_and_permissions -x ts --knexfile=database/knexfile.ts",
-    "make:seed:review_requests": "knex seed:make review_requests -x ts --knexfile=database/knexfile.ts",
-    "make:seed:hsf_org": "knex seed:make hsf_organization -x ts --knexfile=database/knexfile.ts",
-    "seed:role_permissions": "knex seed:run --knexfile=database/knexfile.ts --specific=roles_and_permissions.ts",
-    "seed:run": "npx knex seed:run --knexfile=database/knexfile.ts",
-=======
     "make": "knex migrate:make inspection_reschedule_request -x ts --knexfile=database/knexfile.ts",
     "make:seed": "knex seed:make application-document -x ts --knexfile=database/knexfile.ts",
->>>>>>> a92047b5128daa5122225699a904eff035829fd1
     "seed:developer": "npx knex seed:run --specific=developer_user.ts --knexfile=database/knexfile.ts",
     "seed:review_request": "npx knex seed:run  --knexfile=database/knexfile.ts --specific=review_requests.ts",
     "seed:hsf_org": "npx knex seed:run --knexfile=database/knexfile.ts --specific=hsf_organization.ts",
