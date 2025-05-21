@@ -4,6 +4,7 @@ import { SeekPaginationResult } from '@shared/types/paginate'
 import db from '@infrastructure/database/knex'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
+import { applyPagination } from '@shared/utils/paginate'
 
 export class ManageInspectionRepository implements IManageInspectionRepository {
   constructor() {}
@@ -49,6 +50,17 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
       next_page: page < totalPages ? page + 1 : null,
       prev_page: page > 1 ? page - 1 : null,
     })
+  }
+
+  async getUserInspectionForProperty(
+    propertyId: string,
+    userId: string,
+  ): Promise<SeekPaginationResult<Inspection>> {
+    let baseQuery = db<Inspection>('inspection as i')
+      .orderBy('created_at', 'desc')
+      .where('property_id', propertyId)
+      .andWhere('user_id', userId)
+    return applyPagination(baseQuery)
   }
 
   async getInspectionById(inspection_id: string): Promise<Inspection> {

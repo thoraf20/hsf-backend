@@ -1,76 +1,26 @@
-export class DocumentGroup {
-  id: string
+import { BaseEntity } from '.'
+
+export class DocumentGroup extends BaseEntity {
   name: string
   tag: string
   description?: string
-
-  constructor(d: Partial<DocumentGroup>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
 }
 
-export class GroupDocumentType {
-  id: string
+export class GroupDocumentType extends BaseEntity {
   group_id: string
   document_type: string
+  description?: string
   display_label?: string
   is_user_uploadable: boolean
   uploaded_by_role_id: string
   is_required_for_group: boolean
-
-  constructor(d: Partial<GroupDocumentType>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
 }
 
-export class ApplicationDocument {
-  id: string
+export class ApplicationDocumentEntry extends BaseEntity {
   application_id: string
   document_group_type_id: string
   document_url: string
   document_name: string
   document_size?: string
   review_request_id: string
-  created_at: Date
-  updated_at: Date
-
-  constructor(d: Partial<ApplicationDocument>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
-}
-
-export class ApplicationDocumentEntry {
-  id: string
-  application_id: string
-  document_group_type_id: string
-  document_url: string
-  document_name: string
-  document_type: string
-  document_status: string
-  created_at: Date
-  updated_at: Date
-
-  constructor(d: Partial<ApplicationDocumentEntry>) {
-    let data = {
-      ...d,
-      created_at: new Date(),
-      updated_at: new Date(),
-    }
-    Object.assign(this, data)
-  }
 }

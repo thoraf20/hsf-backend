@@ -168,7 +168,7 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
     }
   }
 
-  async getReviewRequestApprovalByRequestID(
+  async getReviewRequestApprovalByOrgRequestID(
     requestId: string,
     organizationId: string,
   ): Promise<ReviewRequestApproval> {
@@ -184,6 +184,27 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
       )
       throw new Error('Failed to get review request approval by request ID')
     }
+  }
+
+  getReviewRequestApprovalByRequestID(requestId: string): Promise<
+    (ReviewRequestApproval & {
+      review_request_stage: ReviewRequestStage
+      review_request_type_stage: ReviewRequestTypeStage
+    })[]
+  > {
+    return db<any>('review_request_approvals as rra')
+      .innerJoin(
+        'review_request_type_stages as rrts',
+        'rrts.id',
+        'rra.review_request_stage_type_id',
+      )
+      .innerJoin('review_request_stages as rrs', 'rrs.id', 'rrts.stage_id')
+      .select(
+        'rra.*',
+        db.raw('row_to_json(rrs) as review_request_stage'),
+        db.raw('row_to_json(rrts) as review_request_type_stage'),
+      )
+      .where({ request_id: requestId })
   }
 
   async getReviewRequestID(id: string): Promise<ReviewRequest> {

@@ -1,3 +1,4 @@
+import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
   EligibilityStatus,
@@ -24,6 +25,7 @@ import {
   ReviewRequestType,
   ReviewRequestTypeKind,
 } from '@entities/Request'
+import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
@@ -56,6 +58,7 @@ export class ApplicationService {
     private readonly OfferRepository: IOfferLetterRepository,
     private readonly reviewRequestRepository: IReviewRequestRepository,
     private readonly organizationRepository: IOrganizationRepository,
+    private readonly documentRepository: IDocumentRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -504,7 +507,7 @@ export class ApplicationService {
     }
 
     const approval =
-      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+      await this.reviewRequestRepository.getReviewRequestApprovalByOrgRequestID(
         input.request_id,
         organizationId,
       )
@@ -877,5 +880,71 @@ export class ApplicationService {
     reviewRequestContent.total_records = reviewRequestContent.result.length
 
     return reviewRequestContent
+  }
+
+  async getRequiredDoc(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    let requiredDocumentGroupTag: Array<DocumentGroupKind> = []
+
+    // if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
+    requiredDocumentGroupTag.push(
+      DocumentGroupKind.MortgageUpload,
+      DocumentGroupKind.ConditionPrecedent,
+    )
+    // }
+
+    const documentTypes = await Promise.all(
+      requiredDocumentGroupTag.map(async (kind) => {
+        const documentGroup =
+          await this.documentRepository.findDocumentGroupByTag(kind)
+        if (!documentGroup) return []
+
+        const groupDocumentTypes =
+          await this.documentRepository.findGroupDocumentTypesByGroupId(
+            documentGroup.id,
+          )
+
+        return Promise.all(
+          groupDocumentTypes.map(async (gdt) => {
+            const documentEntries = await this.documentRepository
+              .findApplicationDocumentEntriesByApplicationIdAndGroupTypeId(
+                applicationId,
+                gdt.id,
+              )
+              .then(async (docEntries) => {
+                return Promise.all(
+                  docEntries.map(async (entry) => {
+                    const reviewRequests =
+                      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+                        entry.review_request_id,
+                      )
+
+                    return {
+                      ...entry,
+                      review_requests: reviewRequests,
+                    }
+                  }),
+                )
+              })
+
+            return {
+              ...gdt,
+              documents: documentEntries,
+            }
+          }),
+        )
+      }),
+    )
+
+    return documentTypes.flat(1)
   }
 }

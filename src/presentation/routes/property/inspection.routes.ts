@@ -15,6 +15,12 @@ import {
 } from '@application/requests/dto/inspectionVaidator'
 import { TransactionRepository } from '@infrastructure/repositories/transaction/TransactionRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
+import { authorize } from '@middleware/authorization'
+import {
+  isHomeBuyer,
+  requireOrganizationType,
+} from '@shared/utils/permission-policy'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
@@ -27,7 +33,7 @@ const inspectionController = new InspectionController(service)
 
 inspectionRoutes.post(
   '/property/schedule',
-  requireRoles(Role.HOME_BUYER),
+  authorize(isHomeBuyer),
   validateRequest(inspectionSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
@@ -41,7 +47,6 @@ inspectionRoutes.post(
 
 inspectionRoutes.patch(
   '/:inspection_id/status',
-  requireRoles(Role.DEVELOPER),
   validateRequest(updateInspectionStatusSchema),
   asyncMiddleware(async (req, res) => {
     const { inspection_id } = req.params
@@ -66,7 +71,7 @@ inspectionRoutes.get(
 )
 inspectionRoutes.get(
   '/developer/fetch-all',
-  requireRoles(Role.DEVELOPER),
+  authorize(requireOrganizationType(OrganizationType.DEVELOPER_COMPANY)),
   asyncMiddleware(async (req, res) => {
     const { user } = req
     const inspection = await inspectionController.getDevScheduleInspection(

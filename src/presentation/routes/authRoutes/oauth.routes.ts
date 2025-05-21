@@ -1,3 +1,4 @@
+import { UserStatus } from '@domain/enums/userEum'
 import { User } from '@entities/User'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { google } from '@infrastructure/oauth/google'
@@ -100,6 +101,7 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
           image: claims.picture,
           password: '',
           role_id: findRole.id,
+          status: UserStatus.Active,
         })
       }
 

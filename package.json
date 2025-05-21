@@ -16,7 +16,8 @@
     "seed:developer": "npx knex seed:run --specific=developer_user.ts --knexfile=database/knexfile.ts",
     "seed:review_request": "npx knex seed:run  --knexfile=database/knexfile.ts --specific=review_requests.ts",
     "seed:hsf_org": "npx knex seed:run --knexfile=database/knexfile.ts --specific=hsf_organization.ts",
-    "seed:notification_data": "npx knex --knexfile database/knexfile.ts seed:run --specific=initial_notification_data.ts"
+    "seed:notification_data": "npx knex --knexfile database/knexfile.ts seed:run --specific=initial_notification_data.ts",
+    "seed:application_document": "npx knex seed:run --specific=application-document.ts --knexfile=database/knexfile.ts"
   },
   "keywords": [],
   "author": "",

@@ -31,6 +31,10 @@ import {
 import { Router } from 'express'
 import { ReviewRequestRepository } from '@application/repositories/ReviewRequestRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
+import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -41,8 +45,21 @@ const applicationService = new ApplicationService(
   new OfferLetterRepository(),
   new ReviewRequestRepository(),
   new OrganizationRepository(),
+  new DocumentRepository(),
 )
-const applicationController = new ApplicationController(applicationService)
+const manageInspectionRepository = new ManageInspectionRepository()
+const organizationRepository = new OrganizationRepository()
+const applicationController = new ApplicationController(
+  applicationService,
+  new ManageInspectionUseCase(
+    manageInspectionRepository,
+    organizationRepository,
+    new ApplicationRepository(),
+    new PropertyRepository(),
+    new UserRepository(),
+    new DeveloperRespository(),
+  ),
+)
 const applicationRoutes = Router()
 
 applicationRoutes.post(
@@ -251,4 +268,34 @@ applicationRoutes.get(
   asyncMiddleware(async () => {}),
 )
 
+applicationRoutes.get(
+  '/:application_id/documents/required',
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+    } = req
+    const response = await applicationController.getRequiredDoc(
+      application_id,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/inspections',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+    const response = await applicationController.getInspectionsByApplicationId(
+      application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
 export default applicationRoutes

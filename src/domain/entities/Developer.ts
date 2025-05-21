@@ -1,3 +1,4 @@
+import { OrganizationType } from '@domain/enums/organizationEnum'
 import { User } from './User'
 
 export class Developer {
@@ -35,3 +36,19 @@ export class Developer {
 }
 
 export type DevelopeReg = Partial<Developer> & Partial<User>
+
+export function getDeveloperClientView(developer: Developer) {
+  return {
+    id: developer.profile_id,
+    name: developer.company_name,
+    type: OrganizationType.DEVELOPER_COMPANY,
+    office_address: developer.office_address,
+    company_email: developer.company_email,
+    company_image: developer.company_image,
+    specialization: developer.specialization,
+    state: developer.state,
+    city: developer.city,
+    created_at: developer.created_at,
+    updated_at: developer.updated_at,
+  }
+}

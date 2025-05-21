@@ -39,6 +39,10 @@ export class DeveloperRespository implements IDeveloperRepository {
     return developer ? new Developer(developer) : null
   }
 
+  async getDeveloperByOrgId(orgId: string): Promise<Developer> {
+    return db<Developer>(this.tableName).where('organization_id', orgId).first()
+  }
+
   useFilters(
     query: Knex.QueryBuilder<Developer, Developer[]>,
     filters: DeveloperFilters,

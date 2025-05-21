@@ -45,10 +45,17 @@ export interface IReviewRequestRepository {
 
   getReviewRequestTypeStageByID(id: string): Promise<ReviewRequestTypeStage>
 
-  getReviewRequestApprovalByRequestID(
+  getReviewRequestApprovalByOrgRequestID(
     requestId: string,
     organizationId: string,
   ): Promise<ReviewRequestApproval>
+
+  getReviewRequestApprovalByRequestID(requestId: string): Promise<
+    (ReviewRequestApproval & {
+      review_request_stage: ReviewRequestStage
+      review_request_type_stage: ReviewRequestTypeStage
+    })[]
+  >
 
   getHsfReviewRequests(
     hsfOrgId: string,

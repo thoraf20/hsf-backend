@@ -19,6 +19,7 @@ export class Inspection {
   inspection_fee_paid: boolean
   inspection_status: InspectionStatus
   availability_slot_id?: string
+  application_id?: string
   meet_link?: string
   // amount?: string
   user_id: string
@@ -54,4 +55,3 @@ export class InspectionRescheduleRequest {
     Object.assign(this, data)
   }
 }
-

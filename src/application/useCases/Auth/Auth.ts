@@ -131,6 +131,7 @@ export class AuthService {
       ...input,
       email,
       role_id: findRole.id,
+      status: UserStatus.Active,
     })
 
     await this.userRepository.update(user.id, { is_email_verified: true })
@@ -199,7 +200,7 @@ export class AuthService {
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
     emailTemplates.emailVerificationEmail(email, otp.toString())
-    console.log("hey")
+    console.log('hey')
   }
 
   /**
@@ -426,7 +427,7 @@ export class AuthService {
     }
 
     const otp = generateRandomSixNumbers()
-  
+
     const cacheKey = `${CacheEnumKeys.MFA_VERIFICATION_KEY}-${user.id ?? user.user_id}`
     await this.client.setKey(
       cacheKey,

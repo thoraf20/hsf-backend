@@ -4,6 +4,7 @@ import { DeveloperFilters } from '@validators/developerValidator'
 
 export interface IDeveloperRepository {
   createDeveloperProfile: (data: Developer) => Promise<DevelopeReg>
+  getDeveloperByOrgId(orgId: string): Promise<Developer>
   getCompanyName: (company_name: string) => Promise<Developer>
   getCompanyRegistrationNumber: (
     company_registration_number: string,

@@ -2,6 +2,7 @@ import { OfferLetterStatus } from '@domain/enums/propertyEnum'
 import { createResponse } from '@presentation/response/responseType'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { ApplicationService } from '@use-cases/Application/application'
+import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import {
   CreateApplicationInput,
   OfferLetterFilters,
@@ -14,7 +15,10 @@ import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 
 export class ApplicationController {
-  constructor(private readonly applicationService: ApplicationService) {}
+  constructor(
+    private readonly applicationService: ApplicationService,
+    private readonly manageInspectionService: ManageInspectionUseCase,
+  ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
     const application = await this.applicationService.create(userId, input)
@@ -192,6 +196,35 @@ export class ApplicationController {
       StatusCodes.OK,
       'Offer Letter retrieved successfully',
       offerLetters,
+    )
+  }
+
+  async getRequiredDoc(applicationId: string, authInfo: AuthInfo) {
+    const contents = await this.applicationService.getRequiredDoc(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Document Required fetched successfully',
+      { documents: contents },
+    )
+  }
+
+  async getInspectionsByApplicationId(
+    applicationId: string,
+    authInfo: AuthInfo,
+  ) {
+    const contents =
+      await this.manageInspectionService.getInspectionByApplicationId(
+        applicationId,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Inspections retrieved successfully',
+      contents,
     )
   }
 }
