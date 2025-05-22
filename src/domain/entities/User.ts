@@ -143,6 +143,8 @@ export function getUserClientView(
   }
 }
 
+export type UserClientView = ReturnType<typeof getUserClientView>
+
 export class UserRole extends BaseEntity {
   name: string
 

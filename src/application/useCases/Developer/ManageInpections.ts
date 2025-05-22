@@ -1,4 +1,3 @@
-import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 import { InspectionStatus } from '@domain/enums/propertyEnum'
 import { schduleTime } from '@entities/Availabilities'
 import { getDeveloperClientView } from '@entities/Developer'
@@ -239,7 +238,6 @@ export class ManageInspectionUseCase {
       await this.manageInspectionRepository.getdayAvailabilityById(
         getSlot.day_availability_id,
       )
-    console.log(getAvailability)
     if (getAvailability.organization_id !== organization_id) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,

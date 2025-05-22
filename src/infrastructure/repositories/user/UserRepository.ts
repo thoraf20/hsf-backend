@@ -141,7 +141,6 @@ export class UserRepository implements IUserRepository {
 
     if (filters.type) {
       q = add(q).where('o.type', OrganizationType.HSF_INTERNAL)
-      console.log(filters)
       if (filters.type === 'admin') {
         q = add(q).whereIn('r.name', [Role.SUPER_ADMIN, Role.HSF_ADMIN])
       } else {
@@ -165,8 +164,6 @@ export class UserRepository implements IUserRepository {
       'r.name as role',
       db.raw('row_to_json(uom) as membership'),
     )
-
-    console.log({ sql: baseQuery.toSQL().sql })
 
     return applyPagination<User>(baseQuery)
   }

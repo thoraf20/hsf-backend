@@ -170,7 +170,6 @@ export class AuthService {
 
     if (type === OtpEnum.PASSWORD_RESET) {
       const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${tempId}`
-      console.log(id)
       await this.client.setKey(tempKey, { id, is_email_verified: true }, 600)
     }
 
@@ -200,7 +199,6 @@ export class AuthService {
     const details = { id: user.id, otp, type: OtpEnum.EMAIL_VERIFICATION }
     await this.client.setKey(key, details, 60)
     emailTemplates.emailVerificationEmail(email, otp.toString())
-    console.log('hey')
   }
 
   /**
@@ -319,6 +317,10 @@ export class AuthService {
             token: token,
             mfa_required: true,
             mfa_type: MfaFlow.TOTP,
+            email: user.email,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            id: user.id,
           },
         )
       }
@@ -347,6 +349,10 @@ export class AuthService {
           token: token,
           mfa_required: true,
           mfa_type: MfaFlow.EMAIL_OTP,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          id: user.id,
         },
       )
     }

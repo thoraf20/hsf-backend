@@ -4,7 +4,10 @@ import {
   createResponse,
 } from '@presentation/response/responseType'
 import { preQualifyService } from '@use-cases/Properties/preQualify/prequalify'
-import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
+import {
+  PreQualifierEligibleInput,
+  PreQualifyFilters,
+} from '@validators/prequalifyValidation'
 import { StatusCodes } from 'http-status-codes'
 
 export class preQualifyController {
@@ -37,6 +40,17 @@ export class preQualifyController {
   public async getAllPreQualifierById(id: string): Promise<ApiResponse<any>> {
     const preQualifier = await this.service.getAllPreQualifierById(id)
     return createResponse(StatusCodes.OK, `Success`, preQualifier)
+  }
+
+  public async getAllPreQualifiers(
+    filters: PreQualifyFilters,
+  ): Promise<ApiResponse<any>> {
+    const preQualifiers = await this.service.getAllPrequalifiers(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'Prequalifies retrieved successfully',
+      preQualifiers,
+    )
   }
 
   public async updatePrequalifierEligibility(

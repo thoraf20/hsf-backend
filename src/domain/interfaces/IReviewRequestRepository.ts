@@ -33,6 +33,10 @@ export interface IReviewRequestRepository {
     data: Partial<ReviewRequestApproval>,
   ): Promise<ReviewRequestApproval>
 
+  getReviewRequestApprovalById(
+    approvalId: string,
+  ): Promise<ReviewRequestApproval>
+
   updateReviewRequestApproval(
     approverId: string,
     update: Partial<ReviewRequestApproval>,
@@ -52,8 +56,10 @@ export interface IReviewRequestRepository {
 
   getReviewRequestApprovalByRequestID(requestId: string): Promise<
     (ReviewRequestApproval & {
+      review_request: ReviewRequest
       review_request_stage: ReviewRequestStage
       review_request_type_stage: ReviewRequestTypeStage
+      request_approvers: Array<ReviewRequestStageApprover>
     })[]
   >
 

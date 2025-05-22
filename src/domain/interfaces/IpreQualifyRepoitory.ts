@@ -4,10 +4,15 @@ import {
   payment_calculator,
   personalinformation,
   preQualify,
+  PreQualifyDIP,
   prequalifyStatus,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
-import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import {
+  PreQualifierEligibleInput,
+  PreQualifyFilters,
+} from '@validators/prequalifyValidation'
 
 export interface IPreQualify {
   storePersonaInfo(input: personalinformation): Promise<personalinformation>
@@ -23,6 +28,9 @@ export interface IPreQualify {
   ): Promise<void>
   getPreQualifyRequestByUser(user_id: string): Promise<preQualify>
   getPreQualifyRequest(): Promise<preQualify[]>
+  getAllPreQualifiers(
+    filters: PreQualifyFilters,
+  ): Promise<SeekPaginationResult<PreQualifyDIP>>
   getPreQualifyRequestById(id: string): Promise<preQualify>
   getSuccessfulPrequalifyRequestByUser(user_id: string): Promise<preQualify>
   addEligibility(input: Eligibility): Promise<Eligibility>

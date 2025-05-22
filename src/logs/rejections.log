@@ -493,3 +493,268 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at FileRepository.upload (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/infrastructure/services/file.system.service.ts:39:9)
     at FileController.uploadSingleFile (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/File.controller.ts:10:26)
     at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/routes/file/file.routes.ts:44:24
+2025-05-21 12:34:48 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, "ps".*, "el".*, "ol".*, "du".*, "pdu".*, "rp".*, "lo".*, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "prequalify_status" as "ps" on "a"."prequalifier_id" = "ps"."status_id" left join "prequalify_personal_information" as "ppi" on "ps"."personal_information_id" = "ppi"."personal_information_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "document_upload" as "du" on "a"."document_upload_id" = "du"."document_upload_id" left join "precedent_document_upload" as "pdu" on "a"."precedent_document_upload_id" = "pdu"."precedent_document_upload_id" left join "replayment_plan" as "rp" on "a"."payment_date_id" = "rp"."payment_date_id" left join "loan_offer" as "lo" on "a"."loan_offer_id" = "lo"."loan_offer_id" left join "dip" as "dp" on "a"."dip_id" = "dp"."dip_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "property-closings"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-05-21 12:38:55 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, "ps".*, "el".*, "ol".*, "du".*, "pdu".*, "rp".*, "lo".*, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "prequalify_status" as "ps" on "a"."prequalifier_id" = "ps"."status_id" left join "prequalify_personal_information" as "ppi" on "ps"."personal_information_id" = "ppi"."personal_information_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "document_upload" as "du" on "a"."document_upload_id" = "du"."document_upload_id" left join "precedent_document_upload" as "pdu" on "a"."precedent_document_upload_id" = "pdu"."precedent_document_upload_id" left join "replayment_plan" as "rp" on "a"."payment_date_id" = "rp"."payment_date_id" left join "loan_offer" as "lo" on "a"."loan_offer_id" = "lo"."loan_offer_id" left join "dip" as "dp" on "a"."dip_id" = "dp"."dip_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "property-closings"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-05-21 12:40:03 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, "ps".*, "el".*, "ol".*, "du".*, "pdu".*, "rp".*, "lo".*, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "prequalify_status" as "ps" on "a"."prequalifier_id" = "ps"."status_id" left join "prequalify_personal_information" as "ppi" on "ps"."personal_information_id" = "ppi"."personal_information_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "document_upload" as "du" on "a"."document_upload_id" = "du"."document_upload_id" left join "precedent_document_upload" as "pdu" on "a"."precedent_document_upload_id" = "pdu"."precedent_document_upload_id" left join "replayment_plan" as "rp" on "a"."payment_date_id" = "rp"."payment_date_id" left join "loan_offer" as "lo" on "a"."loan_offer_id" = "lo"."loan_offer_id" left join "dip" as "dp" on "a"."dip_id" = "dp"."dip_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "property-closings"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-05-21 12:40:50 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, "ps".*, "el".*, "ol".*, "du".*, "pdu".*, "rp".*, "lo".*, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "prequalify_status" as "ps" on "a"."prequalifier_id" = "ps"."status_id" left join "prequalify_personal_information" as "ppi" on "ps"."personal_information_id" = "ppi"."personal_information_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "document_upload" as "du" on "a"."document_upload_id" = "du"."document_upload_id" left join "precedent_document_upload" as "pdu" on "a"."precedent_document_upload_id" = "pdu"."precedent_document_upload_id" left join "replayment_plan" as "rp" on "a"."payment_date_id" = "rp"."payment_date_id" left join "loan_offer" as "lo" on "a"."loan_offer_id" = "lo"."loan_offer_id" left join "dip" as "dp" on "a"."dip_id" = "dp"."dip_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "property-closings"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-05-21 12:41:35 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
+                            'ppi', row_to_json(ppi),
+                            'prequalify_status', row_to_json(ps),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, "ps".*, "el".*, "ol".*, "du".*, "pdu".*, "rp".*, "lo".*, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "prequalify_status" as "ps" on "a"."prequalifier_id" = "ps"."status_id" left join "prequalify_personal_information" as "ppi" on "ps"."personal_information_id" = "ppi"."personal_information_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "document_upload" as "du" on "a"."document_upload_id" = "du"."document_upload_id" left join "precedent_document_upload" as "pdu" on "a"."precedent_document_upload_id" = "pdu"."precedent_document_upload_id" left join "replayment_plan" as "rp" on "a"."payment_date_id" = "rp"."payment_date_id" left join "loan_offer" as "lo" on "a"."loan_offer_id" = "lo"."loan_offer_id" left join "dip" as "dp" on "a"."dip_id" = "dp"."dip_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "property-closings"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)

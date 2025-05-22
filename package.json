@@ -13,7 +13,7 @@
     "migrate:prod": "knex migrate:latest --env production --knexfile=database/knexfile.ts",
     "make": "knex migrate:make inspection_reschedule_request -x ts --knexfile=database/knexfile.ts",
     "make:seed": "knex seed:make application-document -x ts --knexfile=database/knexfile.ts",
-    "seed:developer": "npx knex seed:run --specific=developer_user.ts --knexfile=database/knexfile.ts",
+    "seed:developer": "npx knex seed:run  --knexfile=database/knexfile.ts --specific=developer_user.ts",
     "seed:review_request": "npx knex seed:run  --knexfile=database/knexfile.ts --specific=review_requests.ts",
     "seed:hsf_org": "npx knex seed:run --knexfile=database/knexfile.ts --specific=hsf_organization.ts",
     "seed:notification_data": "npx knex --knexfile database/knexfile.ts seed:run --specific=initial_notification_data.ts",

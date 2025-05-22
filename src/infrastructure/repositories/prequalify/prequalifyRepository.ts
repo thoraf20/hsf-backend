@@ -5,12 +5,21 @@ import {
   payment_calculator,
   personalinformation,
   preQualify,
+  PreQualifyDIP,
   prequalifyStatus,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
-import { PreQualifierEligibleInput } from '@validators/prequalifyValidation'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { SearchType } from '@shared/types/repoTypes'
+import { addQueryUnionFilter } from '@shared/utils/helpers'
+import { applyPagination } from '@shared/utils/paginate'
+import {
+  PreQualifierEligibleInput,
+  PreQualifyFilters,
+} from '@validators/prequalifyValidation'
+import { Knex } from 'knex'
 
 export class PrequalifyRepository implements IPreQualify {
   public async storePersonaInfo(
@@ -187,5 +196,40 @@ export class PrequalifyRepository implements IPreQualify {
       .where('phone_number', identifier)
       .first()
     return user ? new User(user) : null
+  }
+
+  usePreQualiferFilter(
+    q: Knex.QueryBuilder<any, any[]>,
+    filters: PreQualifyFilters,
+  ) {
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.status) {
+      add(q).whereRaw(
+        db.raw(addQueryUnionFilter('ps.status', [filters.status])),
+      )
+    }
+
+    return q
+  }
+
+  getAllPreQualifiers(
+    filters: PreQualifyFilters,
+  ): Promise<SeekPaginationResult<PreQualifyDIP>> {
+    let baseQuery = db('prequalify_status as ps')
+      .innerJoin(
+        'prequalify_personal_information as ppi',
+        'ps.personal_information_id',
+        'ppi.personal_information_id',
+      )
+      .innerJoin(
+        'prequalify_other_info as info',
+        'ps.personal_information_id',
+        'info.personal_information_id',
+      )
+
+    baseQuery = this.usePreQualiferFilter(baseQuery, filters)
+
+    return applyPagination<PreQualifyDIP>(baseQuery)
   }
 }

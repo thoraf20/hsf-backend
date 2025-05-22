@@ -30,8 +30,10 @@ export interface IOrganizationRepository {
     paginate?: SeekPaginationOption,
   ): Promise<
     SeekPaginationResult<
-      UserOrganizationMember &
-        { user: User; role: { id: string; name: string } }[]
+      UserOrganizationMember & {
+        user: User
+        role: { id: string; name: string }
+      }
     >
   >
 

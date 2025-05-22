@@ -123,11 +123,9 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
     },
   ]
 
-  const reviewRequestStageTable = knex.table<ReviewRequestStage>(
-    'review_request_stages',
-  )
   for (const stageData of offerLetterReviewStagesData) {
-    const reviewStage = await reviewRequestStageTable
+    const reviewStage = await knex
+      .table<ReviewRequestStage>('review_request_stages')
       .select('id')
       .where({ name: stageData.name })
       .first()
@@ -140,15 +138,11 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
     stageData.id = reviewStage.id
   }
 
-  const reviewRequestTypeStageTable = knex.table<ReviewRequestTypeStage>(
-    'review_request_type_stages',
-  )
-  const reviewRequestStageApproverTable =
-    knex.table<ReviewRequestStageApprover>('review_request_stage_approvers')
-
-  await reviewRequestTypeStageTable
+  await knex
+    .table<ReviewRequestTypeStage>('review_request_type_stages')
     .update({ enabled: false })
     .where({ request_type_id: offerLetterReviewType.id })
+
   console.log(
     `Disabled existing stages for request_type_id: ${offerLetterReviewType.id}`,
   )
@@ -163,7 +157,8 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
       `Processing stage: ${stageData.name} (ID: ${stageData.id}) for request_type_id: ${offerLetterReviewType.id} with order ${order}`,
     )
 
-    let [reviewRequestTypeStageEntry] = await reviewRequestTypeStageTable
+    let [reviewRequestTypeStageEntry] = await knex
+      .table<ReviewRequestTypeStage>('review_request_type_stages')
       .select()
       .where({
         request_type_id: offerLetterReviewType.id,
@@ -172,7 +167,8 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
       .returning('*')
 
     if (!reviewRequestTypeStageEntry) {
-      ;[reviewRequestTypeStageEntry] = await reviewRequestTypeStageTable
+      ;[reviewRequestTypeStageEntry] = await knex
+        .table<ReviewRequestTypeStage>('review_request_type_stages')
         .insert({
           stage_order: order,
           enabled: true,
@@ -216,7 +212,8 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
     console.log(
       `Deleting existing approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
     )
-    await reviewRequestStageApproverTable
+    await knex
+      .table<ReviewRequestStageApprover>('review_request_stage_approvers')
       .where({ request_stage_type_id: reviewRequestTypeStageEntry.id! })
       .delete()
 
@@ -230,7 +227,9 @@ async function offerLetterReviewRequestSeed(knex: Knex): Promise<void> {
       console.log(
         `Inserting ${approversToInsert.length} approvers for review_request_type_stage_id: ${reviewRequestTypeStageEntry.id}`,
       )
-      await reviewRequestStageApproverTable.insert(approversToInsert)
+      await knex
+        .table<ReviewRequestStageApprover>('review_request_stage_approvers')
+        .insert(approversToInsert)
     }
 
     console.log(

@@ -5,6 +5,7 @@ import {
   PropertyClosing,
 } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
+import { SeekPaginationResult } from '@shared/types/paginate'
 import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export interface IPurchaseProperty {
@@ -26,6 +27,11 @@ export interface IPurchaseProperty {
     user_id: string,
   ): Promise<PropertyClosing>
   getPropertyClosingById(id: string): Promise<PropertyClosing>
+  getEscrowInfo(escrow_id: string): Promise<EscrowInformation>
+
+  findAllPropertyClosings(
+    filter: any,
+  ): Promise<SeekPaginationResult<PropertyClosing>>
 
   updatePropertyClosing(
     propertyClosingId: string,
@@ -38,7 +44,10 @@ export interface IPurchaseProperty {
 
   getAllOfferLetterByUserId(user_id: string): Promise<OfferLetter[]>
   getOfferLetter(userId: string): Promise<OfferLetter[]>
-  setEscrowAttendance(input: EscrowInformation): Promise<EscrowInformation>
+  setEscrowAttendance(
+    input: EscrowInformation,
+    attendee: Array<string>,
+  ): Promise<EscrowInformation>
   confirmPropertyPurchase(
     input: Record<string, any>,
     user_id: string,

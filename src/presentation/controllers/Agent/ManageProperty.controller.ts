@@ -39,16 +39,16 @@ export class MangagePropertyController {
       properties,
     )
   }
-  async setEscrowAttendance(
-    input: EscrowInformation,
-    agent_id: string,
-  ): Promise<ApiResponse<any>> {
-    const escrow = await this.managePropertyService.setEscrowAttendance(
-      input,
-      agent_id,
-    )
-    return createResponse(StatusCodes.OK, 'Success', escrow)
-  }
+  // async setEscrowAttendance(
+  //   input: EscrowInformation,
+  //   agent_id: string,
+  // ): Promise<ApiResponse<any>> {
+  //   const escrow = await this.managePropertyService.setEscrowAttendance(
+  //     input,
+  //     agent_id,
+  //   )
+  //   return createResponse(StatusCodes.OK, 'Success', escrow)
+  // }
   async confirmPropertyPurchase(
     input: Record<string, any>,
   ): Promise<ApiResponse<any>> {

@@ -78,7 +78,6 @@ inspectionRoutes.get(
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
-    console.log('query', query)
     const inspection = await inspectionController.getScheduleInspection(user.id)
     res.status(inspection.statusCode).json(inspection)
   }),

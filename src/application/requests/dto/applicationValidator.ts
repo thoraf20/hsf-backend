@@ -50,7 +50,7 @@ export type RequestPropertyClosingInput = z.infer<
 >
 
 export const requestOfferLetterRespondSchema = z.object({
-  request_id: z.string().nonempty(),
+  approval_id: z.string().nonempty(),
   offer_letter_status: z.enum([
     OfferLetterStatus.Approved,
     OfferLetterStatus.Rejected,
@@ -66,7 +66,9 @@ export const scheduleEscrowMeetingSchema = z.object({
   date: z.string().date(),
   time: z.string().time(),
   location: z.string().nonempty(),
-  attendees: z.array(z.string()),
+  attendees: z.array(z.string()).nonempty({
+    message: 'need, you need to select at least one person',
+  }),
 })
 
 export type ScheduleEscrowMeetingInput = z.infer<
@@ -74,6 +76,7 @@ export type ScheduleEscrowMeetingInput = z.infer<
 >
 
 export const scheduleEscrowMeetingRespondSchema = z.object({
+  approval_id: z.string().nonempty(),
   confirm_attendance: z.boolean(),
   reason: z.string().nonempty().optional(),
 })

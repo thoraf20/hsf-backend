@@ -42,6 +42,17 @@ export class ApplicationController {
     )
   }
 
+  async getAllPropertyClosingsByHSF(filter: PropertyFilters) {
+    const propertyClosings =
+      await this.applicationService.getAllPropertyClosingsByHSF(filter)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Property closings retrieved successfully',
+      propertyClosings,
+    )
+  }
+
   async getById(id: string, authInfo: AuthInfo) {
     const application = await this.applicationService.getById(id, authInfo)
 
@@ -121,7 +132,7 @@ export class ApplicationController {
     const propertyClosing =
       await this.applicationService.propertyClosingRespond(applicationId, input)
 
-    return createResponse(StatusCodes.OK, '', {
+    return createResponse(StatusCodes.OK, 'Property closing status updated', {
       property_closing: propertyClosing,
     })
   }
@@ -150,13 +161,13 @@ export class ApplicationController {
 
   async scheduleEscrowMeeting(
     applicationId: string,
-    userId: string,
+    authInfo: AuthInfo,
     input: ScheduleEscrowMeetingInput,
   ) {
     const escrowAttendance =
       await this.applicationService.scheduleEscrowMeeting(
         applicationId,
-        userId,
+        authInfo,
         input,
       )
 
@@ -169,15 +180,29 @@ export class ApplicationController {
     )
   }
 
+  async getEscrowMeetingStatus(applicationId: string, authInfo: AuthInfo) {
+    const escrowMeetingStatus =
+      await this.applicationService.getEscrowMeetingStatus(
+        applicationId,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Escrow Meeting status fetched successfully',
+      escrowMeetingStatus,
+    )
+  }
+
   async scheduleEscrowMeetingRespond(
     applicationId: string,
-    userId: string,
+    authInfo: AuthInfo,
     input: ScheduleEscrowMeetingRespondInput,
   ) {
     const escrowMeeting =
       await this.applicationService.scheduleEscrowMeetingRespond(
         applicationId,
-        userId,
+        authInfo,
         input,
       )
 

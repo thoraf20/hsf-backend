@@ -5,17 +5,15 @@ import * as uuid from 'uuid'
 import { OrganizationType } from '../../src/domain/enums/organizationEnum'
 import { Organization } from '../../src/domain/entities/Organization'
 import { Role } from '../../src/domain/enums/rolesEmun'
+import bcrypt from 'bcryptjs'
 
 const uuidv4 = uuid.v4
 
 export async function seed(knex: Knex): Promise<void> {
   // Placeholder for password hashing function - replace with actual hashing logic
   const hashPassword = async (password: string): Promise<string> => {
-    // In a real application, use a library like bcryptjs
-    console.warn(
-      'Using placeholder password hashing. Replace with a secure method.',
-    )
-    return `hashed_${password}` // Example placeholder
+    const salt = await bcrypt.genSalt(Number(process.env.APP_KEY))
+    return bcrypt.hashSync(password, salt)
   }
 
   // Check if a user with this email already exists to prevent duplicates

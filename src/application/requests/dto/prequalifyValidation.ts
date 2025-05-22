@@ -1,3 +1,5 @@
+import { preQualifyStatus } from '@domain/enums/prequalifyEnum'
+import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
 export const preQualifySchema = z.object({
@@ -52,3 +54,11 @@ export const preQualifierEligibleSchema = z.object({
 export type PreQualifierEligibleInput = z.infer<
   typeof preQualifierEligibleSchema
 >
+
+export const preQualifierFiltersSchema = withPaginateSchema(
+  z.object({
+    status: z.nativeEnum(preQualifyStatus).optional(),
+  }),
+)
+
+export type PreQualifyFilters = z.infer<typeof preQualifierFiltersSchema>

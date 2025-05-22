@@ -114,7 +114,7 @@ export class PropertyPurchase {
       loan_acceptance_status,
     } = input
 
-    await this.utilsProperty.getIfPropertyExist(property_id)
+    const property = await this.utilsProperty.getIfPropertyExist(property_id)
     //application start process for morgage and installment
 
     const inspection =
@@ -181,6 +181,7 @@ export class PropertyPurchase {
         user_id,
         application_type: purchase_type,
         inspection_id: inspection?.id,
+        developer_organization_id: property.organization_id,
       })
     }
 
@@ -409,7 +410,7 @@ export class PropertyPurchase {
       property_id,
       user_id,
       inspection_id,
-
+      developer_organization_id: '',
       eligibility_id: eligible.eligibility_id,
       application_type: purchase_type,
       prequalifier_id: preQualify.status_id,

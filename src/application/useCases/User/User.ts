@@ -271,8 +271,6 @@ export class UserService {
       user.password,
     )
 
-    console.log({ isMatchPassword })
-
     if (!isMatchPassword) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -357,8 +355,6 @@ export class UserService {
     } | null = await this.client.getKey(
       `${CacheEnumKeys.PASSWORD_CHANGE_MFA}-${token}`,
     )
-
-    console.log({ sessionData })
 
     if (!(sessionData && sessionData.user_id === user.id)) {
       throw new ApplicationCustomError(

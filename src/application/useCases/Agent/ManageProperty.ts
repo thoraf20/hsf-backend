@@ -61,35 +61,35 @@ export class manageProperty {
     return await this.propertyRepository.getAllPropertiesTobeApproved()
   }
 
-  public async setEscrowAttendance(
-    input: EscrowInformation,
-    agent_id: string,
-  ): Promise<EscrowInformation> {
-    await this.utilsProperty.getIfPropertyExist(input.property_id)
-    const [escrowInformation, escrowStatus] = await Promise.all([
-      this.purchaseRepository.setEscrowAttendance({ ...input, agent_id }),
-      this.propertyRepository.updateEscrowMeeting(
-        input.property_id,
-        input.property_buyer_id,
-        EscrowMeetingStatus.AWAITING_ACCEPTANCE,
-      ), 
-    ])
+  // public async setEscrowAttendance(
+  //   input: EscrowInformation,
+  //   agent_id: string,
+  // ): Promise<EscrowInformation> {
+  //   await this.utilsProperty.getIfPropertyExist(input.property_id)
+  //   const [escrowInformation, escrowStatus] = await Promise.all([
+  //     this.purchaseRepository.setEscrowAttendance({ ...input, agent_id }, []),
+  //     this.propertyRepository.updateEscrowMeeting(
+  //       input.property_id,
+  //       input.property_buyer_id,
+  //       EscrowMeetingStatus.AWAITING_ACCEPTANCE,
+  //     ),
+  //   ])
 
-    const application =
-      await this.applicationRepository.getLastApplicationIfExist(
-        input.property_id,
-        input.property_buyer_id,
-      )
-    await this.applicationRepository.updateApplication({
-      property_id: input.property_id,
-      escrow_information_id: escrowInformation.escrow_id,
-      escrow_status_id: escrowStatus.escrow_status_id,
-      user_id: input.property_buyer_id,
-      application_id: application.application_id,
-    })
+  //   const application =
+  //     await this.applicationRepository.getLastApplicationIfExist(
+  //       input.property_id,
+  //       input.property_buyer_id,
+  //     )
+  //   await this.applicationRepository.updateApplication({
+  //     property_id: input.property_id,
+  //     escrow_information_id: escrowInformation.escrow_id,
+  //     escrow_status_id: escrowStatus.escrow_status_id,
+  //     user_id: input.property_buyer_id,
+  //     application_id: application.application_id,
+  //   })
 
-    return escrowInformation
-  }
+  //   return escrowInformation
+  // }
 
   public async confirmPropertyPurchase(
     input: Record<string, any>,

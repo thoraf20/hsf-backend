@@ -69,8 +69,10 @@ export class OrganizationRepository implements IOrganizationRepository {
     paginateOption?: SeekPaginationOption,
   ): Promise<
     SeekPaginationResult<
-      UserOrganizationMember &
-        { user: User; role: { id: string; name: string } }[]
+      UserOrganizationMember & {
+        user: User
+        role: { id: string; name: string }
+      }
     >
   > {
     const query = db('user_organization_memberships as uom')

@@ -3,6 +3,7 @@ import {
   MARITAL_STATUS,
   preQualifyStatus,
 } from '@domain/enums/prequalifyEnum'
+import { UserClientView } from '@entities/User'
 
 export class personalinformation {
   personal_information_id?: string
@@ -106,3 +107,9 @@ export type preQualify = personalinformation &
   prequalifyStatus &
   payment_calculator &
   Eligibility
+
+export type PreQualifyDIP = personalinformation & {
+  status: prequalifyStatus
+  employee_info: employmentInformation
+  // user: UserClientView
+}
