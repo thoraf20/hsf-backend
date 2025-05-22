@@ -26,9 +26,7 @@ export class OrganizationRepository implements IOrganizationRepository {
   }
 
   async getHsfOrganization(): Promise<Organization> {
-    return db<Organization>('organizations')
-      .where({ type: OrganizationType.HSF_INTERNAL })
-      .first()
+    return this.getOrganizationsByType(OrganizationType.HSF_INTERNAL)[0]
   }
 
   async updateOrganization(
@@ -120,5 +118,11 @@ export class OrganizationRepository implements IOrganizationRepository {
       .first()
 
     return !!membership
+  }
+
+  async getOrganizationsByType(
+    type: OrganizationType,
+  ): Promise<Organization[]> {
+    return db<Organization>('organizations').select().where({ type })
   }
 }

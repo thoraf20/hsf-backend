@@ -86,14 +86,13 @@ export class ManageOrganizations {
     paginateOption?: SeekPaginationOption, // Accept pagination option
   ): Promise<
     SeekPaginationResult<
-      UserOrganizationMember & { user: User; role: { name: string } }[]
+      UserOrganizationMember & { user: User; role: { name: string } }
     >
   > {
-    // Update return type
     return this.organizationRepository.getOrganizationMembers(
       organizationId,
       paginateOption,
-    ) // Pass pagination option
+    )
   }
 
   async getOrganizationsForUser(userId: string) {

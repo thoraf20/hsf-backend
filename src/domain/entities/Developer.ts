@@ -52,3 +52,5 @@ export function getDeveloperClientView(developer: Developer) {
     updated_at: developer.updated_at,
   }
 }
+
+export type DeveloperClientView = ReturnType<typeof getDeveloperClientView>

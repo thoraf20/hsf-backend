@@ -1,4 +1,5 @@
 import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
+import { PrequalificationInput } from '@entities/PrequalificationInput'
 import {
   Eligibility,
   employmentInformation,
@@ -6,7 +7,6 @@ import {
   personalinformation,
   preQualify,
   PreQualifyDIP,
-  prequalifyStatus,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
 import db, { createUnion } from '@infrastructure/database/knex'
@@ -42,12 +42,6 @@ export class PrequalifyRepository implements IPreQualify {
     return new employmentInformation(employment) ? employment : null
   }
 
-  public async storePreQualifyStatus(
-    input: prequalifyStatus,
-  ): Promise<prequalifyStatus> {
-    const [status] = await db('prequalify_status').insert(input).returning('*')
-    return new prequalifyStatus(status) ? status : null
-  }
   public async storePaymentCalculator(
     input: payment_calculator,
   ): Promise<payment_calculator> {
@@ -99,6 +93,7 @@ export class PrequalifyRepository implements IPreQualify {
       .select('*')
       .where('property_id', property_id)
       .andWhere('user_id', user_id)
+      .orderBy('created_at', 'desc')
       .first()
     return new Eligibility(eligible) ? eligible : null
   }
@@ -231,5 +226,53 @@ export class PrequalifyRepository implements IPreQualify {
     baseQuery = this.usePreQualiferFilter(baseQuery, filters)
 
     return applyPagination<PreQualifyDIP>(baseQuery)
+  }
+
+  async storePreQualificationInput(
+    input: PrequalificationInput,
+  ): Promise<PrequalificationInput> {
+    const payload: PrequalificationInput = {
+      first_name: input.first_name,
+      last_name: input.last_name,
+      email: input.email,
+      phone_number: input.phone_number,
+      gender: input.gender,
+      marital_status: input.marital_status,
+      house_number: input.house_number,
+      street_address: input.street_address,
+      state: input.street_address,
+      city: input.city,
+      user_id: input.user_id,
+      employment_confirmation: input.employment_confirmation,
+      employment_position: input.employment_position,
+      years_to_retirement: input.years_to_retirement,
+      employer_address: input.employer_address,
+      net_income: input.net_income,
+      employment_type: input.employment_type,
+      existing_loan_obligation: input.existing_loan_obligation,
+      employer_state: input.employer_state,
+      industry_type: input.industry_type,
+    }
+    if (input.id) {
+      let existing = db<PrequalificationInput>('prequalification_inputs')
+        .select()
+        .where({ id: input.id })
+        .first()
+
+      if (existing) {
+        const [updated] = await db<PrequalificationInput>(
+          'prequalification_inputs',
+        )
+          .update(payload)
+          .returning('*')
+
+        return updated
+      }
+    }
+    const [newly] = await db<PrequalificationInput>('prequalification_inputs')
+      .insert(payload)
+      .returning('*')
+
+    return newly
   }
 }

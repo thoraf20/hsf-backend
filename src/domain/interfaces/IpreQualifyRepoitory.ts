@@ -1,3 +1,4 @@
+import { PrequalificationInput } from '@entities/PrequalificationInput'
 import {
   Eligibility,
   employmentInformation,
@@ -5,7 +6,6 @@ import {
   personalinformation,
   preQualify,
   PreQualifyDIP,
-  prequalifyStatus,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
 import { SeekPaginationResult } from '@shared/types/paginate'
@@ -16,10 +16,14 @@ import {
 
 export interface IPreQualify {
   storePersonaInfo(input: personalinformation): Promise<personalinformation>
+
+  storePreQualificationInput(
+    input: PrequalificationInput,
+  ): Promise<PrequalificationInput>
+
   storeEmploymentInfo(
     input: employmentInformation,
   ): Promise<employmentInformation>
-  storePreQualifyStatus(input: prequalifyStatus): Promise<prequalifyStatus>
   storePaymentCalculator(input: payment_calculator): Promise<payment_calculator>
   findIfApplyForLoanAlready(loaner_id: string): Promise<any>
   updatePrequalifyStatus(

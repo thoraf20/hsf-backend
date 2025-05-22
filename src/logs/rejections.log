@@ -758,3 +758,8 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
     at Socket.Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+2025-05-22 17:07:23 [ERROR]: MaxRetriesPerRequestError: Reached the max retries per request limit (which is 20). Refer to "maxRetriesPerRequest" option for details.
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/ioredis/built/redis/event_handler.js:182:37)
+    at Object.onceWrapper (node:events:633:26)
+    at Socket.emit (node:events:518:28)
+    at TCP.<anonymous> (node:net:351:12)

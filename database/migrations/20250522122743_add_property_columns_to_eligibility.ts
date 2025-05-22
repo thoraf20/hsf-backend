@@ -4,10 +4,10 @@ export async function up(knex: Knex): Promise<void> {
   return knex.schema.alterTable('eligibility', (table) => {
     // Add foreign key for developer
     table
-      .uuid('developer_id')
+      .uuid('organization_id')
       .notNullable()
-      .references('profile_id')
-      .inTable('developers_profile')
+      .references('id')
+      .inTable('organizations')
       .onDelete('CASCADE')
       .onUpdate('CASCADE')
 

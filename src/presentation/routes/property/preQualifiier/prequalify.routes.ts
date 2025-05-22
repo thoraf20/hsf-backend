@@ -11,16 +11,20 @@ import {
 import {
   preQualifierEligibleSchema,
   preQualifierFiltersSchema,
-  preQualifySchema,
+  preQualifiyRequestSchema,
 } from '@validators/prequalifyValidation'
 import { verifyOtpSchema } from '@validators/userValidator'
 import { authorize } from '@middleware/authorization'
 import { requireOrganizationType } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
 
 const preQualifierRoutes: Router = Router()
 
-const service = new preQualifyService(new PrequalifyRepository())
+const service = new preQualifyService(
+  new PrequalifyRepository(),
+  new PropertyRepository(),
+)
 const controller = new preQualifyController(service)
 
 preQualifierRoutes.get(
@@ -37,7 +41,7 @@ preQualifierRoutes.get(
 preQualifierRoutes.post(
   '/request',
   requireRoles(Role.HOME_BUYER),
-  validateRequest(preQualifySchema),
+  validateRequest(preQualifiyRequestSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
     const store = await controller.preQualifierController(body, user.id)

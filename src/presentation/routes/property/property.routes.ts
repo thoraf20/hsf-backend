@@ -26,10 +26,21 @@ import { limiter } from '@middleware/security'
 import { optionalAuth } from '@middleware/authMiddleware'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { validateRequestQuery } from '@shared/utils/paginate'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
-const service = new PropertyService(new PropertyRepository(), application)
+const service = new PropertyService(
+  new PropertyRepository(),
+  application,
+  new OrganizationRepository(),
+  new LenderRepository(),
+  new UserRepository(),
+  new DeveloperRespository(),
+)
 const controller = new PropertyController(service)
 
 propertyRoute.post(
@@ -76,6 +87,14 @@ propertyRoute.get(
       query,
     )
     res.status(properties.statusCode).json(properties)
+  }),
+)
+
+propertyRoute.get(
+  '/lenders',
+  asyncMiddleware(async (req, res) => {
+    const response = await controller.getLenders()
+    res.status(response.statusCode).json(response)
   }),
 )
 

@@ -1,4 +1,3 @@
-import { preQualify } from '@entities/prequalify/prequalify'
 import {
   ApiResponse,
   createResponse,
@@ -7,6 +6,7 @@ import { preQualifyService } from '@use-cases/Properties/preQualify/prequalify'
 import {
   PreQualifierEligibleInput,
   PreQualifyFilters,
+  PreQualifyRequestInput,
 } from '@validators/prequalifyValidation'
 import { StatusCodes } from 'http-status-codes'
 
@@ -14,7 +14,7 @@ export class preQualifyController {
   constructor(private readonly service: preQualifyService) {}
 
   public async preQualifierController(
-    input: preQualify,
+    input: PreQualifyRequestInput,
     user_id: string,
   ): Promise<ApiResponse<any>> {
     await this.service.storePreQualify(input, user_id)

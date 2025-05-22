@@ -26,6 +26,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('employment_confirmation').notNullable()
     table.string('employment_position').notNullable()
     table.bigint('years_to_retirement').notNullable()
+    table.text('employeer_name').notNullable()
     table.string('employer_address').notNullable()
     table.string('employer_state').notNullable()
     table.decimal('net_income', 12, 2).notNullable()
