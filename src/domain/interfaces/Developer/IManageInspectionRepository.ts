@@ -16,9 +16,9 @@ export interface IManageInspectionRepository {
   ) => Promise<DayAvailabilitySlot>
   getdayAvailabilityById: (day_availablity_id: string) => Promise<schduleTime>
   rescheduleInspectionToUpdateInspectionTable: (
-    payload: DayAvailabilitySlot,
+    payload: DayAvailabilitySlot | any,
     inspection_id: string,
-  ) => Promise<schduleTime>
+  ) => Promise<Inspection>
   updateInspectionStatus: (
     inspection_id: string,
     status: string,
@@ -42,4 +42,6 @@ export interface IManageInspectionRepository {
     inspection_id: string,
     details: Partial<Inspection>,
   ) => Promise<void>
+
+  deleteInspection: (inspection_id: string) => Promise<void>
 }

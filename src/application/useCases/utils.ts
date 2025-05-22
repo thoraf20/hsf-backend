@@ -8,6 +8,7 @@ import { Inspection } from '@domain/entities/Inspection'
 import { IEnquiresRepository } from '@interfaces/IEnquiresRepository'
 import { Enquiry } from '@entities/Enquires'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { InspectionStatus } from '@domain/enums/propertyEnum'
 
 export class ExistingUsers {
   private userRepository: IUserRepository
@@ -182,7 +183,7 @@ export class InspectionBaseUtils {
         property_id,
         user_id,
       )
-    if (findInpection) {
+    if (findInpection  || findInpection.inspection_status !== InspectionStatus.CANCELED) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'You have requested for Inspection already',

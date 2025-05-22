@@ -1,5 +1,5 @@
 import { Properties } from '@domain/entities/Property'
-import { Inspection, InspectionRescheduleRequest } from '@domain/entities/Inspection'
+import { Inspection } from '@domain/entities/Inspection'
 import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
 import db from '@infrastructure/database/knex'
 import {

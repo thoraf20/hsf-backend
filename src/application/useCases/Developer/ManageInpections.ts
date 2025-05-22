@@ -1,6 +1,6 @@
 import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 import { InspectionStatus } from '@domain/enums/propertyEnum'
-import { schduleTime } from '@entities/Availabilities'
+import { DayAvailabilitySlot, schduleTime } from '@entities/Availabilities'
 import { getDeveloperClientView } from '@entities/Developer'
 import { Inspection } from '@entities/Inspection'
 import { getUserClientView } from '@entities/User'
@@ -13,7 +13,7 @@ import { IUserRepository } from '@interfaces/IUserRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import { DayAvailabilitySlot } from '@validators/ManageInspectionValidator'
+
 import { StatusCodes } from 'http-status-codes'
 
 export class ManageInspectionUseCase {
@@ -150,7 +150,7 @@ export class ManageInspectionUseCase {
     payload: DayAvailabilitySlot,
     inspection_id: string,
     organization_id: string,
-  ): Promise<schduleTime> {
+  ): Promise<Inspection> {
     const inspection =
       await this.manageInspectionRepository.getInspectionById(inspection_id)
     if (!inspection) {
@@ -179,35 +179,19 @@ export class ManageInspectionUseCase {
         'You are not authorized to access this resource',
       )
     }
+  
 
-    if (
-      availabilities.day_availability_slot_id !== payload.day_availability_id
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        'Invalid day availability slot',
+    const reschedule = await
+      this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable(
+        {
+         day_availability_slot_id: payload.day_availability_slot_id,
+          confirm_avaliability_for_reschedule:
+            InspectionRescheduleRequestStatusEnum.Proposed,
+          action: 'rescheduled',
+        },
+        inspection_id
       )
-    }
-
-    // this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable()
-    // const reschedule =
-    //   this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable(
-    //     {
-    //       ...payload,
-    //       confirm_avaliability_for_reschedule:
-    //         InspectionRescheduleRequestStatusEnum.Proposed,
-    //       action: 'rescheduled',
-    //       is_available: true,
-    //     },
-    //     inspection_id,
-    //   )
-
-    // await this.inspectionRespository.updateScheduleInpection(inspection_id, {
-    //   action: 'reshedule',
-    // })
-    // return reschedule
-    //
-    return {} as any
+    return reschedule
   }
 
   async updateInspectionStatus(
@@ -215,7 +199,7 @@ export class ManageInspectionUseCase {
     status: string,
     organization_id: string,
   ): Promise<Inspection> {
-    const inspection =
+    const inspection = 
       await this.manageInspectionRepository.getInspectionById(inspection_id)
     if (!inspection) {
       throw new ApplicationCustomError(
@@ -240,7 +224,7 @@ export class ManageInspectionUseCase {
         getSlot.day_availability_id,
       )
     console.log(getAvailability)
-    if (getAvailability.organization_id !== organization_id) {
+    if (getAvailability.organization_id !== organization_id) { 
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'You are not permitted to carry out this action',
@@ -254,6 +238,16 @@ export class ManageInspectionUseCase {
       )
     return updatedInspection
   }
+
+
+   async deleteInspection(inspection_id: string): Promise<void> {
+      const  findInspection = await this.inspectionRespository.getScheduleInspectionById(inspection_id)
+      if(!findInspection) {
+        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `Inspection not found`)
+      }
+
+      await this.manageInspectionRepository.deleteInspection(inspection_id)
+   }
 
   //
   //  async updateInspectionDetails(

@@ -5,6 +5,7 @@ import {
   InspectionStatus,
   InspectionRescheduleStatusEnum,
 } from '@domain/enums/propertyEnum'
+import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 // import { DateTime } from 'luxon';
 
 // const toUTC = (date: string, time: string, timezone: string) => {
@@ -86,10 +87,9 @@ export const inspectionSchema = z.object({
 
 
 export const reponseToReschedule = z.object({
-  inspection_id: z.string().uuid(),
   status: z.enum([
-    InspectionRescheduleStatusEnum.Accepted,
-    InspectionRescheduleStatusEnum.Rejected,
+    InspectionRescheduleRequestStatusEnum.AcceptedByUser,
+    InspectionRescheduleRequestStatusEnum.RejectedByUser
   ]),
   user_rejection_reason: z.string().optional(),
 })

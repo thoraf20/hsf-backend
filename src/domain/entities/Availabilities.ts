@@ -12,13 +12,13 @@ export enum DayOfWeekEnum {
 
 export class DayAvailabilitySlot { 
   day_availability_slot_id?: string
-  day: DayOfWeekEnum
-  start_time: Date
-  end_time: Date
+  day?: DayOfWeekEnum
+  start_time?: Date
+  end_time?: Date
   confirm_avaliability_for_reschedule?: InspectionRescheduleRequestStatusEnum;
   action?: 'scheduled' | 'rescheduled'
-  is_available: boolean
- day_availability_id: string
+  is_available?: boolean
+ day_availability_id?: string
   constructor(d: Partial<DayAvailabilitySlot >) {
     let data = {
       ...d,

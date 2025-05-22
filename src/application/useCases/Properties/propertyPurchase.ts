@@ -21,6 +21,7 @@ import { IPaymentRespository } from '@interfaces/IpaymentRepository'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
+import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { ErrorCode } from '@shared/utils/error'
 import { generateTransactionId } from '@shared/utils/helpers'
@@ -36,6 +37,7 @@ export class PropertyPurchase {
   private readonly preQualifieRepository: IPreQualify
   private readonly mortgageRespository: IMortageRespository
   private readonly inspectionRespository: IInspectionRepository
+  private readonly serviceRepository: IServiceOfferingRepository
   // private readonly paymentRepository: IPaymentRespository
   private readonly utilsProperty: PropertyBaseUtils
   // private payment = new PaymentService(new PaymentProcessorFactory())
@@ -47,6 +49,7 @@ export class PropertyPurchase {
     applicationRepository: IApplicationRespository,
     mortgageRepository: IMortageRespository,
     inspectionRespository: IInspectionRepository,
+    serviceRepository: IServiceOfferingRepository
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
@@ -55,6 +58,7 @@ export class PropertyPurchase {
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
     this.mortgageRespository = mortgageRepository
     this.preQualifieRepository = preQualifieRepository
+     this.serviceRepository = serviceRepository
 
     // this.paymentRepository = paymentRepository
   }
@@ -218,6 +222,10 @@ export class PropertyPurchase {
     }
 
     // MORTGAGE flow
+    const inspectionFee = await this.serviceRepository.getByProductCode(
+          input.product_code,
+        )
+
     if (purchase_type === ApplicationPurchaseType.MORTGAGE) {
       switch (request_type) {
         case PropertyRequestTypeEnum.ACCEPT_DIP:
@@ -242,9 +250,10 @@ export class PropertyPurchase {
             paymentType: request_type,
             user_id,
             transaction_id,
+            product_code: inspectionFee.product_code
           }
           return await this.mortgageRespository.payForMortageProcess(
-            { amount: '100000', email },
+            {amount: Number(inspectionFee.base_price), email },
             metaData,
             request_type,
             user_id,
@@ -413,7 +422,7 @@ export class PropertyPurchase {
       eligibility_id: eligible.eligibility_id,
       application_type: purchase_type,
       prequalifier_id: preQualify.status_id,
-    })
+    }) 
 
     return application
   }

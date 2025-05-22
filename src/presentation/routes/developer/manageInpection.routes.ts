@@ -184,5 +184,29 @@ manageInpespectionRouter.put(
     res.status(response.statusCode).json(response)
   }),
 )
+manageInpespectionRouter.delete(
+  '/delete/:inspection_id',
+  authenticate,
+  authorize(
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+    requireOrganizationRole([
+      Role.DEVELOPER_ADMIN,
+      Role.DEVELOPER_AGENT,
+      Role.HSF_ADMIN,
+      Role.HSF_INSPECTION_MANAGER,
+      Role.SUPER_ADMIN,
+    ]),
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { params } = req
+    const response = await manageInspectionController.deleteInspection(
+      params.inspection_id,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
 
 export default manageInpespectionRouter

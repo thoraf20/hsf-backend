@@ -222,9 +222,18 @@ export class InspectionService {
     inspection_id: string,
     payload: Partial<Inspection> | any,
   ): Promise<Inspection> {
+    const inspection = await this.inspectionRepository.getScheduleInspectionById(
+      inspection_id,
+    )
+    if (!inspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Inspection not found',
+      )
+    }
     const reschedule = await this.inspectionRepository.responseToReschedule(
       inspection_id,
-      {...payload, inspection_status: payload.inspection_status},
+      {confirm_avaliability_for_reschedule: payload.status, action: "scheduled"},
     )
     return reschedule
   }

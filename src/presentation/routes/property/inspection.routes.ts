@@ -10,6 +10,7 @@ import {
 } from '../index.t'
 import {
   inspectionSchema,
+  reponseToReschedule,
   UpdateInspectionStatusPayload,
   updateInspectionStatusSchema,
 } from '@application/requests/dto/inspectionVaidator'
@@ -43,10 +44,10 @@ inspectionRoutes.post(
   }),
 )
 
-inspectionRoutes.post(
-  '/property/reschedule/:inspection_id',
+inspectionRoutes.patch(
+  '/reschedule/:inspection_id/respond',
   requireRoles(Role.HOME_BUYER),
-  validateRequest(inspectionSchema),
+  validateRequest(reponseToReschedule),
   asyncMiddleware(async (req, res) => {
     const { body, params } = req
     const schedule = await inspectionController.responseToReschedule(
@@ -56,6 +57,8 @@ inspectionRoutes.post(
     res.status(schedule.statusCode).json(schedule)
   }),
 )
+
+
 
 inspectionRoutes.patch(
   '/:inspection_id/status',
@@ -94,5 +97,8 @@ inspectionRoutes.get(
     res.status(inspection.statusCode).json(inspection)
   }),
 )
+
+
+
 
 export default inspectionRoutes
