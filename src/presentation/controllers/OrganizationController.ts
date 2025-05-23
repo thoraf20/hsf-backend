@@ -227,6 +227,11 @@ export class OrganizationController {
   }
 
   async createDeveloper(data: CreateDeveloperInput) {
-    const newDeveloper = this.manageOrganizations.createDeveloper(data)
+    const newDeveloper = await this.manageOrganizations.createDeveloper(data)
+    return createResponse(
+      StatusCodes.CREATED,
+      'Developer onboarded successfully',
+      { developer: newDeveloper },
+    )
   }
 }

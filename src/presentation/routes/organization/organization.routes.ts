@@ -112,6 +112,8 @@ router.post(
   asyncMiddleware(async (req, res) => {
     const { body } = req
     const response = await organizationController.createDeveloper(body)
+
+    res.status(response.statusCode).json(response)
   }),
 )
 
