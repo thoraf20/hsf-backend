@@ -181,18 +181,7 @@ export class MfaController {
 
     const flow = input.flow
 
-    const usedRecoveryCode = await this.userService.verifyTOTP(
-      findUserById,
-      flow,
-      input.code,
-    )
-
-    if (!usedRecoveryCode) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'Invalid Authenicator Flow',
-      )
-    }
+    await this.userService.verifyTOTP(findUserById, flow, input.code)
     const data = await this.userService.DisableMfa(userId, MfaFlow.TOTP)
 
     return createResponse(StatusCodes.OK, 'MFA disabled for the user.', data)

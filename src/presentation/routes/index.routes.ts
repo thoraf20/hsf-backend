@@ -24,7 +24,7 @@ import manageUserRoutes from './userRoutes/user.manage.routes'
 import developerIndexRoutes from './developer/developerIndex.routes'
 
 const routes: Router = Router()
-routes.use('/user/mfa', mfaRoutes)
+routes.use('/user/mfa', authenticate, limiter, mfaRoutes)
 routes.use('/auth', authRoutes)
 routes.use('/oauth', oauthRoutes)
 routes.use('/webhook', webhook)
