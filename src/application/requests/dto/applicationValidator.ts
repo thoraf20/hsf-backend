@@ -13,12 +13,9 @@ export const createApplicationSchema = z
 
     payment_calculator: z
       .object({
-        house_price: z.coerce.number().positive(),
         interest_rate: z.coerce.number().positive(),
-        terms: z.string(),
-        type: z.string(),
+        terms: z.number(),
         repayment_type: z.string(),
-        est_money_payment: z.coerce.number().positive(),
       })
       .optional()
       .nullable(),

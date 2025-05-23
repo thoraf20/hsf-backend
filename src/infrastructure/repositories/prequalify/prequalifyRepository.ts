@@ -6,7 +6,6 @@ import {
   payment_calculator,
   personalinformation,
   preQualify,
-  PreQualifyDIP,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
 import db, { createUnion } from '@infrastructure/database/knex'
@@ -196,9 +195,7 @@ export class PrequalifyRepository implements IPreQualify {
     const add = createUnion(SearchType.EXCLUSIVE)
 
     if (filters.status) {
-      add(q).whereRaw(
-        db.raw(addQueryUnionFilter('ps.status', [filters.status])),
-      )
+      add(q).whereRaw(db.raw(addQueryUnionFilter('e.status', [filters.status])))
     }
 
     return q
@@ -206,22 +203,21 @@ export class PrequalifyRepository implements IPreQualify {
 
   getAllPreQualifiers(
     filters: PreQualifyFilters,
-  ): Promise<SeekPaginationResult<PreQualifyDIP>> {
-    let baseQuery = db('prequalify_status as ps')
-      .innerJoin(
-        'prequalify_personal_information as ppi',
-        'ps.personal_information_id',
-        'ppi.personal_information_id',
-      )
-      .innerJoin(
-        'prequalify_other_info as info',
-        'ps.personal_information_id',
-        'info.personal_information_id',
-      )
+  ): Promise<SeekPaginationResult<preQualify>> {
+    let baseQuery = db<Eligibility>('eligibility as e').innerJoin(
+      'prequalification_inputs as pqi',
+      'pqi.id',
+      'e.prequalifier_input_id',
+    )
 
     baseQuery = this.usePreQualiferFilter(baseQuery, filters)
+    baseQuery = baseQuery.select(
+      'e.*',
+      db.raw('row_to_json(pqi) as prequalification_input'),
+    )
+    baseQuery = baseQuery.orderBy('created_at', 'desc')
 
-    return applyPagination<PreQualifyDIP>(baseQuery)
+    return applyPagination<preQualify>(baseQuery)
   }
 
   async storePreQualificationInput(
@@ -233,10 +229,11 @@ export class PrequalifyRepository implements IPreQualify {
       email: input.email,
       phone_number: input.phone_number,
       gender: input.gender,
+      date_of_birth: input.date_of_birth,
       marital_status: input.marital_status,
       house_number: input.house_number,
       street_address: input.street_address,
-      state: input.street_address,
+      state: input.state,
       city: input.city,
       user_id: input.user_id,
       employment_confirmation: input.employment_confirmation,
@@ -250,27 +247,41 @@ export class PrequalifyRepository implements IPreQualify {
       employer_state: input.employer_state,
       industry_type: input.industry_type,
     }
-    if (input.id) {
-      let existing = db<PrequalificationInput>('prequalification_inputs')
-        .select()
+
+    let existing = db<PrequalificationInput>('prequalification_inputs')
+      .select()
+      .where({ user_id: input.user_id })
+      .first()
+
+    if (existing) {
+      const [updated] = await db<PrequalificationInput>(
+        'prequalification_inputs',
+      )
+        .update(payload)
         .where({ user_id: input.user_id })
-        .first()
+        .returning('*')
 
-      if (existing) {
-        const [updated] = await db<PrequalificationInput>(
-          'prequalification_inputs',
-        )
-          .update(payload)
-          .where({ user_id: input.user_id })
-          .returning('*')
-
-        return updated
-      }
+      return updated
     }
+
     const [newly] = await db<PrequalificationInput>('prequalification_inputs')
       .insert(payload)
       .returning('*')
 
     return newly
+  }
+
+  async findEligiblityById(id: string): Promise<Eligibility> {
+    let baseQuery = db('eligibility as e')
+      .innerJoin(
+        'prequalification_inputs as pi',
+        'pi.id',
+        'e.prequalifier_input_id',
+      )
+      .where('e.eligibility_id', id)
+      .select('pi.*', db.raw('row_to_json(e) as eligible'))
+
+    const preQualify = await baseQuery.first()
+    return preQualify
   }
 }

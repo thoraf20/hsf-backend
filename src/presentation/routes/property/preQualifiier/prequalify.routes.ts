@@ -21,6 +21,9 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { validateRequestQuery } from '@shared/utils/paginate'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 const preQualifierRoutes: Router = Router()
 
@@ -28,6 +31,9 @@ const service = new preQualifyService(
   new PrequalifyRepository(),
   new PropertyRepository(),
   new LenderRepository(),
+  new UserRepository(),
+  new OrganizationRepository(),
+  new DeveloperRespository(),
 )
 const controller = new preQualifyController(service)
 
@@ -96,6 +102,7 @@ preQualifierRoutes.get(
 
 preQualifierRoutes.patch(
   '/eligible',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   validateRequest(preQualifierEligibleSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req

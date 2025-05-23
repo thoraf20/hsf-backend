@@ -122,17 +122,6 @@ export class ApplicationService {
       )
     }
 
-    // let installmentPaymentCalculator: payment_calculator | null = null
-    // if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
-    //   installmentPaymentCalculator =
-    //     await this.prequalifyRepository.storePaymentCalculator({
-    //       ...(input.payment_calculator as payment_calculator),
-    //       house_price: property.property_price,
-    //       personal_information_id: preQualifier.id,
-    //       type: input.purchase_type,
-    //     })
-    // }
-
     const newApplication = await this.applicationRepository.createApplication({
       user_id: userId,
       status: ApplicationStatus.PENDING,
@@ -142,6 +131,15 @@ export class ApplicationService {
       eligibility_id: eligibility?.eligibility_id ?? null,
       developer_organization_id: property.organization_id,
     })
+
+    if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
+      await this.prequalifyRepository.storePaymentCalculator({
+        application_id: newApplication.application_id,
+        interest_rate: input.payment_calculator.interest_rate,
+        repayment_type: input.payment_calculator.repayment_type,
+        terms: input.payment_calculator.terms,
+      })
+    }
 
     return newApplication
   }

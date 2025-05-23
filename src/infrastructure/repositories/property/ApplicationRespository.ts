@@ -272,29 +272,13 @@ export class ApplicationRepository implements IApplicationRespository {
         'a.property_closing_id',
         'pc.property_closing_id',
       )
-      .leftJoin('prequalify_status as ps', 'a.prequalifier_id', 'ps.status_id')
-      .leftJoin(
-        'prequalify_personal_information as ppi',
-        'ps.personal_information_id',
-        'ppi.personal_information_id',
-      )
       .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
+      .leftJoin(
+        'prequalification_inputs as pqi',
+        'el.prequalifier_input_id',
+        'pqi.id',
+      )
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
-      .leftJoin(
-        'document_upload as du',
-        'a.document_upload_id',
-        'du.document_upload_id',
-      )
-      .leftJoin(
-        'precedent_document_upload as pdu',
-        'a.precedent_document_upload_id',
-        'pdu.precedent_document_upload_id',
-      )
-      .leftJoin(
-        'replayment_plan as rp',
-        'a.payment_date_id',
-        'rp.payment_date_id',
-      )
       .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
       .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
       .select(
@@ -304,9 +288,8 @@ export class ApplicationRepository implements IApplicationRespository {
         db.raw('row_to_json(dp) as dip'),
         db.raw(`
                     CASE
-                        WHEN ppi.personal_information_id IS NOT NULL THEN json_build_object(
-                            'ppi', row_to_json(ppi),
-                            'prequalify_status', row_to_json(ps),
+                        WHEN pqi.id IS NOT NULL THEN json_build_object(
+                            'prequalification_input', row_to_json(pqi),
                             'eligibility', row_to_json(el)
                         )
                         ELSE NULL
@@ -354,13 +337,6 @@ export class ApplicationRepository implements IApplicationRespository {
         db.raw(`row_to_json(ol) as offer_letter`),
         db.raw(`row_to_json(pc) as property_closing`),
         db.raw(`row_to_json(dp) as dip`),
-        'ps.*',
-        'el.*',
-        'ol.*',
-        'du.*',
-        'pdu.*',
-        'rp.*',
-        'lo.*',
         'p.*',
         'a.*',
       )

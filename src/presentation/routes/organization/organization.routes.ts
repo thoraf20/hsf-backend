@@ -23,6 +23,7 @@ import {
   getOrgMemberRoleFilterSchema,
 } from '@validators/organizationValidator'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { createDeveloperSchema } from '@validators/developerValidator'
 
 const router = express.Router()
 const organizationController = new OrganizationController()
@@ -102,6 +103,15 @@ router.post(
     const { body } = req
     const response = await organizationController.createLender(body)
     res.status(response.statusCode).json(response)
+  }),
+)
+
+router.post(
+  '/developers',
+  validateRequest(createDeveloperSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body } = req
+    const response = await organizationController.createDeveloper(body)
   }),
 )
 

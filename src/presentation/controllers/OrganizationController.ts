@@ -19,7 +19,10 @@ import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserFilters } from '@validators/userValidator'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
-import { DeveloperFilters } from '@validators/developerValidator'
+import {
+  CreateDeveloperInput,
+  DeveloperFilters,
+} from '@validators/developerValidator'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -221,5 +224,9 @@ export class OrganizationController {
       'Developers retrived successfully',
       developerContents,
     )
+  }
+
+  async createDeveloper(data: CreateDeveloperInput) {
+    const newDeveloper = this.manageOrganizations.createDeveloper(data)
   }
 }

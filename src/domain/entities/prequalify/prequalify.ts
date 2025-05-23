@@ -1,4 +1,5 @@
 import { Gender, MARITAL_STATUS } from '@domain/enums/prequalifyEnum'
+import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { QueryBoolean } from '@shared/utils/helpers'
 
 export class personalinformation {
@@ -29,7 +30,6 @@ export class Eligibility {
   is_eligible?: boolean
   property_id?: string
   rsa?: string
-  financial_eligibility_type?: string
   organization_id: string
   lender_id?: string
   prequalifier_input_id: string
@@ -42,6 +42,7 @@ export class Eligibility {
     })
   }
 }
+
 export class employmentInformation {
   employment_information_id?: string
   employment_confirmation?: QueryBoolean
@@ -70,13 +71,10 @@ export class employmentInformation {
 
 export class payment_calculator {
   payment_calculator_id?: string
-  house_price: number | string
   interest_rate: number | string
-  terms: string
-  type?: string
+  terms: number
   repayment_type: string
-  est_money_payment: number | string
-  personal_information_id: string
+  application_id: string
   constructor(data: Partial<payment_calculator>) {
     Object.assign(this, {
       ...data,
@@ -84,12 +82,6 @@ export class payment_calculator {
   }
 }
 
-export type preQualify = personalinformation &
-  employmentInformation &
-  payment_calculator &
-  Eligibility
-
-export type PreQualifyDIP = personalinformation & {
-  employee_info: employmentInformation
-  // user: UserClientView
+export type preQualify = Eligibility & {
+  prequalification_input: PrequalificationInput
 }
