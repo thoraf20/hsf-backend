@@ -36,6 +36,8 @@ import {
   DeveloperFilters,
 } from '@validators/developerValidator'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
+import { IDocumentRepository } from '@interfaces/IDocumentRepository'
+import { DocumentGroupKind } from '@domain/enums/documentEnum'
 
 export class ManageOrganizations {
   constructor(
@@ -45,6 +47,7 @@ export class ManageOrganizations {
     private readonly addressRepository: IAddressRepository,
     private readonly developerRepository: IDeveloperRepository,
     private readonly propertyRepository: IPropertyRepository,
+    private readonly documentRepository: IDocumentRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -473,6 +476,39 @@ export class ManageOrganizations {
       )
     }
 
+    const developerDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.DeveloperVerification,
+      )
+
+    if (!developerDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Developer verification document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        developerDocGroup.id,
+      )
+
+    const missingDocType = documentGroupTypes
+      .filter((documentGroupType) => documentGroupType.is_user_uploadable)
+      .find(
+        (documentType) =>
+          !data.documents.find(
+            (providedDoc) => providedDoc.id === documentType.id,
+          ) || documentType.is_required_for_group,
+      )
+
+    if (missingDocType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Missing document type ${missingDocType.display_label} not uploaded.`,
+      )
+    }
+
     const generatedPass = generateRandomPassword()
     const hashedPassword =
       await this.userRepository.hashedPassword(generatedPass)
@@ -495,6 +531,18 @@ export class ManageOrganizations {
       type: OrganizationType.DEVELOPER_COMPANY,
     })
 
+    await Promise.all(
+      data.documents.map((document) =>
+        this.documentRepository.createApplicationDocumentEntry({
+          document_group_type_id: document.id,
+          document_name: document.file_name,
+          document_url: document.file_url,
+          document_size: String(document.file_size),
+          organization_id: developerOrg.id,
+        }),
+      ),
+    )
+
     await this.organizationRepository.addUserToOrganization({
       role_id: developerOwner.role_id,
       organization_id: developerOrg.id,
@@ -502,8 +550,8 @@ export class ManageOrganizations {
     })
 
     const developerProfile =
-      await await this.developerRepository.createDeveloperProfile({
-        company_email: data.company_name,
+      await this.developerRepository.createDeveloperProfile({
+        company_email: data.company_email,
         company_image: data.company_image,
         city: data.city,
         company_name: data.company_name,
@@ -534,6 +582,30 @@ export class ManageOrganizations {
         ),
         password: generatedPass,
       },
+    }
+  }
+
+  async getDeveloperRegRequiredDoc() {
+    const developerDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.DeveloperVerification,
+      )
+
+    if (!developerDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Developer verification document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        developerDocGroup.id,
+      )
+
+    return {
+      ...developerDocGroup,
+      documents: documentGroupTypes,
     }
   }
 }

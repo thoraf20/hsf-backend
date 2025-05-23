@@ -23,6 +23,7 @@ import {
   CreateDeveloperInput,
   DeveloperFilters,
 } from '@validators/developerValidator'
+import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -35,6 +36,7 @@ export class OrganizationController {
       new AddressRepository(),
       new DeveloperRespository(),
       new PropertyRepository(),
+      new DocumentRepository(),
     )
   }
 
@@ -232,6 +234,17 @@ export class OrganizationController {
       StatusCodes.CREATED,
       'Developer onboarded successfully',
       { developer: newDeveloper },
+    )
+  }
+
+  async getDeveloperRegRequiredDoc() {
+    const developerRegDocs =
+      await this.manageOrganizations.getDeveloperRegRequiredDoc()
+
+    return createResponse(
+      StatusCodes.OK,
+      'Developer registration documents',
+      developerRegDocs,
     )
   }
 }

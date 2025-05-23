@@ -17,10 +17,11 @@ export class GroupDocumentType extends BaseEntity {
 }
 
 export class ApplicationDocumentEntry extends BaseEntity {
-  application_id: string
+  application_id?: string
   document_group_type_id: string
   document_url: string
   document_name: string
   document_size?: string
-  review_request_id: string
+  review_request_id?: string
+  organization_id?: string
 }

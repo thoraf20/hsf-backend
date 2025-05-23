@@ -128,6 +128,20 @@ router.get(
 )
 
 router.get(
+  '/developers/required-docs',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+  asyncMiddleware(async (_, res) => {
+    const response = await organizationController.getDeveloperRegRequiredDoc()
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
   '/user',
   authenticate,
   authorize(isOrganizationUser),
