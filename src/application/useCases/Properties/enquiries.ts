@@ -27,7 +27,7 @@ export class EnquiryService {
   ) {
     await this.utilsEnquiry.confirmEnquiryDoesntExist(property_id, user_id)
     const property = await this.utilsEnquiry.checkPropertyExist(property_id)
-    let developer_id = property.user_id
+    let developer_id = property.organization_id
     let enquiry = new Enquires({
       property_id: property.id,
       developer_id: developer_id,

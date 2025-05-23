@@ -1,16 +1,12 @@
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { Properties } from '@domain/entities/Property'
-import {
-  EscrowMeetingStatus,
-  propertyApprovalStatus,
-} from '@domain/enums/propertyEnum'
+import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { OfferLetter } from '@entities/PropertyPurchase'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
-import { EscrowInformation } from '@entities/PurchasePayment'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
@@ -18,7 +14,7 @@ export class manageProperty {
   private readonly propertyRepository: IPropertyRepository
   private readonly purchaseRepository: IPurchaseProperty
   private readonly utilsProperty: PropertyBaseUtils
-  private applicationRepository: IApplicationRespository
+  // private applicationRepository: IApplicationRespository
   constructor(
     propertyRepository: IPropertyRepository,
     purchaseRepository: IPurchaseProperty,
@@ -26,7 +22,7 @@ export class manageProperty {
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
-    this.applicationRepository = applicationRepository
+    // this.applicationRepository = applicationRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 

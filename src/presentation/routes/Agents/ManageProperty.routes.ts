@@ -15,9 +15,7 @@ import {
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import {
   approvePrequalifyRequestSchema,
-  changeOfferLetterStatusSchema,
   confirmPropertyPurchase,
-  SetEscrowMeetingSchema,
 } from '@validators/agentsValidator'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 
@@ -39,16 +37,16 @@ managePropertyRoute.get(
     res.status(property.statusCode).json(property)
   }),
 )
-managePropertyRoute.post(
-  '/property/set-escrow',
-  requireRoles([Role.SUPER_ADMIN]),
-  validateRequest(SetEscrowMeetingSchema),
-  asyncMiddleware(async (req, res) => {
-    const { user, body } = req
-    const property = await controller.setEscrowAttendance(body, user.id)
-    res.status(property.statusCode).json(property)
-  }),
-)
+// managePropertyRoute.post(
+//   '/property/set-escrow',
+//   requireRoles([Role.SUPER_ADMIN]),
+//   validateRequest(SetEscrowMeetingSchema),
+//   asyncMiddleware(async (req, res) => {
+//     const { user, body } = req
+//     const property = await controller.setEscrowAttendance(body, user.id)
+//     res.status(property.statusCode).json(property)
+//   }),
+// )
 managePropertyRoute.put(
   '/property/confirm-purchase',
   requireRoles([Role.SUPER_ADMIN]),

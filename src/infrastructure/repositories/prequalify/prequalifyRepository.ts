@@ -21,7 +21,6 @@ import {
   PreQualifyFilters,
 } from '@validators/prequalifyValidation'
 import { Knex } from 'knex'
-import { userInfo } from 'node:os'
 
 export class PrequalifyRepository implements IPreQualify {
   public async storePersonaInfo(

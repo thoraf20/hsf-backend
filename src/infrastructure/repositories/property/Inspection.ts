@@ -94,7 +94,7 @@ export class InspectionRepository implements IInspectionRepository {
       .join('properties', 'inspection.property_id', 'properties.id')
       .join('users', 'inspection.user_id', 'users.id')
       .where('inspection.user_id', user_id)
-      // .andWhere('inspection.action', '=', query_param)
+    // .andWhere('inspection.action', '=', query_param)
 
     if (paginate) {
       const offset = (paginate.page_number - 1) * paginate.result_per_page
@@ -106,10 +106,9 @@ export class InspectionRepository implements IInspectionRepository {
     return new SeekPaginationResult<Record<string, any>>({
       result: results,
       page: paginate?.page_number || 1,
-      result_per_page: paginate?.result_per_page 
+      result_per_page: paginate?.result_per_page,
     })
   }
-
 
   async getScheduleInspectionById(
     inspection_id: string,
@@ -138,7 +137,7 @@ export class InspectionRepository implements IInspectionRepository {
   }
   async responseToReschedule(
     inspection_id: string,
-    status: Partial<Inspection>
+    status: Partial<Inspection>,
   ): Promise<Inspection> {
     const [updated] = await db<Inspection>('inspection')
       .update(status)
