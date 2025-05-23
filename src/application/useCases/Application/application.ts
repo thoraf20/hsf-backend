@@ -1,9 +1,6 @@
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import {
-  EligibilityStatus,
-  preQualifyStatus,
-} from '@domain/enums/prequalifyEnum'
+
 import {
   ApplicationPurchaseType,
   ApplicationStatus,
@@ -14,11 +11,6 @@ import {
 import { UserStatus } from '@domain/enums/userEum'
 import { getDeveloperClientView } from '@entities/Developer'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
-import {
-  Eligibility,
-  payment_calculator,
-  preQualify,
-} from '@entities/prequalify/prequalify'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import {

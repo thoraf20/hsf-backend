@@ -1,4 +1,3 @@
-import { Knex } from 'knex'
 import { PartialInstantiable } from './partials'
 
 export type SeekPaginationOption = Partial<{

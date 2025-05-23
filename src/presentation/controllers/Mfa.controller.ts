@@ -1,9 +1,5 @@
 import { createResponse } from '@presentation/response/responseType'
-import {
-  generate2faSecret,
-  generateRecoveryCodes,
-  verifyCodeFromRecoveryCodeList,
-} from '@shared/utils/totp'
+import { generate2faSecret, generateRecoveryCodes } from '@shared/utils/totp'
 import { UserService } from '@use-cases/User/User'
 import { StatusCodes } from 'http-status-codes'
 import { createTOTPKeyURI, verifyTOTP } from '@oslojs/otp'

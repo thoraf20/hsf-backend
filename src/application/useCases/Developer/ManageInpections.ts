@@ -23,7 +23,7 @@ export class ManageInspectionUseCase {
     private readonly propertyRepository: IPropertyRepository,
     private readonly userRepository: IUserRepository,
     private readonly developerRepository: IDeveloperRepository,
-    private readonly inspectionRespository: IInspectionRepository,
+    inspectionRespository: IInspectionRepository,
   ) {
     this.manageInspectionRepository = manageInspectionRepository
     this.organizationRepository = organizationRepository

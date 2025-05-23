@@ -77,7 +77,7 @@ inspectionRoutes.get(
   '/fetch-all',
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
-    const { user, query } = req
+    const { user } = req
     const inspection = await inspectionController.getScheduleInspection(user.id)
     res.status(inspection.statusCode).json(inspection)
   }),
