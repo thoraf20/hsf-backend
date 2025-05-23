@@ -12,6 +12,8 @@ import {
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
 import { UserStatus } from '@domain/enums/userEum'
+import { getDeveloperClientView } from '@entities/Developer'
+import { PrequalificationInput } from '@entities/PrequalificationInput'
 import {
   Eligibility,
   payment_calculator,
@@ -21,10 +23,13 @@ import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import {
   ReviewRequestApprovalStatus,
+  ReviewRequestStageKind,
   ReviewRequestStatus,
   ReviewRequestType,
   ReviewRequestTypeKind,
 } from '@entities/Request'
+import { getUserClientView } from '@entities/User'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
@@ -59,6 +64,7 @@ export class ApplicationService {
     private readonly reviewRequestRepository: IReviewRequestRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly documentRepository: IDocumentRepository,
+    private readonly developerRepository: IDeveloperRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -96,11 +102,13 @@ export class ApplicationService {
       )
     }
 
-    let preQualifier: preQualify | null = null
+    let preQualifier: PrequalificationInput | null = null
 
     if (input.purchase_type !== ApplicationPurchaseType.OUTRIGHT) {
-      preQualifier =
-        await this.prequalifyRepository.getPreQualifyRequestByUser(userId)
+      preQualifier = await this.prequalifyRepository.getPreQualifyRequestByUser(
+        userId,
+        { property_id: input.property_id },
+      )
 
       if (!preQualifier) {
         throw new ApplicationCustomError(
@@ -108,46 +116,36 @@ export class ApplicationService {
           'You are required to complete your prequalification form before any application to either installment or mortagage',
         )
       }
-
-      if (preQualifier.status === preQualifyStatus.DELINCED) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'You need to refill your prequalification as your previous one was declined',
-        )
-      }
     }
 
-    let eligibility: Eligibility | null = null
+    let eligibility = await this.prequalifyRepository.findEligiblity(
+      input.property_id,
+      userId,
+    )
 
-    if (
-      input.purchase_type === ApplicationPurchaseType.INSTALLMENT ||
-      input.purchase_type === ApplicationPurchaseType.MORTGAGE
-    ) {
-      eligibility = await this.prequalifyRepository.addEligibility({
-        property_id: property.id,
-        user_id: userId,
-        eligiblity_status: EligibilityStatus.PENDING,
-        financial_eligibility_type: input.purchase_type,
-        prequalify_status_id: preQualifier.status_id,
-      })
+    if (!eligibility) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are required to complete your prequalification form before any application to either installment or mortagage',
+      )
     }
 
-    let installmentPaymentCalculator: payment_calculator | null = null
-    if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
-      installmentPaymentCalculator =
-        await this.prequalifyRepository.storePaymentCalculator({
-          ...(input.payment_calculator as payment_calculator),
-          house_price: property.property_price,
-          personal_information_id: preQualifier.personal_information_id,
-          type: input.purchase_type,
-        })
-    }
+    // let installmentPaymentCalculator: payment_calculator | null = null
+    // if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
+    //   installmentPaymentCalculator =
+    //     await this.prequalifyRepository.storePaymentCalculator({
+    //       ...(input.payment_calculator as payment_calculator),
+    //       house_price: property.property_price,
+    //       personal_information_id: preQualifier.id,
+    //       type: input.purchase_type,
+    //     })
+    // }
 
     const newApplication = await this.applicationRepository.createApplication({
       user_id: userId,
       status: ApplicationStatus.PENDING,
       property_id: property.id,
-      prequalifier_id: preQualifier?.status_id ?? null,
+      prequalifier_id: preQualifier?.id ?? null,
       application_type: input.purchase_type,
       eligibility_id: eligibility?.eligibility_id ?? null,
       developer_organization_id: property.organization_id,
@@ -161,6 +159,50 @@ export class ApplicationService {
       ...filter,
       user_id: userId,
     })
+  }
+
+  async getAllPropertyClosingsByHSF(filter: PropertyFilters) {
+    const propertyClosings =
+      await this.purchaseRepository.findAllPropertyClosings(filter)
+
+    propertyClosings.result = await Promise.all(
+      propertyClosings.result.map(async (closing) => {
+        const property = await this.propertyRepository.getPropertyById(
+          closing.property_id,
+        )
+
+        const applications = await this.applicationRepository.getAllApplication(
+          {
+            user_id: closing.user_id,
+            organization_id: property.organization_id,
+            result_per_page: Number.MAX_SAFE_INTEGER,
+          },
+        )
+
+        const application = applications.result.find(
+          (application) =>
+            application.property_closing_id === closing.property_closing_id,
+        )
+
+        const developer = await this.developerRepository.getDeveloperByOrgId(
+          property.organization_id,
+        )
+
+        const requestedBy = await this.userRepository.findById(closing.user_id)
+
+        return {
+          ...closing,
+          application_id: application?.application_id ?? null,
+          property: {
+            ...property,
+            developer: getDeveloperClientView(developer),
+          },
+          ...(requestedBy && { requested_by: getUserClientView(requestedBy) }),
+        }
+      }),
+    )
+
+    return propertyClosings
   }
 
   async getById(id: string, authInfo: AuthInfo) {
@@ -224,7 +266,9 @@ export class ApplicationService {
     if (application.status !== ApplicationStatus.PENDING) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        application.status === ApplicationStatus.COMPLETED ? '' : '',
+        application.status === ApplicationStatus.COMPLETED
+          ? 'Application is already completed'
+          : `Application status is ${application.status}, cannot request property closing`,
       )
     }
 
@@ -254,6 +298,8 @@ export class ApplicationService {
         ReviewRequestTypeKind.OfferLetterOutright,
       )
 
+    console.log({ outrightReviewType })
+
     if (!outrightReviewType) {
       throw new ApplicationCustomError(
         StatusCodes.INTERNAL_SERVER_ERROR,
@@ -265,6 +311,8 @@ export class ApplicationService {
       await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
         outrightReviewType.id,
       )
+
+    console.log({ outrightReviewTypeStage })
 
     if (!outrightReviewTypeStage.length) {
       throw new ApplicationCustomError(
@@ -363,7 +411,9 @@ export class ApplicationService {
     if (application.status !== ApplicationStatus.PENDING) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        application.status === ApplicationStatus.COMPLETED ? '' : '',
+        application.status === ApplicationStatus.COMPLETED
+          ? 'Application is already completed'
+          : `Application status is ${application.status}, cannot respond to property closing request`,
       )
     }
 
@@ -374,7 +424,10 @@ export class ApplicationService {
         )
 
       if (propertyClosing) {
-        throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Property closing request already initiated for this application',
+        )
       }
     }
 
@@ -435,7 +488,9 @@ export class ApplicationService {
     if (application.status !== ApplicationStatus.PENDING) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        application.status === ApplicationStatus.COMPLETED ? '' : '',
+        application.status === ApplicationStatus.COMPLETED
+          ? 'Application is already completed'
+          : `Application status is ${application.status}, cannot respond to property closing request`,
       )
     }
 
@@ -507,9 +562,8 @@ export class ApplicationService {
     }
 
     const approval =
-      await this.reviewRequestRepository.getReviewRequestApprovalByOrgRequestID(
-        input.request_id,
-        organizationId,
+      await this.reviewRequestRepository.getReviewRequestApprovalById(
+        input.approval_id,
       )
 
     const currentUser = await this.userRepository.findById(userId)
@@ -592,7 +646,7 @@ export class ApplicationService {
 
   async scheduleEscrowMeeting(
     applicationId: string,
-    userId: string,
+    authInfo: AuthInfo,
     input: ScheduleEscrowMeetingInput,
   ) {
     const application =
@@ -608,7 +662,7 @@ export class ApplicationService {
     if (application.status !== ApplicationStatus.PENDING) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        application.status === ApplicationStatus.COMPLETED ? '' : '',
+        `Application is not in a PENDING state. Current status: ${application.status}`,
       )
     }
 
@@ -631,6 +685,26 @@ export class ApplicationService {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         'Applicant user not active',
+      )
+    }
+
+    const members = await this.organizationRepository.getOrganizationMembers(
+      authInfo.currentOrganizationId,
+      {
+        page_number: 1,
+        result_per_page: Number.MAX_SAFE_INTEGER,
+      },
+    )
+
+    const notMember = input.attendees.find(
+      (attendeeId) =>
+        !members.result.find((member) => member.user_id === attendeeId),
+    )
+
+    if (notMember) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `We found the user with id '${notMember} not an HSF member'`,
       )
     }
 
@@ -681,16 +755,11 @@ export class ApplicationService {
     let organizationId = application.developer_organization_id
 
     if (firstStage.organization_type === OrganizationType.HSF_INTERNAL) {
-      const org = await this.organizationRepository.getHsfOrganization()
-
-      if (!org) {
-        throw new ApplicationCustomError(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          'Sorry! We are unable to place your request',
-        )
-      }
-
-      organizationId = org.id
+      organizationId = authInfo.currentOrganizationId
+    } else if (
+      firstStage.organization_type === OrganizationType.DEVELOPER_COMPANY
+    ) {
+      organizationId = application.developer_organization_id
     }
 
     await this.reviewRequestRepository.createReviewRequestApproval({
@@ -700,31 +769,38 @@ export class ApplicationService {
       organization_id: organizationId,
     })
 
-    const escrowAttendance = await this.purchaseRepository.setEscrowAttendance({
-      date: new Date(input.date),
-      time: input.time,
-      property_buyer_id: userId,
-      property_name: property.property_name,
-      property_id: property.id,
-      agent_id: property.organization_id,
-      location: input.location,
-      attendancees: input.attendees.join(','),
-      property_types: application.application_type,
-      review_request_id: reviewRequest.id,
-      application_id: application.application_id,
-    })
+    const escrowAttendance = await this.purchaseRepository.setEscrowAttendance(
+      {
+        date: new Date(input.date),
+        time: input.time,
+        property_buyer_id: application.user_id,
+        property_name: property.property_name,
+        property_id: property.id,
+        location: input.location,
+        property_types: application.application_type,
+        review_request_id: reviewRequest.id,
+        application_id: application.application_id,
+        organization_id: application.developer_organization_id,
+      },
+      input.attendees,
+    )
 
     await this.applicationRepository.updateApplication({
       application_id: application.application_id,
       escrow_information_id: escrowAttendance.escrow_id,
     })
 
+    await this.purchaseRepository.updateEscrowStatus(
+      application.application_id,
+      { escrow_information_id: escrowAttendance.escrow_id },
+    )
+
     return escrowAttendance
   }
 
   async scheduleEscrowMeetingRespond(
     applicationId: string,
-    userId: string,
+    authInfo: AuthInfo,
     input: ScheduleEscrowMeetingRespondInput,
   ) {
     const application =
@@ -764,48 +840,156 @@ export class ApplicationService {
       }
     ).escrow_status_info
 
-    if (!(application.escrow_status_id || escrowStatusInfo)) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'Escrow meeting process yet to be initiated',
-      )
-    }
-
     if (
-      escrowStatusInfo.escrow_status.escrow_status ===
-      EscrowMeetingStatus.AWAITING
+      !application.escrow_status_id &&
+      (!escrowStatusInfo || !escrowStatusInfo.escrow_meeting_info)
     ) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        'You are not allowed to perform this action',
+        'Escrow meeting process yet to be initiated or required information is missing',
       )
     }
 
-    if (!escrowStatusInfo.escrow_meeting_info) {
+    const approval =
+      await this.reviewRequestRepository.getReviewRequestApprovalById(
+        input.approval_id,
+      )
+
+    if (!approval) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Invalid approval request access',
+      )
+    }
+
+    if (approval.approval_status !== ReviewRequestApprovalStatus.Pending) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        'Escrow meeting process yet to be setup',
+        `Approval request is not in a PENDING state. Current status: ${approval.approval_status}`,
       )
     }
 
-    return this.purchaseRepository.confirmPropertyEscrowMeeting(
-      application.escrow_status_id,
-      input.confirm_attendance
-        ? EscrowMeetingStatus.CONFIRMED
-        : EscrowMeetingStatus.DECLINED,
+    const approvals =
+      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+        approval.request_id,
+      )
+
+    const allowRoleApprover = approvals
+      .find((a) => a.id === approval.id)
+      .request_approvers.find(
+        (approver) => approver.role_id === authInfo.roleId,
+      )
+
+    if (!allowRoleApprover) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to approve this document',
+      )
+    }
+
+    const updatedApproval =
+      await this.reviewRequestRepository.updateReviewRequestApproval(
+        approval.id,
+        {
+          approval_status: input.confirm_attendance
+            ? ReviewRequestApprovalStatus.Approved
+            : ReviewRequestApprovalStatus.Rejected,
+        },
+      )
+
+    const currentReviewTypeStage =
+      await this.reviewRequestRepository.getReviewRequestTypeStageByID(
+        approval.review_request_stage_type_id,
+      )
+
+    const requestStageTypes =
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+        currentReviewTypeStage.request_type_id,
+      )
+
+    const currentStageType = requestStageTypes.find(
+      (type) => type.id === approval.review_request_stage_type_id,
     )
+
+    const currentStage =
+      await this.reviewRequestRepository.getReviewRequestStageByID(
+        currentStageType.stage_id,
+      )
+
+    const nextStageType = requestStageTypes.find(
+      (type) => type.stage_order > currentStageType.stage_order,
+    )
+
+    const nextStage =
+      await this.reviewRequestRepository.getReviewRequestStageByID(
+        nextStageType.stage_id,
+      )
+
+    if (
+      currentStage.name ===
+        ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
+      updatedApproval.approval_status === ReviewRequestApprovalStatus.Approved
+    ) {
+      await this.purchaseRepository.updateEscrowStatus(
+        application.escrow_status_id,
+        {
+          escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
+        },
+      )
+    }
+
+    if (requestStageTypes.at(-1).id === approval.review_request_stage_type_id) {
+      await this.reviewRequestRepository.updateReviewRequest(
+        approval.request_id,
+        {
+          status: input.confirm_attendance
+            ? ReviewRequestStatus.Approved
+            : ReviewRequestStatus.Rejected,
+        },
+      )
+
+      await this.purchaseRepository.confirmPropertyEscrowMeeting(
+        application.escrow_status_id,
+        input.confirm_attendance
+          ? EscrowMeetingStatus.CONFIRMED
+          : EscrowMeetingStatus.DECLINED,
+      )
+      return updatedApproval
+    }
+
+    let organizationId: string | null = null
+    let approverId: string | null = null
+    if (
+      nextStage.name === ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
+    ) {
+      approverId = application.user_id
+    } else if (
+      nextStage.name === ReviewRequestStageKind.DeveloperEscrowMeetingRespond
+    ) {
+      organizationId = application.developer_organization_id
+    }
+
+    await this.reviewRequestRepository.createReviewRequestApproval({
+      request_id: approval.request_id,
+      review_request_stage_type_id: nextStageType.id,
+      approval_status: ReviewRequestApprovalStatus.Pending,
+      organization_id: organizationId,
+      approval_id: approverId,
+    })
+
+    return updatedApproval
   }
 
   async getOfferLetters(authInfo: AuthInfo, filters: OfferLetterFilters) {
-    if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
-      filters.organization_id = authInfo.currentOrganizationId
+    // if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
+    filters.organization_id = authInfo.currentOrganizationId
 
-      if (
-        ![Role.DEVELOPER_ADMIN, Role.LENDER_ADMIN].includes(authInfo.globalRole)
-      ) {
-        filters.approver_id = authInfo.userId
-      }
+    if (
+      ![Role.DEVELOPER_ADMIN, Role.LENDER_ADMIN].includes(authInfo.globalRole)
+    ) {
+      filters.approver_id = authInfo.userId
     }
+    // }
 
     let reviewTypeKinds = await Promise.all(
       [ReviewRequestTypeKind.OfferLetterOutright].map((kind) =>
@@ -946,5 +1130,64 @@ export class ApplicationService {
     )
 
     return documentTypes.flat(1)
+  }
+
+  async getEscrowMeetingStatus(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    const escrowStatus = (
+      application as {
+        escrow_status_info?: { escrow_status?: EscrowInformationStatus }
+      }
+    )?.escrow_status_info?.escrow_status
+
+    if (!escrowStatus) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Escrow meetting yet to be initiated',
+      )
+    }
+
+    if (!application.escrow_information_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'No escrow meeting set',
+      )
+    }
+
+    const escrowMeeting = await this.purchaseRepository.getEscrowInfo(
+      application.escrow_information_id,
+    )
+
+    if (!escrowMeeting) {
+      await this.applicationRepository.updateApplication({
+        application_id: application.application_id,
+        escrow_information_id: null,
+      })
+
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'No escrow meeting set',
+      )
+    }
+
+    const approvals =
+      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+        escrowMeeting.review_request_id,
+      )
+
+    return {
+      escrow_meeting: escrowMeeting,
+      escrow_status: escrowStatus,
+      approvals,
+    }
   }
 }

@@ -56,6 +56,15 @@ export class PropertyController {
     )
   }
 
+  public async getLenders() {
+    const lenders = await this.propertyService.getLenderBanks()
+    return createResponse(
+      StatusCodes.OK,
+      'Lender institution retrieved successfully',
+      { lenders: lenders.result },
+    )
+  }
+
   public async getPropertyByHSFAdmin(
     filters?: PropertyFilters,
   ): Promise<ApiResponse<any>> {

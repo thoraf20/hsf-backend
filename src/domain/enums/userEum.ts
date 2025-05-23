@@ -24,3 +24,16 @@ export enum AddressType {
 export enum MfaPurpose {
   ChangePassword = 'Change Password',
 }
+
+export enum Gender {
+  MALE = 'Male',
+  FEMALE = 'Female',
+  OTHER = 'Other',
+}
+
+export enum MartialStatus {
+  SINGLE = 'Single',
+  MARRIED = 'Married',
+  DIVORCED = 'Divorced',
+  WIDOWED = 'Widowed',
+}

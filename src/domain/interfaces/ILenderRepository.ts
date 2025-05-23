@@ -5,6 +5,7 @@ import { SeekPaginationResult } from '@shared/types/paginate'
 export interface ILenderRepository {
   createLender(lender: Lender): Promise<LenderProfile>
   getLenderById(id: string): Promise<Lender | null>
+  getLenderByOrgId(orgId: string): Promise<Lender | null>
   getAllLenders(filters: LenderFilters): Promise<SeekPaginationResult<Lender>>
   updateLender(id: string, lender: Partial<Lender>): Promise<Lender | null>
   deleteLender(id: string): Promise<void>

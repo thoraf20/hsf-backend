@@ -100,7 +100,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
     if (filters.organization_id) {
       q = add(q).whereRaw(
-        `${tablename}organization_id = ${filters.organization_id}`,
+        db.raw(`p.organization_id = '${filters.organization_id}'`),
       )
     }
 
@@ -142,7 +142,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
   async getAllApplication(
     filters?: PropertyFilters,
-  ): Promise<SeekPaginationResult<any>> {
+  ): Promise<SeekPaginationResult<Application>> {
     const page = filters?.page_number ?? 1
     const perPage = filters?.result_per_page ?? 10
     const offset = (page - 1) * perPage
@@ -235,7 +235,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
     const totalPages = Math.ceil(Number(total) / perPage)
 
-    return new SeekPaginationResult<any>({
+    return new SeekPaginationResult<Application>({
       result: paginatedResults,
       page,
       result_per_page: perPage,

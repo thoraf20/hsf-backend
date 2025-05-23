@@ -43,6 +43,7 @@ export class Agents {
     this.developerRepository = developerRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
     this.developer = new DeveloperUtils(this.developerRepository)
+    this.developerRepository = this.developerRepository
     this.lenderRepository = lenderRepository
     this.adminRepository = adminRepository
     this.organizationRepository = organizationRepository
@@ -487,7 +488,6 @@ export class Agents {
         head_office_address: input.head_office_address,
         state: input.state,
         organization_id: lenderOrg.id,
-        user_id: user.user_id,
       }),
     )
 

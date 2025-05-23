@@ -8,16 +8,38 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { Application } from '@entities/Application'
 import { PropertyFilters } from '@validators/propertyValidator'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
+import { ILenderRepository } from '@interfaces/ILenderRepository'
+import { getLenderClientView } from '@entities/Lender'
+import { IUserRepository } from '@interfaces/IUserRepository'
+import { getUserClientView, UserClientView } from '@entities/User'
+import {
+  DeveloperClientView,
+  getDeveloperClientView,
+} from '@entities/Developer'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
   private readonly applicationRepository: IApplicationRespository
+  private readonly organizationRepository: IOrganizationRepository
+  private readonly lenderRepository: ILenderRepository
+  private readonly userRepository: IUserRepository
+  private readonly developerRepository: IDeveloperRepository
   constructor(
     propertyRepository: IPropertyRepository,
     applicationRepository: IApplicationRespository,
+    organizationRepository: IOrganizationRepository,
+    lenderRepository: ILenderRepository,
+    userRepository: IUserRepository,
+    developerRepository: IDeveloperRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository
+    this.organizationRepository = organizationRepository
+    this.lenderRepository = lenderRepository
+    this.developerRepository = developerRepository
+    this.userRepository = userRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
@@ -48,18 +70,28 @@ export class PropertyService {
     return fetchProperties
   }
 
-  public async getPropertyById(
-    id: string,
-    user_id: string,
-    userRole: string,
-  ): Promise<Properties> {
+  public async getPropertyById(id: string, user_id: string, userRole: string) {
     const fetchProperty = await this.utilsProperty.findIfPropertyExist(
       id,
       user_id,
       userRole,
     )
 
-    return fetchProperty
+    if (!fetchProperty) {
+      return null
+    }
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      fetchProperty.organization_id,
+    )
+
+    console.log({ d: this.developerRepository })
+
+    let developer: DeveloperClientView = getDeveloperClientView(
+      await this.developerRepository.getDeveloperByOrgId(organization.id),
+    )
+
+    return { ...fetchProperty, developer, organization }
   }
 
   public async getPropertyByDeveloperOrg(
@@ -268,5 +300,40 @@ export class PropertyService {
     }
 
     return await this.applicationRepository.getApplicationById(application_id)
+  }
+
+  async getLenderBanks() {
+    const lenderOrgs = await this.lenderRepository.getAllLenders({
+      result_per_page: Number.MAX_SAFE_INTEGER,
+    })
+
+    //@ts-ignore
+    lenderOrgs.result = await Promise.all(
+      lenderOrgs.result.map(async (lender) => {
+        const organization =
+          await this.organizationRepository.getOrganizationById(
+            lender.organization_id,
+          )
+
+        let ownerUserView: UserClientView
+        if (organization.owner_user_id) {
+          const ownerUser = await this.userRepository.findById(
+            organization.owner_user_id,
+          )
+
+          if (ownerUser) {
+            ownerUserView = getUserClientView(ownerUser)
+          }
+        }
+
+        return {
+          ...getLenderClientView(lender),
+          owner: ownerUserView ?? null,
+          organization,
+        }
+      }),
+    )
+
+    return lenderOrgs
   }
 }

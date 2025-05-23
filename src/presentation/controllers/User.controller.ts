@@ -17,6 +17,8 @@ import { ManageOrganizations } from '@application/useCases/ManageOrganizations'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
 
 export class UserController {
   private manageOrganizations: ManageOrganizations
@@ -29,6 +31,8 @@ export class UserController {
       new UserRepository(),
       new LenderRepository(),
       new AddressRepository(),
+      new DeveloperRespository(),
+      new PropertyRepository(),
     )
   }
 

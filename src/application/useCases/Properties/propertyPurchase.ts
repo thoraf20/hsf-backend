@@ -23,7 +23,6 @@ import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import { ErrorCode } from '@shared/utils/error'
 import { generateTransactionId } from '@shared/utils/helpers'
 // import { generateTransactionId } from '@shared/utils/helpers'
 import { PropertyBaseUtils } from '@use-cases/utils'
@@ -118,7 +117,7 @@ export class PropertyPurchase {
       loan_acceptance_status,
     } = input
 
-    await this.utilsProperty.getIfPropertyExist(property_id)
+    const property = await this.utilsProperty.getIfPropertyExist(property_id)
     //application start process for morgage and installment
 
     const inspection =
@@ -163,12 +162,7 @@ export class PropertyPurchase {
         )
       }
 
-      return this.applyEligibleCheck({
-        property_id,
-        purchase_type,
-        user_id,
-        inspection_id: inspection?.id,
-      })
+      return
     }
 
     if (!application && request_type === PropertyRequestTypeEnum.INITIATE) {
@@ -185,6 +179,7 @@ export class PropertyPurchase {
         user_id,
         application_type: purchase_type,
         inspection_id: inspection?.id,
+        developer_organization_id: property.organization_id,
       })
     }
 
@@ -349,82 +344,6 @@ export class PropertyPurchase {
       user_id,
     })
     return status
-  }
-
-  public async applyEligibleCheck({
-    property_id,
-    purchase_type,
-    user_id,
-    inspection_id,
-  }: {
-    property_id: string
-    purchase_type: ApplicationPurchaseType
-    user_id: string
-    inspection_id: string
-  }) {
-    const preQualify =
-      await this.preQualifieRepository.getPreQualifyRequestByUser(user_id)
-
-    if (!preQualify) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'You have to be prequalify before proceeding',
-        null,
-        ErrorCode.MISSING_PREQUALIFIER,
-      )
-    }
-
-    let application =
-      await this.applicationRepository.getLastApplicationIfExist(
-        property_id,
-        user_id,
-      )
-
-    if (application) {
-      if (
-        application.status === ApplicationStatus.PENDING ||
-        application.status === ApplicationStatus.PROCESSING
-      ) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'You have an active application ongoing',
-        )
-      }
-
-      if (application.status === ApplicationStatus.COMPLETED) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Your application has been completed',
-        )
-      }
-
-      if (application.status === ApplicationStatus.REJECTED) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Your application has been rejected',
-        )
-      }
-    }
-
-    const eligible = await this.preQualifieRepository.addEligibility({
-      prequalify_status_id: preQualify.status_id,
-      property_id,
-      user_id,
-      financial_eligibility_type: purchase_type,
-    })
-
-    application = await this.applicationRepository.createApplication({
-      status: ApplicationStatus.PENDING,
-      property_id,
-      user_id,
-      inspection_id,
-
-      eligibility_id: eligible.eligibility_id,
-      application_type: purchase_type,
-      prequalifier_id: preQualify.status_id,
-    }) 
-
-    return application
   }
 
   public async requestForOfferLetter({

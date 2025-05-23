@@ -152,6 +152,15 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
     }
   }
 
+  async getReviewRequestApprovalById(
+    approvalId: string,
+  ): Promise<ReviewRequestApproval> {
+    return db<ReviewRequestApproval>('review_request_approvals')
+      .select()
+      .where({ id: approvalId })
+      .first()
+  }
+
   async updateReviewRequest(
     id: string,
     update: Partial<ReviewRequest>,
@@ -188,8 +197,10 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
 
   getReviewRequestApprovalByRequestID(requestId: string): Promise<
     (ReviewRequestApproval & {
+      review_request: ReviewRequest
       review_request_stage: ReviewRequestStage
       review_request_type_stage: ReviewRequestTypeStage
+      request_approvers: Array<ReviewRequestStageApprover>
     })[]
   > {
     return db<any>('review_request_approvals as rra')
@@ -199,12 +210,24 @@ export class ReviewRequestRepository implements IReviewRequestRepository {
         'rra.review_request_stage_type_id',
       )
       .innerJoin('review_request_stages as rrs', 'rrs.id', 'rrts.stage_id')
+      .leftJoin(
+        'review_request_stage_approvers as rrsa',
+        'rrsa.request_stage_type_id',
+        'rra.review_request_stage_type_id',
+      )
+      .innerJoin('review_requests as rr', 'rr.id', 'rra.request_id')
       .select(
         'rra.*',
         db.raw('row_to_json(rrs) as review_request_stage'),
+        db.raw('row_to_json(rr) as review_request'),
         db.raw('row_to_json(rrts) as review_request_type_stage'),
+        db.raw(
+          `coalesce(json_agg(row_to_json(rrsa)) FILTER (WHERE rrsa.id IS NOT NULL),'[]'::json) as request_approvers`,
+        ),
       )
+
       .where({ request_id: requestId })
+      .groupBy('rra.id', 'rrs.*', 'rr.id', 'rrts.id')
   }
 
   async getReviewRequestID(id: string): Promise<ReviewRequest> {

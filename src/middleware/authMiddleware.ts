@@ -74,6 +74,7 @@ const authenticate = asyncMiddleware(
       // 4. Construct AuthInfo object.  Only include the first membership.
       let authInfo: AuthInfo = {
         userId: userRecord.id,
+        roleId: userRecord.role_id,
         globalRole: globalRole,
         organizationMembership: undefined,
         currentOrganizationId: undefined,
@@ -120,6 +121,7 @@ const optionalAuth = asyncMiddleware(async (req, res, next) => {
   if (!token) {
     const authInfo: AuthInfo = {
       userId: '',
+      roleId: '',
       currentOrganizationId: '',
     }
 

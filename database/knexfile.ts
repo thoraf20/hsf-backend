@@ -3,7 +3,13 @@ import path from 'path'
 import dotenv from 'dotenv'
 dotenv.config({ path: path.resolve(__dirname, '../.env') })
 
-console.log(process.env.PORT)
+console.log(process.env.PORT, {
+  host: process.env.DB_HOST as string,
+  port: parseInt(String(process.env.DB_PORT)),
+  user: process.env.DB_USER as string,
+  password: process.env.DB_PASSWORD as string,
+  database: process.env.DB_NAME as string,
+})
 const config: { [key: string]: Knex.Config } = {
   development: {
     client: 'postgresql',
@@ -29,9 +35,11 @@ const config: { [key: string]: Knex.Config } = {
   production: {
     client: 'postgresql',
     connection: {
-      database: 'my_db',
-      user: 'username',
-      password: 'password',
+      host: process.env.DB_HOST as string,
+      port: parseInt(String(process.env.DB_PORT)),
+      user: process.env.DB_USER as string,
+      password: process.env.DB_PASSWORD as string,
+      database: process.env.DB_NAME as string,
     },
     pool: {
       min: 2,

@@ -1,6 +1,7 @@
 // HSF-Backend-New/src/domain/interfaces/IOrganizationRepository.ts
 import { Organization } from '@domain/entities/Organization'
 import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 import { User } from '@entities/User'
 import {
   SeekPaginationOption,
@@ -17,6 +18,8 @@ export interface IOrganizationRepository {
   ): Promise<Organization | null>
   deleteOrganization(id: string): Promise<void>
 
+  getOrganizationsByType(type: OrganizationType): Promise<Organization[]>
+
   addUserToOrganization(
     userOrganizationMember: UserOrganizationMember,
   ): Promise<UserOrganizationMember>
@@ -30,8 +33,10 @@ export interface IOrganizationRepository {
     paginate?: SeekPaginationOption,
   ): Promise<
     SeekPaginationResult<
-      UserOrganizationMember &
-        { user: User; role: { id: string; name: string } }[]
+      UserOrganizationMember & {
+        user: User
+        role: { id: string; name: string }
+      }
     >
   >
 

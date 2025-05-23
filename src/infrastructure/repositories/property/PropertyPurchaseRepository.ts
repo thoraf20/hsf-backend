@@ -4,9 +4,11 @@ import {
   OfferLetter,
   PropertyClosing,
 } from '@entities/PropertyPurchase'
-import { EscrowInformation } from '@entities/PurchasePayment'
+import { EscrowAttendee, EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { applyPagination } from '@shared/utils/paginate'
 import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 
 export class PropertyPurchaseRepository implements IPurchaseProperty {
@@ -97,6 +99,16 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
     return escrowStatus
   }
 
+  async findAllPropertyClosings(
+    filter: any,
+  ): Promise<SeekPaginationResult<PropertyClosing>> {
+    let baseQuery = db<PropertyClosing>('property_closing').orderBy(
+      'created_at',
+      'desc',
+    )
+    return applyPagination<PropertyClosing>(baseQuery)
+  }
+
   public async confirmPropertyPurchase(
     input: Record<string, any>,
     user_id: string,
@@ -142,9 +154,23 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
 
   public async setEscrowAttendance(
     input: EscrowInformation,
+    attendee: Array<string>,
   ): Promise<EscrowInformation> {
-    const [escrow] = await db('escrow_information').insert(input).returning('*')
-    return new EscrowInformation(escrow) ? escrow : null
+    return db.transaction(async (tx) => {
+      const [escrow] = await tx<EscrowInformation>('escrow_information')
+        .insert(input)
+        .returning('*')
+
+      console.log(
+        attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
+      )
+      await tx<EscrowAttendee>('escrow_attendee')
+        .insert(
+          attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
+        )
+        .returning('*')
+      return new EscrowInformation(escrow) ? escrow : null
+    })
   }
 
   public async approvePrequalifyRequest(
@@ -162,6 +188,25 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
       .insert({ ...input, escrow_status: EscrowMeetingStatus.AWAITING })
       .returning('*')
     return new EscrowInformationStatus(escrowStatus) ? escrowStatus : null
+  }
+
+  public async updateEscrowStatus(
+    escrow_status_id: string,
+    update: Partial<EscrowInformationStatus>,
+  ) {
+    const [updated] = await db('escrow_status')
+      .update<EscrowInformationStatus>(update)
+      .where({ escrow_status_id })
+      .returning('*')
+
+    return updated
+  }
+
+  public async getEscrowInfo(escrow_id: string) {
+    return db('escrow_information')
+      .select<EscrowInformation>()
+      .where({ escrow_id: escrow_id })
+      .first()
   }
 
   public async updatePropertyClosing(

@@ -66,4 +66,11 @@ export class LenderRepository implements ILenderRepository {
     const lender = await db('lenders_profile').where({ cac }).first()
     return lender ? new Lender(lender) : null
   }
+
+  getLenderByOrgId(orgId: string): Promise<Lender | null> {
+    return db<Lender>('lenders_profile')
+      .select()
+      .where({ organization_id: orgId })
+      .first()
+  }
 }

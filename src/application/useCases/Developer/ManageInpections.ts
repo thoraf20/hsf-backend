@@ -223,8 +223,7 @@ export class ManageInspectionUseCase {
       await this.manageInspectionRepository.getdayAvailabilityById(
         getSlot.day_availability_id,
       )
-    console.log(getAvailability)
-    if (getAvailability.organization_id !== organization_id) { 
+    if (getAvailability.organization_id !== organization_id) {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'You are not permitted to carry out this action',

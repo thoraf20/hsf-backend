@@ -20,3 +20,14 @@ export class Lender {
 }
 
 export type LenderProfile = Lender & User
+
+export const getLenderClientView = (lender: Lender) => ({
+  id: lender.id,
+  lender_name: lender.lender_name,
+  lender_type: lender.lender_type,
+  head_office_address: lender.head_office_address,
+  state: lender.state,
+  organization_id: lender.organization_id,
+  created_at: lender.created_at,
+  updated_at: lender.updated_at,
+})

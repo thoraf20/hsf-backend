@@ -12,7 +12,9 @@ import { asyncMiddleware, requireRoles, Role } from '@routes/index.t'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import {
   All,
+  isHomeBuyer,
   isOrganizationUser,
+  RequireAny,
   requireOrganizationType,
 } from '@shared/utils/permission-policy'
 
@@ -21,6 +23,7 @@ import {
   createApplicationSchema,
   offerLetterFiltersSchema,
   requestOfferLetterRespondSchema,
+  requestPropertyClosingSchema,
   scheduleEscrowMeetingRespondSchema,
   scheduleEscrowMeetingSchema,
 } from '@validators/applicationValidator'
@@ -47,6 +50,7 @@ const applicationService = new ApplicationService(
   new ReviewRequestRepository(),
   new OrganizationRepository(),
   new DocumentRepository(),
+  new DeveloperRespository(),
 )
 const manageInspectionRepository = new ManageInspectionRepository()
 const organizationRepository = new OrganizationRepository()
@@ -128,6 +132,17 @@ applicationRoutes.get(
   }),
 )
 
+applicationRoutes.get(
+  '/property-closings',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res, next) => {
+    const { query } = req
+    const response =
+      await applicationController.getAllPropertyClosingsByHSF(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 applicationRoutes.get('/:application_id', async (req, res) => {
   const { authInfo, params } = req
 
@@ -136,7 +151,6 @@ applicationRoutes.get('/:application_id', async (req, res) => {
     authInfo,
   )
 
-  console.log(JSON.stringify(response.body))
   res.status(response.statusCode).json(response)
 })
 
@@ -207,27 +221,28 @@ applicationRoutes.patch(
 )
 
 applicationRoutes.patch(
-  '/:application_id/closing/respond',
+  '/:application_id/property-closings/respond',
   requireRoles(Role.SUPER_ADMIN),
+  validateRequest(requestPropertyClosingSchema),
   asyncMiddleware(async (req, res) => {
     const { params, body } = req
     const response = await applicationController.propertyClosingRespond(
       params.application_id,
       body,
     )
-
     res.status(response.statusCode).json(response)
   }),
 )
 
 applicationRoutes.post(
   '/:application_id/escrow/schedule',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   validateRequest(scheduleEscrowMeetingSchema),
   asyncMiddleware(async (req, res) => {
-    const { user: claim, params, body } = req
+    const { params, body, authInfo } = req
     const response = await applicationController.scheduleEscrowMeeting(
       params.application_id,
-      claim.id,
+      authInfo,
       body,
     )
 
@@ -235,14 +250,41 @@ applicationRoutes.post(
   }),
 )
 
+applicationRoutes.get(
+  '/:application_id/escrow-status',
+  authorize(
+    RequireAny(
+      requireOrganizationType(
+        OrganizationType.HSF_INTERNAL,
+        OrganizationType.DEVELOPER_COMPANY,
+      ),
+      isHomeBuyer,
+    ),
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { params, authInfo } = req
+    const response = await applicationController.getEscrowMeetingStatus(
+      params.application_id,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 applicationRoutes.patch(
   '/:application_id/escrow-meeting/respond',
+  authorize(
+    RequireAny(
+      requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
+      isHomeBuyer,
+    ),
+  ),
   validateRequest(scheduleEscrowMeetingRespondSchema),
   asyncMiddleware(async (req, res) => {
-    const { user: claim, body, params } = req
+    const { authInfo, body, params } = req
     const response = await applicationController.scheduleEscrowMeetingRespond(
       params.application_id,
-      claim.id,
+      authInfo,
       body,
     )
 

@@ -1,4 +1,5 @@
 import { LoanOfferStatus } from '@domain/enums/propertyEnum'
+import { BaseEntity } from '.'
 
 export class PaymentEntity {
   payment_id?: string
@@ -43,7 +44,6 @@ export class EscrowInformation {
   date: Date
   time: string
   location: string
-  attendancees: string
   property_name: string
   property_types: string
   confirm_attendance?: boolean
@@ -51,7 +51,7 @@ export class EscrowInformation {
   property_buyer_id: string
   review_request_id: string
   application_id?: string
-  agent_id: string
+  organization_id: string
   created_at?: Date
   updated_at?: Date
   constructor(data: Partial<invoices>) {
@@ -61,6 +61,11 @@ export class EscrowInformation {
       ...data,
     })
   }
+}
+
+export class EscrowAttendee extends BaseEntity {
+  escrow_id: string
+  user_id: string
 }
 
 export class uploadDocument {
