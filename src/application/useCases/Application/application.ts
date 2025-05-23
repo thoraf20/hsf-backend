@@ -13,6 +13,7 @@ import {
 } from '@domain/enums/propertyEnum'
 import { UserStatus } from '@domain/enums/userEum'
 import { getDeveloperClientView } from '@entities/Developer'
+import { PrequalificationInput } from '@entities/PrequalificationInput'
 import {
   Eligibility,
   payment_calculator,
@@ -51,7 +52,6 @@ import {
   ScheduleEscrowMeetingRespondInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
-import { Stats } from 'fs'
 import { StatusCodes } from 'http-status-codes'
 
 export class ApplicationService {
@@ -103,7 +103,7 @@ export class ApplicationService {
       )
     }
 
-    let preQualifier: preQualify | null = null
+    let preQualifier: PrequalificationInput | null = null
 
     if (input.purchase_type !== ApplicationPurchaseType.OUTRIGHT) {
       preQualifier =
@@ -115,46 +115,36 @@ export class ApplicationService {
           'You are required to complete your prequalification form before any application to either installment or mortagage',
         )
       }
-
-      if (preQualifier.status === preQualifyStatus.DELINCED) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'You need to refill your prequalification as your previous one was declined',
-        )
-      }
     }
 
-    let eligibility: Eligibility | null = null
+    let eligibility = await this.prequalifyRepository.findEligiblity(
+      input.property_id,
+      userId,
+    )
 
-    if (
-      input.purchase_type === ApplicationPurchaseType.INSTALLMENT ||
-      input.purchase_type === ApplicationPurchaseType.MORTGAGE
-    ) {
-      eligibility = await this.prequalifyRepository.addEligibility({
-        property_id: property.id,
-        user_id: userId,
-        eligiblity_status: EligibilityStatus.PENDING,
-        financial_eligibility_type: input.purchase_type,
-        prequalify_status_id: preQualifier.status_id,
-      })
+    if (!eligibility) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are required to complete your prequalification form before any application to either installment or mortagage',
+      )
     }
 
-    let installmentPaymentCalculator: payment_calculator | null = null
-    if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
-      installmentPaymentCalculator =
-        await this.prequalifyRepository.storePaymentCalculator({
-          ...(input.payment_calculator as payment_calculator),
-          house_price: property.property_price,
-          personal_information_id: preQualifier.personal_information_id,
-          type: input.purchase_type,
-        })
-    }
+    // let installmentPaymentCalculator: payment_calculator | null = null
+    // if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
+    //   installmentPaymentCalculator =
+    //     await this.prequalifyRepository.storePaymentCalculator({
+    //       ...(input.payment_calculator as payment_calculator),
+    //       house_price: property.property_price,
+    //       personal_information_id: preQualifier.id,
+    //       type: input.purchase_type,
+    //     })
+    // }
 
     const newApplication = await this.applicationRepository.createApplication({
       user_id: userId,
       status: ApplicationStatus.PENDING,
       property_id: property.id,
-      prequalifier_id: preQualifier?.status_id ?? null,
+      prequalifier_id: preQualifier?.id ?? null,
       application_type: input.purchase_type,
       eligibility_id: eligibility?.eligibility_id ?? null,
       developer_organization_id: property.organization_id,

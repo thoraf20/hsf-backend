@@ -30,7 +30,7 @@ export interface IPreQualify {
     loaner_id: string,
     input: Partial<preQualify>,
   ): Promise<void>
-  getPreQualifyRequestByUser(user_id: string): Promise<preQualify>
+  getPreQualifyRequestByUser(user_id: string): Promise<PrequalificationInput>
   getPreQualifyRequest(): Promise<preQualify[]>
   getAllPreQualifiers(
     filters: PreQualifyFilters,

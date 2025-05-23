@@ -140,21 +140,9 @@ export class PrequalifyRepository implements IPreQualify {
 
   public async getPreQualifyRequestByUser(
     user_id: string,
-  ): Promise<preQualify> {
-    const prequalify = await db('prequalify_status as ps')
-      .join(
-        'prequalify_personal_information as ppi',
-        'ps.personal_information_id',
-        'ppi.personal_information_id',
-      )
-      .join(
-        'prequalify_other_info as info',
-        'ps.personal_information_id',
-        'info.personal_information_id',
-      )
-      .where('ps.loaner_id', user_id)
-      // .andWhere('is_approved', true)
-      .select('ps.*', 'ppi.*', 'info.*')
+  ): Promise<PrequalificationInput> {
+    const prequalify = await db('prequalification_inputs as pi')
+      .where('pi.user_id', user_id)
       .first()
 
     return prequalify

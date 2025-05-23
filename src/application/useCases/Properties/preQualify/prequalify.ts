@@ -144,7 +144,9 @@ export class preQualifyService {
     return this.prequalify.getAllPreQualifiers(filters)
   }
 
-  public async getPrequalifierByUserId(user_id: string): Promise<preQualify> {
+  public async getPrequalifierByUserId(
+    user_id: string,
+  ): Promise<PrequalificationInput> {
     return await this.prequalify.getPreQualifyRequestByUser(user_id)
   }
 
