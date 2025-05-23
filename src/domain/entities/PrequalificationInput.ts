@@ -15,6 +15,7 @@ export class PrequalificationInput extends BaseEntity {
   public employment_confirmation: string
   public employment_position: string
   public years_to_retirement: number
+  public employer_name: string
   public employer_address: string
   public employer_state: string
   public net_income: number

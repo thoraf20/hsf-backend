@@ -11,6 +11,7 @@ import {
 import {
   preQualifierEligibleSchema,
   preQualifierFiltersSchema,
+  preQualifierStatusQuerySchema,
   preQualifiyRequestSchema,
 } from '@validators/prequalifyValidation'
 import { verifyOtpSchema } from '@validators/userValidator'
@@ -18,12 +19,15 @@ import { authorize } from '@middleware/authorization'
 import { requireOrganizationType } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { validateRequestQuery } from '@shared/utils/paginate'
 
 const preQualifierRoutes: Router = Router()
 
 const service = new preQualifyService(
   new PrequalifyRepository(),
   new PropertyRepository(),
+  new LenderRepository(),
 )
 const controller = new preQualifyController(service)
 
@@ -64,8 +68,8 @@ preQualifierRoutes.get(
   '/home-buyer/single/fetch',
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const prequalify = await controller.getPrequalifierByUserId(user.id)
+    const { user, query } = req
+    const prequalify = await controller.getPrequalifierByUserId(user.id, query)
     res.status(prequalify.statusCode).json(prequalify)
   }),
 )
@@ -81,10 +85,11 @@ preQualifierRoutes.get(
 )
 preQualifierRoutes.get(
   '/status',
+  validateRequestQuery(preQualifierStatusQuerySchema),
   requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
-    const { user } = req
-    const prequalify = await controller.getPrequalifierByUserId(user.id)
+    const { user, query } = req
+    const prequalify = await controller.getPrequalifierByUserId(user.id, query)
     res.status(prequalify.statusCode).json(prequalify)
   }),
 )

@@ -9,12 +9,14 @@ import { generateRandomSixNumbers } from '@shared/utils/helpers'
 import { StatusCodes } from 'http-status-codes'
 import {
   PreQualifierEligibleInput,
+  PreQualifierStatusQuery,
   PreQualifyFilters,
   PreQualifyRequestInput,
 } from '@validators/prequalifyValidation'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
+import { ILenderRepository } from '@interfaces/ILenderRepository'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
@@ -22,6 +24,7 @@ export class preQualifyService {
   constructor(
     prequalify: IPreQualify,
     private readonly propertyRepository: IPropertyRepository,
+    private readonly lenderRepository: ILenderRepository,
   ) {
     this.prequalify = prequalify
   }
@@ -31,19 +34,26 @@ export class preQualifyService {
   }
 
   public async storePreQualify(input: PreQualifyRequestInput, user_id: string) {
-    const checkSucessfullPreQualifier =
-      await this.prequalify.getSuccessfulPrequalifyRequestByUser(user_id)
-    if (checkSucessfullPreQualifier) {
-      throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'You have already applied for prequalification. Check if you are eligible to purchase a property.',
+    if (input.eligibility?.property_id) {
+      const checkSucessfullPreQualifier = await this.prequalify.findEligiblity(
+        input.eligibility?.property_id,
+        user_id,
       )
+      if (
+        checkSucessfullPreQualifier?.eligiblity_status ===
+        EligibilityStatus.APPROVED
+      ) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'You have already applied for prequalification. Check if you are eligible to purchase a property.',
+        )
+      }
     }
 
     const otp = generateRandomSixNumbers()
     const key = `${CacheEnumKeys.preQualify_VERIFICATION}-${user_id}`
     const identifierKey = `${CacheEnumKeys.preQualify_VERIFICATION}-${otp}`
-    await this.cache.setKey(identifierKey, user_id)
+    await this.cache.setKey(identifierKey, user_id, 600)
 
     const details = { otp, type: OtpEnum.PREQUALIFY, user_id, input }
     await this.cache.setKey(key, details, 600)
@@ -66,6 +76,8 @@ export class preQualifyService {
       )
     }
 
+    console.log({ identifierKey })
+
     const dataKey = `${CacheEnumKeys.preQualify_VERIFICATION}-${identifierKey}`
     const details: {
       otp: string
@@ -73,7 +85,7 @@ export class preQualifyService {
       user_id: string
       input: PreQualifyRequestInput
     } | null = await this.cache.getKey(dataKey)
-
+    console.log({ details })
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -83,7 +95,7 @@ export class preQualifyService {
 
     const { user_id, otp } = details
 
-    if (!(otp === input.otp && user_id === identifierKey)) {
+    if (!(String(otp) === String(input.otp) && user_id === identifierKey)) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Invalid or expired OTP',
@@ -92,9 +104,10 @@ export class preQualifyService {
 
     const { eligibility, ...preQualifierInput } = details.input
 
-    const prequalifyInput = await this.prequalify.storePreQualificationInput(
-      preQualifierInput as PrequalificationInput,
-    )
+    const prequalifyInput = await this.prequalify.storePreQualificationInput({
+      ...preQualifierInput,
+      user_id,
+    } as PrequalificationInput)
 
     if (eligibility) {
       const property = await this.propertyRepository.getPropertyById(
@@ -126,11 +139,15 @@ export class preQualifyService {
           preQualifyEligibility.prequalifier_input_id === prequalifyInput.id
         )
       ) {
+        const lender = await this.lenderRepository.getLenderByOrgId(
+          eligibility.lender_id,
+        )
         await this.prequalify.addEligibility({
           organization_id: property.organization_id,
           eligiblity_status: EligibilityStatus.PENDING,
-          lender_id: eligibility.lender_id,
+          lender_id: lender.id,
           property_id: property.id,
+          rsa: '',
           user_id,
           prequalifier_input_id: prequalifyInput.id,
         })
@@ -146,8 +163,9 @@ export class preQualifyService {
 
   public async getPrequalifierByUserId(
     user_id: string,
+    query: PreQualifierStatusQuery,
   ): Promise<PrequalificationInput> {
-    return await this.prequalify.getPreQualifyRequestByUser(user_id)
+    return await this.prequalify.getPreQualifyRequestByUser(user_id, query)
   }
 
   public async getAllPreQualifierToBeapproved(): Promise<preQualify[]> {

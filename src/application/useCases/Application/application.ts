@@ -23,7 +23,6 @@ import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import {
   ReviewRequestApprovalStatus,
-  ReviewRequestStage,
   ReviewRequestStageKind,
   ReviewRequestStatus,
   ReviewRequestType,
@@ -106,8 +105,10 @@ export class ApplicationService {
     let preQualifier: PrequalificationInput | null = null
 
     if (input.purchase_type !== ApplicationPurchaseType.OUTRIGHT) {
-      preQualifier =
-        await this.prequalifyRepository.getPreQualifyRequestByUser(userId)
+      preQualifier = await this.prequalifyRepository.getPreQualifyRequestByUser(
+        userId,
+        { property_id: input.property_id },
+      )
 
       if (!preQualifier) {
         throw new ApplicationCustomError(

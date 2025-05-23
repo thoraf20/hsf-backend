@@ -17,9 +17,11 @@ import { addQueryUnionFilter } from '@shared/utils/helpers'
 import { applyPagination } from '@shared/utils/paginate'
 import {
   PreQualifierEligibleInput,
+  PreQualifierStatusQuery,
   PreQualifyFilters,
 } from '@validators/prequalifyValidation'
 import { Knex } from 'knex'
+import { userInfo } from 'node:os'
 
 export class PrequalifyRepository implements IPreQualify {
   public async storePersonaInfo(
@@ -52,15 +54,6 @@ export class PrequalifyRepository implements IPreQualify {
   }
 
   public async findIfApplyForLoanAlready(loaner_id: string): Promise<any> {
-    return await db('prequalify_status')
-      .where('loaner_id', loaner_id)
-      .where('is_prequalify_requested', true)
-      .first()
-  }
-
-  public async getSuccessfulPrequalifyRequestByUser(
-    loaner_id: string,
-  ): Promise<any> {
     return await db('prequalify_status')
       .where('loaner_id', loaner_id)
       .where('is_prequalify_requested', true)
@@ -140,12 +133,28 @@ export class PrequalifyRepository implements IPreQualify {
 
   public async getPreQualifyRequestByUser(
     user_id: string,
+    query: PreQualifierStatusQuery,
   ): Promise<PrequalificationInput> {
-    const prequalify = await db('prequalification_inputs as pi')
-      .where('pi.user_id', user_id)
-      .first()
+    let baseQuery = db('prequalification_inputs as pi').where(
+      'pi.user_id',
+      user_id,
+    )
 
-    return prequalify
+    if (query.property_id) {
+      baseQuery = baseQuery
+        .leftJoin('eligibility as e', (qb) => {
+          qb.on('e.prequalifier_input_id', 'pi.id').andOnVal(
+            'e.property_id',
+            query.property_id,
+          )
+        })
+        .select('pi.*', db.raw('row_to_json(e) as eligible'))
+    }
+
+    console.log({ sql: baseQuery.toSQL().sql, query })
+
+    const preQualify = await baseQuery.first()
+    return preQualify
   }
 
   public async getPreQualifyRequestById(id: string): Promise<preQualify> {
@@ -234,6 +243,7 @@ export class PrequalifyRepository implements IPreQualify {
       employment_confirmation: input.employment_confirmation,
       employment_position: input.employment_position,
       years_to_retirement: input.years_to_retirement,
+      employer_name: input.employer_name,
       employer_address: input.employer_address,
       net_income: input.net_income,
       employment_type: input.employment_type,
@@ -244,7 +254,7 @@ export class PrequalifyRepository implements IPreQualify {
     if (input.id) {
       let existing = db<PrequalificationInput>('prequalification_inputs')
         .select()
-        .where({ id: input.id })
+        .where({ user_id: input.user_id })
         .first()
 
       if (existing) {
@@ -252,6 +262,7 @@ export class PrequalifyRepository implements IPreQualify {
           'prequalification_inputs',
         )
           .update(payload)
+          .where({ user_id: input.user_id })
           .returning('*')
 
         return updated

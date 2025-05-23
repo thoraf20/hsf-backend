@@ -5,6 +5,7 @@ import {
 import { preQualifyService } from '@use-cases/Properties/preQualify/prequalify'
 import {
   PreQualifierEligibleInput,
+  PreQualifierStatusQuery,
   PreQualifyFilters,
   PreQualifyRequestInput,
 } from '@validators/prequalifyValidation'
@@ -29,8 +30,12 @@ export class preQualifyController {
   }
   public async getPrequalifierByUserId(
     user_id: string,
+    query: PreQualifierStatusQuery,
   ): Promise<ApiResponse<any>> {
-    const preQualifier = await this.service.getPrequalifierByUserId(user_id)
+    const preQualifier = await this.service.getPrequalifierByUserId(
+      user_id,
+      query,
+    )
     return createResponse(StatusCodes.OK, `Success`, preQualifier)
   }
   public async getAllPreQualifierToBeapproved(): Promise<ApiResponse<any>> {

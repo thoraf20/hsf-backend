@@ -28,6 +28,7 @@ export class Eligibility {
   eligiblity_status?: string
   is_eligible?: boolean
   property_id?: string
+  rsa?: string
   financial_eligibility_type?: string
   organization_id: string
   lender_id?: string

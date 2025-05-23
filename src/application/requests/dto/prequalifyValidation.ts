@@ -47,6 +47,9 @@ export const preQualifiyRequestSchema = z.object({
     })
     .int()
     .positive(),
+  employer_name: z.string({
+    message: 'Employer name is required for eligibility check',
+  }),
   employer_address: z.string({
     message: 'Employer address is required for eligibility check',
   }),
@@ -91,3 +94,11 @@ export const preQualifierFiltersSchema = withPaginateSchema(
 )
 
 export type PreQualifyFilters = z.infer<typeof preQualifierFiltersSchema>
+
+export const preQualifierStatusQuerySchema = z.object({
+  property_id: z.string().optional(),
+})
+
+export type PreQualifierStatusQuery = z.infer<
+  typeof preQualifierStatusQuerySchema
+>
