@@ -19,6 +19,7 @@ import { ServiceOfferingRepository } from '@repositories/serviceOffering/service
 import { authorize } from '@middleware/authorization'
 import { isHomeBuyer } from '@shared/utils/permission-policy'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
@@ -26,6 +27,7 @@ const service = new InspectionService(
   new ServiceOfferingRepository(),
   new TransactionRepository(),
   new ManageInspectionRepository(),
+  new PropertyRepository()
 )
 
 const inspectionController = new InspectionController(service)
@@ -36,6 +38,7 @@ inspectionRoutes.post(
   validateRequest(inspectionSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
+    console.log('pendingInspection', body)
     const schedule = await inspectionController.scheduleInspectionController(
       body,
       user.id,

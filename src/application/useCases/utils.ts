@@ -183,10 +183,11 @@ export class InspectionBaseUtils {
         property_id,
         user_id,
       )
-    if (findInpection  || findInpection.inspection_status !== InspectionStatus.CANCELED) {
+ 
+    if (findInpection) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
-        'You have requested for Inspection already',
+        'You have requested for Inspection already recieved',
       )
     }
     return findInpection

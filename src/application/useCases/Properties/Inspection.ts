@@ -21,6 +21,7 @@ import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
 import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectionQueue'
 import { serviceProductFeeCodes } from '@infrastructure/config/serviceProductFeeCodes'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
+import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private serviceRepository: IServiceOfferingRepository
@@ -34,10 +35,12 @@ export class InspectionService {
     serviceRepository: IServiceOfferingRepository,
     transactions: ITransaction,
     private readonly manageInspectionRepository: IManageInspectionRepository,
+    private readonly propertyRepository: IPropertyRepository,
   ) {
     this.inspectionRepository = inspectionRepository
     this.serviceRepository = serviceRepository
     this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
+    this.propertyRepository = propertyRepository
     this.manageInspectionRepository = manageInspectionRepository
 
     if (!transactions) {
@@ -50,6 +53,14 @@ export class InspectionService {
     input: ScheduleInspectionInput,
     user_id: string,
   ): Promise<Inspection | any> {
+    console.log('input', input.property_id)
+   const findInspection = await this.propertyRepository.getPropertyById(input.property_id)
+   if(!findInspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Property not found',
+      )
+    }
     await this.utilsInspection.findALreadyScheduledInspection(
       input.property_id,
       user_id,
@@ -77,6 +88,7 @@ export class InspectionService {
         inspection_meeting_type: inspectionData.inspection_meeting_type,
         inspection_status: InspectionStatus.PENDING,
       }
+      
 
       if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {
         if (!(input.product_code && input.amount)) {
@@ -164,7 +176,7 @@ export class InspectionService {
       await this.sendEmailsWithRetry(inspection)
       await trx.commit()
 
-      return inspection
+      return pendingInspection
     } catch (error) {
       await trx.rollback()
       throw error
