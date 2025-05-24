@@ -5,7 +5,6 @@ import {
   payment_calculator,
   personalinformation,
   preQualify,
-  PreQualifyDIP,
 } from '@entities/prequalify/prequalify'
 import { User } from '@entities/User'
 import { SeekPaginationResult } from '@shared/types/paginate'
@@ -38,10 +37,11 @@ export interface IPreQualify {
   getPreQualifyRequest(): Promise<preQualify[]>
   getAllPreQualifiers(
     filters: PreQualifyFilters,
-  ): Promise<SeekPaginationResult<PreQualifyDIP>>
+  ): Promise<SeekPaginationResult<preQualify>>
   getPreQualifyRequestById(id: string): Promise<preQualify>
   addEligibility(input: Eligibility): Promise<Eligibility>
   findEligiblity(property_id: string, user_id: string): Promise<Eligibility>
+  findEligiblityById(id: string): Promise<Eligibility>
   updateEligibility(input: PreQualifierEligibleInput): Promise<Eligibility>
   IsHomeBuyerEligible(
     property_id: string,

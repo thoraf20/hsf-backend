@@ -9,28 +9,28 @@ export class Developer {
   company_email: string
   state: string
   city: string
-  developer_role: string
-  years_in_business: string
+  // developer_role: string
+  years_in_business: number
   specialization: string
   organization_id: string
   region_of_operation: string
   company_image: string
-  documents: any
+  // documents: any
   created_at?: Date
   updated_at?: Date
 
   constructor(data: Partial<Developer>) {
-    let complete_data = {
-      documents:
-        typeof data.documents === 'string'
-          ? JSON.stringify(data.documents)
-          : Array.isArray(data.documents)
-            ? data.documents
-            : [],
-      ...data,
-    }
+    // let complete_data = {
+    //   documents:
+    //     typeof data.documents === 'string'
+    //       ? JSON.stringify(data.documents)
+    //       : Array.isArray(data.documents)
+    //         ? data.documents
+    //         : [],
+    //   ...data,
+    // }
     if (data) {
-      Object.assign(this, complete_data)
+      Object.assign(this)
     }
   }
 }

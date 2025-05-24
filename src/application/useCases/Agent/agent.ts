@@ -406,12 +406,10 @@ export class Agents {
         office_address: input.office_address,
         state: input.state,
         city: input.city,
-        developer_role: input.developer_role,
         years_in_business: input.years_in_business,
         specialization: input.specialization,
         region_of_operation: input.region_of_operation,
         company_image: input.company_image,
-        documents: JSON.stringify(input.documents),
         organization_id: developerOrg.id,
       }),
     )

@@ -9,6 +9,7 @@ export class PrequalificationInput extends BaseEntity {
   public marital_status: string
   public house_number: string
   public street_address: string
+  public date_of_birth: Date | string
   public state: string
   public city: string
   public user_id: string

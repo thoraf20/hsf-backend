@@ -17,6 +17,11 @@ import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
+import { IUserRepository } from '@interfaces/IUserRepository'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { getDeveloperClientView } from '@entities/Developer'
+import { getUserClientView } from '@entities/User'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
@@ -25,6 +30,9 @@ export class preQualifyService {
     prequalify: IPreQualify,
     private readonly propertyRepository: IPropertyRepository,
     private readonly lenderRepository: ILenderRepository,
+    private readonly userRepository: IUserRepository,
+    private readonly organizationRepository: IOrganizationRepository,
+    private readonly developerRepository: IDeveloperRepository,
   ) {
     this.prequalify = prequalify
   }
@@ -158,7 +166,41 @@ export class preQualifyService {
   }
 
   public async getAllPrequalifiers(filters: PreQualifyFilters) {
-    return this.prequalify.getAllPreQualifiers(filters)
+    const preQualifierContents =
+      await this.prequalify.getAllPreQualifiers(filters)
+
+    preQualifierContents.result = await Promise.all(
+      preQualifierContents.result.map(async (preQualifier) => {
+        const property = await this.propertyRepository.getPropertyById(
+          preQualifier.property_id,
+        )
+
+        const organization =
+          await this.organizationRepository.getOrganizationById(
+            property.organization_id,
+          )
+
+        const developer = await this.developerRepository.getDeveloperByOrgId(
+          property.organization_id,
+        )
+
+        const requestedBy = await this.userRepository.findById(
+          preQualifier.user_id,
+        )
+
+        return {
+          ...preQualifier,
+          requested_by: getUserClientView(requestedBy),
+          property: {
+            ...property,
+            organization,
+            developer: getDeveloperClientView(developer),
+          },
+        }
+      }),
+    )
+
+    return preQualifierContents
   }
 
   public async getPrequalifierByUserId(
@@ -179,6 +221,26 @@ export class preQualifyService {
   public async updatePrequalifierEligibility(
     input: PreQualifierEligibleInput,
   ): Promise<Eligibility> {
+    const eligibility = await this.prequalify.findEligiblityById(
+      input.eligibility_id,
+    )
+
+    if (!eligibility) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'PreQualification not found',
+      )
+    }
+
+    if (
+      eligibility.eligiblity_status === EligibilityStatus.APPROVED &&
+      input.is_eligible
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'PreQualification eligible approved already',
+      )
+    }
     return await this.prequalify.updateEligibility(input)
   }
 }

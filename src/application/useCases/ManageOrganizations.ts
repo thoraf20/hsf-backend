@@ -31,8 +31,13 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { UserFilters } from '@validators/userValidator'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
-import { DeveloperFilters } from '@validators/developerValidator'
+import {
+  CreateDeveloperInput,
+  DeveloperFilters,
+} from '@validators/developerValidator'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
+import { IDocumentRepository } from '@interfaces/IDocumentRepository'
+import { DocumentGroupKind } from '@domain/enums/documentEnum'
 
 export class ManageOrganizations {
   constructor(
@@ -42,6 +47,7 @@ export class ManageOrganizations {
     private readonly addressRepository: IAddressRepository,
     private readonly developerRepository: IDeveloperRepository,
     private readonly propertyRepository: IPropertyRepository,
+    private readonly documentRepository: IDocumentRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -194,7 +200,7 @@ export class ManageOrganizations {
       lenderOwner.email,
       fullName,
       'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
-      lenderRole.name,
+      lenderOrg.name,
       generatedPass,
     )
 
@@ -443,6 +449,163 @@ export class ManageOrganizations {
     return developerContents
   }
 
+  async createDeveloper(data: CreateDeveloperInput) {
+    const developerRole = await this.userRepository.getRoleByName(
+      Role.DEVELOPER_ADMIN,
+    )
+    if (!developerRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
 
+    const [existingEmailUser, existingPhoneUser] = await Promise.all([
+      this.userRepository.findByEmail(data.email),
+      this.userRepository.findByPhone(data.phone_number),
+    ])
 
+    if (existingEmailUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email not available',
+      )
+    }
+
+    if (existingPhoneUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Phone number not available',
+      )
+    }
+
+    const developerDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.DeveloperVerification,
+      )
+
+    if (!developerDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Developer verification document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        developerDocGroup.id,
+      )
+
+    const missingDocType = documentGroupTypes
+      .filter((documentGroupType) => documentGroupType.is_user_uploadable)
+      .find(
+        (documentType) =>
+          !data.documents.find(
+            (providedDoc) => providedDoc.id === documentType.id,
+          ) || documentType.is_required_for_group,
+      )
+
+    if (missingDocType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Missing document type ${missingDocType.display_label} not uploaded.`,
+      )
+    }
+
+    const generatedPass = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(generatedPass)
+
+    const developerOwner = await this.userRepository.create({
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      status: UserStatus.Pending,
+      password: hashedPassword,
+      phone_number: data.phone_number,
+      is_admin: true,
+      force_password_reset: true,
+      role_id: developerRole.id,
+    })
+
+    const developerOrg = await this.organizationRepository.createOrganization({
+      name: data.company_name,
+      owner_user_id: developerOwner.id,
+      type: OrganizationType.DEVELOPER_COMPANY,
+    })
+
+    await Promise.all(
+      data.documents.map((document) =>
+        this.documentRepository.createApplicationDocumentEntry({
+          document_group_type_id: document.id,
+          document_name: document.file_name,
+          document_url: document.file_url,
+          document_size: String(document.file_size),
+          organization_id: developerOrg.id,
+        }),
+      ),
+    )
+
+    await this.organizationRepository.addUserToOrganization({
+      role_id: developerOwner.role_id,
+      organization_id: developerOrg.id,
+      user_id: developerOwner.id,
+    })
+
+    const developerProfile =
+      await this.developerRepository.createDeveloperProfile({
+        company_email: data.company_email,
+        company_image: data.company_image,
+        city: data.city,
+        company_name: data.company_name,
+        company_registration_number: data.company_registration_number,
+        organization_id: developerOrg.id,
+        office_address: data.office_address,
+        region_of_operation: data.operation_states,
+        specialization: data.specialization,
+        state: data.state,
+        years_in_business: data.year_in_business,
+      })
+
+    const fullName = `${developerOwner.first_name} ${developerOwner.last_name}`
+    emailHelper.InvitationEmail(
+      developerOwner.email,
+      fullName,
+      'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+      developerRole.name,
+      generatedPass,
+    )
+
+    return {
+      ...developerProfile,
+      organization: developerOrg,
+      owner: {
+        ...getUserClientView(
+          await this.userRepository.findById(developerOwner.id),
+        ),
+        password: generatedPass,
+      },
+    }
+  }
+
+  async getDeveloperRegRequiredDoc() {
+    const developerDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.DeveloperVerification,
+      )
+
+    if (!developerDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Developer verification document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        developerDocGroup.id,
+      )
+
+    return {
+      ...developerDocGroup,
+      documents: documentGroupTypes,
+    }
+  }
 }

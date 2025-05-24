@@ -24,7 +24,7 @@ export interface IUserRepository {
   findById(id: string): Promise<User | null>
   update(id: string, user: Partial<User>): Promise<User | null>
   findByIdentifier(identifier: string): Promise<User | null>
-  getRoleByName(name: string): Promise<Record<string, any> | null>
+  getRoleByName(name: string): Promise<UserRole | null>
   comparedPassword(input: string, hashed: string): Promise<string | boolean>
   getRoleById(id: string): Promise<UserRole | null>
   getRolesByType(types: Array<Role>): Promise<UserRole[]>

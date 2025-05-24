@@ -23,6 +23,7 @@ import {
   getOrgMemberRoleFilterSchema,
 } from '@validators/organizationValidator'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { createDeveloperSchema } from '@validators/developerValidator'
 
 const router = express.Router()
 const organizationController = new OrganizationController()
@@ -105,12 +106,37 @@ router.post(
   }),
 )
 
+router.post(
+  '/developers',
+  validateRequest(createDeveloperSchema),
+  asyncMiddleware(async (req, res) => {
+    const { body } = req
+    const response = await organizationController.createDeveloper(body)
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 router.get(
   '/developers',
   authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   asyncMiddleware(async (req, res) => {
     const { query } = req
     const response = await organizationController.getDevelopers(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/developers/required-docs',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+  asyncMiddleware(async (_, res) => {
+    const response = await organizationController.getDeveloperRegRequiredDoc()
     res.status(response.statusCode).json(response)
   }),
 )

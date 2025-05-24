@@ -19,7 +19,11 @@ import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserFilters } from '@validators/userValidator'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
-import { DeveloperFilters } from '@validators/developerValidator'
+import {
+  CreateDeveloperInput,
+  DeveloperFilters,
+} from '@validators/developerValidator'
+import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -32,6 +36,7 @@ export class OrganizationController {
       new AddressRepository(),
       new DeveloperRespository(),
       new PropertyRepository(),
+      new DocumentRepository(),
     )
   }
 
@@ -223,6 +228,23 @@ export class OrganizationController {
     )
   }
 
+  async createDeveloper(data: CreateDeveloperInput) {
+    const newDeveloper = await this.manageOrganizations.createDeveloper(data)
+    return createResponse(
+      StatusCodes.CREATED,
+      'Developer onboarded successfully',
+      { developer: newDeveloper },
+    )
+  }
 
-} 
+  async getDeveloperRegRequiredDoc() {
+    const developerRegDocs =
+      await this.manageOrganizations.getDeveloperRegRequiredDoc()
 
+    return createResponse(
+      StatusCodes.OK,
+      'Developer registration documents',
+      developerRegDocs,
+    )
+  }
+}
