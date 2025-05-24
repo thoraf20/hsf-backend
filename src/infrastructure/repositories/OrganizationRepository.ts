@@ -4,7 +4,7 @@ import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
 import { IOrganizationRepository } from '@domain/interfaces/IOrganizationRepository'
 import db from '@infrastructure/database/knex'
 import paginate from '@infrastructure/database/paginator'
-import { User } from '@entities/User'
+import { getUserClientView, User, UserClientView } from '@entities/User'
 import {
   SeekPaginationOption,
   SeekPaginationResult,
@@ -125,4 +125,6 @@ export class OrganizationRepository implements IOrganizationRepository {
   ): Promise<Organization[]> {
     return db<Organization>('organizations').select().where({ type })
   }
+
+
 }

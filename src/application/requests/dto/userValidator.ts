@@ -139,4 +139,12 @@ export const getUserFiltersSchema = withPaginateSchema(
   }),
 )
 
+export const getUserByIdSchema = z.object({
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  email: z.string().optional(),
+  phone_number: z.string().optional(),
+
+})
 export type UserFilters = z.infer<typeof getUserFiltersSchema>
+export type UserFilter = z.infer<typeof getUserByIdSchema>

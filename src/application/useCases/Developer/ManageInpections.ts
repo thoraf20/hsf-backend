@@ -24,10 +24,11 @@ export class ManageInspectionUseCase {
     private readonly propertyRepository: IPropertyRepository,
     private readonly userRepository: IUserRepository,
     private readonly developerRepository: IDeveloperRepository,
-    inspectionRespository: IInspectionRepository,
+    private readonly inspectionRespository: IInspectionRepository,
   ) {
     this.manageInspectionRepository = manageInspectionRepository
     this.organizationRepository = organizationRepository
+    this.inspectionRespository = inspectionRespository
   }
 
   async createDayAvailabilityAndSlot(
