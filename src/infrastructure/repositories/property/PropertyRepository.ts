@@ -400,7 +400,7 @@ export class PropertyRepository implements IPropertyRepository {
         'properties.organization_id',
         'organizations.id',
       )
-      .innerJoin(
+      .leftJoin(
         'developers_profile',
         'developers_profile.organization_id',
         'properties.organization_id',
@@ -433,7 +433,7 @@ export class PropertyRepository implements IPropertyRepository {
       baseQuery.clone().groupBy('properties.id'),
       filters,
     ) // Apply filters
-      .orderBy('properties.id', 'desc') // Apply initial selects and ordering
+      .orderBy('properties.created_at', 'desc') // Apply initial selects and ordering
 
     // Call shared applyPagination which returns SeekPaginationResult<RawData>
     const paginationResult = await applyPagination<Properties>(

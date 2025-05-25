@@ -533,7 +533,10 @@ export class AuthService {
         delete account.token_type
       })
 
-      if (!findUserById.is_email_verified) {
+      if (
+        !findUserById.is_email_verified ||
+        findUserById.status === UserStatus.Pending
+      ) {
         await this.userRepository.update(findUserById.id, {
           is_email_verified: true,
           status: UserStatus.Active,

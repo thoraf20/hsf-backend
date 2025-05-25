@@ -9,6 +9,7 @@ export enum DocumentGroupKind {
   DeveloperVerification = 'DeveloperVerification',
   ConditionPrecedent = 'ConditionPrecedent',
   MortgageUpload = 'MortgageUpload',
+  PropertyReport = 'PropertyReport',
 }
 
 export enum DeveloperVerificationDocType {
@@ -45,4 +46,9 @@ export enum MortgageUploadDocType {
   EmploymentLetterOfIntroduction = 'EmploymentLetterOfIntroduction',
   BankStatements = 'BankStatements',
   SixUndatedCheque = 'SixUndatedCheque', // Renamed slightly for clarity
+}
+
+export enum PropertyReportDocType {
+  LandReport = 'LandReport',
+  VerificationReport = 'VerificationReport',
 }

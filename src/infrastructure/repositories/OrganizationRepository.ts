@@ -14,6 +14,16 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export class OrganizationRepository implements IOrganizationRepository {
   async createOrganization(organization: Organization): Promise<Organization> {
+    // Check if an HSF_INTERNAL organization already exists before creating a new one
+    if (organization.type === OrganizationType.HSF_INTERNAL) {
+      const existingHsfOrgs = await this.getOrganizationsByType(
+        OrganizationType.HSF_INTERNAL,
+      )
+      if (existingHsfOrgs.length > 0) {
+        throw new Error('An organization of type HSF_INTERNAL already exists.')
+      }
+    }
+
     const [newOrganization] = await db('organizations')
       .insert(organization)
       .returning('*')

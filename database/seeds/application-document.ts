@@ -5,6 +5,7 @@ import {
   DeveloperVerificationDocType,
   MortgageUploadDocType,
   ConditionPrecedentDocType,
+  PropertyReportDocType,
 } from '../../src/domain/enums/documentEnum'
 import { Role } from '../../src/domain/enums/rolesEmun'
 
@@ -75,6 +76,13 @@ async function seedDocumentGroups(
       tag: DocumentGroupEnum.MortgageUpload,
       name: 'Mortgage Upload Documents',
       description: 'Documents required for mortgage application uploads.',
+    },
+
+    {
+      tag: DocumentGroupEnum.PropertyReport,
+      name: 'Property Document',
+      description:
+        'Documents required to verification the authenicity of the property',
     },
   ]
 
@@ -344,6 +352,24 @@ async function seedGroupDocumentTypes(
       is_user_uploadable: true,
       uploaded_by_role_id: roleIds.homeBuyerRole?.id || null,
       is_required_for_group: true,
+    },
+
+    // Property Report Doc Types
+    {
+      group_id: groupIds[DocumentGroupEnum.PropertyReport],
+      document_type: PropertyReportDocType.LandReport,
+      display_label: 'Land Report',
+      is_user_uploadable: false, // Assuming HSF admin uploads these
+      uploaded_by_role_id: roleIds.hsfAdminRole?.id || null, // Assuming HSF admin uploads these
+      is_required_for_group: true, // Assuming they are required
+    },
+    {
+      group_id: groupIds[DocumentGroupEnum.PropertyReport],
+      document_type: PropertyReportDocType.VerificationReport,
+      display_label: 'Verification Report',
+      is_user_uploadable: false, // Assuming HSF admin uploads these
+      uploaded_by_role_id: roleIds.hsfAdminRole?.id || null, // Assuming HSF admin uploads these
+      is_required_for_group: true, // Assuming they are required
     },
   ]
 

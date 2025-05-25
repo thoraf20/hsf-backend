@@ -7,7 +7,10 @@ import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { Application } from '@entities/Application'
-import { PropertyFilters } from '@validators/propertyValidator'
+import {
+  CreatePropertyInput,
+  PropertyFilters,
+} from '@validators/propertyValidator'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { getLenderClientView } from '@entities/Lender'
@@ -18,6 +21,9 @@ import {
   getDeveloperClientView,
 } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDocumentRepository } from '@interfaces/IDocumentRepository'
+import { DocumentGroupKind } from '@domain/enums/documentEnum'
+import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -26,6 +32,7 @@ export class PropertyService {
   private readonly lenderRepository: ILenderRepository
   private readonly userRepository: IUserRepository
   private readonly developerRepository: IDeveloperRepository
+  private readonly documentRepository: IDocumentRepository
   constructor(
     propertyRepository: IPropertyRepository,
     applicationRepository: IApplicationRespository,
@@ -33,6 +40,7 @@ export class PropertyService {
     lenderRepository: ILenderRepository,
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
+    documentRepository: IDocumentRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository
@@ -40,13 +48,54 @@ export class PropertyService {
     this.lenderRepository = lenderRepository
     this.developerRepository = developerRepository
     this.userRepository = userRepository
+    this.documentRepository = documentRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
   async createProperty(
-    input: Properties,
+    input: CreatePropertyInput,
     organization_id: string,
   ): Promise<Properties> {
+    console.log(input)
+    const propertyReportDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.PropertyReport,
+      )
+
+    if (!propertyReportDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Property Reports document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        propertyReportDocGroup.id,
+      )
+
+    const missingDocType = documentGroupTypes
+      .filter((documentGroupType) => documentGroupType.is_user_uploadable)
+      .find(
+        (documentType) =>
+          !input.documents.find(
+            (providedDoc) => providedDoc.id === documentType.id,
+          ) || documentType.is_required_for_group,
+      )
+
+    if (missingDocType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Missing document type ${missingDocType.display_label} not uploaded.`,
+      )
+    }
+
+    input.financial_types = Array.from(
+      new Set([...input.financial_types, ApplicationPurchaseType.OUTRIGHT]),
+    )
+
+    input.postal_code = ''
+    input.payment_duration = ''
     const address = await this.propertyRepository.createProperties(
       new Properties({
         ...input,
@@ -335,5 +384,29 @@ export class PropertyService {
     )
 
     return lenderOrgs
+  }
+
+  async getPropertyReportDocs() {
+    const developerDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.PropertyReport,
+      )
+
+    if (!developerDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Property Reports document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        developerDocGroup.id,
+      )
+
+    return {
+      ...developerDocGroup,
+      documents: documentGroupTypes,
+    }
   }
 }

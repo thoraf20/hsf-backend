@@ -10,7 +10,7 @@ import {
 } from '../index.t'
 import {
   propertyFiltersSchema,
-  PropertySchema,
+  createPropertySchema,
   sharePropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
@@ -30,6 +30,7 @@ import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -40,15 +41,29 @@ const service = new PropertyService(
   new LenderRepository(),
   new UserRepository(),
   new DeveloperRespository(),
+  new DocumentRepository(),
 )
 const controller = new PropertyController(service)
 
 propertyRoute.post(
   '/create',
   authenticate,
-  authorize(requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.HSF_ADMIN])),
+  authorize(
+    All(
+      requireOrganizationType(
+        OrganizationType.DEVELOPER_COMPANY,
+        OrganizationType.HSF_INTERNAL,
+      ),
+      requireOrganizationRole([
+        Role.HSF_ADMIN,
+        Role.SUPER_ADMIN,
+        Role.DEVELOPER_ADMIN,
+        Role.DEVELOPER_AGENT,
+      ]),
+    ),
+  ),
   limiter,
-  validateRequest(PropertySchema),
+  validateRequest(createPropertySchema),
   asyncMiddleware(async (req, res) => {
     const { body, authInfo } = req
     const property = await controller.createProperty(
@@ -56,6 +71,22 @@ propertyRoute.post(
       authInfo.currentOrganizationId,
     )
     res.status(property.statusCode).json(property)
+  }),
+)
+
+propertyRoute.get(
+  '/required-reports-doc',
+  authenticate,
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+  limiter,
+  asyncMiddleware(async (_, res) => {
+    const response = await controller.getPropertyReportDocs()
+    res.status(response.statusCode).json(response)
   }),
 )
 

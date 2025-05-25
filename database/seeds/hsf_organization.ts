@@ -7,6 +7,8 @@ import { OrganizationType } from '../../src/domain/enums/organizationEnum'
 import { UserStatus } from '../../src/domain/enums/userEum'
 import bcrypt from 'bcryptjs'
 import { Role } from '../../src/domain/enums/rolesEmun'
+import { Organization } from '../../src/domain/entities/Organization'
+import { Developer } from '../../src/domain/entities/Developer'
 
 const uuidv4 = uuid.v4
 dotenv.config({ path: path.resolve(__dirname, '../../.env') })
@@ -29,7 +31,7 @@ export async function seed(knex: Knex): Promise<void> {
   const HASHED_DEFAULT_PASSWORD = await hashPassword(DEFAULT_PASSWORD)
 
   // --- 1. Upsert HSF Organization ---
-  let hsfOrganization = await knex('organizations')
+  let hsfOrganization = await knex<Organization>('organizations')
     .where({ name: HSF_ORGANIZATION_NAME, type: HSF_ORGANIZATION_TYPE_ENUM })
     .first()
 
@@ -51,6 +53,33 @@ export async function seed(knex: Knex): Promise<void> {
       'Fatal: Failed to create or find HSF organization. Aborting HSF staff seed.',
     )
     return
+  }
+
+  const developerProfile = await knex<Developer>('developers_profile')
+    .select()
+    .where({ organization_id: hsfOrganization.id })
+    .first()
+
+  console.log({ developerProfile })
+  if (!developerProfile) {
+    console.log(`Creating HSF developer profile: ${HSF_ORGANIZATION_NAME}`)
+    // Insert developer profile record
+    await knex('developers_profile').insert({
+      profile_id: uuidv4(),
+      company_name: 'HSF',
+      company_registration_number: 'REG123457',
+      office_address: '123 Seed Street, Developer City',
+      company_email: 'hsf@example.com',
+      state: 'CA',
+      city: 'San Francisco',
+      years_in_business: '5+',
+      specialization: 'Web Development',
+      region_of_operation: 'North America',
+      company_image: 'https://example.com/company_logo.png',
+      organization_id: hsfOrganization.id,
+      created_at: new Date(),
+      updated_at: new Date(),
+    })
   }
 
   // --- Helper Function to Seed User and Assign to HSF Org ---

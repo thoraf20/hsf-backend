@@ -5,13 +5,16 @@ import {
 import { PropertyService } from '@application/useCases/Properties/Property'
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { StatusCodes } from 'http-status-codes'
-import { PropertyFilters } from '@validators/propertyValidator'
+import {
+  CreatePropertyInput,
+  PropertyFilters,
+} from '@validators/propertyValidator'
 
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
 
   public async createProperty(
-    input: Properties,
+    input: CreatePropertyInput,
     organization_id: string,
   ): Promise<ApiResponse<any>> {
     const property = await this.propertyService.createProperty(
@@ -184,5 +187,16 @@ export class PropertyController {
     const application =
       await this.propertyService.getApplicationById(application_id)
     return createResponse(StatusCodes.OK, 'Success', application)
+  }
+
+  async getPropertyReportDocs() {
+    const propertyReportDocs =
+      await this.propertyService.getPropertyReportDocs()
+
+    return createResponse(
+      StatusCodes.OK,
+      'Property Report document retrieved successfully',
+      propertyReportDocs,
+    )
   }
 }
