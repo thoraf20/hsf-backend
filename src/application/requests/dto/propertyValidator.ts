@@ -1,5 +1,6 @@
 import {
   ApplicationPurchaseType,
+  ApplicationStatus,
   DocumentTypeEnum,
   propertyApprovalStatus,
   PropertyFeatureEnum,
@@ -74,7 +75,9 @@ export const createPropertySchema = z
   })
   .strip()
 
-export type CreatePropertyInput = z.infer<typeof createPropertySchema>
+export type CreatePropertyInput = z.infer<typeof createPropertySchema> & {
+  listed_by_id: string
+}
 
 export const UpdateSchema = z.object({
   street_address: z
@@ -162,4 +165,4 @@ export const propertyFiltersSchema = withPaginateSchema(
 
 export type PropertyFilters = z.infer<typeof propertyFiltersSchema> & {
   offer_letter_id?: string
-}
+} & { status?: ApplicationStatus }

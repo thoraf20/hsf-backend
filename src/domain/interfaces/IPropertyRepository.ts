@@ -11,11 +11,7 @@ import { PropertyFilters } from '@validators/propertyValidator'
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
 
-  findPropertyByUser(
-    id: string,
-    user_id?: string,
-    userRole?: string,
-  ): Promise<Properties | null>
+  findPropertyByUser(id: string, user_id?: string): Promise<Properties | null>
 
   findPropertiesByDeveloperOrg(
     organization_id: string,
@@ -75,7 +71,10 @@ export interface IPropertyRepository {
     filters?: Record<string, any>,
   ): Promise<SeekPaginationResult<Properties>>
 
-  getAllUserPropertyCount(user_id: string): Promise<PropertyCount>
+  getAllUserPropertyCount(
+    organization_id: string,
+    filters?: { listed_by?: string },
+  ): Promise<PropertyCount>
 
   viewProperty(input: Record<string, any>): Promise<void>
 

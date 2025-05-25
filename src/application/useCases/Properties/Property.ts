@@ -123,8 +123,9 @@ export class PropertyService {
     const fetchProperty = await this.utilsProperty.findIfPropertyExist(
       id,
       user_id,
-      userRole,
     )
+
+    console.log({ fetchProperty })
 
     if (!fetchProperty) {
       return null

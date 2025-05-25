@@ -7,6 +7,9 @@ import { StatusCodes } from 'http-status-codes'
 import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
+import { ApplicationCustomError } from '@middleware/errors/customError'
+import { AuthInfo } from '@shared/utils/permission-policy'
+import { OrganizationType } from '@domain/enums/organizationEnum'
 
 export class MangagePropertyController {
   constructor(
@@ -84,5 +87,35 @@ export class MangagePropertyController {
     ])
 
     return createResponse(StatusCodes.OK, 'Success', {})
+  }
+
+  async getPropertyById(propertyId: string, authInfo: AuthInfo) {
+    const property =
+      await this.managePropertyService.getPropertyById(propertyId)
+
+    if (!property) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Property not found',
+      )
+    }
+
+    if (
+      !(
+        authInfo.organizationType === OrganizationType.HSF_INTERNAL ||
+        property.organization_id === authInfo.currentOrganizationId
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Property not found',
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      'Property retrieved successfully',
+      property,
+    )
   }
 }

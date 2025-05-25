@@ -124,6 +124,10 @@ export class ApplicationRepository implements IApplicationRespository {
       )
     }
 
+    if (filters.status) {
+      q = add(q).whereRaw(`a.status = '${filters.status}'`)
+    }
+
     if (filters.property_features) {
       const feat = filters.property_features
         .split(',')

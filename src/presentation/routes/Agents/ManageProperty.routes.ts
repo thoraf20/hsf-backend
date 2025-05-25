@@ -18,6 +18,11 @@ import {
   confirmPropertyPurchase,
 } from '@validators/agentsValidator'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { authorize } from '@middleware/authorization'
+import { requireOrganizationType } from '@shared/utils/permission-policy'
+import { OrganizationType } from '@domain/enums/organizationEnum'
+import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 const managePropertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -26,6 +31,8 @@ const service = new manageProperty(
   new PropertyRepository(),
   purchasrRepo,
   application,
+  new DeveloperRespository(),
+  new UserRepository(),
 )
 const controller = new MangagePropertyController(service, purchasrRepo)
 
@@ -35,6 +42,25 @@ managePropertyRoute.get(
   asyncMiddleware(async (req, res) => {
     const property = await controller.GetAllPropertiesToBeApproved()
     res.status(property.statusCode).json(property)
+  }),
+)
+
+managePropertyRoute.get(
+  '/property/:property_id',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+
+  asyncMiddleware(async (req, res) => {
+    const { params, authInfo } = req
+    const response = await controller.getPropertyById(
+      params.property_id,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
   }),
 )
 // managePropertyRoute.post(

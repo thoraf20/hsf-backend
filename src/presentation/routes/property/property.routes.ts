@@ -67,7 +67,7 @@ propertyRoute.post(
   asyncMiddleware(async (req, res) => {
     const { body, authInfo } = req
     const property = await controller.createProperty(
-      body,
+      { ...body, listed_by_id: authInfo.userId },
       authInfo.currentOrganizationId,
     )
     res.status(property.statusCode).json(property)

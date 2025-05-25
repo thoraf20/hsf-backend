@@ -11,6 +11,7 @@ import {
 import { UserStatus } from '@domain/enums/userEum'
 import { getDeveloperClientView } from '@entities/Developer'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
+import { Eligibility } from '@entities/prequalify/prequalify'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import {
@@ -95,6 +96,7 @@ export class ApplicationService {
     }
 
     let preQualifier: PrequalificationInput | null = null
+    let eligibility: Eligibility | null = null
 
     if (input.purchase_type !== ApplicationPurchaseType.OUTRIGHT) {
       preQualifier = await this.prequalifyRepository.getPreQualifyRequestByUser(
@@ -108,18 +110,18 @@ export class ApplicationService {
           'You are required to complete your prequalification form before any application to either installment or mortagage',
         )
       }
-    }
 
-    let eligibility = await this.prequalifyRepository.findEligiblity(
-      input.property_id,
-      userId,
-    )
-
-    if (!eligibility) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'You are required to complete your prequalification form before any application to either installment or mortagage',
+      eligibility = await this.prequalifyRepository.findEligiblity(
+        input.property_id,
+        userId,
       )
+
+      if (!eligibility) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You are required to complete your prequalification form before any application to either installment or mortagage',
+        )
+      }
     }
 
     const newApplication = await this.applicationRepository.createApplication({

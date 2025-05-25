@@ -15,6 +15,7 @@ export class Properties {
   property_images: string[]
   documents: any
   status?: propertyApprovalStatus
+  down_payment_percentage?: number
 
   organization_id: string
   is_sold?: boolean
@@ -25,6 +26,7 @@ export class Properties {
   postal_code: string
   landmark: string
   state: string
+  listed_by_id?: string
   payment_duration?: string
   created_at?: Date
   updated_at?: Date

@@ -289,6 +289,20 @@ export class AuthService {
       }
     }
 
+    if (user.status === UserStatus.Deleted) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your account has been deleted. It may be recoverable within 90 days of deletion. Please contact our support team for assistance with account recovery.',
+      )
+    }
+
+    if ([UserStatus.Banned, UserStatus.Suspended].includes(user.status)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Your account is currently ${user.status}. You can contact our support team to inquire about recovering your account.`,
+      )
+    }
+
     const role = await this.userRepository.getRoleById(user.role_id)
 
     if (!role) {

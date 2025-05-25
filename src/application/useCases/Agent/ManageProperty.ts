@@ -1,6 +1,9 @@
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { Properties } from '@domain/entities/Property'
-import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
+import {
+  ApplicationStatus,
+  propertyApprovalStatus,
+} from '@domain/enums/propertyEnum'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { OfferLetter } from '@entities/PropertyPurchase'
@@ -9,20 +12,31 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IUserRepository } from '@interfaces/IUserRepository'
+import { getUserClientView, UserClientView } from '@entities/User'
+import { PropertyCount } from '@shared/types/repoTypes'
 
 export class manageProperty {
   private readonly propertyRepository: IPropertyRepository
   private readonly purchaseRepository: IPurchaseProperty
   private readonly utilsProperty: PropertyBaseUtils
-  // private applicationRepository: IApplicationRespository
+  private readonly developerRepository: IDeveloperRepository
+  private readonly userRepository: IUserRepository
+
+  private applicationRepository: IApplicationRespository
   constructor(
     propertyRepository: IPropertyRepository,
     purchaseRepository: IPurchaseProperty,
     applicationRepository: IApplicationRespository,
+    developerRepository: IDeveloperRepository,
+    userRepository: IUserRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
-    // this.applicationRepository = applicationRepository
+    this.applicationRepository = applicationRepository
+    this.developerRepository = developerRepository
+    this.userRepository = userRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
@@ -55,6 +69,46 @@ export class manageProperty {
     SeekPaginationResult<Properties>
   > {
     return await this.propertyRepository.getAllPropertiesTobeApproved()
+  }
+
+  public async getPropertyById(propertyId: string) {
+    const property = await this.propertyRepository.getPropertyById(propertyId)
+    if (!property) {
+      return null
+    }
+    const developer = await this.developerRepository.getDeveloperByOrgId(
+      property.organization_id,
+    )
+
+    let listed_by: UserClientView & {
+      listing_counts?: PropertyCount
+    }
+
+    if (property.listed_by_id) {
+      const listedBy = await this.userRepository.findById(property.listed_by_id)
+      if (listedBy) {
+        listed_by = getUserClientView(listedBy)
+
+        listed_by.listing_counts =
+          await this.propertyRepository.getAllUserPropertyCount(
+            property.organization_id,
+            { listed_by: listedBy.id },
+          )
+      }
+    }
+    const { result: latestApplications } =
+      await this.applicationRepository.getAllApplication({
+        result_per_page: 10,
+        status: ApplicationStatus.PENDING,
+        organization_id: property.organization_id,
+      })
+
+    return {
+      ...property,
+      developer,
+      listed_by,
+      latest_applications: latestApplications,
+    }
   }
 
   // public async setEscrowAttendance(

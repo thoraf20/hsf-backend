@@ -90,13 +90,13 @@ export class PropertyBaseUtils {
   public async findIfPropertyExist(
     id: string,
     user_id?: string,
-    userRole?: string,
   ): Promise<Properties> {
     const properties = (await this.propertyRepository.findPropertyByUser(
       id,
       user_id,
-      userRole,
     )) as Properties
+
+    console.log({ properties, id, user_id })
     if (!properties) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
@@ -183,7 +183,7 @@ export class InspectionBaseUtils {
         property_id,
         user_id,
       )
- 
+
     if (findInpection) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,

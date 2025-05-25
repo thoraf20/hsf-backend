@@ -3,6 +3,7 @@ import { User } from '@entities/User'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { google } from '@infrastructure/oauth/google'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import logger from '@middleware/logger'
 import { createResponse } from '@presentation/response/responseType'
 import { AccountRepository } from '@repositories/user/AccountRepository'
@@ -88,6 +89,22 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       user = await userRepository.findById(account.user_id)
     } else {
       user = await userRepository.findByEmail(claims.email)
+    }
+
+    if (user) {
+      if (user.status === UserStatus.Deleted) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Your account has been deleted. It may be recoverable within 90 days of deletion. Please contact our support team for assistance with account recovery.',
+        )
+      }
+
+      if ([UserStatus.Banned, UserStatus.Suspended].includes(user.status)) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          `Your account is currently ${user.status}. You can contact our support team to inquire about recovering your account.`,
+        )
+      }
     }
 
     if (!account) {

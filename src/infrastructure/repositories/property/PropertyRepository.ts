@@ -221,11 +221,7 @@ export class PropertyRepository implements IPropertyRepository {
     return paginationResult
   }
 
-  async findPropertyByUser(
-    id: string,
-    user_id?: string,
-    userRole?: string,
-  ): Promise<any> {
+  async findPropertyByUser(id: string, user_id?: string): Promise<any> {
     let propertyQuery = db('properties')
       .select([
         'properties.*',
@@ -318,11 +314,19 @@ export class PropertyRepository implements IPropertyRepository {
 
   async getAllUserPropertyCount(
     organization_id: string,
+    filters?: { listed_by?: string },
   ): Promise<PropertyCount> {
-    let properties = (await db('properties')
-      .select('properties.*')
+    let baseQuery = db<Properties>('properties')
+      .select<Properties[]>('properties.*')
       .where('properties.organization_id', organization_id)
-      .orderBy('properties.id', 'desc')) as Properties[]
+
+    if (filters?.listed_by) {
+      baseQuery = baseQuery.andWhere(
+        'properties.listed_by_id',
+        filters.listed_by,
+      )
+    }
+    let properties = await baseQuery
 
     const queryresp = properties.reduce(
       (acc: PropertyCount, curr: Properties) => {
