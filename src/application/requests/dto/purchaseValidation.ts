@@ -21,12 +21,13 @@ export const purchasePropertySchema = z
     request_type: z.nativeEnum(PropertyRequestTypeEnum),
     escrow_status_id: z.string().optional(),
     dip_status: z.nativeEnum(DIPStatus).optional(),
+    product_code: z.string(),
     email: z.string().email().optional(),
     loan_acceptance_status: z.nativeEnum(LoanOfferStatus).optional(),
     documents: z.array(DocumentSchema).optional(),
   })
   .superRefine((data, ctx) => {
-    const { request_type } = data
+    const { request_type, purchase_type } = data
 
     if (
       [
@@ -40,6 +41,14 @@ export const purchasePropertySchema = z
           code: z.ZodIssueCode.custom,
           message: 'email is required',
           path: ['email'],
+        })
+      }
+
+      if(!purchase_type) {
+         ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Purchase_code is required',
+          path: ['Purchase_code'],
         })
       }
     }
@@ -92,6 +101,7 @@ export const purchasePropertySchema = z
         path: ['loan_acceptance_status'],
       })
     }
+
   })
 
 export type PurchasePropertyInput = z.infer<typeof purchasePropertySchema>

@@ -177,12 +177,12 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
   async rescheduleInspectionToUpdateInspectionTable(
     payload: DayAvailabilitySlot,
     inspection_id: string,
-  ): Promise<schduleTime> {
-    const [reschedule] = await db<schduleTime>('inspection')
-      .update(payload)
-      .where('inspection_id', inspection_id)
-      .andWhere('day_availability_slot_id', payload.day_availability_slot_id)
+  ): Promise<Inspection> {
+    const [reschedule] = await db<Inspection>('inspection')
+      .update({...payload, updated_at: new Date()})
+      .where('id', inspection_id)
       .returning('*')
+      console.log(payload)
     return reschedule
   }
 
@@ -214,7 +214,7 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
   ): Promise<Inspection> {
     const [updatedInspection] = await db<Inspection>('inspection')
       .where('id', inspection_id)
-      .update({ inspection_status: status })
+      .update({ inspection_status: status, updated_at: new Date() })
       .returning('*')
     if (!updatedInspection) {
       throw new ApplicationCustomError(
@@ -230,5 +230,9 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
     details: Partial<Inspection>,
   ): Promise<void> {
     // Implementation for updating inspection details
+  }
+
+  async deleteInspection(inspection_id: string): Promise<void> {
+        await db('inspection').delete().where('id', inspection_id)
   }
 }

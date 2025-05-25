@@ -10,6 +10,7 @@ import {
 } from '../index.t'
 import {
   inspectionSchema,
+  reponseToReschedule,
   UpdateInspectionStatusPayload,
   updateInspectionStatusSchema,
 } from '@application/requests/dto/inspectionVaidator'
@@ -18,6 +19,7 @@ import { ServiceOfferingRepository } from '@repositories/serviceOffering/service
 import { authorize } from '@middleware/authorization'
 import { isHomeBuyer } from '@shared/utils/permission-policy'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
+import { PropertyRepository } from '@repositories/property/PropertyRepository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
@@ -25,6 +27,7 @@ const service = new InspectionService(
   new ServiceOfferingRepository(),
   new TransactionRepository(),
   new ManageInspectionRepository(),
+  new PropertyRepository()
 )
 
 const inspectionController = new InspectionController(service)
@@ -35,6 +38,7 @@ inspectionRoutes.post(
   validateRequest(inspectionSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
+    console.log('pendingInspection', body)
     const schedule = await inspectionController.scheduleInspectionController(
       body,
       user.id,
@@ -43,10 +47,10 @@ inspectionRoutes.post(
   }),
 )
 
-inspectionRoutes.post(
-  '/property/reschedule/:inspection_id',
+inspectionRoutes.patch(
+  '/reschedule/:inspection_id/respond',
   requireRoles(Role.HOME_BUYER),
-  validateRequest(inspectionSchema),
+  validateRequest(reponseToReschedule),
   asyncMiddleware(async (req, res) => {
     const { body, params } = req
     const schedule = await inspectionController.responseToReschedule(
@@ -56,6 +60,8 @@ inspectionRoutes.post(
     res.status(schedule.statusCode).json(schedule)
   }),
 )
+
+
 
 inspectionRoutes.patch(
   '/:inspection_id/status',
@@ -93,5 +99,8 @@ inspectionRoutes.get(
     res.status(inspection.statusCode).json(inspection)
   }),
 )
+
+
+
 
 export default inspectionRoutes

@@ -22,6 +22,7 @@ import organizationRoutes from './organization/organization.routes'
 import notificationRoutes from './userRoutes/notificationRoutes'
 import manageUserRoutes from './userRoutes/user.manage.routes'
 import developerIndexRoutes from './developer/developerIndex.routes'
+import clientRoutes from './Agents/ManageClient.routes'
 
 const routes: Router = Router()
 routes.use('/user/mfa', authenticate, limiter, mfaRoutes)
@@ -45,4 +46,5 @@ routes.use('/manage', authenticate, limiter, manageApplicationRoutes)
 routes.use('/manage', authenticate, limiter, manageUserRoutes)
 routes.use('/organizations', authenticate, limiter, organizationRoutes)
 routes.use('/notifications', notificationRoutes)
+routes.use('/manage-client', authenticate, clientRoutes)
 export default routes

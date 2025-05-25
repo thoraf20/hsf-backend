@@ -10,11 +10,11 @@ import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import {
   asyncMiddleware,
-  authenticate,
   Role,
   validateRequest,
 } from '@routes/index.t'
 import {
+  All,
   requireOrganizationRole,
   requireOrganizationType,
 } from '@shared/utils/permission-policy'
@@ -44,10 +44,12 @@ const manageInspectionController = new ManageInspectionController(
 
 manageInpespectionRouter.get(
   '/:organization_id/list-inspections',
-  authenticate,
   authorize(
+     All(
     requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
     requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT]),
+    )
+
   ),
   asyncMiddleware(async (req, res) => {
     const { organization_id } = req.params
@@ -62,10 +64,12 @@ manageInpespectionRouter.get(
 
 manageInpespectionRouter.get(
   '/availability/fetch-all',
-  authenticate,
   authorize(
+    All(
     requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
     requireOrganizationRole([Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT]),
+    )
+
   ),
   asyncMiddleware(async (req, res) => {
     const { authInfo } = req
@@ -80,8 +84,8 @@ manageInpespectionRouter.get(
 manageInpespectionRouter.post(
   '/availability',
   validateRequest(SchduleTimeSchema),
-  authenticate,
   authorize(
+     All (
     requireOrganizationType(
       OrganizationType.DEVELOPER_COMPANY,
       OrganizationType.HSF_INTERNAL,
@@ -93,6 +97,7 @@ manageInpespectionRouter.post(
       Role.HSF_INSPECTION_MANAGER,
       Role.SUPER_ADMIN,
     ]),
+  )
   ),
   asyncMiddleware(async (req, res) => {
     const { body, authInfo } = req
@@ -132,8 +137,8 @@ manageInpespectionRouter.get(
 manageInpespectionRouter.put(
   '/:inspection_id/status',
   validateRequest(updateInspectionStatus),
-  authenticate,
   authorize(
+   All (
     requireOrganizationType(
       OrganizationType.DEVELOPER_COMPANY,
       OrganizationType.HSF_INTERNAL,
@@ -146,6 +151,7 @@ manageInpespectionRouter.put(
       Role.SUPER_ADMIN,
     ]),
   ),
+),
   asyncMiddleware(async (req, res) => {
     const { params, authInfo, body } = req
     const response = await manageInspectionController.updateInspectionStatus(
@@ -160,8 +166,8 @@ manageInpespectionRouter.put(
 manageInpespectionRouter.put(
   '/:inspection_id/propose-reschedule',
   validateRequest(reschedule),
-  authenticate,
   authorize(
+   All (
     requireOrganizationType(
       OrganizationType.DEVELOPER_COMPANY,
       OrganizationType.HSF_INTERNAL,
@@ -174,12 +180,38 @@ manageInpespectionRouter.put(
       Role.SUPER_ADMIN,
     ]),
   ),
+),
   asyncMiddleware(async (req, res) => {
     const { params, authInfo, body } = req
     const response = await manageInspectionController.rescheduleInspection(
       body,
       params.inspection_id,
       authInfo.currentOrganizationId,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+manageInpespectionRouter.delete(
+  '/delete/:inspection_id',
+   authorize(
+   All (
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+    requireOrganizationRole([
+      Role.DEVELOPER_ADMIN,
+      Role.DEVELOPER_AGENT,
+      Role.HSF_ADMIN,
+      Role.HSF_INSPECTION_MANAGER,
+      Role.SUPER_ADMIN,
+    ]),
+  ),
+),
+  asyncMiddleware(async (req, res) => {
+    const { params } = req
+    const response = await manageInspectionController.deleteInspection(
+      params.inspection_id,
     )
     res.status(response.statusCode).json(response)
   }),

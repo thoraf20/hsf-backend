@@ -196,6 +196,9 @@ router.get(
     )
     res.status(response.statusCode).json(response)
   }),
-)
+) 
+
+
+
 
 export default router

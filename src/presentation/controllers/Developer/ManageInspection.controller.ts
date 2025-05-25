@@ -70,4 +70,9 @@ export class ManageInspectionController {
      const response = await this.manageInspectionService.updateInspectionStatus(inspection_id, status, organization_id)
      return createResponse(StatusCodes.OK, 'success', response)
   }
+
+  async deleteInspection (inspection_id:string): Promise<ApiResponse<any>> {
+      await this.manageInspectionService.deleteInspection(inspection_id)
+     return createResponse(StatusCodes.OK, 'success', {})
+  }
 }

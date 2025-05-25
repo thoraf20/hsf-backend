@@ -19,9 +19,7 @@ export const DayAvailabilitySlotSchema = z.object({
 });
 
 export const reschedule = z.object({
-  day_availability_slot_id: z.string().uuid(),
-  start_time: z.coerce.date(),
-  end_time: z.coerce.date(),
+  day_availability_slot_id: z.string().uuid()
 });
 export const DayAvailabilitySchema = z.object({
   time_slot: z.string(),
@@ -30,6 +28,8 @@ export const DayAvailabilitySchema = z.object({
 export const updateInspectionStatus =  z.object({
   status: z.nativeEnum(InspectionResponseRequestStatusEnum)
 })
+
+
 
 export const SchduleTimeSchema = DayAvailabilitySchema.merge(DayAvailabilitySlotSchema);
 export type DayAvailabilitySlot = z.infer<typeof DayAvailabilitySlotSchema>;

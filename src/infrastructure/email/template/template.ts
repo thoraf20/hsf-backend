@@ -766,4 +766,217 @@ export default {
 </body>
 </html>
 `,
+
+  inspectionReschedule: `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reschedule Inspection</title>
+    <style>
+        /* Reset styles for email compatibility */
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        /* Container styles */
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        /* Heading styles */
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        /* Content styles */
+        .content {
+            margin-top: 20px;
+            color: #666;
+        }
+        /* Button styles */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            text-decoration: none;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+        }
+        /* Responsive styles */
+        @media only screen and (max-width: 500px) {
+            .container {
+                width: 100%;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reschedule Inspection</h1>
+        <div class="content">
+            <p>Dear {name} </p>
+            <p>We regret to inform you that we need to reschedule the upcoming inspection appointment. We apologize for any inconvenience caused.</p>
+            <p>Please here is the propose time on {day},  the inspection will start by {start_time}, and end by {end_time}</p>
+            <p>Please go to your dashboard to confirm your</p>
+            <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
+            <p>Thank you for your understanding.</p>
+            <p>Best regards,</p>
+            <p>{Your Name}<br>{Your Position}<br>{Your Company}</p>
+        </div>
+    </div>
+</body>
+</html>
+`,
+
+  inspectionRescheduleConfirmation :  `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inspection Response</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f2f4f6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333333;
+    }
+    p {
+      color: #555555;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #28a745;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .btn.cancel {
+      background-color: #dc3545;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #999999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <h2>Inspection Appointment Update</h2>
+    <p>Dear [Client Name],</p>
+
+     ✅ For Confirmation 
+    
+    <p>We are pleased to confirm your inspection appointment scheduled for <strong>[Date & Time]</strong>.</p>
+    <p>Our team looks forward to seeing you at the location: <strong>[Address]</strong>.</p>
+
+    <p>If you have any questions or need assistance, feel free to contact us.</p>
+    <p>Thank you,<br>
+    [Your Name]<br>
+    [Your Company]</p>
+
+    <div class="footer">
+      © [Year] [Your Company]. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+`,
+
+
+inspectionRescheduleCancellation :  `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inspection Response</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f2f4f6;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 30px auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #333333;
+    }
+    p {
+      color: #555555;
+      line-height: 1.6;
+    }
+    .btn {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 20px;
+      background-color: #28a745;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .btn.cancel {
+      background-color: #dc3545;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #999999;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <h2>Inspection Appointment Update</h2>
+    ❌ For Cancellation
+    <p>Dear [Client Name],</p>
+    <p>We acknowledge the  ❌ cancellation of your inspection appointment originally scheduled for <strong>[Date & Time]</strong>.</p>
+    <p>If you'd like to reschedule, you can do so using the link below at your convenience.</p>
+    <a href="[Reschedule Link]" class="btn cancel">Reschedule Appointment</a>
+
+    <p>If you have any questions or need assistance, feel free to contact us.</p>
+    <p>Thank you,<br>
+    [Your Name]<br>
+    [Your Company]</p>
+
+    <div class="footer">
+      © [Year] [Your Company]. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>
+`
+
+
 }

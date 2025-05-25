@@ -19,6 +19,7 @@ export class Inspection {
   inspection_fee_paid: boolean
   inspection_status?: InspectionStatus
   day_availability_slot_id?: string
+  confirm_avaliability_for_reschedule?: string
   action?: string
   application_id?: string
   meet_link?: string
