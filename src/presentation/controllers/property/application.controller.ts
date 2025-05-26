@@ -2,9 +2,11 @@ import { OfferLetterStatus } from '@domain/enums/propertyEnum'
 import { createResponse } from '@presentation/response/responseType'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { ApplicationService } from '@use-cases/Application/application'
+import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import {
   CreateApplicationInput,
+  DipFilters,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
@@ -18,6 +20,7 @@ export class ApplicationController {
   constructor(
     private readonly applicationService: ApplicationService,
     private readonly manageInspectionService: ManageInspectionUseCase,
+    private readonly manageDipService: ManageDipUseCase,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -251,5 +254,21 @@ export class ApplicationController {
       'Inspections retrieved successfully',
       contents,
     )
+  }
+
+  async getDips(filters: DipFilters) {
+    const dipContents = await this.manageDipService.getDips(filters)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Dips retrived successfully',
+      dipContents,
+    )
+  }
+
+  async getApplicationDipById(applicationId: string, dipId: string) {
+    const dip = await this.manageDipService.getDipById(applicationId, dipId)
+
+    return createResponse(StatusCodes.OK, 'Dip retrived succesfully', dip)
   }
 }

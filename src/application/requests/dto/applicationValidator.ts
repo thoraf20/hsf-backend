@@ -1,5 +1,6 @@
 import {
   ApplicationPurchaseType,
+  DIPStatus,
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
@@ -94,3 +95,14 @@ export type OfferLetterFilters = z.infer<typeof offerLetterFiltersSchema> &
   Partial<{
     approver_id: string
   }>
+
+export const dipFiltersSchema = withPaginateSchema(
+  z.object({
+    status: z.nativeEnum(DIPStatus).optional(),
+    user_id: z.string().nonempty().optional(),
+    property_id: z.string().nonempty().optional(),
+    organization_id: z.string().nonempty().optional(),
+  }),
+)
+
+export type DipFilters = z.infer<typeof dipFiltersSchema>

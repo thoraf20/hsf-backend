@@ -23,10 +23,8 @@ import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { getDeveloperClientView } from '@entities/Developer'
 import { getUserClientView } from '@entities/User'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
-import { application } from 'express'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { DIPStatus } from '@domain/enums/propertyEnum'
-import { PaymentEnum } from '@domain/enums/PaymentEnum'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify

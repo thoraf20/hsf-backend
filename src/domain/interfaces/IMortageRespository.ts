@@ -1,3 +1,4 @@
+import { Application } from '@entities/Application'
 import { DIP } from '@entities/Mortage'
 import { Payment } from '@entities/Payment'
 import {
@@ -6,11 +7,17 @@ import {
   uploadPrecedentDocument,
 } from '@entities/PurchasePayment'
 import { MortagePayment } from '@entities/Transaction'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { DipFilters } from '@validators/applicationValidator'
 
 export interface IMortageRespository {
   initiate(input: DIP): Promise<DIP>
   acceptDip(input: DIP): Promise<DIP>
   getDipByEligibilityID(id: string): Promise<DIP>
+  getDipByID(id: string): Promise<DIP>
+  getAllDips(
+    filters: DipFilters,
+  ): Promise<SeekPaginationResult<DIP & { application: Application }>>
   payForMortageProcess(
     payment: Payment,
     metaData: Record<string, any>,

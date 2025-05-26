@@ -21,6 +21,7 @@ import {
 import { ApplicationService } from '@use-cases/Application/application'
 import {
   createApplicationSchema,
+  dipFiltersSchema,
   offerLetterFiltersSchema,
   requestOfferLetterRespondSchema,
   requestPropertyClosingSchema,
@@ -39,6 +40,9 @@ import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { InspectionRepository } from '@repositories/property/Inspection'
+import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
+import { MortageRepository } from '@repositories/property/MortageRepository'
+import { AddressRepository } from '@repositories/user/AddressRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -52,6 +56,14 @@ const applicationService = new ApplicationService(
   new DocumentRepository(),
   new DeveloperRespository(),
 )
+const manageDipService = new ManageDipUseCase(
+  new MortageRepository(),
+  new UserRepository(),
+  new PrequalifyRepository(),
+  new ApplicationRepository(),
+  new AddressRepository(),
+)
+
 const manageInspectionRepository = new ManageInspectionRepository()
 const organizationRepository = new OrganizationRepository()
 const applicationController = new ApplicationController(
@@ -65,6 +77,7 @@ const applicationController = new ApplicationController(
     new DeveloperRespository(),
     new InspectionRepository(),
   ),
+  manageDipService,
 )
 const applicationRoutes = Router()
 
@@ -288,6 +301,42 @@ applicationRoutes.patch(
       body,
     )
 
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/mortgage/dips',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+  ),
+  validateRequest(dipFiltersSchema),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const response = await applicationController.getDips(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/mortgage/dips/:dip_id',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.DEVELOPER_COMPANY,
+      OrganizationType.HSF_INTERNAL,
+    ),
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { params } = req
+    const { application_id, dip_id } = params
+    console.log({ application_id, dip_id })
+    const response = await applicationController.getApplicationDipById(
+      application_id,
+      dip_id,
+    )
     res.status(response.statusCode).json(response)
   }),
 )

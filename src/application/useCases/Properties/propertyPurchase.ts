@@ -58,7 +58,6 @@ export class PropertyPurchase {
     this.mortgageRespository = mortgageRepository
     this.preQualifieRepository = preQualifieRepository
     this.serviceRepository = serviceRepository
-
     // this.paymentRepository = paymentRepository
   }
 
@@ -113,7 +112,6 @@ export class PropertyPurchase {
       request_type,
       email,
       documents,
-      dip_status,
       loan_acceptance_status,
     } = input
 

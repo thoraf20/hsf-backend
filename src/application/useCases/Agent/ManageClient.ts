@@ -8,7 +8,6 @@ import {
   EnableCustomerInput,
 } from '@validators/customerValidator'
 import { UserFilter } from '@validators/userValidator'
-import { Stats } from 'fs'
 import { StatusCodes } from 'http-status-codes'
 
 export class ManageClientUseCase {

@@ -11,7 +11,7 @@ import {
 } from '@domain/enums/rolesEmun'
 import { AddressType, UserStatus } from '@domain/enums/userEum'
 import { IOrganizationRepository } from '@domain/interfaces/IOrganizationRepository'
-import { getUserClientView, User, UserClientView } from '@entities/User' // Import User
+import { getUserClientView, User } from '@entities/User' // Import User
 import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'

@@ -3,7 +3,6 @@ import {
   MeetingPlatform,
   InspectionMeetingType,
   InspectionStatus,
-  InspectionRescheduleStatusEnum,
 } from '@domain/enums/propertyEnum'
 import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 // import { DateTime } from 'luxon';
@@ -82,14 +81,13 @@ export const inspectionSchema = z.object({
 
   property_id: z.string(),
 
-  availability_slot_id: z.string().nonempty()
+  availability_slot_id: z.string().nonempty(),
 })
-
 
 export const reponseToReschedule = z.object({
   status: z.enum([
     InspectionRescheduleRequestStatusEnum.AcceptedByUser,
-    InspectionRescheduleRequestStatusEnum.RejectedByUser
+    InspectionRescheduleRequestStatusEnum.RejectedByUser,
   ]),
   user_rejection_reason: z.string().optional(),
 })

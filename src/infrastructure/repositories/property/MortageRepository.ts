@@ -8,13 +8,19 @@ import {
   uploadPrecedentDocument,
 } from '@entities/PurchasePayment'
 import { MortagePayment } from '@entities/Transaction'
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
 // import { ApplicationRepository } from './ApplicationRespository'
 import { LoanOfferStatus } from '@domain/enums/propertyEnum'
+import { DipFilters } from '@validators/applicationValidator'
+import { Knex } from 'knex'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { SearchType } from '@shared/types/repoTypes'
+import { applyPagination } from '@shared/utils/paginate'
+import { Application } from '@entities/Application'
 
 export class MortageRepository implements IMortageRespository {
   private paymentService = new PaymentService(new PaymentProcessorFactory())
@@ -28,6 +34,10 @@ export class MortageRepository implements IMortageRespository {
 
   getDipByEligibilityID(id: string): Promise<DIP> {
     return db<DIP>('dip').select().where('eligibility_id', id).first()
+  }
+
+  getDipByID(id: string): Promise<DIP> {
+    return db<DIP>('dip').select().where('dip_id', id).first()
   }
 
   async savePaymentStatus(
@@ -145,5 +155,35 @@ export class MortageRepository implements IMortageRespository {
   async initiate(input: DIP): Promise<DIP> {
     const [inserted] = await db<DIP>('dip').insert(input).returning('*')
     return inserted
+  }
+
+  useFilter(q: Knex.QueryBuilder<any, any[]>, filters: DipFilters) {
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.status) {
+      q = add(q).andWhereRaw(db.raw(`d.dip_status = '${filters.status}'`))
+    }
+
+    if (filters.user_id) {
+      q = add(q).andWhereRaw(db.raw(`d.user_id = '${filters.user_id}'`))
+    }
+
+    if (filters.property_id) {
+      q = add(q).andWhereRaw(db.raw(`d.property_id = '${filters.property_id}'`))
+    }
+    return q
+  }
+
+  getAllDips(
+    filters: DipFilters,
+  ): Promise<SeekPaginationResult<DIP & { application: Application }>> {
+    let baseQuery = db<DIP>('dip as d')
+      .innerJoin('application as a', 'a.application_id', 'd.application_id')
+      .select('d.*', db.raw('row_to_json(a) as application'))
+
+    baseQuery = this.useFilter(baseQuery, filters)
+    baseQuery = baseQuery.orderBy('created_at', 'desc')
+
+    return applyPagination(baseQuery, filters)
   }
 }
