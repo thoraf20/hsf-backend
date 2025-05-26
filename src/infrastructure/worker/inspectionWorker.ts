@@ -1,4 +1,4 @@
-import { PaymentType, PaystackPaymentStatus } from '@domain/enums/PaymentEnum'
+import { PaymentType, PaymentStatus } from '@domain/enums/PaymentEnum'
 import { PaystackProcessor } from '@domain/paymentProcessor'
 import { Inspection } from '@entities/Inspection'
 import { RedisClient } from '@infrastructure/cache/redisClient'
@@ -61,7 +61,7 @@ const inspectionWorker = new Worker(
         transaction.reference,
       )
 
-      if (response.status === PaystackPaymentStatus.SUCCESS) {
+      if (response.status === PaymentStatus.SUCCESS) {
         inspection = await inspectionRepository.createInpection({
           ...inspectionData,
           inspection_fee_paid: true,

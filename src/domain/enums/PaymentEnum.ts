@@ -11,7 +11,7 @@ export enum PaymentType {
   INSPECTION = 'PAYMENT_FOR_INSPECTION',
 }
 
-export enum PaystackPaymentStatus {
+export enum PaymentStatus {
   ABANDONED = 'abandoned',
   FAILED = 'failed',
   ONGOING = 'ongoing',

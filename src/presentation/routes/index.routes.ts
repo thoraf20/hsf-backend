@@ -23,6 +23,7 @@ import notificationRoutes from './userRoutes/notificationRoutes'
 import manageUserRoutes from './userRoutes/user.manage.routes'
 import developerIndexRoutes from './developer/developerIndex.routes'
 import clientRoutes from './Agents/ManageClient.routes'
+import managePaymentRoutes from './payments/managePayments.routes'
 
 const routes: Router = Router()
 routes.use('/user/mfa', authenticate, limiter, mfaRoutes)
@@ -43,6 +44,7 @@ routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
 routes.use('/manage', authenticate, manageAgentRoutes)
 routes.use('/manage', authenticate, limiter, manageApplicationRoutes)
 routes.use('/manage', authenticate, limiter, manageUserRoutes)
+routes.use('/manage', authenticate, limiter, managePaymentRoutes)
 routes.use('/organizations', authenticate, limiter, organizationRoutes)
 routes.use('/notifications', notificationRoutes)
 routes.use('/manage-client', authenticate, clientRoutes)

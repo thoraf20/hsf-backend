@@ -17,7 +17,7 @@ import { IMortageRespository } from '@interfaces/IMortageRespository'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
-import { IPaymentRespository } from '@interfaces/IpaymentRepository'
+import { IPaymentProviderRespository } from '@interfaces/IPaymentProviderRepository'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
@@ -44,7 +44,7 @@ export class PropertyPurchase {
     purchaseRepository: IPurchaseProperty,
     propertyRepository: IPropertyRepository,
     preQualifieRepository: IPreQualify,
-    paymentRepository: IPaymentRespository,
+    paymentRepository: IPaymentProviderRespository,
     applicationRepository: IApplicationRespository,
     mortgageRepository: IMortageRespository,
     inspectionRespository: IInspectionRepository,
