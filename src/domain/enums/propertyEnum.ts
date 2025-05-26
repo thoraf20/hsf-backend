@@ -61,7 +61,6 @@ export enum InspectionMeetingType {
   VIDEO_CHAT = 'Video Chat',
 }
 
-
 export enum InspectionRescheduleStatusEnum {
   Rejected = 'Rejected',
   Accepted = 'Accepted',
@@ -92,9 +91,18 @@ export enum InspectionStatus {
 }
 
 export enum DIPStatus {
-  DECLINED = 'Declined',
-  ACCEPTED = 'Accepted',
-  REJECTED = 'Rejected',
+  Generated = 'Generated',
+  AwaitingUserAction = 'Awaiting User Action',
+  Accepted = 'Accepted',
+  Rejected = 'Rejected',
+  PaymentPending = 'Payment Pending',
+  DocumentsPending = 'Documents Pending',
+  Completed = 'Completed',
+}
+
+export enum UserAction {
+  Accept = 'Accept',
+  Reject = 'Reject',
 }
 
 export enum ApplicationStatus {

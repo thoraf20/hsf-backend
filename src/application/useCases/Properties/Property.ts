@@ -56,7 +56,6 @@ export class PropertyService {
     input: CreatePropertyInput,
     organization_id: string,
   ): Promise<Properties> {
-    console.log(input)
     const propertyReportDocGroup =
       await this.documentRepository.findDocumentGroupByTag(
         DocumentGroupKind.PropertyReport,
@@ -125,8 +124,6 @@ export class PropertyService {
       user_id,
     )
 
-    console.log({ fetchProperty })
-
     if (!fetchProperty) {
       return null
     }
@@ -134,8 +131,6 @@ export class PropertyService {
     const organization = await this.organizationRepository.getOrganizationById(
       fetchProperty.organization_id,
     )
-
-    console.log({ d: this.developerRepository })
 
     let developer: DeveloperClientView = getDeveloperClientView(
       await this.developerRepository.getDeveloperByOrgId(organization.id),

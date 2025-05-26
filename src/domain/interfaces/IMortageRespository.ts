@@ -8,7 +8,9 @@ import {
 import { MortagePayment } from '@entities/Transaction'
 
 export interface IMortageRespository {
+  initiate(input: DIP): Promise<DIP>
   acceptDip(input: DIP): Promise<DIP>
+  getDipByEligibilityID(id: string): Promise<DIP>
   payForMortageProcess(
     payment: Payment,
     metaData: Record<string, any>,

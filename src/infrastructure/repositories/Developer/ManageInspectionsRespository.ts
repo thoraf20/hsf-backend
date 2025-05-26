@@ -179,10 +179,9 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
     inspection_id: string,
   ): Promise<Inspection> {
     const [reschedule] = await db<Inspection>('inspection')
-      .update({...payload, updated_at: new Date()})
+      .update({ ...payload, updated_at: new Date() })
       .where('id', inspection_id)
       .returning('*')
-      console.log(payload)
     return reschedule
   }
 
@@ -233,6 +232,6 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
   }
 
   async deleteInspection(inspection_id: string): Promise<void> {
-        await db('inspection').delete().where('id', inspection_id)
+    await db('inspection').delete().where('id', inspection_id)
   }
 }

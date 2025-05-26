@@ -17,6 +17,7 @@ import http from 'http'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import '@infrastructure/worker/inspectionWorker'
 import { asyncMiddleware } from '@routes/index.t'
+import { startJobWorkers } from '@infrastructure/worker'
 // import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 // import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 // import { AdminRepository } from '@repositories/Agents/AdminRepository'
@@ -94,6 +95,7 @@ app.all('*', (req: Request, res: Response) => {
 // app.use(rateLimiter)
 setupSecurity(app)
 app.use(ErrorHandler)
+startJobWorkers()
 
 const PORT = process.env.PORT || 3000
 server.listen(PORT, () => {

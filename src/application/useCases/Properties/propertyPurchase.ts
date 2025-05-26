@@ -48,7 +48,7 @@ export class PropertyPurchase {
     applicationRepository: IApplicationRespository,
     mortgageRepository: IMortageRespository,
     inspectionRespository: IInspectionRepository,
-    serviceRepository: IServiceOfferingRepository
+    serviceRepository: IServiceOfferingRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
@@ -57,7 +57,7 @@ export class PropertyPurchase {
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
     this.mortgageRespository = mortgageRepository
     this.preQualifieRepository = preQualifieRepository
-     this.serviceRepository = serviceRepository
+    this.serviceRepository = serviceRepository
 
     // this.paymentRepository = paymentRepository
   }
@@ -218,23 +218,23 @@ export class PropertyPurchase {
 
     // MORTGAGE flow
     const inspectionFee = await this.serviceRepository.getByProductCode(
-          input.product_code,
-        )
+      input.product_code,
+    )
 
     if (purchase_type === ApplicationPurchaseType.MORTGAGE) {
       switch (request_type) {
-        case PropertyRequestTypeEnum.ACCEPT_DIP:
-          const dip = await this.mortgageRespository.acceptDip({
-            dip_status,
-            property_id,
-            user_id,
-          })
-          await this.applicationRepository.updateApplication({
-            property_id,
-            document_upload_id: dip.dip_id,
-            user_id,
-          })
-          return dip
+        // case PropertyRequestTypeEnum.ACCEPT_DIP:
+        //   const dip = await this.mortgageRespository.acceptDip({
+        //     dip_status,
+        //     property_id,
+        //     user_id,
+        //   })
+        //   await this.applicationRepository.updateApplication({
+        //     property_id,
+        //     document_upload_id: dip.dip_id,
+        //     user_id,
+        //   })
+        //   return dip
 
         case PropertyRequestTypeEnum.DUE_DELIGENT:
         case PropertyRequestTypeEnum.BROKER_FEE:
@@ -245,10 +245,10 @@ export class PropertyPurchase {
             paymentType: request_type,
             user_id,
             transaction_id,
-            product_code: inspectionFee.product_code
+            product_code: inspectionFee.product_code,
           }
           return await this.mortgageRespository.payForMortageProcess(
-            {amount: Number(inspectionFee.base_price), email },
+            { amount: Number(inspectionFee.base_price), email },
             metaData,
             request_type,
             user_id,

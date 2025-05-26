@@ -15,6 +15,7 @@ import { paymentRepository } from '@repositories/property/purchasePayment'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { MortageRepository } from '@repositories/property/MortageRepository'
 import { InspectionRepository } from '@repositories/property/Inspection'
+import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 const propertyPurchaseRoutes = Router()
 
 const propertyRepository = new PropertyRepository()
@@ -24,6 +25,7 @@ const payment = new paymentRepository()
 const application = new ApplicationRepository()
 const mortageRepository = new MortageRepository()
 const inspectionRepository = new InspectionRepository()
+const serviceRepository = new ServiceOfferingRepository()
 const propertyPurchaseService = new PropertyPurchase(
   propertyPurchaseRepository,
   propertyRepository,
@@ -32,6 +34,7 @@ const propertyPurchaseService = new PropertyPurchase(
   application,
   mortageRepository,
   inspectionRepository,
+  serviceRepository,
 )
 const purchasePropertyController = new PurchasePropertyController(
   propertyPurchaseService,

@@ -1,4 +1,7 @@
-import { InspectionMeetingType, InspectionStatus } from '@domain/enums/propertyEnum'
+import {
+  InspectionMeetingType,
+  InspectionStatus,
+} from '@domain/enums/propertyEnum'
 import { Inspection } from '@domain/entities/Inspection'
 import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
 import { InspectionBaseUtils } from '../utils'
@@ -53,9 +56,10 @@ export class InspectionService {
     input: ScheduleInspectionInput,
     user_id: string,
   ): Promise<Inspection | any> {
-    console.log('input', input.property_id)
-   const findInspection = await this.propertyRepository.getPropertyById(input.property_id)
-   if(!findInspection) {
+    const findInspection = await this.propertyRepository.getPropertyById(
+      input.property_id,
+    )
+    if (!findInspection) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
         'Property not found',
@@ -69,12 +73,12 @@ export class InspectionService {
     const trx = await db.transaction()
 
     const { ...inspectionData } = input
-    const availability= await this.manageInspectionRepository.getDayAvailablitySlotById(
-      input.availability_slot_id,
-    )
+    const availability =
+      await this.manageInspectionRepository.getDayAvailablitySlotById(
+        input.availability_slot_id,
+      )
     try {
-      const
-       pendingInspection: Partial<Inspection> = {
+      const pendingInspection: Partial<Inspection> = {
         contact_number: inspectionData.contact_number,
         inspection_date: inspectionData.inspection_date,
         inspection_time: inspectionData.inspection_time,
@@ -88,7 +92,6 @@ export class InspectionService {
         inspection_meeting_type: inspectionData.inspection_meeting_type,
         inspection_status: InspectionStatus.PENDING,
       }
-      
 
       if (input.inspection_meeting_type === InspectionMeetingType.VIDEO_CHAT) {
         if (!(input.product_code && input.amount)) {
@@ -224,9 +227,14 @@ export class InspectionService {
     }
   }
 
-  public async getInspectionSchedule(user_id: string, action?: string): Promise<SeekPaginationResult<Record<string, any>>>{
-    const Inspection =
-      await this.inspectionRepository.getAllScheduleInspection(user_id, action)
+  public async getInspectionSchedule(
+    user_id: string,
+    action?: string,
+  ): Promise<SeekPaginationResult<Record<string, any>>> {
+    const Inspection = await this.inspectionRepository.getAllScheduleInspection(
+      user_id,
+      action,
+    )
     return Inspection
   }
 
@@ -234,9 +242,8 @@ export class InspectionService {
     inspection_id: string,
     payload: Partial<Inspection> | any,
   ): Promise<Inspection> {
-    const inspection = await this.inspectionRepository.getScheduleInspectionById(
-      inspection_id,
-    )
+    const inspection =
+      await this.inspectionRepository.getScheduleInspectionById(inspection_id)
     if (!inspection) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
@@ -245,11 +252,13 @@ export class InspectionService {
     }
     const reschedule = await this.inspectionRepository.responseToReschedule(
       inspection_id,
-      {confirm_avaliability_for_reschedule: payload.status, action: "scheduled"},
+      {
+        confirm_avaliability_for_reschedule: payload.status,
+        action: 'scheduled',
+      },
     )
     return reschedule
   }
-
 
   public async getInspectionById(schedule_id: string): Promise<Inspection> {
     const inspection =

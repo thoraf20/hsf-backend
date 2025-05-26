@@ -1,10 +1,23 @@
-import { DIPStatus } from '@domain/enums/propertyEnum'
+import { DIPStatus, UserAction } from '@domain/enums/propertyEnum'
 
 export class DIP {
   dip_id?: string
   property_id: string
-  user_id: string
+  application_id: string
+  eligibility_id: string
+  approved_loan_amount?: number
+  interest_rate?: number
+  loan_term?: string
+  monthly_payment?: number
   dip_status: DIPStatus
+  generated_at?: Date
+  user_action?: UserAction
+  user_action_at?: string
+  payment_status?: string
+  payment_transaction_id?: string
+  documents_status?: string
+  documents_review_request_id?: string
+  user_id: string
   created_at?: Date
   updated_at?: Date
   constructor(d: Partial<DIP>) {

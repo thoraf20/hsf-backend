@@ -290,8 +290,6 @@ export class ApplicationService {
         ReviewRequestTypeKind.OfferLetterOutright,
       )
 
-    console.log({ outrightReviewType })
-
     if (!outrightReviewType) {
       throw new ApplicationCustomError(
         StatusCodes.INTERNAL_SERVER_ERROR,
@@ -303,8 +301,6 @@ export class ApplicationService {
       await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
         outrightReviewType.id,
       )
-
-    console.log({ outrightReviewTypeStage })
 
     if (!outrightReviewTypeStage.length) {
       throw new ApplicationCustomError(

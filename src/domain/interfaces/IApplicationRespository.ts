@@ -8,6 +8,15 @@ export interface IApplicationRespository {
     filters?: PropertyFilters,
   ): Promise<SeekPaginationResult<any>>
   getApplicationById(application_id: string): Promise<Application>
+  getByUniqueID(
+    ids: Pick<
+      Application,
+      | 'eligibility_id'
+      | 'property_closing_id'
+      | 'loan_offer_id'
+      | 'offer_letter_id'
+    >,
+  ): Promise<Application>
   updateApplication(input: Partial<Application>): Promise<void>
   getLastApplicationIfExist(
     property_id: string,

@@ -118,7 +118,6 @@ const authenticate = asyncMiddleware(
 const optionalAuth = asyncMiddleware(async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '')
 
-  console.log({ token })
   if (!token) {
     const authInfo: AuthInfo = {
       userId: '',

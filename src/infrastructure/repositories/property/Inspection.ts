@@ -79,7 +79,6 @@ export class InspectionRepository implements IInspectionRepository {
     filter?: Record<string, any>,
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Record<string, any>>> {
-    console.log(query_param)
     let query = db('inspection')
       .select(
         'inspection.id as inspection_id',

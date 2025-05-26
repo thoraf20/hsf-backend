@@ -22,6 +22,11 @@ import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { getDeveloperClientView } from '@entities/Developer'
 import { getUserClientView } from '@entities/User'
+import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { application } from 'express'
+import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { DIPStatus } from '@domain/enums/propertyEnum'
+import { PaymentEnum } from '@domain/enums/PaymentEnum'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
@@ -33,6 +38,8 @@ export class preQualifyService {
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly developerRepository: IDeveloperRepository,
+    private readonly mortgageRepository: IMortageRespository,
+    private readonly applicationRepository: IApplicationRespository,
   ) {
     this.prequalify = prequalify
   }
@@ -84,8 +91,6 @@ export class preQualifyService {
       )
     }
 
-    console.log({ identifierKey })
-
     const dataKey = `${CacheEnumKeys.preQualify_VERIFICATION}-${identifierKey}`
     const details: {
       otp: string
@@ -93,7 +98,6 @@ export class preQualifyService {
       user_id: string
       input: PreQualifyRequestInput
     } | null = await this.cache.getKey(dataKey)
-    console.log({ details })
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -221,7 +225,7 @@ export class preQualifyService {
   public async updatePrequalifierEligibility(
     input: PreQualifierEligibleInput,
   ): Promise<Eligibility> {
-    const eligibility = await this.prequalify.findEligiblityById(
+    let eligibility = await this.prequalify.findEligiblityById(
       input.eligibility_id,
     )
 
@@ -241,6 +245,25 @@ export class preQualifyService {
         'PreQualification eligible approved already',
       )
     }
-    return await this.prequalify.updateEligibility(input)
+
+    eligibility = await this.prequalify.updateEligibility(input)
+    const application = await this.applicationRepository.getByUniqueID({
+      eligibility_id: eligibility.eligibility_id,
+    })
+
+    if (
+      application &&
+      eligibility.eligiblity_status === EligibilityStatus.APPROVED
+    ) {
+      await this.mortgageRepository.initiate({
+        application_id: application.application_id,
+        eligibility_id: eligibility.eligibility_id,
+        property_id: application.property_id,
+        user_id: application.user_id,
+        dip_status: DIPStatus.Generated,
+      })
+    }
+
+    return eligibility
   }
 }

@@ -351,6 +351,126 @@ export class ApplicationRepository implements IApplicationRespository {
     return result
   }
 
+  async getByUniqueID(
+    ids: Pick<
+      Application,
+      | 'eligibility_id'
+      | 'property_closing_id'
+      | 'loan_offer_id'
+      | 'offer_letter_id'
+    >,
+  ): Promise<Application> {
+    let query = db('application as a')
+      .leftJoin('properties as p', 'a.property_id', 'p.id')
+      .innerJoin('organizations', 'p.organization_id', 'organizations.id')
+      .innerJoin(
+        'developers_profile',
+        'developers_profile.organization_id',
+        'p.organization_id',
+      )
+      .leftJoin(
+        'escrow_status as es',
+        'a.escrow_status_id',
+        'es.escrow_status_id',
+      )
+      .leftJoin(
+        'escrow_information as ei',
+        'a.escrow_information_id',
+        'ei.escrow_id',
+      )
+      .leftJoin('users as u', 'u.id', 'a.user_id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .leftJoin(
+        'property_closing as pc',
+        'a.property_closing_id',
+        'pc.property_closing_id',
+      )
+      .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
+      .leftJoin(
+        'prequalification_inputs as pqi',
+        'el.prequalifier_input_id',
+        'pqi.id',
+      )
+      .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
+      .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
+      .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
+      .select(
+        'es.escrow_status',
+        'es.is_escrow_set',
+        'pc.closing_status',
+        db.raw('row_to_json(dp) as dip'),
+        db.raw(`
+                    CASE
+                        WHEN pqi.id IS NOT NULL THEN json_build_object(
+                            'prequalification_input', row_to_json(pqi),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                `),
+        db.raw(`
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        `),
+
+        db.raw(`
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            `),
+        db.raw(`
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          `),
+        db.raw(`row_to_json(lo) as loan_offer`),
+        db.raw(`row_to_json(ol) as offer_letter`),
+        db.raw(`row_to_json(pc) as property_closing`),
+        db.raw(`row_to_json(dp) as dip`),
+        'p.*',
+        'a.*',
+      )
+
+    const uniqueIdEntries = Object.entries(ids)
+
+    if (!uniqueIdEntries.length) {
+      throw new Error('No unique ID provided to query application')
+    }
+
+    uniqueIdEntries.forEach(([field, value], index) => {
+      if (index === 0) {
+        query = query.where(`a.${field}`, value)
+      } else {
+        query = query.andWhere(`a.${field}`, value)
+      }
+    })
+
+    return query.first()
+  }
+
   async updateApplication(input: Partial<Application>): Promise<void> {
     await db('application')
       .update(input)

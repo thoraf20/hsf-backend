@@ -26,6 +26,10 @@ export class MortageRepository implements IMortageRespository {
     return dip ?? null
   }
 
+  getDipByEligibilityID(id: string): Promise<DIP> {
+    return db<DIP>('dip').select().where('eligibility_id', id).first()
+  }
+
   async savePaymentStatus(
     property_id: string,
     user_id: string,
@@ -136,5 +140,10 @@ export class MortageRepository implements IMortageRespository {
     })
 
     return new Payment(paymentTransaction as any)
+  }
+
+  async initiate(input: DIP): Promise<DIP> {
+    const [inserted] = await db<DIP>('dip').insert(input).returning('*')
+    return inserted
   }
 }

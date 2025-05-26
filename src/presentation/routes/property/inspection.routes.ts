@@ -27,7 +27,7 @@ const service = new InspectionService(
   new ServiceOfferingRepository(),
   new TransactionRepository(),
   new ManageInspectionRepository(),
-  new PropertyRepository()
+  new PropertyRepository(),
 )
 
 const inspectionController = new InspectionController(service)
@@ -38,7 +38,6 @@ inspectionRoutes.post(
   validateRequest(inspectionSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
-    console.log('pendingInspection', body)
     const schedule = await inspectionController.scheduleInspectionController(
       body,
       user.id,
@@ -60,8 +59,6 @@ inspectionRoutes.patch(
     res.status(schedule.statusCode).json(schedule)
   }),
 )
-
-
 
 inspectionRoutes.patch(
   '/:inspection_id/status',
@@ -99,8 +96,5 @@ inspectionRoutes.get(
     res.status(inspection.statusCode).json(inspection)
   }),
 )
-
-
-
 
 export default inspectionRoutes

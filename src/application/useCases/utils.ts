@@ -96,7 +96,6 @@ export class PropertyBaseUtils {
       user_id,
     )) as Properties
 
-    console.log({ properties, id, user_id })
     if (!properties) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,

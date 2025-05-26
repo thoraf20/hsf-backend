@@ -1,4 +1,5 @@
 import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
+import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
 import {
   Eligibility,
@@ -149,8 +150,6 @@ export class PrequalifyRepository implements IPreQualify {
         .select('pi.*', db.raw('row_to_json(e) as eligible'))
     }
 
-    console.log({ sql: baseQuery.toSQL().sql, query })
-
     const preQualify = await baseQuery.first()
     return preQualify
   }
@@ -279,9 +278,23 @@ export class PrequalifyRepository implements IPreQualify {
         'e.prequalifier_input_id',
       )
       .where('e.eligibility_id', id)
-      .select('pi.*', db.raw('row_to_json(e) as eligible'))
+      .select('e.*', db.raw('row_to_json(pi) as personal_information'))
 
     const preQualify = await baseQuery.first()
     return preQualify
+  }
+
+  async findApprovedMortgageEligibilitiesWithoutDip(): Promise<Eligibility[]> {
+    return db('eligibility as e')
+      .leftJoin('dip as d', 'd.eligibility_id', 'e.eligibility_id')
+      .innerJoin('application as a', 'a.eligibility_id', 'e.eligibility_id')
+      .whereRaw('d.dip_id IS NULL')
+      .andWhereRaw(
+        db.raw(`e.eligiblity_status = '${EligibilityStatus.APPROVED}'`),
+      )
+      .andWhereRaw(
+        db.raw(`a.application_type = '${ApplicationPurchaseType.MORTGAGE}'`),
+      )
+      .select('e.*')
   }
 }

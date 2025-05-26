@@ -24,7 +24,6 @@ clientRoutes.get(
   '/customers/fetch-all',
   authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   asyncMiddleware(async (req, res) => {
-    console.log(req)
     const { query } = req
     const response = await controller.getCustomers(query)
     res.status(response.statusCode).json(response)

@@ -26,6 +26,8 @@ export interface IPreQualify {
   ): Promise<employmentInformation>
   storePaymentCalculator(input: payment_calculator): Promise<payment_calculator>
   findIfApplyForLoanAlready(loaner_id: string): Promise<any>
+
+  findApprovedMortgageEligibilitiesWithoutDip(): Promise<Eligibility[]>
   updatePrequalifyStatus(
     loaner_id: string,
     input: Partial<preQualify>,

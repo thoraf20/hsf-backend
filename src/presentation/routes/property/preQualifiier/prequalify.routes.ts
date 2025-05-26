@@ -24,6 +24,8 @@ import { validateRequestQuery } from '@shared/utils/paginate'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { MortageRepository } from '@repositories/property/MortageRepository'
 
 const preQualifierRoutes: Router = Router()
 
@@ -34,6 +36,8 @@ const service = new preQualifyService(
   new UserRepository(),
   new OrganizationRepository(),
   new DeveloperRespository(),
+  new MortageRepository(),
+  new ApplicationRepository(),
 )
 const controller = new preQualifyController(service)
 

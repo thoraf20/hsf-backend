@@ -7,7 +7,7 @@ if (!process.env.REDIS_URL) {
 }
 
 console.log(process.env.REDIS_URL)
-const redis = new Redis()
+const redis = new Redis({ maxRetriesPerRequest: null })
 redis.on('error', (err) => logger.error('Redis Error:', err))
 
 redis.on('connect', async () => {
