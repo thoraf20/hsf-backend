@@ -311,7 +311,7 @@ export default {
   </head>
   <body>
     <div class="container">
-      <h2>Inspection Confirmed ✅</h2>
+      <h2>Inspection Request Sent ✅</h2>
       <p>Hi {{full_name}},</p>
       <p>Thank you for scheduling an inspection for one of our properties.</p>
 
@@ -381,7 +381,7 @@ export default {
   </head>
   <body>
     <div class="container">
-      <h2>Inspection Confirmed ✅</h2>
+      <h2>Inspection Request Sent ✅</h2>
       <p>Hi {{full_name}},</p>
       <p>Thank you for scheduling an inspection for one of our properties.</p>
 
@@ -822,14 +822,14 @@ export default {
     <div class="container">
         <h1>Reschedule Inspection</h1>
         <div class="content">
-            <p>Dear {name} </p>
+            <p>Dear {{name}} </p>
             <p>We regret to inform you that we need to reschedule the upcoming inspection appointment. We apologize for any inconvenience caused.</p>
-            <p>Please here is the propose time on {day},  the inspection will start by {start_time}, and end by {end_time}</p>
+            <p>Please here is the propose time on {{day}},  the inspection will start by {{start_time}}, and end by {{end_time}}</p>
             <p>Please go to your dashboard to confirm your</p>
             <p>If you have any questions or need further assistance, please don't hesitate to contact us.</p>
             <p>Thank you for your understanding.</p>
             <p>Best regards,</p>
-            <p>{Your Name}<br>{Your Position}<br>{Your Company}</p>
+            <p>{{company_name}}</p>
         </div>
     </div>
 </body>
@@ -887,20 +887,19 @@ export default {
 <body>
   <div class="email-container">
     <h2>Inspection Appointment Update</h2>
-    <p>Dear [Client Name],</p>
+    <p>Dear {{organization_name}},</p>
 
      ✅ For Confirmation 
     
-    <p>We are pleased to confirm your inspection appointment scheduled for <strong>[Date & Time]</strong>.</p>
-    <p>Our team looks forward to seeing you at the location: <strong>[Address]</strong>.</p>
+    <p>{{client_name}} has confirm your inspection appointment scheduled for <strong>{{date_time}}</strong>.</p>
+    <p>Our team looks forward to seeing you at the location: <strong>{{address}}</strong>.</p>
 
     <p>If you have any questions or need assistance, feel free to contact us.</p>
     <p>Thank you,<br>
-    [Your Name]<br>
-    [Your Company]</p>
+    {{client_name}}</p>
 
     <div class="footer">
-      © [Year] [Your Company]. All rights reserved.
+      © {{year}} {{organization_name}}. All rights reserved.
     </div>
   </div>
 </body>
@@ -960,18 +959,15 @@ inspectionRescheduleCancellation :  `<!DOCTYPE html>
   <div class="email-container">
     <h2>Inspection Appointment Update</h2>
     ❌ For Cancellation
-    <p>Dear [Client Name],</p>
-    <p>We acknowledge the  ❌ cancellation of your inspection appointment originally scheduled for <strong>[Date & Time]</strong>.</p>
+    <p>Dear {{organization_name}},</p>
+    <p>{{client_name}} has ❌ canceled  your inspection appointment originally scheduled for <strong>{{date_time}}</strong>.</p>
     <p>If you'd like to reschedule, you can do so using the link below at your convenience.</p>
-    <a href="[Reschedule Link]" class="btn cancel">Reschedule Appointment</a>
 
     <p>If you have any questions or need assistance, feel free to contact us.</p>
     <p>Thank you,<br>
-    [Your Name]<br>
-    [Your Company]</p>
-
+    {{client_name}}</p>
     <div class="footer">
-      © [Year] [Your Company]. All rights reserved.
+      © {{Year}} {{organization_name}}. All rights reserved.
     </div>
   </div>
 </body>

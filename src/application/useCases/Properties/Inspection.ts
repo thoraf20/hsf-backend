@@ -25,6 +25,10 @@ import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectio
 import { serviceProductFeeCodes } from '@infrastructure/config/serviceProductFeeCodes'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
+import { UserRepository } from '@repositories/user/UserRepository'
+import { getUserClientView } from '@entities/User'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private serviceRepository: IServiceOfferingRepository
@@ -39,12 +43,16 @@ export class InspectionService {
     transactions: ITransaction,
     private readonly manageInspectionRepository: IManageInspectionRepository,
     private readonly propertyRepository: IPropertyRepository,
+    private readonly organizationRepository: OrganizationRepository,
+    private readonly userRepository: UserRepository,
   ) {
     this.inspectionRepository = inspectionRepository
     this.serviceRepository = serviceRepository
     this.utilsInspection = new InspectionBaseUtils(this.inspectionRepository)
     this.propertyRepository = propertyRepository
     this.manageInspectionRepository = manageInspectionRepository
+    this.organizationRepository = organizationRepository
+    this.userRepository = userRepository
 
     if (!transactions) {
       throw new Error('Transaction repository is required.')
@@ -257,6 +265,16 @@ export class InspectionService {
         action: 'scheduled',
       },
     )
+
+    this.rescheduleInspectionEmail(
+      payload.status,
+      inspection.organization_id,
+      inspection.user_id,
+      inspection.inspection_date,
+      inspection.inspection_time,
+      inspection.property_id,
+    )
+
     return reschedule
   }
 
@@ -264,5 +282,44 @@ export class InspectionService {
     const inspection =
       await this.inspectionRepository.getScheduleInspectionById(schedule_id)
     return inspection
+  }
+
+  async rescheduleInspectionEmail(
+    status: InspectionRescheduleRequestStatusEnum,
+    organization_id: string,
+    user_id: string,
+    inspection_date: string,
+    inspection_time: string,
+    property_id: string,
+  ): Promise<void> {
+    const [organization, propertyInfo, clientInfo] = await Promise.all([
+      this.organizationRepository.getOrganizationById(organization_id),
+      this.propertyRepository.getPropertyById(property_id),
+      getUserClientView(await this.userRepository.findById(user_id)),
+    ])
+
+    const userInfo = getUserClientView(
+      await this.userRepository.findById(organization.owner_user_id),
+    )
+
+    if (status === InspectionRescheduleRequestStatusEnum.RejectedByUser) {
+      emailTemplates.inspectionRescheduleCancellation(
+        userInfo.email,
+        organization.name,
+        `${clientInfo.first_name} ${clientInfo.last_name}`,
+        `${inspection_date} ${inspection_time}`,
+        propertyInfo.street_address,
+      )
+    } else if (
+      status === InspectionRescheduleRequestStatusEnum.AcceptedByUser
+    ) {
+      emailTemplates.inspectionRescheduleConfirmation(
+        `gbemilekeadeboyega@gmail.com`,
+        organization.name,
+        `${clientInfo.first_name} ${clientInfo.last_name}`,
+        `${inspection_date} ${inspection_time}`,
+        propertyInfo.street_address,
+      )
+    }
   }
 }

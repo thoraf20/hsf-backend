@@ -20,6 +20,8 @@ import { authorize } from '@middleware/authorization'
 import { isHomeBuyer } from '@shared/utils/permission-policy'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 
 const inspectionRoutes: Router = Router()
 const service = new InspectionService(
@@ -28,6 +30,8 @@ const service = new InspectionService(
   new TransactionRepository(),
   new ManageInspectionRepository(),
   new PropertyRepository(),
+  new OrganizationRepository(),
+  new UserRepository(),
 )
 
 const inspectionController = new InspectionController(service)

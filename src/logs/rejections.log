@@ -763,3 +763,10 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at Object.onceWrapper (node:events:633:26)
     at Socket.emit (node:events:518:28)
     at TCP.<anonymous> (node:net:351:12)
+2025-05-27 01:47:27 [ERROR]: TypeError: Cannot read properties of undefined (reading 'getOrganizationById')
+    at InspectionService.rescheduleInspectionEmail (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\application\useCases\Properties\Inspection.ts:288:35)
+    at InspectionService.reponseToReschedule (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\application\useCases\Properties\Inspection.ts:269:10)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at InspectionController.responseToReschedule (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\presentation\controllers\property\Inspection.controller.ts:42:24)
+    at C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\presentation\routes\property\inspection.routes.ts:55:22
+    at tryCatchWrapper (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\shared\utils\tryCatch.ts:6:12)

@@ -13,7 +13,7 @@ import { IUserRepository } from '@interfaces/IUserRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
-
+import emailTemplate from '@infrastructure/email/template/constant'
 import { StatusCodes } from 'http-status-codes'
 
 export class ManageInspectionUseCase {
@@ -151,6 +151,7 @@ export class ManageInspectionUseCase {
     payload: DayAvailabilitySlot,
     inspection_id: string,
     organization_id: string,
+    agent_id: string
   ): Promise<Inspection> {
     const inspection =
       await this.manageInspectionRepository.getInspectionById(inspection_id)
@@ -160,6 +161,8 @@ export class ManageInspectionUseCase {
         'Inspection not found',
       )
     }
+    
+    const userInfo = await this.userRepository.findById(inspection.user_id)
     const getSlot =
       await this.manageInspectionRepository.getDayAvailablitySlotById(
         inspection.day_availability_slot_id,
@@ -192,6 +195,11 @@ export class ManageInspectionUseCase {
         },
         inspection_id
       )
+
+      const getAgentRole = await getDeveloperClientView(
+      await this.developerRepository.getDeveloperByOrgId(organization_id),
+    )
+    emailTemplate.rescheduleInspection(userInfo.email, `${userInfo.first_name} ${userInfo.last_name}`, availabilities.day, getSlot.start_time.toDateString(), getSlot.end_time.toDateString(), getAgentRole.company_email)
     return reschedule
   }
 
@@ -215,7 +223,7 @@ export class ManageInspectionUseCase {
         'Inspection status has already been updated',
       )
     }
-
+    // const getClient = getUserClientView(await this.userRepository.findById(inspection.user_id))
     const getSlot =
       await this.manageInspectionRepository.getDayAvailablitySlotById(
         inspection.day_availability_slot_id,

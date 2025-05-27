@@ -290,12 +290,104 @@ export default {
     let text = `Accept invitation`
     let html = templates.InvitationEmail.replace('{{fullname}}', fullname)
       .replace('{{role}}', role)
+      .replace('{{role}}', role)
       .replace('{{defaultPassword}}', defaultPassword)
       .replace('{{activationLink}}', activationLink)
       .replace('{{year}}', new Date().getFullYear().toString())
 
     try {
       const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  rescheduleInspection(
+    client_email: string,
+    client_name: string,
+    day: string,
+    start_time: string,
+    end_time: string,
+    company_name: string,
+  ) {
+    let subject = `Rescheduling Inspection`
+    let text = `Inspection Reschedule`
+    let html = templates.InvitationEmail.replace('{{name}}', client_name)
+      .replace('{{day}}', day)
+      .replace('{{start_time}}', start_time)
+      .replace('{{client_name}}', client_name)
+      .replace('{{end_time}}', end_time)
+      .replace('{{company_name}}', company_name)
+
+    try {
+      const emailData = { to: client_email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  inspectionRescheduleConfirmation(
+    organization_email: string,
+    organization_name: string,
+    client_name: string,
+    date_time: string,
+    address: string,
+  ) {
+    let subject = `Confirmation email`
+    let text = `Inspection Confirmation`
+    let html = templates.inspectionRescheduleConfirmation
+      .replace('{{organization_name}}', organization_name)
+      .replace('{{client_name}}', client_name)
+      .replace('{{date_time}}', date_time)
+      .replace('{{address}}', address)
+      .replace('{{client_name}}', client_name)
+      .replace('{{organization_name}}', organization_name)
+      .replace('{{year}}', new Date().getFullYear().toString())
+
+    try {
+      const emailData = { to: organization_email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  inspectionRescheduleCancellation(
+    organization_email: string,
+    organization_name: string,
+    client_name: string,
+    date_time: string,
+    address: string,
+  ) {
+    let subject = `Cancellation email`
+    let text = `Inspection Cancellation`
+    let html = templates.inspectionRescheduleCancellation
+      .replace('{{organization_name}}', organization_name)
+      .replace('{{client_name}}', client_name)
+      .replace('{{date_time}}', date_time)
+      .replace('{{address}}', address)
+      .replace('{{organization_name}}', organization_name)
+      .replace('{{organization_name}}', organization_name)
+      .replace('{{year}}', new Date().getFullYear().toString())
+
+    try {
+      const emailData = { to: organization_email, subject, text, html }
       sendMailInWorker(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {

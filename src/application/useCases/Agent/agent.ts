@@ -135,7 +135,7 @@ export class Agents {
       input.email,
       `${(input.first_name, input.last_name)}`,
       invitation_email,
-      input.role,
+      agentUser.role,
       defaultPassword,
     )
     delete newUser.password
@@ -291,7 +291,7 @@ export class Agents {
       input.email,
       `${(input.first_name, input.last_name)}`,
       invitation_email,
-      input.role,
+      findRole.name,
       defaultPassword,
     )
     delete newUser.password
