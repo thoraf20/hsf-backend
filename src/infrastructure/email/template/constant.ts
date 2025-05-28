@@ -398,4 +398,28 @@ export default {
       )
     }
   },
-}
+
+  passwordResetForOrganization(email: string, fullname: string, default_password: string, url: string, organization_name: string) {
+    let subject = `Password Reset`
+    let text = `Reset your password`
+    let html = templates.resetPasswordForOrganization
+      .replace('{{full_name}}', fullname)
+      .replace('{{default_password}}', default_password)
+      .replace('{{url}}', url)
+       .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{organization_name}}', organization_name)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+
+  }
+ }

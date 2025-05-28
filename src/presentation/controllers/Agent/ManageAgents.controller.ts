@@ -25,4 +25,13 @@ export class ManageAgentController {
             agent
         )
     }
+
+    public async resetPasswordForOrganization (organization_id: string, agent_id: string): Promise<ApiResponse<any>> {
+       await this.manageAgent.resetOrganizationAgentPassword(organization_id, agent_id)
+        return createResponse(
+            StatusCodes.OK,
+            'Success',
+           {}
+        )
+    }
 }

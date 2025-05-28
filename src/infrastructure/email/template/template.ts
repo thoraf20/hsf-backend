@@ -972,6 +972,104 @@ inspectionRescheduleCancellation :  `<!DOCTYPE html>
   </div>
 </body>
 </html>
+`,
+resetPasswordForOrganization: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Password Reset</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      background-color: #0052cc;
+      color: #ffffff;
+      padding: 20px;
+      border-radius: 8px 8px 0 0;
+      text-align: center;
+    }
+    .content {
+      padding: 20px;
+      color: #333333;
+    }
+    .password-box {
+      background-color: #f1f1f1;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 15px 0;
+      text-align: center;
+      border-radius: 5px;
+      word-break: break-word;
+    }
+    .button {
+      display: inline-block;
+      padding: 12px 24px;
+      margin-top: 20px;
+      background-color: #0052cc;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 12px;
+      color: #777777;
+      text-align: center;
+    }
+    @media (max-width: 600px) {
+      .email-container {
+        padding: 15px;
+      }
+      .button {
+        display: block;
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="email-container">
+    <div class="header">
+      <h2>Password Reset Notification</h2>
+    </div>
+    <div class="content">
+      <p>Hello, {{full_name}}</p>
+      <p>We’ve reset your password as requested. Please use the temporary password below to log in:</p>
+      
+      <div class="password-box">{{default_password}}</div>
+      
+      <p>After logging in, we strongly recommend that you change your password for security purposes.</p>
+      
+      <a href={{url}} class="button">Log In</a>
+
+      <p>If you didn’t request this change, please contact our support team immediately.</p>
+      
+      <p>Best regards,<br>The IT Support Team</p>
+    </div>
+    <div class="footer">
+      © 2025 {{your_organization}}. All rights reserved.<br>
+      123 Business Rd, Suite 100, City, Country
+    </div>
+  </div>
+
+</body>
+</html>
+
 `
 
 
