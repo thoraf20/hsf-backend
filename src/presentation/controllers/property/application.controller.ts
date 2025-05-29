@@ -1,18 +1,32 @@
-import { OfferLetterStatus } from '@domain/enums/propertyEnum'
+import { OrganizationType } from '@domain/enums/organizationEnum'
+import { MortgagePaymentType } from '@domain/enums/PaymentEnum'
+import {
+  DIPLenderStatus,
+  DIPStatus,
+  OfferLetterStatus,
+} from '@domain/enums/propertyEnum'
+import { Application } from '@entities/Application'
+import { DIP } from '@entities/Mortage'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import { createResponse } from '@presentation/response/responseType'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { ApplicationService } from '@use-cases/Application/application'
 import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
+import { PaymentUseCase } from '@use-cases/Payments/payments'
 import {
   CreateApplicationInput,
   DipFilters,
+  InitiateMortgagePayment,
+  LenderDipResponse,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
+  UpdateDipLoanInput,
 } from '@validators/applicationValidator'
+import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 
@@ -21,6 +35,7 @@ export class ApplicationController {
     private readonly applicationService: ApplicationService,
     private readonly manageInspectionService: ManageInspectionUseCase,
     private readonly manageDipService: ManageDipUseCase,
+    private readonly paymentService: PaymentUseCase,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -256,8 +271,34 @@ export class ApplicationController {
     )
   }
 
-  async getDips(filters: DipFilters) {
-    const dipContents = await this.manageDipService.getDips(filters)
+  async getInspections(authInfo: AuthInfo, filters: InspectionFilters) {
+    const contents = await this.manageInspectionService.getAllInspections({
+      ...filters,
+      ...(authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY
+        ? { organization_id: authInfo.currentOrganizationId }
+        : null),
+    })
+
+    return createResponse(
+      StatusCodes.OK,
+      'Inspections retrieved successfully',
+      contents,
+    )
+  }
+
+  async getInspect(applicationId: string, authInfo: AuthInfo) {
+    const contents =
+      await this.manageInspectionService.getAllInspectionList(applicationId)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Inspections retrieved successfully',
+      contents,
+    )
+  }
+
+  async getDips(authInfo: AuthInfo, filters: DipFilters) {
+    const dipContents = await this.manageDipService.getDips(authInfo, filters)
 
     return createResponse(
       StatusCodes.OK,
@@ -270,5 +311,110 @@ export class ApplicationController {
     const dip = await this.manageDipService.getDipById(applicationId, dipId)
 
     return createResponse(StatusCodes.OK, 'Dip retrived succesfully', dip)
+  }
+
+  async updateApplicationDipById(
+    applicationId: string,
+    dipId: string,
+    input: UpdateDipLoanInput,
+  ) {
+    const updatedDip = await this.manageDipService.updateDip(
+      applicationId,
+      dipId,
+      input,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Dip updated successfully',
+      updatedDip,
+    )
+  }
+
+  async lenderDipRespond(
+    applicationId: string,
+    dipId: string,
+    input: LenderDipResponse,
+  ) {
+    const updatedDip = await this.manageDipService.lenderDipResponse(
+      applicationId,
+      dipId,
+      input,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      updatedDip.dip_lender_status === DIPLenderStatus.Accepted
+        ? 'Dip approved successfully'
+        : 'Dip rejected successfully',
+      updatedDip,
+    )
+  }
+
+  async userDipRespond(
+    authInfo: AuthInfo,
+    applicationId: string,
+    dipId: string,
+    input: LenderDipResponse,
+  ) {
+    const updatedDip = await this.manageDipService.userDipResponse(
+      authInfo,
+      applicationId,
+      dipId,
+      input,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      updatedDip.dip_lender_status === DIPLenderStatus.Accepted
+        ? 'Dip accepted successfully'
+        : 'Dip rejected successfully',
+      updatedDip,
+    )
+  }
+
+  async initiateMortgagePaymentIntent(
+    authInfo: AuthInfo,
+    applicationId: string,
+    input: InitiateMortgagePayment,
+  ) {
+    const application = (await this.applicationService.getById(
+      applicationId,
+      authInfo,
+    )) as Application & { dip?: DIP }
+
+    if (input.payment_for === MortgagePaymentType.DECISION_IN_PRINCIPLE) {
+      if (!application.dip) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Dip not inititated',
+        )
+      }
+
+      if (application.dip.dip_status === DIPStatus.PaymentPending) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Dip payment not initiated',
+        )
+      }
+
+      const paymentIntent =
+        await this.paymentService.inititateMortgagePaymentIntent(
+          authInfo,
+          application,
+          input,
+        )
+
+      return createResponse(
+        StatusCodes.OK,
+        'Payment intent generated',
+        paymentIntent,
+      )
+    }
+
+    throw new ApplicationCustomError(
+      StatusCodes.FORBIDDEN,
+      'Mortgage payment intent not setup',
+    )
   }
 }

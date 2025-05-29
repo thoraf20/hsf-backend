@@ -14,6 +14,7 @@ import {
   isOrganizationUser,
   requireOrganizationRole,
   requireOrganizationType,
+  requireRoleLevel,
 } from '@shared/utils/permission-policy'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import {
@@ -21,6 +22,8 @@ import {
   createLenderAdminSchema,
   getLenderFilterSchema,
   getOrgMemberRoleFilterSchema,
+  hsfResetOrgMemberPasswordSchema,
+  resetOrgMemberPasswordSchema,
 } from '@validators/organizationValidator'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { createDeveloperSchema } from '@validators/developerValidator'
@@ -96,6 +99,25 @@ router.get(
   }),
 )
 
+router.get(
+  '/lenders/:lender_id',
+  validateRequestQuery(getLenderFilterSchema),
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.LENDER_INSTITUTION,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { lender_id },
+    } = req
+    const response = await organizationController.getLenderByID(lender_id)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 router.post(
   '/lenders',
   validateRequest(createLenderAdminSchema),
@@ -123,6 +145,19 @@ router.get(
   asyncMiddleware(async (req, res) => {
     const { query } = req
     const response = await organizationController.getDevelopers(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/developers/:developer_id',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { developer_id },
+    } = req
+    const response =
+      await organizationController.getDeveloperByDeveloperId(developer_id)
     res.status(response.statusCode).json(response)
   }),
 )
@@ -169,6 +204,23 @@ router.get(
 )
 
 router.get(
+  '/:organization_id/members',
+  authenticate,
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req: Request, res: Response) => {
+    const {
+      params: { organization_id },
+      query,
+    } = req
+    const response = await organizationController.getOrganizationMembers(
+      organization_id,
+      query,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
   '/members/current-org-roles',
   validateRequestQuery(getOrgMemberRoleFilterSchema),
   authenticate,
@@ -196,9 +248,59 @@ router.get(
     )
     res.status(response.statusCode).json(response)
   }),
-) 
+)
 
+router.patch(
+  '/member/reset-password',
+  authorize(All(isOrganizationUser, requireRoleLevel(1))),
+  validateRequest(resetOrgMemberPasswordSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      body: { member_id },
+    } = req
+    const response = await organizationController.resetOrgMemberPassword(
+      authInfo,
+      member_id,
+    )
 
+    res.status(response.statusCode).json(response)
+  }),
+)
 
+router.patch(
+  '/members/:member_id/disable-2fa',
+  authorize(All(isOrganizationUser, requireRoleLevel(1))),
+  asyncMiddleware(async (req, res) => {
+    const { authInfo, body } = req
+    const response = await organizationController.disableOrgMember2fa(
+      authInfo,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.patch(
+  `/reset-password`,
+  authorize(
+    All(
+      requireOrganizationType(OrganizationType.HSF_INTERNAL),
+      requireOrganizationRole([Role.SUPER_ADMIN, Role.HSF_ADMIN]),
+    ),
+  ),
+  validateRequest(hsfResetOrgMemberPasswordSchema),
+  asyncMiddleware(async (req, res) => {
+    const { authInfo, body } = req
+
+    const response = await organizationController.hsfResetOrgMemberPassword(
+      authInfo,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
 
 export default router

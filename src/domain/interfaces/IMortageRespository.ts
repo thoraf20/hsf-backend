@@ -18,6 +18,7 @@ export interface IMortageRespository {
   getAllDips(
     filters: DipFilters,
   ): Promise<SeekPaginationResult<DIP & { application: Application }>>
+  updateDipById(dip: Partial<DIP>): Promise<DIP>
   payForMortageProcess(
     payment: Payment,
     metaData: Record<string, any>,

@@ -20,12 +20,14 @@ import { AddressRepository } from '@repositories/user/AddressRepository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { IAddressRepository } from '@interfaces/IAddressRepository'
 
 export class UserController {
   private manageOrganizations: ManageOrganizations
   constructor(
     private readonly userService: UserService,
     private readonly accountRepository: IAccountRepository,
+    private readonly addressRepository: IAddressRepository,
   ) {
     this.manageOrganizations = new ManageOrganizations(
       new OrganizationRepository(),
@@ -82,11 +84,16 @@ export class UserController {
       )
     }
 
+    const addresses = await this.addressRepository.getUserAddresses(user.id)
+
     user.allow_email_change = Boolean(user.password && user.password.length > 0)
 
     delete user.password
     delete user.mfa_totp_secret
-    return createResponse(StatusCodes.OK, 'User retrieved successfully', user)
+    return createResponse(StatusCodes.OK, 'User retrieved successfully', {
+      ...user,
+      addresses,
+    })
   }
 
   public async resetPassword(

@@ -69,6 +69,7 @@ export class UserService {
       last_name: input.last_name,
       image: input.image,
       phone_number: input.phone_number,
+      date_of_birth: input.date_of_birth,
     })
     return getUserClientView(updatedUser!)
   }

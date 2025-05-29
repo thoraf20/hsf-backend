@@ -21,3 +21,15 @@ export enum PaymentStatus {
   REVERSED = 'reversed',
   SUCCESS = 'success',
 }
+
+export enum DipPaymentStatus {
+  Completed = 'Completed',
+  Failed = 'Failed',
+  Pending = 'Pending',
+}
+
+export enum MortgagePaymentType {
+  DUE_DILIGENT = 'PAYMENT_FOR_DUE_DILIGENT',
+  BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
+  DECISION_IN_PRINCIPLE = 'Decision In Principle',
+}

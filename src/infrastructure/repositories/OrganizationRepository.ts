@@ -99,7 +99,7 @@ export class OrganizationRepository implements IOrganizationRepository {
     return paginate(query, paginateOption as any) // Cast to any due to generic paginate type
   }
 
-  async getOrganizationsByUserId(userId: string): Promise<
+  async getOrgenizationMemberByUserId(userId: string): Promise<
     UserOrganizationMember & {
       organization: Organization
       role: { id: string; name: string }
@@ -107,6 +107,29 @@ export class OrganizationRepository implements IOrganizationRepository {
   > {
     return db('user_organization_memberships as uom')
       .where('uom.user_id', userId)
+      .join('organizations as o', 'uom.organization_id', 'o.id')
+      .join('roles as r', 'uom.role_id', 'r.id')
+      .select(
+        'uom.*',
+        db.raw(`row_to_json(o) as organization`),
+        db.raw(`row_to_json(r) as role`),
+      )
+      .groupBy('uom.id', 'o.*', 'r.*')
+      .first()
+  }
+
+  async getOrganizationMemberByMemberID(
+    memberId: string,
+    organizationId: string,
+  ): Promise<
+    UserOrganizationMember & {
+      organization: Organization
+      role: { id: string; name: string }
+    }
+  > {
+    return db('user_organization_memberships as uom')
+      .where('uom.id', memberId)
+      .andWhere('o.id', organizationId)
       .join('organizations as o', 'uom.organization_id', 'o.id')
       .join('roles as r', 'uom.role_id', 'r.id')
       .select(

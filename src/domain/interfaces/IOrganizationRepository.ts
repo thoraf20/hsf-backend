@@ -8,7 +8,6 @@ import {
   SeekPaginationResult,
 } from '@shared/types/paginate'
 
-
 export interface IOrganizationRepository {
   createOrganization(organization: Organization): Promise<Organization>
   getOrganizationById(id: string): Promise<Organization | null>
@@ -41,9 +40,16 @@ export interface IOrganizationRepository {
     >
   >
 
-  getOrganizationsByUserId(
-    userId: string,
-    paginate?: SeekPaginationOption,
+  getOrgenizationMemberByUserId(userId: string): Promise<
+    UserOrganizationMember & {
+      organization: Organization
+      role: { id: string; name: string }
+    }
+  >
+
+  getOrganizationMemberByMemberID(
+    memberId: string,
+    organizationId: string,
   ): Promise<
     UserOrganizationMember & {
       organization: Organization
@@ -56,5 +62,4 @@ export interface IOrganizationRepository {
     userId: string,
     organizationId: string,
   ): Promise<boolean>
-
 }

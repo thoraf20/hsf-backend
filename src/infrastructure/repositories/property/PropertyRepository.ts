@@ -137,6 +137,12 @@ export class PropertyRepository implements IPropertyRepository {
     if (filters.location) {
       q = add(q).whereRaw(`${tablename}state ILIKE '%${filters.location}%'`)
     }
+
+    if (filters.organization_id) {
+      q = add(q).whereRaw(
+        `properties.organization_id = '${filters.organization_id}'`,
+      )
+    }
     // q = q.or.whereRaw(
     //   ` ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} )`,
     // )

@@ -65,10 +65,11 @@ const authenticate = asyncMiddleware(
         .where({ user_id: userId })
         .leftJoin('organizations as o', 'o.id', 'uom.organization_id')
         .select<{
+          id: string
           organization_id: string
           role_id: string
           type: OrganizationType
-        }>('uom.organization_id', 'uom.role_id', 'o.type')
+        }>('uom.id', 'uom.organization_id', 'uom.role_id', 'o.type')
         .first() // Select organization_id and role_id
 
       // 4. Construct AuthInfo object.  Only include the first membership.
@@ -88,6 +89,7 @@ const authenticate = asyncMiddleware(
 
         if (orgRoleRecord) {
           authInfo.organizationMembership = {
+            memberId: organizationMembership.id,
             organizationId: organizationMembership.organization_id,
             organizationRole: orgRoleRecord.name as Role,
           }

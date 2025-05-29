@@ -32,6 +32,8 @@ export interface IManageInspectionRepository {
     organization_id: string,
     filter?: any,
   ) => Promise<SeekPaginationResult<Inspection>>
+
+  getAllInspections: (filter?: any) => Promise<SeekPaginationResult<Inspection>>
   getInspectionById: (inspection_id: string) => Promise<Inspection>
   getUserInspectionForProperty(
     propertyId: string,

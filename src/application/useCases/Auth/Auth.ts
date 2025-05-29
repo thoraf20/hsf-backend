@@ -130,7 +130,12 @@ export class AuthService {
     //@ts-ignore
     delete input.user_id
     let user = await this.userRepository.create({
-      ...input,
+      first_name: input.first_name,
+      last_name: input.last_name,
+      password: input.password,
+      is_email_verified: true,
+      phone_number: input.phone_number,
+      is_admin: false,
       email,
       role_id: findRole.id,
       status: UserStatus.Active,

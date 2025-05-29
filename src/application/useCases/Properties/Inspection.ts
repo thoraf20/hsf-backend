@@ -20,7 +20,10 @@ import { v4 as uuidv4 } from 'uuid'
 import { RedisClient } from '@infrastructure/cache/redisClient'
 import { TimeSpan } from '@shared/utils/time-unit'
 import { IServiceOfferingRepository } from '@interfaces/IServiceOfferingRepository'
-import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
+import {
+  InspectionFilters,
+  ScheduleInspectionInput,
+} from '@validators/inspectionVaidator'
 import { createPendingInspectionCacheKey } from '@infrastructure/queue/inspectionQueue'
 import { serviceProductFeeCodes } from '@infrastructure/config/serviceProductFeeCodes'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
@@ -29,6 +32,7 @@ import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { getUserClientView } from '@entities/User'
+import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 export class InspectionService {
   private inspectionRepository: IInspectionRepository
   private serviceRepository: IServiceOfferingRepository
@@ -45,6 +49,7 @@ export class InspectionService {
     private readonly propertyRepository: IPropertyRepository,
     private readonly organizationRepository: OrganizationRepository,
     private readonly userRepository: UserRepository,
+    private readonly manageInspectionService: ManageInspectionUseCase,
   ) {
     this.inspectionRepository = inspectionRepository
     this.serviceRepository = serviceRepository
@@ -239,11 +244,20 @@ export class InspectionService {
     user_id: string,
     action?: string,
   ): Promise<SeekPaginationResult<Record<string, any>>> {
-    const Inspection = await this.inspectionRepository.getAllScheduleInspection(
-      user_id,
-      action,
-    )
+    const Inspection =
+      await this.inspectionRepository.getAllUserScheduleInspection(
+        user_id,
+        action,
+      )
     return Inspection
+  }
+
+  public async getAllInspections(
+    filters: InspectionFilters,
+  ): Promise<SeekPaginationResult<Record<string, any>>> {
+    const inspections =
+      await this.manageInspectionService.getAllInspections(filters)
+    return inspections
   }
 
   public async reponseToReschedule(

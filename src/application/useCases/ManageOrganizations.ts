@@ -27,6 +27,7 @@ import {
   CreateHSFAdminInput,
   CreateLenderInput,
   LenderFilters,
+  ResetOrgOwnerPasswordInput,
 } from '@validators/organizationValidator'
 import { StatusCodes } from 'http-status-codes'
 import { UserFilters } from '@validators/userValidator'
@@ -38,6 +39,7 @@ import {
 import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
+import template from '@infrastructure/email/template/constant'
 
 export class ManageOrganizations {
   constructor(
@@ -102,7 +104,7 @@ export class ManageOrganizations {
   }
 
   async getOrganizationsForUser(userId: string) {
-    return this.organizationRepository.getOrganizationsByUserId(userId)
+    return this.organizationRepository.getOrgenizationMemberByUserId(userId)
   }
 
   async getCurrentOrgRoles(organizationType: OrganizationType) {
@@ -138,14 +140,36 @@ export class ManageOrganizations {
             lender.organization_id,
           )
 
-        let owner: User
+        let owner: User & { membership?: UserOrganizationMember }
         if (organization.owner_user_id) {
           owner = await this.userRepository.findById(organization.owner_user_id)
+          owner.membership =
+            await this.organizationRepository.getOrgenizationMemberByUserId(
+              owner.id,
+            )
         }
         return { ...lender, organization, owner: getUserClientView(owner) }
       }),
     )
     return lenderContents
+  }
+
+  async getLenderById(lenderId: string) {
+    const lender = await this.lenderRepository.getLenderById(lenderId)
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      lender.organization_id,
+    )
+
+    let owner: User & { membership?: UserOrganizationMember }
+    if (organization.owner_user_id) {
+      owner = await this.userRepository.findById(organization.owner_user_id)
+      owner.membership =
+        await this.organizationRepository.getOrgenizationMemberByUserId(
+          owner.id,
+        )
+    }
+    return { ...lender, organization, owner: getUserClientView(owner) }
   }
 
   async getAdmins(filters: UserFilters, type: 'admin' | 'sub-admin') {
@@ -607,5 +631,211 @@ export class ManageOrganizations {
       ...developerDocGroup,
       documents: documentGroupTypes,
     }
+  }
+
+  async getDeveloperByDeveloperID(developerId: string) {
+    const developer =
+      await this.developerRepository.getDeveloperById(developerId)
+
+    if (!developer) {
+      return null
+    }
+
+    const org = await this.organizationRepository.getOrganizationById(
+      developer.organization_id,
+    )
+    const owner = await this.userRepository.findById(org.owner_user_id)
+
+    const meta = await this.propertyRepository.findPropertiesByDeveloperOrg(
+      developer.organization_id,
+      { result_per_page: 1 },
+    )
+
+    return {
+      ...developer,
+      owner: getUserClientView(owner),
+      property_listing_counts: meta.total_records,
+      organization: {
+        ...org,
+      },
+    }
+  }
+
+  async resetOrgMemberPassword(authInfo: AuthInfo, memberId: string) {
+    const member =
+      await this.organizationRepository.getOrganizationMemberByMemberID(
+        memberId,
+        authInfo.currentOrganizationId,
+      )
+
+    if (!member) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Member not found in this organization',
+      )
+    }
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      authInfo.currentOrganizationId,
+    )
+
+    if (
+      !(
+        isHigherRoleLevel(authInfo.globalRole, member.role.name as Role) ||
+        authInfo.userId === organization.owner_user_id
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'you are not authorized to reset password this admin account',
+      )
+    }
+
+    if (authInfo.organizationMembership.memberId === member.id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allow to self reset your password. Please contact an Admin with higher priviledge on your organization.',
+      )
+    }
+
+    const defaultPassword = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(defaultPassword)
+
+    const user = await this.userRepository.update(member.user_id, {
+      password: hashedPassword,
+      is_default_password: true,
+      force_password_reset: true,
+    })
+
+    const url = `${process.env.FRONTEND_URL}/auth/login`
+    template.passwordResetForOrganization(
+      user.email,
+      `${user.first_name} ${user.last_name}`,
+      defaultPassword,
+      url,
+      organization.name,
+    )
+
+    return {
+      email: user.email,
+      generated_password: defaultPassword,
+    }
+  }
+
+  async hsfResetOrgMemberPassword(
+    authInfo: AuthInfo,
+    input: ResetOrgOwnerPasswordInput,
+  ) {
+    const organization = await this.organizationRepository.getOrganizationById(
+      input.organization_id,
+    )
+
+    if (!organization) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    const member =
+      await this.organizationRepository.getOrganizationMemberByMemberID(
+        input.member_id,
+        organization.id,
+      )
+
+    console.log({ member, organization })
+
+    if (!member) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Member not found in this organization',
+      )
+    }
+
+    const defaultPassword = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(defaultPassword)
+
+    const user = await this.userRepository.update(member.user_id, {
+      password: hashedPassword,
+      is_default_password: true,
+      force_password_reset: false,
+    })
+
+    const url = `${process.env.FRONTEND_URL}/auth/login`
+    template.passwordResetForOrganization(
+      user.email,
+      `${user.first_name} ${user.last_name}`,
+      defaultPassword,
+      url,
+      organization.name,
+    )
+
+    return {
+      email: user.email,
+      generated_password: defaultPassword,
+    }
+  }
+
+  async disableOrgMember2fa(authInfo: AuthInfo, memberId: string) {
+    const member =
+      await this.organizationRepository.getOrganizationMemberByMemberID(
+        memberId,
+        authInfo.currentOrganizationId,
+      )
+
+    if (!member) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Member not found in this organization',
+      )
+    }
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      authInfo.currentOrganizationId,
+    )
+
+    if (
+      !(
+        isHigherRoleLevel(authInfo.globalRole, member.role.name as Role) ||
+        authInfo.userId === organization.owner_user_id
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'you are not authorized to disable 2fa this admin account',
+      )
+    }
+
+    if (authInfo.organizationMembership.memberId === member.id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allow to disable 2fa for your self. Please contact an Admin with higher priviledge on your organization.',
+      )
+    }
+
+    let user = await this.userRepository.findById(member.user_id)
+
+    if (!user.require_authenticator_mfa) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        '2FA is already disabled for this user.',
+      )
+    }
+
+    user = await this.userRepository.update(member.user_id, {
+      require_authenticator_mfa: false,
+      mfa_totp_secret: null,
+    })
+
+    await this.userRepository.clearRecoveryCodesByUserId(user.id)
+    template.disableOrgMember2faEmail(
+      user.email,
+      `${user.first_name} ${user.last_name}`,
+      organization.name,
+    )
+
+    return getUserClientView(user)
   }
 }

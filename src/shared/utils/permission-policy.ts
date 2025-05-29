@@ -7,6 +7,7 @@ import { UserRolePermission } from '@entities/User'
  * including their role within that organization.
  */
 export interface OrganizationMembership {
+  memberId: string
   organizationId: string
   permissions?: Array<UserRolePermission>
   organizationRole: Role // The role the user has within this specific organization

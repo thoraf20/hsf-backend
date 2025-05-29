@@ -17,7 +17,7 @@ import fileRoutes from './file/file.routes'
 import manageAgentRoutes from './Agents/ManageAgent.routes'
 import mfaRoutes from './userRoutes/mfa.routes'
 import applicationRoutes from './application/application.routes'
-import manageApplicationRoutes from './application/application.manage.routes'
+import manageInspectionRoutes from './application/application.manage.routes'
 import organizationRoutes from './organization/organization.routes'
 import notificationRoutes from './userRoutes/notificationRoutes'
 import manageUserRoutes from './userRoutes/user.manage.routes'
@@ -42,7 +42,7 @@ routes.use('/applications', authenticate, limiter, applicationRoutes)
 routes.use('/file', fileRoutes)
 routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
 routes.use('/manage', authenticate, manageAgentRoutes)
-routes.use('/manage', authenticate, limiter, manageApplicationRoutes)
+routes.use('/manage', authenticate, limiter, manageInspectionRoutes)
 routes.use('/manage', authenticate, limiter, manageUserRoutes)
 routes.use('/manage', authenticate, limiter, managePaymentRoutes)
 routes.use('/organizations', authenticate, limiter, organizationRoutes)

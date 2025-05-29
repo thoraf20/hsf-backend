@@ -23,7 +23,11 @@ const userRoutes: Router = Router()
 
 const userServices = new UserService(new UserRepository())
 const accountRepository = new AccountRepository()
-const userController = new UserController(userServices, accountRepository)
+const userController = new UserController(
+  userServices,
+  accountRepository,
+  new AddressRepository(),
+)
 const addressController = new AddressController(
   new AddressService(new AddressRepository()),
 )

@@ -111,3 +111,22 @@ export const getHsfSubAdminFiltersSchema = withPaginateSchema(
 )
 
 export type HSFSubAdminFilters = z.infer<typeof getHsfSubAdminFiltersSchema>
+
+export const resetOrgMemberPasswordSchema = z.object({
+  member_id: z.string().nonempty(),
+})
+
+export const hsfResetOrgMemberPasswordSchema = z.object({
+  member_id: z.string().nonempty(),
+  organization_id: z.string().nonempty(),
+})
+
+export type ResetOrgOwnerPasswordInput = z.infer<
+  typeof hsfResetOrgMemberPasswordSchema
+>
+
+export const disable2faOrgMemberSchema = z.object({
+  member_id: z.string().nonempty(),
+})
+
+export type Disable2faOrgMemberInput = z.infer<typeof disable2faOrgMemberSchema>

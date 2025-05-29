@@ -5,6 +5,7 @@ import {
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
+import { InspectionFilters } from '@validators/inspectionVaidator'
 
 export interface IInspectionRepository {
   createInpection(
@@ -16,7 +17,7 @@ export interface IInspectionRepository {
     user_id: string,
   ): Promise<Inspection>
 
- responseToReschedule(
+  responseToReschedule(
     inspection_id: string,
     status: Partial<Inspection>,
   ): Promise<Inspection>
@@ -25,12 +26,17 @@ export interface IInspectionRepository {
     inspectionId: string,
     update: Partial<Inspection>,
   ): Promise<Inspection>
-  getAllScheduleInspection(
+  getAllUserScheduleInspection(
     user_id: string,
     query: string,
     filter?: Record<string, any>,
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Record<string, any>>>
+
+  getAllScheduleInspection(
+    filters: InspectionFilters,
+  ): Promise<SeekPaginationResult<Inspection>>
+
   getScheduleInspectionById(
     inspection_id: string,
   ): Promise<Inspection & Properties>
@@ -38,6 +44,4 @@ export interface IInspectionRepository {
     property_ids: string[],
     paginate?: SeekPaginationOption,
   ): Promise<SeekPaginationResult<Inspection>>
-  
-
 }

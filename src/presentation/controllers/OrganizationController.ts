@@ -7,8 +7,10 @@ import { createResponse } from '@presentation/response/responseType'
 import {
   CreateHSFAdminInput,
   CreateLenderInput,
+  Disable2faOrgMemberInput,
   LenderFilters,
   OrgMemberRoleFilters,
+  ResetOrgOwnerPasswordInput,
   UpdateOrganizationInput,
 } from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
@@ -167,6 +169,16 @@ export class OrganizationController {
     )
   }
 
+  async getLenderByID(lenderId: string) {
+    const lenderContents =
+      await this.manageOrganizations.getLenderById(lenderId)
+    return createResponse(
+      StatusCodes.OK,
+      'Lender retrieved successfully',
+      lenderContents,
+    )
+  }
+
   async getSubAdmins(filters: UserFilters) {
     const subAdminContents = await this.manageOrganizations.getAdmins(
       filters,
@@ -228,6 +240,24 @@ export class OrganizationController {
     )
   }
 
+  async getDeveloperByDeveloperId(developerId: string) {
+    const developer =
+      await this.manageOrganizations.getDeveloperByDeveloperID(developerId)
+
+    if (!developer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Developer not found',
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      'Developer retrived successfully',
+      developer,
+    )
+  }
+
   async createDeveloper(data: CreateDeveloperInput) {
     const newDeveloper = await this.manageOrganizations.createDeveloper(data)
     return createResponse(
@@ -245,6 +275,49 @@ export class OrganizationController {
       StatusCodes.OK,
       'Developer registration documents',
       developerRegDocs,
+    )
+  }
+
+  async resetOrgMemberPassword(authInfo: AuthInfo, memberId: string) {
+    const newLoginCred = await this.manageOrganizations.resetOrgMemberPassword(
+      authInfo,
+      memberId,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Password reset successfully.',
+      newLoginCred,
+    )
+  }
+
+  async hsfResetOrgMemberPassword(
+    authInfo: AuthInfo,
+    input: ResetOrgOwnerPasswordInput,
+  ) {
+    const newLoginCred =
+      await this.manageOrganizations.hsfResetOrgMemberPassword(authInfo, input)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Password reset successfully.',
+      newLoginCred,
+    )
+  }
+
+  async disableOrgMember2fa(
+    authInfo: AuthInfo,
+    input: Disable2faOrgMemberInput,
+  ) {
+    const disabled2faUser = await this.manageOrganizations.disableOrgMember2fa(
+      authInfo,
+      input.member_id,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Authenicator mfa disabled successfully.',
+      disabled2faUser,
     )
   }
 }
