@@ -108,7 +108,7 @@ export class AuthService {
     emailTemplates.welcomeEmail(input.email, `${input.email}`)
     emailTemplates.emailVerificationEmail(input.email, otp.toString())
   }
-  async register(
+  async   register(
     input: Omit<User, 'email' | 'tempId'> & { tempId: string },
   ): Promise<User> {
     const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${input.tempId}`
@@ -126,7 +126,7 @@ export class AuthService {
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
-
+    console.log(input)
     //@ts-ignore
     delete input.user_id
     let user = await this.userRepository.create({

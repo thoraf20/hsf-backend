@@ -22,9 +22,7 @@ export const UserSchema = z.object({
   profile: z.string().optional(),
   image: z.string().url('Invalid image URL').optional(),
   userAgent: z.string().optional(),
-  failedLoginAttempts: z.number().int().min(0).default(0),
-  isEmailVerified: z.boolean().default(false),
-  isPhoneVerified: z.boolean().default(false),
+
 })
 
 export const RegisterEmail = z.object({
