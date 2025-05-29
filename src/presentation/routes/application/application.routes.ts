@@ -22,6 +22,7 @@ import { ApplicationService } from '@use-cases/Application/application'
 import {
   createApplicationSchema,
   dipFiltersSchema,
+  initiateMortgagePaymentSchema,
   lenderDipResponseSchema,
   offerLetterFiltersSchema,
   requestOfferLetterRespondSchema,
@@ -29,6 +30,7 @@ import {
   scheduleEscrowMeetingRespondSchema,
   scheduleEscrowMeetingSchema,
   updateDipLoanSchema,
+  userDipResponseSchema,
 } from '@validators/applicationValidator'
 import {
   PropertyFilters,
@@ -47,6 +49,11 @@ import { MortageRepository } from '@repositories/property/MortageRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { inspectionFiltersSchema } from '@validators/inspectionVaidator'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { PaymentUseCase } from '@use-cases/Payments/payments'
+import { PaymentRepostory } from '@repositories/PaymentRepository'
+import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
+import { PaymentService } from '@infrastructure/services/paymentService.service'
+import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -83,6 +90,13 @@ const applicationController = new ApplicationController(
     new InspectionRepository(),
   ),
   manageDipService,
+
+  new PaymentUseCase(
+    new PaymentRepostory(),
+    new ServiceOfferingRepository(),
+    new UserRepository(),
+    new PaymentService(new PaymentProcessorFactory()),
+  ),
 )
 const applicationRoutes = Router()
 
@@ -382,6 +396,24 @@ applicationRoutes.patch(
   }),
 )
 
+applicationRoutes.patch(
+  '/:application_id/mortgage/dips/user/respond',
+  authorize(isHomeBuyer),
+  validateRequest(userDipResponseSchema),
+  asyncMiddleware(async (req, res) => {
+    const { params, body, authInfo } = req
+    const { application_id } = params
+    const response = await applicationController.userDipRespond(
+      authInfo,
+      application_id,
+      body.dip_id,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 applicationRoutes.put(
   '/:application_id/mortgage/dips/:dip_id',
   authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
@@ -466,6 +498,26 @@ applicationRoutes.get(
     const response = await applicationController.getInspectionsByApplicationId(
       application_id,
       authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.post(
+  '/:application_id/mortgage/payment/initiate',
+  authorize(isHomeBuyer),
+  validateRequest(initiateMortgagePaymentSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      body,
+      params: { application_id },
+    } = req
+    const response = await applicationController.initiateMortgagePaymentIntent(
+      authInfo,
+      application_id,
+      body,
     )
 
     res.status(response.statusCode).json(response)

@@ -344,7 +344,7 @@ export class PropertyService {
       )
     }
 
-    return await this.applicationRepository.getApplicationById(application_id)
+    return application
   }
 
   async getLenderBanks() {

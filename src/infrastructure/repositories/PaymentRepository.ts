@@ -9,11 +9,24 @@ import { PaymentFilters } from '@validators/paymentValidator'
 import { Knex } from 'knex'
 
 export class PaymentRepostory implements IPaymentRepository {
+  async create(data: Partial<Payment>): Promise<Payment> {
+    const [created] = await db('payments').insert(data).returning('*')
+    return created
+  }
+
   getById(id: string): Promise<Payment & { payer?: User }> {
     return db('payments')
       .leftJoin('users as u', 'u.id', 'payments.user_id')
       .select('payments.*', db.raw('row_to_json(u) as payer'))
       .where({ id })
+      .first()
+  }
+
+  getByType(type: string): Promise<Payment & { payer?: User }> {
+    return db('payments')
+      .leftJoin('users as u', 'u.id', 'payments.user_id')
+      .select('payments.*', db.raw('row_to_json(u) as payer'))
+      .where({ paymentType: type })
       .first()
   }
 

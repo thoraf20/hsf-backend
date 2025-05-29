@@ -1,3 +1,4 @@
+import { MortgagePaymentType } from '@domain/enums/PaymentEnum'
 import {
   ApplicationPurchaseType,
   DIPStatus,
@@ -123,3 +124,20 @@ export const lenderDipResponseSchema = z.object({
 })
 
 export type LenderDipResponse = z.infer<typeof lenderDipResponseSchema>
+
+export const userDipResponseSchema = z.object({
+  approve: z.nativeEnum(QueryBoolean),
+  dip_id: z.string().nonempty(),
+})
+
+export type UserDipResponse = z.infer<typeof userDipResponseSchema>
+
+export const initiateMortgagePaymentSchema = z.object({
+  payment_for: z.nativeEnum(MortgagePaymentType),
+  amount: z.coerce.number(),
+  product_code: z.string().nonempty(),
+})
+
+export type InitiateMortgagePayment = z.infer<
+  typeof initiateMortgagePaymentSchema
+>

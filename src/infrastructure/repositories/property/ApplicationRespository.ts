@@ -284,8 +284,14 @@ export class ApplicationRepository implements IApplicationRespository {
       )
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
       .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
-      .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
-      .select(
+      .leftJoin('dip as dp', (qb) => {
+        // qb.on('dp.dip_id', 'dp.dip_id')
+        qb.on('dp.eligibility_id', 'el.eligibility_id').andOn(
+          'a.application_id',
+          'dp.application_id',
+        )
+      })
+      .and.select(
         'es.escrow_status',
         'es.is_escrow_set',
         'pc.closing_status',

@@ -1,12 +1,21 @@
 import { PaymentController } from '@controllers/PaymentController'
+import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
+import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
+import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware } from '@routes/index.t'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import { PaymentUseCase } from '@use-cases/Payments/payments'
 import { paymentFiltersSchema } from '@validators/paymentValidator'
 import { Router } from 'express'
 
-const paymentService = new PaymentUseCase(new PaymentRepostory())
+const paymentService = new PaymentUseCase(
+  new PaymentRepostory(),
+  new ServiceOfferingRepository(),
+  new UserRepository(),
+  new PaymentService(new PaymentProcessorFactory()),
+)
 const controller = new PaymentController(paymentService)
 const managePaymentRoutes = Router()
 

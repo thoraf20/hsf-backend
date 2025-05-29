@@ -3,6 +3,7 @@ import {
   ApplicationStatus,
   DIPLenderStatus,
   DIPStatus,
+  UserAction,
 } from '@domain/enums/propertyEnum'
 import { Address, getUserClientView, UserClientView } from '@entities/User'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
@@ -233,6 +234,75 @@ export class ManageDipUseCase {
           : DIPLenderStatus.Rejected,
 
       dip_status: DIPStatus.AwaitingUserAction,
+    })
+
+    return updatedDip
+  }
+
+  async userDipResponse(
+    authInfo: AuthInfo,
+    applicationId: string,
+    dipId: string,
+    input: LenderDipResponse,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!(application && application.user_id === authInfo.userId)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    if (application.status === ApplicationStatus.REJECTED) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Sorry, You can proceed with this dip because the application have been rejected',
+      )
+    }
+
+    const dip = await this.mortgageRepository.getDipByID(dipId)
+
+    if (!dip) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Dip not found')
+    }
+
+    if (dip.application_id !== application.application_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Dip not associated with this application',
+      )
+    }
+
+    if (
+      dip.user_action === UserAction.Accept &&
+      input.approve === QueryBoolean.YES
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Dip already approved',
+      )
+    }
+
+    if (
+      dip.user_action === UserAction.Reject &&
+      input.approve === QueryBoolean.NO
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Dip already rejected',
+      )
+    }
+
+    const updatedDip = await this.mortgageRepository.updateDipById({
+      dip_id: dip.dip_id,
+      user_action:
+        input.approve === QueryBoolean.YES
+          ? UserAction.Accept
+          : UserAction.Reject,
+
+      dip_status: DIPStatus.PaymentPending,
     })
 
     return updatedDip

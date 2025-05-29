@@ -1,3 +1,4 @@
+import { DipPaymentStatus } from '@domain/enums/PaymentEnum'
 import {
   DIPLenderStatus,
   DIPStatus,
@@ -18,7 +19,7 @@ export class DIP {
   generated_at?: Date
   user_action?: UserAction
   user_action_at?: string
-  payment_status?: string
+  payment_status?: DipPaymentStatus
   payment_transaction_id?: string
   documents_status?: string
   documents_review_request_id?: string
