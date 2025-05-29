@@ -51,7 +51,7 @@ export default {
   sendMfaOtpEmail(email: string, otp: string, supportLinkUrl: string) {
     const subject = `Your MFA Verification Code`
     const text = `Use this code to complete your login or action.`
-    let html = templates.VerificationEmail // Reusing VerificationEmail template for OTPs
+    let html = templates.mfaVerification // Reusing VerificationEmail template for OTPs
     html = safeReplace(html, `{{otp}}`, otp)
     html = safeReplace(html, `{{SUPPORT_LINK}}`, supportLinkUrl)
 
