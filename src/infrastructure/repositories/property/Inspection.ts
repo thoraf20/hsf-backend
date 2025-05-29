@@ -1,12 +1,15 @@
 import { Properties } from '@domain/entities/Property'
 import { Inspection } from '@domain/entities/Inspection'
 import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
+import { InspectionFilters } from '@validators/inspectionVaidator'
+import { SearchType } from '@shared/types/repoTypes'
+import { applyPagination } from '@shared/utils/paginate'
 
 export class InspectionRepository implements IInspectionRepository {
   async createInpection(
@@ -73,7 +76,7 @@ export class InspectionRepository implements IInspectionRepository {
     })
   }
 
-  async getAllScheduleInspection(
+  async getAllUserScheduleInspection(
     user_id: string,
     query_param?: string,
     filter?: Record<string, any>,
@@ -107,6 +110,45 @@ export class InspectionRepository implements IInspectionRepository {
       page: paginate?.page_number || 1,
       result_per_page: paginate?.result_per_page,
     })
+  }
+
+  useFilters(q: Knex.QueryBuilder<any, any[]>, filters: InspectionFilters) {
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.organization_id) {
+      q = add(q).whereRaw(`p.organization_id = '${filters.organization_id}'`)
+    }
+
+    if (filters.user_id) {
+      q = add(q).whereRaw(`i.user_id = '${filters.user_id}'`)
+    }
+
+    if (filters.status) {
+      q = add(q).whereRaw(`i.inspection_status = '${filters.status}'`)
+    }
+    return q
+  }
+
+  async getAllScheduleInspection(
+    filters: InspectionFilters,
+  ): Promise<SeekPaginationResult<Inspection>> {
+    let query = db('inspection as i')
+      .select(
+        'i.*',
+        'i.id as inspection_id',
+        'i.user_id as home_buyer_id',
+        'properties.id as property_id',
+        'properties.property_name',
+        'properties.street_address',
+        'inspection.inspection_date',
+        'properties.organization_id',
+      )
+      .join('properties as p', 'i.property_id', 'p.id')
+      .leftJoin('users as u', 'i.user_id', 'u.id')
+
+    query = this.useFilters(query, filters)
+
+    return applyPagination(query, filters)
   }
 
   async getScheduleInspectionById(

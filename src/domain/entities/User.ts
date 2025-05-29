@@ -17,6 +17,7 @@ export class User extends BaseEntity {
   password: string
   image?: string
   user_agent?: string
+  date_of_birth?: Date | string
   is_admin: boolean
   user_id?: string
   role?: Role
@@ -96,6 +97,7 @@ export function getUserClientView(
   | 'email'
   | 'phone_number'
   | 'is_mfa_enabled'
+  | 'date_of_birth'
   | 'is_email_verified'
   | 'is_phone_verified'
   | 'is_default_password'
@@ -106,6 +108,7 @@ export function getUserClientView(
   | 'role_id'
   | 'image'
   | 'profile'
+  | 'membership'
   | 'ip_address'
   | 'last_logged_in_at'
   | 'failed_login_attempts'
@@ -128,6 +131,8 @@ export function getUserClientView(
     status: user.status,
     image: user.image,
     role: user.role,
+    date_of_birth: user.date_of_birth,
+    membership: user.membership,
     role_id: user.role_id,
     profile: user.profile,
     force_password_reset: user.force_password_reset,

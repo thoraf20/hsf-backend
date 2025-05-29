@@ -43,12 +43,16 @@ export class ManageInspectionController {
     organization_id: string,
   ): Promise<ApiResponse<any>> {
     const response =
-      await this.manageInspectionService.createDayAvailabilityAndSlot(payload, organization_id)
+      await this.manageInspectionService.createDayAvailabilityAndSlot(
+        payload,
+        organization_id,
+      )
     return createResponse(StatusCodes.CREATED, 'success', response)
   }
 
-
-  async getOrganizationAvailability(organization_id: string): Promise<ApiResponse<any>> {
+  async getOrganizationAvailability(
+    organization_id: string,
+  ): Promise<ApiResponse<any>> {
     const response =
       await this.manageInspectionService.getOrganizationAvailability(
         organization_id,
@@ -56,7 +60,11 @@ export class ManageInspectionController {
     return createResponse(StatusCodes.OK, 'success', response)
   }
 
-    async rescheduleInspection(payload: DayAvailabilitySlot,inspection_id: string, organization_id: string): Promise<ApiResponse<any>> {
+  async rescheduleInspection(
+    payload: DayAvailabilitySlot,
+    inspection_id: string,
+    organization_id: string,
+  ): Promise<ApiResponse<any>> {
     const response =
       await this.manageInspectionService.rescheduleInspectionToUpdateInspectionTable(
         payload,
@@ -66,13 +74,21 @@ export class ManageInspectionController {
     return createResponse(StatusCodes.OK, 'success', response)
   }
 
-  async updateInspectionStatus(inspection_id: string, status: string, organization_id:string  ): Promise<ApiResponse<any>> {
-     const response = await this.manageInspectionService.updateInspectionStatus(inspection_id, status, organization_id)
-     return createResponse(StatusCodes.OK, 'success', response)
+  async updateInspectionStatus(
+    inspection_id: string,
+    status: string,
+    organization_id: string,
+  ): Promise<ApiResponse<any>> {
+    const response = await this.manageInspectionService.updateInspectionStatus(
+      inspection_id,
+      status,
+      organization_id,
+    )
+    return createResponse(StatusCodes.OK, 'success', response)
   }
 
-  async deleteInspection (inspection_id:string): Promise<ApiResponse<any>> {
-      await this.manageInspectionService.deleteInspection(inspection_id)
-     return createResponse(StatusCodes.OK, 'success', {})
+  async deleteInspection(inspection_id: string): Promise<ApiResponse<any>> {
+    await this.manageInspectionService.deleteInspection(inspection_id)
+    return createResponse(StatusCodes.OK, 'success', {})
   }
 }

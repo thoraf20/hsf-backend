@@ -110,6 +110,7 @@ export const updateProfileSchema = z
     first_name: z.string().min(2, 'Firstname must have at least 2 characters'),
     last_name: z.string().min(2, 'Lastname must have at least 2 characters'),
     phone_number: z.string().nullable().optional(),
+    date_of_birth: z.coerce.date().nullable(),
     image: z.string().url('Invalid image URL'),
   })
   .partial()
@@ -144,7 +145,6 @@ export const getUserByIdSchema = z.object({
   last_name: z.string().optional(),
   email: z.string().optional(),
   phone_number: z.string().optional(),
-
 })
 export type UserFilters = z.infer<typeof getUserFiltersSchema>
 export type UserFilter = z.infer<typeof getUserByIdSchema>

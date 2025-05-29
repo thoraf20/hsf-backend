@@ -18,6 +18,11 @@ export default {
             margin: 20px auto;
             background-color: #ffffff;
             padding: 20px;
+`,
+  disable2faEmail: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             text-align: center;
@@ -836,7 +841,7 @@ export default {
 </html>
 `,
 
-  inspectionRescheduleConfirmation :  `<!DOCTYPE html>
+  inspectionRescheduleConfirmation: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -889,8 +894,8 @@ export default {
     <h2>Inspection Appointment Update</h2>
     <p>Dear {{organization_name}},</p>
 
-     ✅ For Confirmation 
-    
+     ✅ For Confirmation
+
     <p>{{client_name}} has confirm your inspection appointment scheduled for <strong>{{date_time}}</strong>.</p>
     <p>Our team looks forward to seeing you at the location: <strong>{{address}}</strong>.</p>
 
@@ -906,8 +911,7 @@ export default {
 </html>
 `,
 
-
-inspectionRescheduleCancellation :  `<!DOCTYPE html>
+  inspectionRescheduleCancellation: `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -973,7 +977,7 @@ inspectionRescheduleCancellation :  `<!DOCTYPE html>
 </body>
 </html>
 `,
-resetPasswordForOrganization: `<!DOCTYPE html>
+  resetPasswordForOrganization: `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -1050,15 +1054,15 @@ resetPasswordForOrganization: `<!DOCTYPE html>
     <div class="content">
       <p>Hello, {{full_name}}</p>
       <p>We’ve reset your password as requested. Please use the temporary password below to log in:</p>
-      
+
       <div class="password-box">{{default_password}}</div>
-      
+
       <p>After logging in, we strongly recommend that you change your password for security purposes.</p>
-      
+
       <a href={{url}} class="button">Log In</a>
 
       <p>If you didn’t request this change, please contact our support team immediately.</p>
-      
+
       <p>Best regards,<br>The IT Support Team</p>
     </div>
     <div class="footer">
@@ -1070,7 +1074,39 @@ resetPasswordForOrganization: `<!DOCTYPE html>
 </body>
 </html>
 
-`
-
-
+`,
+  disable2faEmailByOrg: `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2FA Disabled</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+    background-color: #ffffff;
+    padding: 20px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>2FA Disabled</h1>
+  <p>Dear {{full_name}},</p>
+  <p>2-Factor Authentication has been disabled for your account in {{organization_name}}.</p>
+  <p>If you did not request this change, please contact support immediately.</p>
+  <p>Sincerely,<br>The HSF Team</p>
+  <p>{{year}}</p>
+</div>
+</body>
+</html>
+`,
 }

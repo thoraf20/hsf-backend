@@ -93,11 +93,15 @@ export enum InspectionStatus {
 export enum DIPStatus {
   Generated = 'Generated',
   AwaitingUserAction = 'Awaiting User Action',
-  Accepted = 'Accepted',
-  Rejected = 'Rejected',
+  AwaitingLenderAction = 'Awaiting Lender Action',
   PaymentPending = 'Payment Pending',
   DocumentsPending = 'Documents Pending',
   Completed = 'Completed',
+}
+
+export enum DIPLenderStatus {
+  Accepted = 'Accepted',
+  Rejected = 'Rejected',
 }
 
 export enum UserAction {

@@ -5,7 +5,10 @@ import {
   ApiResponse,
   createResponse,
 } from '@presentation/response/responseType'
-import { ScheduleInspectionInput } from '@validators/inspectionVaidator'
+import {
+  InspectionFilters,
+  ScheduleInspectionInput,
+} from '@validators/inspectionVaidator'
 import { StatusCodes } from 'http-status-codes'
 
 export class InspectionController {
@@ -26,8 +29,14 @@ export class InspectionController {
     )
   }
 
-  public async getScheduleInspection(user: string, action?: string): Promise<ApiResponse<any>> {
-    const inspection = await this.inspectionService.getInspectionSchedule(user, action)
+  public async getScheduleInspection(
+    user: string,
+    action?: string,
+  ): Promise<ApiResponse<any>> {
+    const inspection = await this.inspectionService.getInspectionSchedule(
+      user,
+      action,
+    )
     return createResponse(
       StatusCodes.OK,
       'Inspection retrived successfully',
@@ -35,9 +44,20 @@ export class InspectionController {
     )
   }
 
+  public async getAllInspection(
+    filters: InspectionFilters,
+  ): Promise<ApiResponse<any>> {
+    const inspections = await this.inspectionService.getAllInspections(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'Inspections retrived successfully',
+      inspections,
+    )
+  }
+
   public async responseToReschedule(
     inspection_id: string,
-    payload: Partial<Inspection>
+    payload: Partial<Inspection>,
   ): Promise<ApiResponse<any>> {
     const inspection = await this.inspectionService.reponseToReschedule(
       inspection_id,
@@ -63,7 +83,6 @@ export class InspectionController {
       inspection,
     )
   }
-
 
   public async getInspectionById(
     property_id: string,

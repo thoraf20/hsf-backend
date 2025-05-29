@@ -161,16 +161,21 @@ export class MortageRepository implements IMortageRespository {
     const add = createUnion(SearchType.EXCLUSIVE)
 
     if (filters.status) {
-      q = add(q).andWhereRaw(db.raw(`d.dip_status = '${filters.status}'`))
+      q = add(q).whereRaw(db.raw(`d.dip_status = '${filters.status}'`))
     }
 
     if (filters.user_id) {
-      q = add(q).andWhereRaw(db.raw(`d.user_id = '${filters.user_id}'`))
+      q = add(q).whereRaw(db.raw(`d.user_id = '${filters.user_id}'`))
     }
 
     if (filters.property_id) {
-      q = add(q).andWhereRaw(db.raw(`d.property_id = '${filters.property_id}'`))
+      q = add(q).whereRaw(db.raw(`d.property_id = '${filters.property_id}'`))
     }
+
+    if (filters.lender_id) {
+      q = add(q).whereRaw(`e.lender_id = '${filters.lender_id}'`)
+    }
+
     return q
   }
 
@@ -179,11 +184,21 @@ export class MortageRepository implements IMortageRespository {
   ): Promise<SeekPaginationResult<DIP & { application: Application }>> {
     let baseQuery = db<DIP>('dip as d')
       .innerJoin('application as a', 'a.application_id', 'd.application_id')
+      .innerJoin('eligibility as e', 'e.eligibility_id', 'a.eligibility_id')
       .select('d.*', db.raw('row_to_json(a) as application'))
 
     baseQuery = this.useFilter(baseQuery, filters)
     baseQuery = baseQuery.orderBy('created_at', 'desc')
 
     return applyPagination(baseQuery, filters)
+  }
+
+  async updateDipById(dip: Partial<DIP>): Promise<DIP> {
+    const [updated] = await db<DIP>('dip')
+      .update(dip)
+      .where('dip_id', dip.dip_id)
+      .returning('*')
+
+    return updated
   }
 }

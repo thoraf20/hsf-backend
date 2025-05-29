@@ -4,6 +4,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
@@ -101,8 +102,24 @@ export const dipFiltersSchema = withPaginateSchema(
     status: z.nativeEnum(DIPStatus).optional(),
     user_id: z.string().nonempty().optional(),
     property_id: z.string().nonempty().optional(),
+    lender_id: z.string().nonempty().optional(),
     organization_id: z.string().nonempty().optional(),
   }),
 )
 
 export type DipFilters = z.infer<typeof dipFiltersSchema>
+
+export const updateDipLoanSchema = z.object({
+  approved_loan_amount: z.coerce.number(),
+  interest_rate: z.coerce.number(),
+  loan_term: z.coerce.number().int(),
+})
+
+export type UpdateDipLoanInput = z.infer<typeof updateDipLoanSchema>
+
+export const lenderDipResponseSchema = z.object({
+  approve: z.nativeEnum(QueryBoolean),
+  dip_id: z.string().nonempty(),
+})
+
+export type LenderDipResponse = z.infer<typeof lenderDipResponseSchema>

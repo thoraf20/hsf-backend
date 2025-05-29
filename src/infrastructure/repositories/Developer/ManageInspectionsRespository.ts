@@ -1,7 +1,7 @@
 import { Inspection } from '@entities/Inspection'
 import { IManageInspectionRepository } from '@interfaces/Developer/IManageInspectionRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { applyPagination } from '@shared/utils/paginate'
@@ -11,6 +11,9 @@ import {
   schduleTime,
 } from '@entities/Availabilities'
 import { InspectionStatus } from '@domain/enums/propertyEnum'
+import { Knex } from 'knex'
+import { InspectionFilters } from '@validators/inspectionVaidator'
+import { SearchType } from '@shared/types/repoTypes'
 
 export class ManageInspectionRepository implements IManageInspectionRepository {
   constructor() {}
@@ -233,5 +236,35 @@ export class ManageInspectionRepository implements IManageInspectionRepository {
 
   async deleteInspection(inspection_id: string): Promise<void> {
     await db('inspection').delete().where('id', inspection_id)
+  }
+
+  useFilters(q: Knex.QueryBuilder<any, any[]>, filters: InspectionFilters) {
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.user_id) {
+      q = add(q).whereRaw(`i.user_id = '${filters.user_id}'`)
+    }
+
+    if (filters.organization_id) {
+      q = add(q).whereRaw(`i.organization_id = '${filters.organization_id}'`)
+    }
+
+    if (filters.status) {
+      q = add(q).whereRaw(`i.inspection_status = '${filters.status}'`)
+    }
+
+    return q
+  }
+
+  async getAllInspections(
+    filters: InspectionFilters,
+  ): Promise<SeekPaginationResult<Inspection>> {
+    let baseQuery = db<Inspection>('inspection as i')
+      .innerJoin('properties as p', 'p.id', 'i.property_id')
+      .select('i.*', db.raw(`row_to_json(p)`))
+
+    baseQuery = this.useFilters(baseQuery, filters)
+    baseQuery = baseQuery.orderBy('i.created_at', 'desc')
+    return applyPagination(baseQuery, filters)
   }
 }

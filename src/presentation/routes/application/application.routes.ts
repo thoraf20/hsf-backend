@@ -22,11 +22,13 @@ import { ApplicationService } from '@use-cases/Application/application'
 import {
   createApplicationSchema,
   dipFiltersSchema,
+  lenderDipResponseSchema,
   offerLetterFiltersSchema,
   requestOfferLetterRespondSchema,
   requestPropertyClosingSchema,
   scheduleEscrowMeetingRespondSchema,
   scheduleEscrowMeetingSchema,
+  updateDipLoanSchema,
 } from '@validators/applicationValidator'
 import {
   PropertyFilters,
@@ -43,6 +45,8 @@ import { InspectionRepository } from '@repositories/property/Inspection'
 import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
 import { MortageRepository } from '@repositories/property/MortageRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
+import { inspectionFiltersSchema } from '@validators/inspectionVaidator'
+import { LenderRepository } from '@repositories/Agents/LenderRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -62,6 +66,7 @@ const manageDipService = new ManageDipUseCase(
   new PrequalifyRepository(),
   new ApplicationRepository(),
   new AddressRepository(),
+  new LenderRepository(),
 )
 
 const manageInspectionRepository = new ManageInspectionRepository()
@@ -311,12 +316,14 @@ applicationRoutes.get(
     requireOrganizationType(
       OrganizationType.DEVELOPER_COMPANY,
       OrganizationType.HSF_INTERNAL,
+      OrganizationType.LENDER_INSTITUTION,
     ),
   ),
   validateRequest(dipFiltersSchema),
   asyncMiddleware(async (req, res) => {
-    const { query } = req
-    const response = await applicationController.getDips(query)
+    const { query, authInfo } = req
+
+    const response = await applicationController.getDips(authInfo, query)
     res.status(response.statusCode).json(response)
   }),
 )
@@ -327,16 +334,67 @@ applicationRoutes.get(
     requireOrganizationType(
       OrganizationType.DEVELOPER_COMPANY,
       OrganizationType.HSF_INTERNAL,
+      OrganizationType.LENDER_INSTITUTION,
     ),
   ),
   asyncMiddleware(async (req, res) => {
     const { params } = req
     const { application_id, dip_id } = params
-    console.log({ application_id, dip_id })
     const response = await applicationController.getApplicationDipById(
       application_id,
       dip_id,
     )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/mortgage/dips/:dip_id',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(updateDipLoanSchema),
+  asyncMiddleware(async (req, res) => {
+    const { params, body } = req
+    const { application_id, dip_id } = params
+    const response = await applicationController.updateApplicationDipById(
+      application_id,
+      dip_id,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/mortgage/dips/lender/respond',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(lenderDipResponseSchema),
+  asyncMiddleware(async (req, res) => {
+    const { params, body } = req
+    const { application_id } = params
+    const response = await applicationController.lenderDipRespond(
+      application_id,
+      body.dip_id,
+      body,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.put(
+  '/:application_id/mortgage/dips/:dip_id',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(updateDipLoanSchema),
+  asyncMiddleware(async (req, res) => {
+    const { params, body } = req
+    const { application_id, dip_id } = params
+    const response = await applicationController.updateApplicationDipById(
+      application_id,
+      dip_id,
+      body,
+    )
+
     res.status(response.statusCode).json(response)
   }),
 )
@@ -372,6 +430,28 @@ applicationRoutes.get(
       application_id,
       authInfo,
     )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/inspections/users/:user_id',
+  validateRequestQuery(inspectionFiltersSchema),
+  authorize(
+    RequireAny(
+      isHomeBuyer,
+      requireOrganizationType(
+        OrganizationType.DEVELOPER_COMPANY,
+        OrganizationType.HSF_INTERNAL,
+      ),
+    ),
+  ),
+  asyncMiddleware(async (req, res) => {
+    const { query, authInfo, params } = req
+    const response = await applicationController.getInspections(authInfo, {
+      ...query,
+      user_id: params.user_id,
+    })
     res.status(response.statusCode).json(response)
   }),
 )

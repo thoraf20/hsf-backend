@@ -15,6 +15,7 @@ import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import emailTemplate from '@infrastructure/email/template/constant'
 import { StatusCodes } from 'http-status-codes'
+import { InspectionFilters } from '@validators/inspectionVaidator'
 
 export class ManageInspectionUseCase {
   constructor(
@@ -127,6 +128,39 @@ export class ManageInspectionUseCase {
     return inspectionContents
   }
 
+  async getAllInspections(filters: InspectionFilters) {
+    const inspectionContents =
+      await this.manageInspectionRepository.getAllInspections(filters)
+
+    inspectionContents.result = await Promise.all(
+      inspectionContents.result.map(async (inspection) => {
+        const property = await this.propertyRepository.getPropertyById(
+          inspection.property_id,
+        )
+
+        const createdByUser = await this.userRepository.findById(
+          inspection.user_id,
+        )
+
+        const developerProfile =
+          await this.developerRepository.getDeveloperByOrgId(
+            property.organization_id,
+          )
+
+        return {
+          ...inspection,
+          property: {
+            ...property,
+            developer: getDeveloperClientView(developerProfile),
+          },
+          created_by: getUserClientView(createdByUser),
+        }
+      }),
+    )
+
+    return inspectionContents
+  }
+
   async getInspectionById(inspection_id: string): Promise<Inspection> {
     return this.manageInspectionRepository.getInspectionById(inspection_id)
   }
@@ -151,7 +185,6 @@ export class ManageInspectionUseCase {
     payload: DayAvailabilitySlot,
     inspection_id: string,
     organization_id: string,
-    agent_id: string
   ): Promise<Inspection> {
     const inspection =
       await this.manageInspectionRepository.getInspectionById(inspection_id)
@@ -161,7 +194,7 @@ export class ManageInspectionUseCase {
         'Inspection not found',
       )
     }
-    
+
     const userInfo = await this.userRepository.findById(inspection.user_id)
     const getSlot =
       await this.manageInspectionRepository.getDayAvailablitySlotById(
@@ -183,23 +216,29 @@ export class ManageInspectionUseCase {
         'You are not authorized to access this resource',
       )
     }
-  
 
-    const reschedule = await
-      this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable(
+    const reschedule =
+      await this.manageInspectionRepository.rescheduleInspectionToUpdateInspectionTable(
         {
-         day_availability_slot_id: payload.day_availability_slot_id,
+          day_availability_slot_id: payload.day_availability_slot_id,
           confirm_avaliability_for_reschedule:
             InspectionRescheduleRequestStatusEnum.Proposed,
           action: 'rescheduled',
         },
-        inspection_id
+        inspection_id,
       )
 
-      const getAgentRole = await getDeveloperClientView(
+    const getAgentRole = getDeveloperClientView(
       await this.developerRepository.getDeveloperByOrgId(organization_id),
     )
-    emailTemplate.rescheduleInspection(userInfo.email, `${userInfo.first_name} ${userInfo.last_name}`, availabilities.day, getSlot.start_time.toDateString(), getSlot.end_time.toDateString(), getAgentRole.company_email)
+    emailTemplate.rescheduleInspection(
+      userInfo.email,
+      `${userInfo.first_name} ${userInfo.last_name}`,
+      availabilities.day,
+      getSlot.start_time.toDateString(),
+      getSlot.end_time.toDateString(),
+      getAgentRole.company_email,
+    )
     return reschedule
   }
 
@@ -208,7 +247,7 @@ export class ManageInspectionUseCase {
     status: string,
     organization_id: string,
   ): Promise<Inspection> {
-    const inspection = 
+    const inspection =
       await this.manageInspectionRepository.getInspectionById(inspection_id)
     if (!inspection) {
       throw new ApplicationCustomError(
@@ -247,15 +286,18 @@ export class ManageInspectionUseCase {
     return updatedInspection
   }
 
+  async deleteInspection(inspection_id: string): Promise<void> {
+    const findInspection =
+      await this.inspectionRespository.getScheduleInspectionById(inspection_id)
+    if (!findInspection) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Inspection not found`,
+      )
+    }
 
-   async deleteInspection(inspection_id: string): Promise<void> {
-      const  findInspection = await this.inspectionRespository.getScheduleInspectionById(inspection_id)
-      if(!findInspection) {
-        throw new ApplicationCustomError(StatusCodes.NOT_FOUND, `Inspection not found`)
-      }
-
-      await this.manageInspectionRepository.deleteInspection(inspection_id)
-   }
+    await this.manageInspectionRepository.deleteInspection(inspection_id)
+  }
 
   //
   //  async updateInspectionDetails(

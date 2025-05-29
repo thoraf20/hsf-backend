@@ -5,6 +5,7 @@ import {
   InspectionStatus,
 } from '@domain/enums/propertyEnum'
 import { InspectionRescheduleRequestStatusEnum } from '@domain/enums/inspectionEnum'
+import { withPaginateSchema } from '@shared/utils/paginate'
 // import { DateTime } from 'luxon';
 
 // const toUTC = (date: string, time: string, timezone: string) => {
@@ -100,3 +101,13 @@ export const updateInspectionStatusSchema = z.object({
 export type UpdateInspectionStatusPayload = z.infer<
   typeof updateInspectionStatusSchema
 >
+
+export const inspectionFiltersSchema = withPaginateSchema(
+  z.object({
+    user_id: z.string().nonempty().optional(),
+    organization_id: z.string().nonempty().optional(),
+    status: z.nativeEnum(InspectionStatus).optional(),
+  }),
+)
+
+export type InspectionFilters = z.infer<typeof inspectionFiltersSchema>

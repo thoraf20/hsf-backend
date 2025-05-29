@@ -1,4 +1,8 @@
-import { DIPStatus, UserAction } from '@domain/enums/propertyEnum'
+import {
+  DIPLenderStatus,
+  DIPStatus,
+  UserAction,
+} from '@domain/enums/propertyEnum'
 
 export class DIP {
   dip_id?: string
@@ -9,6 +13,7 @@ export class DIP {
   interest_rate?: number
   loan_term?: string
   monthly_payment?: number
+  dip_lender_status?: DIPLenderStatus
   dip_status: DIPStatus
   generated_at?: Date
   user_action?: UserAction

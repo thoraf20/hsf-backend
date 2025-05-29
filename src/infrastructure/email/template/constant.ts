@@ -399,14 +399,20 @@ export default {
     }
   },
 
-  passwordResetForOrganization(email: string, fullname: string, default_password: string, url: string, organization_name: string) {
+  passwordResetForOrganization(
+    email: string,
+    fullname: string,
+    default_password: string,
+    url: string,
+    organization_name: string,
+  ) {
     let subject = `Password Reset`
     let text = `Reset your password`
     let html = templates.resetPasswordForOrganization
       .replace('{{full_name}}', fullname)
       .replace('{{default_password}}', default_password)
       .replace('{{url}}', url)
-       .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{year}}', new Date().getFullYear().toString())
       .replace('{{organization_name}}', organization_name)
 
     try {
@@ -420,6 +426,30 @@ export default {
         `Unable to send email`,
       )
     }
+  },
 
-  }
- }
+  disableOrgMember2faEmail(
+    email: string,
+    fullname: string,
+    organization_name: string,
+  ) {
+    let subject = `2FA Disabled`
+    let text = `2FA has been disabled for your account`
+    let html = templates.disable2faEmailByOrg
+      .replace(/{{full_name}}/g, fullname)
+      .replace(/{{organization_name}}/g, organization_name)
+      .replace(/{{year}}/g, new Date().getFullYear().toString())
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+}
