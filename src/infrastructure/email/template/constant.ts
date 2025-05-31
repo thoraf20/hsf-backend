@@ -290,7 +290,6 @@ export default {
     let text = `Accept invitation`
     let html = templates.InvitationEmail.replace('{{fullname}}', fullname)
       .replace('{{role}}', role)
-      .replace('{{role}}', role)
       .replace('{{defaultPassword}}', defaultPassword)
       .replace('{{activationLink}}', activationLink)
       .replace('{{year}}', new Date().getFullYear().toString())

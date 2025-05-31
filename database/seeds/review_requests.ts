@@ -514,6 +514,17 @@ async function DIPDocumentReviewRequest(knex: Knex): Promise<void> {
         })
 
         .returning('*')
+    } else {
+      ;[reviewRequestTypeStageEntry] = await knex
+        .table<ReviewRequestTypeStage>('review_request_type_stages')
+        .update({
+          stage_order: order,
+          enabled: true,
+          request_type_id: dipDocumentRequestType.id,
+          stage_id: stageData.id!,
+        })
+        .where({ id: reviewRequestTypeStageEntry.id })
+        .returning('*')
     }
 
     if (!reviewRequestTypeStageEntry) {

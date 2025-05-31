@@ -82,7 +82,7 @@ export class RedisClient {
   /**
    * Check if a key exists and handle cache clearing logic.
    */
-  public async checkAndClearCache(key: string): Promise<void> {
+  public async getKeyTTL(key: string): Promise<number> {
     try {
       const ttl = await redis.ttl(key)
       if (ttl === -2) {
@@ -92,6 +92,8 @@ export class RedisClient {
       } else {
         logger.info(`Redis: Key "${key}" will expire in ${ttl} seconds.`)
       }
+
+      return Math.max(ttl, 0)
     } catch (error) {
       logger.error(`Redis: Error checking TTL for key "${key}":`, error)
     }

@@ -36,7 +36,7 @@ export class OrganizationRepository implements IOrganizationRepository {
   }
 
   async getHsfOrganization(): Promise<Organization> {
-    return this.getOrganizationsByType(OrganizationType.HSF_INTERNAL)[0]
+    return (await this.getOrganizationsByType(OrganizationType.HSF_INTERNAL))[0]
   }
 
   async updateOrganization(

@@ -22,11 +22,15 @@ import { MfaToken } from '@shared/utils/mfa_token'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { LoginAttemptRepository } from '@repositories/LoginAttemptRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 
 const service = new AuthService(
   new UserRepository(),
   new AccountRepository(),
   new OrganizationRepository(),
+  new LoginAttemptRepository(),
+  new UserActivityLogRepository(),
 )
 const mfaTokenGen = new MfaToken()
 const controller = new AuthController(service)

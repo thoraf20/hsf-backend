@@ -1,14 +1,10 @@
 import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
-import db from '@infrastructure/database/knex'
-import { TransactionEnum } from '@domain/enums/transactionEnum'
-import { PaymentStatus, PaymentType } from '@domain/enums/PaymentEnum'
+import { PaymentStatus } from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 import { SseService } from '@infrastructure/services/sse.service'
-import { Transaction } from '@entities/Transaction'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
-import { addVerifyInspectionPaymentJob } from '@infrastructure/queue/inspectionQueue'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
 
 const WebhookRouter: Router = Router()

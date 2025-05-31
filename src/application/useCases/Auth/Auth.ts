@@ -18,7 +18,7 @@ import { MfaToken } from '@shared/utils/mfa_token'
 import { TimeSpan } from '@shared/utils/time-unit'
 import { MfaFlow, UserStatus } from '@domain/enums/userEum'
 import { decryptToString } from '@shared/utils/encrypt'
-import { decodeBase64 } from '@oslojs/encoding'
+import { decodeBase64, encodeHexUpperCase } from '@oslojs/encoding'
 import { verifyTOTP } from '@oslojs/otp'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
@@ -30,10 +30,18 @@ import { AddressRepository } from '@repositories/user/AddressRepository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { ILoginAttemptRepository } from '@domain/repositories/ILoginAttemptRepository'
+import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
+import { UserActivityKind } from '@domain/enums/UserActivityKind'
+import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
+import { sha256 } from '@oslojs/crypto/sha2'
+import { hashData } from '@shared/utils/sha-hash'
 
 export class AuthService {
   private userRepository: IUserRepository
   private accountRepository: IAccountRepository
+  private readonly loginAttemptRepository: ILoginAttemptRepository
+  private readonly userActivityRepository: IUserActivityLogRepository
   private readonly existingUsers: ExistingUsers
   private readonly manageOrganizations: ManageOrganizations
   private readonly hashData = new Hashing()
@@ -43,10 +51,14 @@ export class AuthService {
     userRepository: IUserRepository,
     accountRepository: IAccountRepository,
     organizationRepository: IOrganizationRepository,
+    loginAttemptRepository: ILoginAttemptRepository,
+    userActivityRepository: IUserActivityLogRepository,
   ) {
     this.userRepository = userRepository
     this.accountRepository = accountRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
+    this.loginAttemptRepository = loginAttemptRepository
+    this.userActivityRepository = userActivityRepository
     this.manageOrganizations = new ManageOrganizations(
       organizationRepository,
       new UserRepository(),
@@ -108,7 +120,7 @@ export class AuthService {
     emailTemplates.welcomeEmail(input.email, `${input.email}`)
     emailTemplates.emailVerificationEmail(input.email, otp.toString())
   }
-  async   register(
+  async register(
     input: Omit<User, 'email' | 'tempId'> & { tempId: string },
   ): Promise<User> {
     const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${input.tempId}`
@@ -156,8 +168,8 @@ export class AuthService {
     const details =
       (await this.client.getKey(emailKey)) ||
       (await this.client.getKey(passwordKey))
-    await this.client.checkAndClearCache(emailKey)
-    await this.client.checkAndClearCache(passwordKey)
+    await this.client.getKeyTTL(emailKey)
+    await this.client.getKeyTTL(passwordKey)
     if (!details) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
@@ -170,14 +182,27 @@ export class AuthService {
 
     const tempId = uuidv4()
 
+    const tokenValidFor = new TimeSpan(1, 'h').toMilliseconds()
+
     if (type === OtpEnum.EMAIL_VERIFICATION) {
       const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${tempId}`
-      await this.client.setKey(tempKey, { email, is_email_verified: true }, 600)
+      await this.client.setKey(
+        tempKey,
+        { email, is_email_verified: true },
+        tokenValidFor,
+      )
     }
 
     if (type === OtpEnum.PASSWORD_RESET) {
-      const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${tempId}`
-      await this.client.setKey(tempKey, { id, is_email_verified: true }, 600)
+      const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${id}`
+      const identiferKey = hashData(tempId)
+
+      await this.client.setKey(identiferKey, id, tokenValidFor)
+      await this.client.setKey(
+        tempKey,
+        { id, token: tempId, is_email_verified: true },
+        tokenValidFor,
+      )
     }
 
     await this.client.deleteKey(emailKey)
@@ -229,10 +254,25 @@ export class AuthService {
    * Reset password using OTP
    */
   async resetPassword(input: ResetPasswordType): Promise<void> {
-    const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${input.tempId}`
-    const regDetails = await this.client.getKey(tempKey)
-    await this.client.checkAndClearCache(tempKey)
-    if (!regDetails) {
+    const idenifierCacheKey = hashData(input.tempId)
+
+    const identifier: string | null =
+      await this.client.getKey(idenifierCacheKey)
+
+    if (!identifier) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Invalid or expired session',
+      )
+    }
+
+    const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${identifier}`
+    const regDetails: {
+      id: string
+      token: string
+      is_email_verified: boolean
+    } | null = await this.client.getKey(tempKey)
+    if (!(regDetails && regDetails.token === input.tempId)) {
       throw new ApplicationCustomError(
         StatusCodes.BAD_REQUEST,
         'Session expired....',
@@ -273,7 +313,6 @@ export class AuthService {
     }
 
     const lockKey = `${CacheEnumKeys.LOGIN_ATTEMPT_LOCK}-${user.id}`
-    await this.client.checkAndClearCache(lockKey)
     const isLocked = await this.client.getKey(lockKey)
 
     if (isLocked) {
@@ -292,6 +331,61 @@ export class AuthService {
           'This account was registered via OAuth. Please log in using your OAuth provider.',
         )
       }
+    }
+
+    const isValid = await this.userRepository.comparedPassword(
+      input.password,
+      user.password,
+    )
+
+    const ipAddress = getIpAddress()
+    const userAgent = getUserAgent()
+
+    if (!isValid) {
+      let failedLoginAttempts =
+        ((await this.loginAttemptRepository.countFailedAttempts(
+          user.id,
+          new TimeSpan(10, 'm').toMilliseconds(),
+        )) || 0) + 1
+
+      const loginAttempt = await this.loginAttemptRepository.create({
+        attempted_at: new Date(),
+        successful: false,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        user_id: user.id,
+      })
+
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.FAILED_LOGIN,
+        performed_at: new Date(),
+        user_id: user.id,
+        description: `Failed login attempt from IP: ${ipAddress ?? 'unknown'}`,
+        metadata: loginAttempt,
+      })
+
+      if (failedLoginAttempts >= 3) {
+        await this.client.setKey(lockKey, true, 600) //lock account for 10mins
+        await this.userActivityRepository.create({
+          activity_type: UserActivityKind.ACCOUNT_LOCKED,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          performed_at: new Date(),
+          user_id: user.id,
+          description: `Account locked due to ${failedLoginAttempts} failed login attempts`,
+          metadata: loginAttempt,
+        })
+
+        throw new ApplicationCustomError(
+          StatusCodes.TOO_MANY_REQUESTS,
+          'Too many failed login attempts. Please try again after 10 minutes.',
+        )
+      }
+
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Invalid email or password.',
+      )
     }
 
     if (user.status === UserStatus.Deleted) {
@@ -321,6 +415,46 @@ export class AuthService {
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'Sorry!, We are unable to sign you into your account',
+      )
+    }
+
+    if (
+      user.force_password_reset === true &&
+      user.is_default_password === true
+    ) {
+      const tempId = uuidv4()
+      const tokenValidFor = new TimeSpan(1, 'h').toMilliseconds()
+      const tempKey = `${CacheEnumKeys.PASSWORD_RESET_KEY}-${user.id}`
+      const identiferKey = hashData(tempId)
+
+      await this.client.setKey(identiferKey, user.id, tokenValidFor)
+      await this.client.setKey(
+        tempKey,
+        { id: user.id, token: tempId, is_email_verified: true },
+        tokenValidFor,
+      )
+
+      // Log the forced password reset activity
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.FORCE_CHANGE_PASSWORD,
+        performed_at: new Date(),
+        user_id: user.id,
+        description: `User required to change default password from IP: ${ipAddress ?? 'unknown'}`,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
+
+      throw new ApplicationCustomError(
+        StatusCodes.PRECONDITION_REQUIRED,
+        'You must change your default password before continuing.',
+        {
+          token: tempId,
+          password_reset_required: true,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          id: user.id,
+        },
       )
     }
 
@@ -362,63 +496,35 @@ export class AuthService {
         String(otp),
         'http://localhost:3000/suport',
       )
-      throw new ApplicationCustomError(
-        StatusCodes.CREATED,
-        `We've sent a one-time password (OTP) to your registered email address.
-        Please check your email and enter the OTP to continue.`,
-        {
-          token: token,
-          mfa_required: true,
-          mfa_type: MfaFlow.EMAIL_OTP,
-          email: user.email,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          id: user.id,
-        },
-      )
+      return {
+        token: token,
+        mfa_required: true,
+        mfa_type: MfaFlow.EMAIL_OTP,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        id: user.id,
+      } as any // Assertion needed because the return type is an error
     }
 
-    if (
-      user.force_password_reset === true &&
-      user.is_default_password === true
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Please you have to change your password.',
-      )
-    }
-    const isValid = await this.userRepository.comparedPassword(
-      input.password,
-      user.password,
-    )
+    const successfulLoginAttempt = await this.loginAttemptRepository.create({
+      attempted_at: new Date(),
+      successful: true,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      user_id: user.id,
+    })
 
-    if (!isValid) {
-      const failedLoginAttempts = (user.failed_login_attempts || 0) + 1
-      if (failedLoginAttempts >= 3) {
-        await this.client.setKey(lockKey, true, 600)
-        await this.userRepository.update(user.id, {
-          failed_login_attempts: failedLoginAttempts,
-        })
+    await this.userActivityRepository.create({
+      activity_type: UserActivityKind.LOGIN,
+      performed_at: new Date(),
+      user_id: user.id,
+      description: `Successful login from IP: ${ipAddress ?? 'unknown'}`,
+      metadata: successfulLoginAttempt,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    })
 
-        throw new ApplicationCustomError(
-          StatusCodes.TOO_MANY_REQUESTS,
-          'Too many failed login attempts. Please try again after 10 minutes.',
-        )
-      }
-
-      await this.userRepository.update(user.id, {
-        failed_login_attempts: failedLoginAttempts,
-      })
-
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Invalid email or password.',
-      )
-    }
-
-    if (user.failed_login_attempts > 0) {
-      await this.userRepository.update(user.id, { failed_login_attempts: 0 })
-    }
     user = await this.userRepository.findById(user.id)
     user.accounts = await this.accountRepository.findByUserID(user.id)
     user.accounts.forEach((account) => {
@@ -432,6 +538,10 @@ export class AuthService {
     )
     const token = await this.hashData.accessCode(user.user_id, user.role)
     await this.client.deleteKey(lockKey)
+
+    // Reset failed login attempts after successful login
+    await this.userRepository.update(user.id, { failed_login_attempts: 0 })
+
     delete user.password
     return { token, mfa_required: false, ...user }
   }

@@ -1132,7 +1132,17 @@ export class ApplicationService {
     const application =
       await this.applicationRepository.getApplicationById(applicationId)
 
-    if (!application) {
+    if (
+      !(
+        application &&
+        ((authInfo.globalRole === Role.HOME_BUYER &&
+          application.user_id === authInfo.userId) ||
+          authInfo.organizationType === OrganizationType.HSF_INTERNAL ||
+          (authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY &&
+            application.developer_organization_id ===
+              authInfo.currentOrganizationId))
+      )
+    ) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
         'Application not found',
@@ -1198,32 +1208,35 @@ export class ApplicationService {
     if (!application) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
-        'Application not found',
+        `Application with ID '${applicationId}' not found.`,
       )
     }
 
     const user = await this.userRepository.findById(authInfo.userId)
 
-    let allowDocGroupPerApplicationType: Array<DocumentGroupKind> = []
+    // Use a more descriptive name
+    let allowedDocumentGroups: DocumentGroupKind[] = []
 
     if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
-      allowDocGroupPerApplicationType.push(
+      allowedDocumentGroups.push(
         DocumentGroupKind.MortgageUpload,
         DocumentGroupKind.ConditionPrecedent,
       )
     }
 
-    if (!allowDocGroupPerApplicationType.length) {
+    if (allowedDocumentGroups.length === 0) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        `Sorry this application type '${application.application_type}' doesn't support any document upload group`,
+        `Application type '${application.application_type}' does not support document uploads.`,
       )
     }
 
-    if (!allowDocGroupPerApplicationType.includes(input.group)) {
+    if (!allowedDocumentGroups.includes(input.group)) {
       throw new ApplicationCustomError(
         StatusCodes.UNPROCESSABLE_ENTITY,
-        `This document group type ${input.group} is not part of the known document group for this application type ${application.application_type}`,
+        `Document group '${input.group}' is not allowed for application type '${application.application_type}'. Allowed groups are: ${allowedDocumentGroups.join(
+          ', ',
+        )}`,
       )
     }
 
@@ -1234,7 +1247,7 @@ export class ApplicationService {
     if (!documentGroup) {
       throw new ApplicationCustomError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `The document group is yet to be properly setup`,
+        `Document group with tag '${input.group}' is not properly set up.`,
       )
     }
 
@@ -1246,55 +1259,117 @@ export class ApplicationService {
     if (!documentGroupTypes.length) {
       throw new ApplicationCustomError(
         StatusCodes.INTERNAL_SERVER_ERROR,
-        `The document group types is yet to be properly setup for this document group ${documentGroup.name}`,
+        `No document types are set up for document group '${documentGroup.name}'.`,
       )
     }
 
-    const notMatchDocType = documentGroupTypes.find(
-      (docType) => !input.documents.find((doc) => doc.id === docType.id),
+    // Use a more descriptive name
+    const missingDocumentType = documentGroupTypes.find((docType) =>
+      input.documents.every((doc) => doc.id !== docType.id),
     )
 
-    if (!notMatchDocType) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        `As part of the document uploaded we are unable to find a matching document for ${notMatchDocType.document_type}`,
-      )
-    }
+    // if (missingDocumentType) {
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.FORBIDDEN,
+    //     `Missing document type: '${missingDocumentType.document_type}'. Please ensure all required documents are uploaded.`,
+    //   )
+    // }
 
     const hsfOrg = await this.organizationRepository.getHsfOrganization()
 
-    await Promise.all(
+    console.log({ hsfOrg })
+
+    const reviewRequestType =
+      await this.reviewRequestRepository.getReviewRequestTypeByKind(
+        ReviewRequestTypeKind.DipDocumentReview,
+      )
+
+    if (!reviewRequestType) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Review request type '${ReviewRequestTypeKind.DipDocumentReview}' not found.`,
+      )
+    }
+
+    console.log({ reviewRequestType })
+
+    const requestTypeStages =
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+        reviewRequestType.id,
+      )
+
+    if (!requestTypeStages.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `No stages found for review request type '${reviewRequestType.type}'.`,
+      )
+    }
+
+    const reviewStages = await Promise.all(
+      requestTypeStages.map((requestTypeStage) =>
+        this.reviewRequestRepository.getReviewRequestStageByID(
+          requestTypeStage.stage_id,
+        ),
+      ),
+    )
+
+    const hsfReviewStage = reviewStages.find(
+      (stage) => stage.organization_type === OrganizationType.HSF_INTERNAL,
+    )
+
+    if (!hsfReviewStage) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `HSF Internal review stage not found.`,
+      )
+    }
+
+    const hsfRequestTypeStage = requestTypeStages.find(
+      ({ stage_id }) => hsfReviewStage.id === stage_id,
+    )
+
+    if (!hsfRequestTypeStage) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `HSF Request Type Stage not found.`,
+      )
+    }
+
+    return Promise.all(
       input.documents.map(async (doc) => {
         const reviewRequest =
           await this.reviewRequestRepository.createReviewRequest({
             candidate_name: `${user.first_name} ${user.last_name}`,
             initiator_id: user.id,
+            status: ReviewRequestStatus.Pending,
             submission_date: new Date(),
-            request_type_id: '',
+            request_type_id: reviewRequestType.id,
           })
 
-        await this.reviewRequestRepository.createReviewRequestApproval({
-          organization_id: hsfOrg.id,
-          request_id: reviewRequest.id,
-          review_request_stage_type_id: '',
-          approval_status: ReviewRequestApprovalStatus.Pending,
-        })
+        const reviewRequestApproval =
+          await this.reviewRequestRepository.createReviewRequestApproval({
+            organization_id: hsfOrg.id,
+            request_id: reviewRequest.id,
+            review_request_stage_type_id: hsfRequestTypeStage.id,
+            approval_status: ReviewRequestApprovalStatus.Pending,
+          })
 
-        await this.documentRepository.createApplicationDocumentEntry({
-          review_request_id: reviewRequest.id,
-          application_id: application.application_id,
-          document_group_type_id: doc.id,
-          document_name: doc.file_name,
-          document_size: String(doc.file_size),
-          document_url: doc.file_url,
-        })
+        const applicationDocument =
+          await this.documentRepository.createApplicationDocumentEntry({
+            review_request_id: reviewRequest.id,
+            application_id: application.application_id,
+            document_group_type_id: doc.id,
+            document_name: doc.file_name,
+            document_size: String(doc.file_size),
+            document_url: doc.file_url,
+          })
+
+        return {
+          review_request: reviewRequest,
+          review_approval: reviewRequestApproval,
+          application_document: applicationDocument,
+        }
       }),
     )
-
-    // this.reviewRequestRepository.getReviewRequestTypeByKind(ReviewRequestTypeKind.)
-
-    // this.documentRepository.createApplicationDocumentEntry({
-
-    // })
   }
 }

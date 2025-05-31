@@ -480,8 +480,16 @@ applicationRoutes.post(
     const {
       authInfo,
       params: { application_id },
-      query,
+      body,
     } = req
+
+    const response = await applicationController.handleApplicationDocUploads(
+      application_id,
+      body,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
   }),
 )
 

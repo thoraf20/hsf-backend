@@ -18,6 +18,7 @@ import { getEnv } from '@infrastructure/config/env/env.config'
 import '@infrastructure/worker/inspectionWorker'
 import { asyncMiddleware } from '@routes/index.t'
 import { startJobWorkers } from '@infrastructure/worker'
+import { requestContextMiddleware } from '@middleware/requestContext'
 // import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 // import { LenderRepository } from '@repositories/Agents/LeaderRepository'
 // import { AdminRepository } from '@repositories/Agents/AdminRepository'
@@ -58,6 +59,7 @@ app.use(hpp())
 app.use(speedLimiter)
 app.use(morgan('combined'))
 app.use(morgan('dev'))
+app.use(requestContextMiddleware)
 
 // const userRepo = new UserRepository()
 // const create_admin = new Agents(userRepo, new DeveloperRespository(), new AdminRepository(), new LenderRepository())

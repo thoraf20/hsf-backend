@@ -456,10 +456,17 @@ export class ApplicationController {
     input: ApplicationDocUploadsInput,
     authInfo: AuthInfo,
   ) {
-    this.applicationService.handleApplicationDocUploads(
-      applicationId,
-      input,
-      authInfo,
+    const documentReview =
+      await this.applicationService.handleApplicationDocUploads(
+        applicationId,
+        input,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application documents uploades successfully',
+      { reviews: documentReview },
     )
   }
 }

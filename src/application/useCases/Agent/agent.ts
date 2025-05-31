@@ -151,7 +151,7 @@ export class Agents {
   public async acceptInvitation(input: invitation): Promise<void> {
     const key = `${CacheEnumKeys.ACCEPT_INVITE_KEY}-${input.invite_code}`
 
-    await this.client.checkAndClearCache(key)
+    await this.client.getKeyTTL(key)
     const details = await this.client.getKey(key)
     if (!details) {
       throw new ApplicationCustomError(
