@@ -2,6 +2,7 @@ import {
   ApplicationPurchaseType,
   ApplicationStatus,
 } from '@domain/enums/propertyEnum'
+import { DIP } from './Mortage'
 
 export class Application {
   application_id?: string
@@ -17,6 +18,7 @@ export class Application {
   precedent_document_upload_id?: string
   status: ApplicationStatus
   user_id?: string
+  dip?: DIP
   document_upload_id?: string
   property_closing_id?: string
   loan_offer_id?: string

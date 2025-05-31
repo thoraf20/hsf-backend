@@ -1,7 +1,8 @@
+import { PaymentStatus } from '@domain/enums/PaymentEnum'
 import { PartialInstantiable } from '@shared/types/partials'
 
 export class Payment extends PartialInstantiable<Payment> {
-  id?: string
+  payment_id: string
   amount?: number | string
   email: string
   currency?: string
@@ -10,7 +11,7 @@ export class Payment extends PartialInstantiable<Payment> {
   user_id?: string
   reference?: string
   transaction_id?: string
-  status?: 'pending' | 'success' | 'failed'
+  payment_status?: PaymentStatus
   metadata?: Record<string, any>
   createdAt?: Date
   updatedAt?: Date

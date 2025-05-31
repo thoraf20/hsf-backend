@@ -9,12 +9,15 @@ import { Application } from '@entities/Application'
 import { DIP } from '@entities/Mortage'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { createResponse } from '@presentation/response/responseType'
+import { Role } from '@routes/index.t'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { ApplicationService } from '@use-cases/Application/application'
 import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import { PaymentUseCase } from '@use-cases/Payments/payments'
 import {
+  ApplicationDocFilters,
+  ApplicationDocUploadsInput,
   CreateApplicationInput,
   DipFilters,
   InitiateMortgagePayment,
@@ -27,6 +30,7 @@ import {
   UpdateDipLoanInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
+import { PaymentFilters } from '@validators/paymentValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 
@@ -242,9 +246,14 @@ export class ApplicationController {
     )
   }
 
-  async getRequiredDoc(applicationId: string, authInfo: AuthInfo) {
+  async getRequiredDoc(
+    applicationId: string,
+    filters: ApplicationDocFilters,
+    authInfo: AuthInfo,
+  ) {
     const contents = await this.applicationService.getRequiredDoc(
       applicationId,
+      filters,
       authInfo,
     )
 
@@ -391,7 +400,7 @@ export class ApplicationController {
         )
       }
 
-      if (application.dip.dip_status === DIPStatus.PaymentPending) {
+      if (application.dip.dip_status !== DIPStatus.PaymentPending) {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'Dip payment not initiated',
@@ -415,6 +424,42 @@ export class ApplicationController {
     throw new ApplicationCustomError(
       StatusCodes.FORBIDDEN,
       'Mortgage payment intent not setup',
+    )
+  }
+
+  async getApplicationPayments(
+    authInfo: AuthInfo,
+    applicationId: string,
+    query: PaymentFilters,
+  ) {
+    let user_id: string
+
+    if (authInfo.globalRole === Role.HOME_BUYER) {
+      user_id = authInfo.userId
+    }
+
+    const payments = await this.paymentService.getAll({
+      ...query,
+      application_id: applicationId,
+      user_id,
+    })
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application payment retrived successfully',
+      payments,
+    )
+  }
+
+  async handleApplicationDocUploads(
+    applicationId: string,
+    input: ApplicationDocUploadsInput,
+    authInfo: AuthInfo,
+  ) {
+    this.applicationService.handleApplicationDocUploads(
+      applicationId,
+      input,
+      authInfo,
     )
   }
 }

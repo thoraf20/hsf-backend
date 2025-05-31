@@ -27,17 +27,15 @@ import { startJobWorkers } from '@infrastructure/worker'
 
 const app: Application = express()
 
+console.log(getEnv('ORIGINS'), [
+  'http://localhost:3000',
+  'http://localhost:3001',
+])
+
 app.use(cookieParser())
 app.use(
   cors({
-    origin:
-      getEnv('NODE_ENV') === 'development'
-        ? [
-            'http://localhost:3000',
-            'http://localhost:3001',
-            'http://localhost:3002',
-          ]
-        : getEnv('ORIGINS'),
+    origin: getEnv('ORIGINS'),
 
     credentials: true,
   }),

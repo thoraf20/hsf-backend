@@ -2,16 +2,19 @@ import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 import db from '@infrastructure/database/knex'
 import { TransactionEnum } from '@domain/enums/transactionEnum'
-import { PaymentType } from '@domain/enums/PaymentEnum'
+import { PaymentStatus, PaymentType } from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 import { SseService } from '@infrastructure/services/sse.service'
 import { Transaction } from '@entities/Transaction'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import { addVerifyInspectionPaymentJob } from '@infrastructure/queue/inspectionQueue'
+import { PaymentRepostory } from '@repositories/PaymentRepository'
 
 const WebhookRouter: Router = Router()
 const sse = new SseService()
+
+const paymentRepository = new PaymentRepostory()
 
 WebhookRouter.post(
   '/paystack',
@@ -31,70 +34,44 @@ WebhookRouter.post(
 
     try {
       const event = req.body
-      if (event.event === 'charge.success') {
-        const metadata = event.data.metadata
+      const metadata = event.data.metadata
 
-        const transaction_id = metadata?.transaction_id
-        if (!transaction_id) {
-          return res.status(400).json({ message: 'Invalid metadata' })
-        }
-
-        const transaction = await db('transactions')
-          .where({ transaction_id })
-          .first()
-
-        if (!transaction) {
-          return res.status(404).json({ message: 'Transaction not found' })
-        }
-
-        const { user_id, transaction_type, property_id } = transaction
-
-        const [updatedTransaction] = await db('transactions')
-          .where({ transaction_id })
-          .update({ status: TransactionEnum.SUCCESSFULL })
-          .returning('*')
-
-        sse.publishStatus(updatedTransaction)
-
-        const updateFields: Record<string, boolean> = {}
-
-        switch (transaction_type) {
-          case PaymentType.DUE_DILIGENT:
-            updateFields.pay_due_deligence = true
-            break
-          case PaymentType.BROKER_FEE:
-            updateFields.pay_brokage_fee = true
-            break
-          case PaymentType.MANAGEMENT_FEE:
-            updateFields.pay_management_fee = true
-            break
-          case PaymentType.INSPECTION:
-            const inspection_id = metadata?.inspection_id
-            if (!inspection_id) {
-              return res
-                .status(400)
-                .json({ message: 'Missing inspection ID in metadata' })
-            }
-
-            await addVerifyInspectionPaymentJob({
-              inspectionId: inspection_id,
-              transactionId: transaction.id,
-            })
-
-            break
-          default:
-            break
-        }
-
-        if (Object.keys(updateFields).length > 0) {
-          await db('mortage_payment_status')
-            .where({ user_id, property_id })
-            .update(updateFields)
-        }
-
-        return res.sendStatus(200)
+      const transaction_id = metadata?.reference
+      if (!transaction_id) {
+        return res.status(400).json({ message: 'Invalid metadata' })
       }
 
+      let transaction =
+        await paymentRepository.getByTransactionRef(transaction_id)
+      if (!transaction) {
+        return res.status(404).json({ message: 'Transaction not found' })
+      }
+
+      if (event.event === 'transfer.success') {
+        transaction = await paymentRepository.update({
+          payment_id: transaction.payment_id,
+          payment_status: PaymentStatus.SUCCESS,
+        })
+
+        // await addVerifyInspectionPaymentJob({
+        //   inspectionId: inspection_id,
+        //   transactionId: transaction.id,
+        // })
+
+        return res.sendStatus(200)
+      } else if (event.event === 'transfer.failed') {
+        transaction = await paymentRepository.update({
+          payment_id: transaction.payment_id,
+          payment_status: PaymentStatus.FAILED,
+        })
+      } else if (event.event === 'transfer.reversed') {
+        transaction = await paymentRepository.update({
+          payment_id: transaction.payment_id,
+          payment_status: PaymentStatus.REVERSED,
+        })
+      }
+
+      sse.publishStatus(transaction)
       return res.sendStatus(200)
     } catch (err) {
       console.error('Paystack webhook error:', err)
@@ -114,11 +91,11 @@ WebhookRouter.get(
         .json({ message: 'Missing Transaction reference in query' })
     }
 
-    const transaction = await db<Transaction>('transactions')
-      .where({ reference: reference as string })
-      .first()
+    const payment = await paymentRepository.getByTransactionRef(
+      reference as string,
+    )
 
-    if (!transaction) {
+    if (!payment) {
       const response = createResponse(
         StatusCodes.NOT_FOUND,
         'Transaction not found',
@@ -127,10 +104,10 @@ WebhookRouter.get(
       return
     }
 
-    const subscriber = await sse.createStream(res, transaction)
+    const subscriber = await sse.createStream(res, payment)
 
     res.on('end', () => {
-      sse.closeStream(subscriber, transaction.id)
+      sse.closeStream(subscriber, payment.payment_id)
     })
   }),
 )

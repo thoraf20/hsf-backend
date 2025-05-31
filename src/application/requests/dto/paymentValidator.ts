@@ -8,6 +8,7 @@ export const paymentFiltersSchema = withPaginateSchema(
     user_id: z.string().optional(),
     payment_type: z.nativeEnum(PaymentType).optional(),
     q: z.string().optional(),
+    application_id: z.string().optional(),
   }),
 )
 

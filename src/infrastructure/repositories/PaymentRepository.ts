@@ -14,19 +14,45 @@ export class PaymentRepostory implements IPaymentRepository {
     return created
   }
 
+  async update(data: Partial<Payment>): Promise<Payment> {
+    const [updated] = await db('payments')
+      .update(data)
+      .where('payment_id', data.payment_id)
+      .returning('*')
+    return updated
+  }
+
   getById(id: string): Promise<Payment & { payer?: User }> {
-    return db('payments')
-      .leftJoin('users as u', 'u.id', 'payments.user_id')
-      .select('payments.*', db.raw('row_to_json(u) as payer'))
-      .where({ id })
+    return db('payments as p')
+      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .select('p.*', db.raw('row_to_json(u) as payer'))
+      .where({ payment_id: id })
+      .first()
+  }
+
+  getByTransactionRef(ref: string): Promise<Payment & { payer?: User }> {
+    return db('payments as p')
+      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .select(
+        'p.*',
+        db.raw('row_to_json(u) as payer'),
+        db.raw('row_to_json(r) as role'),
+      )
+      .where({ reference: ref })
       .first()
   }
 
   getByType(type: string): Promise<Payment & { payer?: User }> {
-    return db('payments')
-      .leftJoin('users as u', 'u.id', 'payments.user_id')
-      .select('payments.*', db.raw('row_to_json(u) as payer'))
-      .where({ paymentType: type })
+    return db<Payment>('payments as p')
+      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .select(
+        'p.*',
+        db.raw('row_to_json(u) as payer'),
+        db.raw('row_to_json(r) as role'),
+      )
+      .where({ payment_type: type })
       .first()
   }
 
@@ -36,9 +62,9 @@ export class PaymentRepostory implements IPaymentRepository {
     if (filters.q) {
       q = add(q).where((builder) => {
         builder.where((searchBuilder) => {
-          searchBuilder.whereILike('payments.id', `%${filters.q}%`)
+          searchBuilder.whereILike('p.payment_id', `%${filters.q}%`)
           if (!Number.isNaN(Number(filters.q))) {
-            searchBuilder.orWhereILike('amount', `%${filters.q}%`)
+            searchBuilder.orWhereILike('p.amount', `%${filters.q}%`)
           }
           searchBuilder.orWhere(function () {
             this.whereILike('u.first_name', `%${filters.q}%`).orWhereILike(
@@ -51,7 +77,17 @@ export class PaymentRepostory implements IPaymentRepository {
     }
 
     if (filters.user_id) {
-      q = add(q).where('payments.user_id', filters.user_id)
+      q = add(q).whereRaw(`p.user_id = '${filters.user_id}'`)
+    }
+
+    if (filters.payment_type) {
+      q = add(q).where('p.payment_type', '=', filters.payment_type)
+    }
+
+    if (filters.application_id) {
+      q = q.whereRaw(`p.metadata::jsonb ->> 'application_id' = ?`, [
+        filters.application_id,
+      ])
     }
 
     return q
@@ -60,12 +96,19 @@ export class PaymentRepostory implements IPaymentRepository {
   getAll(
     filters: PaymentFilters,
   ): Promise<SeekPaginationResult<Payment & { payer?: User }>> {
-    let baseQuery = db<Payment>('payments')
-      .leftJoin('users as u', 'u.id', 'payments.user_id')
-      .select('payments.*', db.raw('row_to_json(u) as payer'))
+    let baseQuery = db<Payment>('payments as p')
+      .leftJoin('users as u', 'u.id', 'p.user_id')
+      .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .select(
+        'p.*',
+        db.raw('row_to_json(u) as payer'),
+        db.raw('row_to_json(r) as role'),
+      )
 
     baseQuery = this.useFilters(baseQuery, filters)
-    baseQuery = baseQuery.orderBy('payments.created_at', 'desc')
+
+    console.log({ sql: baseQuery.toSQL().sql })
+    baseQuery = baseQuery.orderBy('p.created_at', 'desc')
     return applyPagination(baseQuery, filters)
   }
 }

@@ -20,6 +20,8 @@ import {
 
 import { ApplicationService } from '@use-cases/Application/application'
 import {
+  applicationDocFilterSchema,
+  applicationDocUploadsSchema,
   createApplicationSchema,
   dipFiltersSchema,
   initiateMortgagePaymentSchema,
@@ -54,6 +56,7 @@ import { PaymentRepostory } from '@repositories/PaymentRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
+import { paymentFiltersSchema } from '@validators/paymentValidator'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -96,6 +99,7 @@ const applicationController = new ApplicationController(
     new ServiceOfferingRepository(),
     new UserRepository(),
     new PaymentService(new PaymentProcessorFactory()),
+    new MortageRepository(),
   ),
 )
 const applicationRoutes = Router()
@@ -453,16 +457,31 @@ applicationRoutes.get(
 
 applicationRoutes.get(
   '/:application_id/documents/required',
+  validateRequestQuery(applicationDocFilterSchema),
   asyncMiddleware(async (req, res) => {
     const {
       authInfo,
       params: { application_id },
+      query,
     } = req
     const response = await applicationController.getRequiredDoc(
       application_id,
+      query,
       authInfo,
     )
     res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.post(
+  '/:application_id/documents',
+  validateRequest(applicationDocUploadsSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+      query,
+    } = req
   }),
 )
 
@@ -523,4 +542,31 @@ applicationRoutes.post(
     res.status(response.statusCode).json(response)
   }),
 )
+
+applicationRoutes.get(
+  '/:application_id/payments',
+  authorize(
+    RequireAny(
+      isHomeBuyer,
+      requireOrganizationType(OrganizationType.HSF_INTERNAL),
+    ),
+  ),
+
+  validateRequestQuery(paymentFiltersSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+      query,
+    } = req
+    const response = await applicationController.getApplicationPayments(
+      authInfo,
+      application_id,
+      query,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 export default applicationRoutes

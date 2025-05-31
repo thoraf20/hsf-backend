@@ -36,6 +36,8 @@ import { UserRepository } from '@repositories/user/UserRepository'
 import { Role } from '@routes/index.t'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import {
+  ApplicationDocFilters,
+  ApplicationDocUploadsInput,
   CreateApplicationInput,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
@@ -1054,7 +1056,11 @@ export class ApplicationService {
     return reviewRequestContent
   }
 
-  async getRequiredDoc(applicationId: string, authInfo: AuthInfo) {
+  async getRequiredDoc(
+    applicationId: string,
+    filters: ApplicationDocFilters,
+    authInfo: AuthInfo,
+  ) {
     const application =
       await this.applicationRepository.getApplicationById(applicationId)
 
@@ -1067,12 +1073,14 @@ export class ApplicationService {
 
     let requiredDocumentGroupTag: Array<DocumentGroupKind> = []
 
-    // if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
-    requiredDocumentGroupTag.push(
-      DocumentGroupKind.MortgageUpload,
-      DocumentGroupKind.ConditionPrecedent,
-    )
-    // }
+    if (!filters.group) {
+      requiredDocumentGroupTag.push(
+        DocumentGroupKind.MortgageUpload,
+        DocumentGroupKind.ConditionPrecedent,
+      )
+    } else {
+      requiredDocumentGroupTag.push(filters.group)
+    }
 
     const documentTypes = await Promise.all(
       requiredDocumentGroupTag.map(async (kind) => {
@@ -1177,5 +1185,116 @@ export class ApplicationService {
       escrow_status: escrowStatus,
       approvals,
     }
+  }
+
+  async handleApplicationDocUploads(
+    applicationId: string,
+    input: ApplicationDocUploadsInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    const user = await this.userRepository.findById(authInfo.userId)
+
+    let allowDocGroupPerApplicationType: Array<DocumentGroupKind> = []
+
+    if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
+      allowDocGroupPerApplicationType.push(
+        DocumentGroupKind.MortgageUpload,
+        DocumentGroupKind.ConditionPrecedent,
+      )
+    }
+
+    if (!allowDocGroupPerApplicationType.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Sorry this application type '${application.application_type}' doesn't support any document upload group`,
+      )
+    }
+
+    if (!allowDocGroupPerApplicationType.includes(input.group)) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNPROCESSABLE_ENTITY,
+        `This document group type ${input.group} is not part of the known document group for this application type ${application.application_type}`,
+      )
+    }
+
+    const documentGroup = await this.documentRepository.findDocumentGroupByTag(
+      input.group,
+    )
+
+    if (!documentGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `The document group is yet to be properly setup`,
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        documentGroup.id,
+      )
+
+    if (!documentGroupTypes.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `The document group types is yet to be properly setup for this document group ${documentGroup.name}`,
+      )
+    }
+
+    const notMatchDocType = documentGroupTypes.find(
+      (docType) => !input.documents.find((doc) => doc.id === docType.id),
+    )
+
+    if (!notMatchDocType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `As part of the document uploaded we are unable to find a matching document for ${notMatchDocType.document_type}`,
+      )
+    }
+
+    const hsfOrg = await this.organizationRepository.getHsfOrganization()
+
+    await Promise.all(
+      input.documents.map(async (doc) => {
+        const reviewRequest =
+          await this.reviewRequestRepository.createReviewRequest({
+            candidate_name: `${user.first_name} ${user.last_name}`,
+            initiator_id: user.id,
+            submission_date: new Date(),
+            request_type_id: '',
+          })
+
+        await this.reviewRequestRepository.createReviewRequestApproval({
+          organization_id: hsfOrg.id,
+          request_id: reviewRequest.id,
+          review_request_stage_type_id: '',
+          approval_status: ReviewRequestApprovalStatus.Pending,
+        })
+
+        await this.documentRepository.createApplicationDocumentEntry({
+          review_request_id: reviewRequest.id,
+          application_id: application.application_id,
+          document_group_type_id: doc.id,
+          document_name: doc.file_name,
+          document_size: String(doc.file_size),
+          document_url: doc.file_url,
+        })
+      }),
+    )
+
+    // this.reviewRequestRepository.getReviewRequestTypeByKind(ReviewRequestTypeKind.)
+
+    // this.documentRepository.createApplicationDocumentEntry({
+
+    // })
   }
 }

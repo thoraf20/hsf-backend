@@ -3,6 +3,7 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 export enum ReviewRequestTypeKind {
   OfferLetterOutright = 'Offer Letter Outright',
   EscrowMeetingRequest = 'Escrow Metting Request',
+  DipDocumentReview = 'DIP Document Review',
 }
 
 export enum ReviewRequestStageKind {
@@ -11,6 +12,9 @@ export enum ReviewRequestStageKind {
 
   DeveloperEscrowMeetingRespond = 'Developer Escrow Meeting Respond',
   HomeBuyerEscrowMeetingRespond = 'Home buyer Escrow Meeting Respond',
+
+  DIPHsfDocumentReview = 'DIP Hsf Document Review',
+  DIPDeveloperDocumentReview = 'DIP Developer Document Review',
 }
 
 export enum ReviewRequestStatus {

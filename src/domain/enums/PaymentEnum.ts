@@ -4,9 +4,15 @@ export enum PaymentEnum {
   FLUTTERWARE = 'FLUTTERWARE',
 }
 
-export enum PaymentType {
+export enum MortgagePaymentType {
   DUE_DILIGENT = 'PAYMENT_FOR_DUE_DILIGENT',
   BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
+  DECISION_IN_PRINCIPLE = 'Decision In Principle',
+}
+
+export enum PaymentType {
+  DUE_DILIGENT = MortgagePaymentType.DECISION_IN_PRINCIPLE,
+  BROKER_FEE = MortgagePaymentType.BROKER_FEE,
   MANAGEMENT_FEE = 'PAYMENT_FOR_DUE_DELIGENT',
   INSPECTION = 'PAYMENT_FOR_INSPECTION',
 }
@@ -26,10 +32,4 @@ export enum DipPaymentStatus {
   Completed = 'Completed',
   Failed = 'Failed',
   Pending = 'Pending',
-}
-
-export enum MortgagePaymentType {
-  DUE_DILIGENT = 'PAYMENT_FOR_DUE_DILIGENT',
-  BROKER_FEE = 'PAYMENT_FOR_BROKER_FEE',
-  DECISION_IN_PRINCIPLE = 'Decision In Principle',
 }

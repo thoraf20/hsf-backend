@@ -2,11 +2,11 @@ import axios from 'axios'
 
 import https from 'https'
 import PaymentProcessor from './interfaces/IPaymentProcessor'
-import { Payment } from './entities/Payment'
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ''
 const axiosInstance = axios.create({
   baseURL: 'https://api.paystack.co',
+  validateStatus: () => true,
   headers: {
     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
     'Content-Type': 'application/json',
@@ -17,27 +17,29 @@ const axiosInstance = axios.create({
 export class PaystackProcessor implements PaymentProcessor {
   constructor() {}
 
-  async createProcess(input: Payment): Promise<any> {
-    try {
-      const requestBody = {
-        ...input,
-        amount: Number(input.amount) * 100,
-        currency: 'NGN',
-      }
-
-      const response = await axiosInstance.post(
-        '/transaction/initialize',
-        requestBody,
-      )
-      if (response.data.status) {
-        return response.data.data
-      }
-
-      throw new Error('Payment initialization failed')
-    } catch (error) {
-      console.error('Paystack Payment Error:', error)
-      throw new Error('Payment processing failed')
+  async createProcess(input: {
+    amount: number
+    email: string
+    reference: string
+    cancel_url?: string
+    metadata?: unknown
+  }) {
+    const requestBody = {
+      ...input,
+      amount: Number(input.amount) * 100,
+      currency: 'NGN',
     }
+
+    const response = await axiosInstance.post<CreatePaymentIntentResponse>(
+      '/transaction/initialize',
+      requestBody,
+    )
+
+    if (!response.data.status) {
+      return null
+    }
+
+    return response.data.data
   }
 
   async verifyPayment(
@@ -88,3 +90,32 @@ type VerifyPaymentResponse = {
   plan_object: Record<string, any> //empty object
   subaccount: Record<string, any> // empty object
 }
+
+type PaystackBaseResponse = {
+  status: boolean
+  message: string
+  meta?: Record<string, unknown>
+}
+
+export enum PaystackErrorCode {
+  DuplicateReference = 'duplicate_reference',
+}
+
+export type PaystackErrorResponse = PaystackBaseResponse & {
+  status: false
+  type: string
+  code?: PaystackErrorCode
+}
+
+export type PaystackSuccessResponse<Data> = PaystackBaseResponse & {
+  status: true
+  data: Data
+}
+
+export type CreatePaymentIntentResponse =
+  | PaystackErrorResponse
+  | PaystackSuccessResponse<{
+      authorization_url: string
+      access_code?: string
+      reference: string
+    }>

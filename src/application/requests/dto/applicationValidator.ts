@@ -1,4 +1,5 @@
-import { MortgagePaymentType } from '@domain/enums/PaymentEnum'
+import { DocumentGroupKind } from '@domain/enums/documentEnum'
+import { MortgagePaymentType, PaymentEnum } from '@domain/enums/PaymentEnum'
 import {
   ApplicationPurchaseType,
   DIPStatus,
@@ -136,8 +137,42 @@ export const initiateMortgagePaymentSchema = z.object({
   payment_for: z.nativeEnum(MortgagePaymentType),
   amount: z.coerce.number(),
   product_code: z.string().nonempty(),
+  payment_method: z.nativeEnum(PaymentEnum).default(PaymentEnum.PAYSTACK),
 })
 
 export type InitiateMortgagePayment = z.infer<
   typeof initiateMortgagePaymentSchema
+>
+
+export const applicationDocFilterSchema = z.object({
+  group: z
+    .enum([
+      DocumentGroupKind.MortgageUpload,
+      DocumentGroupKind.ConditionPrecedent,
+    ])
+    .optional(),
+})
+
+export type ApplicationDocFilters = z.infer<typeof applicationDocFilterSchema>
+
+export const applicationDocUploadsSchema = z.object({
+  group: z.enum([
+    DocumentGroupKind.MortgageUpload,
+    DocumentGroupKind.ConditionPrecedent,
+  ]),
+  documents: z
+    .array(
+      z.object({
+        id: z.string().nonempty(),
+        file_url: z.string().url(),
+        file_name: z.string(),
+        file_size: z.number().optional(),
+        file_ext: z.string().optional(),
+      }),
+    )
+    .nonempty(),
+})
+
+export type ApplicationDocUploadsInput = z.infer<
+  typeof applicationDocUploadsSchema
 >

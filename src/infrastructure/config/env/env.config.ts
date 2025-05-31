@@ -6,7 +6,9 @@ import { isSupportedTimeUnit, parseStrTimeUnit } from '@shared/utils/time-unit'
 dotenv.config()
 
 export const envSchema = z.object({
-  NODE_ENV: z.enum(['development', 'production']).default('development'),
+  NODE_ENV: z
+    .enum(['development', 'staging', 'production'])
+    .default('development'),
   PORT: z.string(),
   DB_HOST: z.string(),
   DB_PORT: z.string(),

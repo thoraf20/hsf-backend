@@ -5,6 +5,7 @@ import { PaymentFilters } from '@validators/paymentValidator'
 
 export interface IPaymentRepository {
   create(data: Partial<Payment>): Promise<Payment>
+  update(data: Partial<Payment>): Promise<Payment>
   getAll(
     filters: PaymentFilters,
   ): Promise<SeekPaginationResult<Payment & { payer?: User }>>
