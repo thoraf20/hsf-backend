@@ -1,6 +1,7 @@
 import { LoginAttempt } from '@domain/entities/LoginAttempt'
 import { ILoginAttemptRepository } from '@domain/repositories/ILoginAttemptRepository'
 import db from '@infrastructure/database/knex'
+import { subMinutes } from 'date-fns'
 
 export class LoginAttemptRepository implements ILoginAttemptRepository {
   async create(loginAttempt: LoginAttempt): Promise<LoginAttempt> {
@@ -19,7 +20,7 @@ export class LoginAttemptRepository implements ILoginAttemptRepository {
     userId: string,
     withinMinutes: number,
   ): Promise<number> {
-    const cutoff = new Date(Date.now() - withinMinutes * 60 * 1000)
+    const cutoff = subMinutes(Date.now(), withinMinutes)
 
     // First get the last successful login timestamp
     const lastSuccessfulLogin = await db('login_attempts')
@@ -28,6 +29,7 @@ export class LoginAttemptRepository implements ILoginAttemptRepository {
       .orderBy('attempted_at', 'desc')
       .first()
 
+    console.log({ cutoff, withinMinutes })
     let query = db('login_attempts')
       .count<{ count: number }>('id')
       .where({ user_id: userId, successful: false })

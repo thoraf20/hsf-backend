@@ -22,7 +22,6 @@ export const UserSchema = z.object({
   profile: z.string().optional(),
   image: z.string().url('Invalid image URL').optional(),
   userAgent: z.string().optional(),
-
 })
 
 export const RegisterEmail = z.object({
@@ -146,3 +145,15 @@ export const getUserByIdSchema = z.object({
 })
 export type UserFilters = z.infer<typeof getUserFiltersSchema>
 export type UserFilter = z.infer<typeof getUserByIdSchema>
+
+export const userActivityFilterSchema = withPaginateSchema(
+  z.object({
+    organization_id: z.string().optional(),
+    user_id: z.string().optional(),
+    activity_type: z.string().optional(),
+    start_date: z.coerce.date().optional(),
+    end_date: z.coerce.date().optional(),
+  }),
+)
+
+export type UserActivityFilters = z.infer<typeof userActivityFilterSchema>

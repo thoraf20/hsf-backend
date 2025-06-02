@@ -9,6 +9,7 @@ import {
   updatePasswordSchema,
   updateProfileImageSchema,
   updateProfileSchema,
+  userActivityFilterSchema,
   verifyTokenSchema,
 } from '@application/requests/dto/userValidator'
 import { AccountRepository } from '@repositories/user/AccountRepository'
@@ -19,9 +20,14 @@ import {
   createAddressSchema,
   updateAddressSchema,
 } from '@validators/addressValidator'
+import { validateRequestQuery } from '@shared/utils/paginate'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 const userRoutes: Router = Router()
 
-const userServices = new UserService(new UserRepository())
+const userServices = new UserService(
+  new UserRepository(),
+  new UserActivityLogRepository(),
+)
 const accountRepository = new AccountRepository()
 const userController = new UserController(
   userServices,
@@ -163,8 +169,22 @@ userRoutes.put(
 
 userRoutes.get(
   '/roles',
+  validateRequestQuery(userActivityFilterSchema),
   asyncMiddleware(async (req, res) => {
     const response = await userController.getRoles()
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+userRoutes.get(
+  '/activities',
+  asyncMiddleware(async (req, res) => {
+    const { query, authInfo } = req
+    const response = await userController.getUserActivites({
+      ...query,
+      user_id: authInfo.userId,
+    })
+
     res.status(response.statusCode).json(response)
   }),
 )

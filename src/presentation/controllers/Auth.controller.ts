@@ -11,6 +11,7 @@ import {
   veriftOtpType,
 } from '@shared/types/userType'
 import { MfaFlow } from '@domain/enums/userEum'
+import { ApplicationCustomError } from '@middleware/errors/customError'
 
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -81,7 +82,15 @@ export class AuthController {
   public async requestPasswordResetOtp(
     email: string,
   ): Promise<ApiResponse<any>> {
-    await this.authService.requestPasswordReset(email)
+    const foundUser = await this.authService.requestPasswordReset(email)
+
+    if (!foundUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No account found with this email, Try again!',
+      )
+    }
+
     return createResponse(
       StatusCodes.OK,
       'Otp will be sent to this email if this account exist',

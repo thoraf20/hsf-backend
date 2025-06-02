@@ -18,7 +18,7 @@ import { MfaToken } from '@shared/utils/mfa_token'
 import { TimeSpan } from '@shared/utils/time-unit'
 import { MfaFlow, UserStatus } from '@domain/enums/userEum'
 import { decryptToString } from '@shared/utils/encrypt'
-import { decodeBase64, encodeHexUpperCase } from '@oslojs/encoding'
+import { decodeBase64 } from '@oslojs/encoding'
 import { verifyTOTP } from '@oslojs/otp'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
@@ -34,7 +34,6 @@ import { ILoginAttemptRepository } from '@domain/repositories/ILoginAttemptRepos
 import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
 import { UserActivityKind } from '@domain/enums/UserActivityKind'
 import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
-import { sha256 } from '@oslojs/crypto/sha2'
 import { hashData } from '@shared/utils/sha-hash'
 
 export class AuthService {
@@ -239,8 +238,25 @@ export class AuthService {
   async requestPasswordReset(email: string): Promise<void | boolean> {
     const user = await this.userRepository.findByEmail(email)
 
+    console.log({ user })
     if (!user) {
       return false
+    }
+
+    if (!user.password) {
+      const account = await this.accountRepository.findByUserID(user.id)
+
+      if (account.length) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Your account was setup via oauth. Please use the oauth process.',
+        )
+      }
+
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'We encounter an error while verifying your email',
+      )
     }
 
     const otp = generateRandomSixNumbers()
@@ -248,6 +264,7 @@ export class AuthService {
     const details = { id: user.id, otp, type: OtpEnum.PASSWORD_RESET }
     await this.client.setKey(key, details, 600)
     emailTemplates.ResetVerificationEmail(email, otp.toString())
+    return true
   }
 
   /**
@@ -290,7 +307,11 @@ export class AuthService {
     const newpassword = await this.userRepository.hashedPassword(
       input.newPassword,
     )
-    await this.userRepository.update(id, { password: newpassword })
+    await this.userRepository.update(id, {
+      password: newpassword,
+      force_password_reset: false,
+      is_default_password: false,
+    })
     await this.client.deleteKey(tempKey)
   }
 
@@ -316,9 +337,14 @@ export class AuthService {
     const isLocked = await this.client.getKey(lockKey)
 
     if (isLocked) {
+      const waitFor = new TimeSpan(
+        await this.client.getKeyTTL(lockKey),
+        's',
+      ).toSeconds()
+
       throw new ApplicationCustomError(
         StatusCodes.TOO_MANY_REQUESTS,
-        'Too many failed login attempts. Please try again after 10 minutes.',
+        `Too many failed login attempts. Please try again after ${Math.round(waitFor / 100)} minutes`,
       )
     }
 
@@ -341,11 +367,13 @@ export class AuthService {
     const ipAddress = getIpAddress()
     const userAgent = getUserAgent()
 
+    const TRIAL_DURATION = 10 //minute
+    const TRIAL_THRESHOLD = 5
     if (!isValid) {
       let failedLoginAttempts =
         ((await this.loginAttemptRepository.countFailedAttempts(
           user.id,
-          new TimeSpan(10, 'm').toMilliseconds(),
+          TRIAL_DURATION,
         )) || 0) + 1
 
       const loginAttempt = await this.loginAttemptRepository.create({
@@ -360,11 +388,12 @@ export class AuthService {
         activity_type: UserActivityKind.FAILED_LOGIN,
         performed_at: new Date(),
         user_id: user.id,
+        title: 'Failed login attempt',
         description: `Failed login attempt from IP: ${ipAddress ?? 'unknown'}`,
         metadata: loginAttempt,
       })
 
-      if (failedLoginAttempts >= 3) {
+      if (failedLoginAttempts > TRIAL_THRESHOLD) {
         await this.client.setKey(lockKey, true, 600) //lock account for 10mins
         await this.userActivityRepository.create({
           activity_type: UserActivityKind.ACCOUNT_LOCKED,
@@ -372,6 +401,7 @@ export class AuthService {
           user_agent: userAgent,
           performed_at: new Date(),
           user_id: user.id,
+          title: 'Account locked',
           description: `Account locked due to ${failedLoginAttempts} failed login attempts`,
           metadata: loginAttempt,
         })
@@ -439,6 +469,7 @@ export class AuthService {
         activity_type: UserActivityKind.FORCE_CHANGE_PASSWORD,
         performed_at: new Date(),
         user_id: user.id,
+        title: 'Required to change default password',
         description: `User required to change default password from IP: ${ipAddress ?? 'unknown'}`,
         ip_address: ipAddress,
         user_agent: userAgent,
@@ -519,6 +550,7 @@ export class AuthService {
       activity_type: UserActivityKind.LOGIN,
       performed_at: new Date(),
       user_id: user.id,
+      title: 'Login successful',
       description: `Successful login from IP: ${ipAddress ?? 'unknown'}`,
       metadata: successfulLoginAttempt,
       ip_address: ipAddress,

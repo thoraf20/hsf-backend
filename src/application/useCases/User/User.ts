@@ -13,6 +13,7 @@ import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
   UpdateProfileImageInput,
+  UserActivityFilters,
   UserFilters,
 } from '@validators/userValidator'
 import { TimeSpan } from '@shared/utils/time-unit'
@@ -21,12 +22,20 @@ import { verifyTOTP } from '@oslojs/otp'
 import { decodeBase64 } from '@oslojs/encoding'
 import { getEnv } from '@infrastructure/config/env/env.config'
 import { decryptToString } from '@shared/utils/encrypt'
+import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
+import { generateRandomPassword } from '@shared/utils/helpers'
+import template from '@infrastructure/email/template/template'
 
 export class UserService {
   private userRepository: IUserRepository
+  private userActivityRepository: IUserActivityLogRepository
   private readonly client = new RedisClient()
-  constructor(userRepository: IUserRepository) {
+  constructor(
+    userRepository: IUserRepository,
+    userActivityRepository: IUserActivityLogRepository,
+  ) {
     this.userRepository = userRepository
+    this.userActivityRepository = userActivityRepository
   }
 
   public async getUserProfile(user: string): Promise<User> {
@@ -440,5 +449,50 @@ export class UserService {
 
   async getRoles() {
     return this.userRepository.getRoles()
+  }
+
+  async getUserActivites(filters: UserActivityFilters) {
+    return this.userActivityRepository.getAll(filters)
+  }
+
+  async hsfResetUserPassword(userId: string) {
+    let user = await this.userRepository.findById(userId)
+    if (!user || user.status === UserStatus.Deleted) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
+    }
+
+    if (
+      !(
+        user.status === UserStatus.Active || user.status === UserStatus.Inactive
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Password change not allowed for user with status: ${user.status}. Account must be active or inactive.`,
+      )
+    }
+    const defaultPassword = generateRandomPassword()
+    const hashedPassword =
+      await this.userRepository.hashedPassword(defaultPassword)
+
+    user = await this.userRepository.update(user.id, {
+      password: hashedPassword,
+      is_default_password: true,
+      force_password_reset: true,
+    })
+
+    const url = `${process.env.FRONTEND_URL}/auth/login`
+    // template.passwordResetForOrganization(
+    //   user.email,
+    //   `${user.first_name} ${user.last_name}`,
+    //   defaultPassword,
+    //   url,
+    //   organization.name,
+    // )
+
+    return {
+      email: user.email,
+      generated_password: defaultPassword,
+    }
   }
 }

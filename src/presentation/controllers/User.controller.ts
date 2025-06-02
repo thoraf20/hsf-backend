@@ -10,6 +10,7 @@ import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
   UpdateProfileImageInput,
+  UserActivityFilters,
   UserFilters,
 } from '@validators/userValidator'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
@@ -146,4 +147,15 @@ export class UserController {
       userContents,
     )
   }
+
+  async getUserActivites(filters: UserActivityFilters) {
+    const activityContents = await this.userService.getUserActivites(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'User activities retrieved successfully',
+      activityContents,
+    )
+  }
+
+  async hsfResetUserPassword(userId: string) {}
 }

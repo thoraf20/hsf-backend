@@ -17,7 +17,7 @@ export async function up(knex: Knex): Promise<void> {
     table.index('user_id')
     table.index('attempted_at')
     table.index('successful')
-    table.timestamps(true)
+    table.timestamps(true, true)
   })
 }
 

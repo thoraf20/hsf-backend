@@ -255,7 +255,7 @@ export class ManageOrganizations {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
 
-    if (HSF_INTERNAL_ROLES.includes(newAdminRole.name as Role)) {
+    if (!HSF_INTERNAL_ROLES.includes(newAdminRole.name as Role)) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         'Invalid HSF role',

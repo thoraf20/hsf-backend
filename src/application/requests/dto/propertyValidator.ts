@@ -33,7 +33,7 @@ export const createPropertySchema = z
     unit_number: z.string().default('1'),
     state: z.string(),
     postal_code: z.string().min(4, 'Postal code must be valid').optional(),
-    landmark: z.string(),
+    landmark: z.string().optional().default(''),
     property_name: z
       .string()
       .min(3, 'Property name must be at least 3 characters long'),
@@ -41,9 +41,7 @@ export const createPropertySchema = z
       .string()
       .min(3, 'Property type must be at least 3 characters long'),
     property_size: z.string().min(1, 'Property size is required'),
-    property_price: z
-      .string()
-      .regex(/^\d+$/, 'Property price must be a valid number'),
+    property_price: z.coerce.number(),
     // down_payment: z.coerce.number().optional().nullable(),
     property_description: z.string().optional(),
     numbers_of_bedroom: z
