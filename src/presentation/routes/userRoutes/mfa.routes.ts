@@ -2,6 +2,7 @@ import { MfaController } from '@controllers/Mfa.controller'
 import { validateRequest } from '@middleware/validateRequest'
 import { createResponse } from '@presentation/response/responseType'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { asyncMiddleware } from '@routes/index.t'
 import { UserService } from '@use-cases/User/User'
 import {
@@ -14,7 +15,10 @@ import { StatusCodes } from 'http-status-codes'
 
 const mfaRoutes = Router()
 
-const userService = new UserService(new UserRepository())
+const userService = new UserService(
+  new UserRepository(),
+  new UserActivityLogRepository(),
+)
 const mfaController = new MfaController(userService, new UserRepository())
 
 mfaRoutes.post(

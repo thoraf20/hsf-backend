@@ -98,6 +98,7 @@ export class PropertyService {
     const address = await this.propertyRepository.createProperties(
       new Properties({
         ...input,
+        property_price: String(input.property_price),
         documents: JSON.stringify(input.documents),
         organization_id,
       }),

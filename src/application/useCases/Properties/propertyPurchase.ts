@@ -246,7 +246,7 @@ export class PropertyPurchase {
             product_code: inspectionFee.product_code,
           }
           return await this.mortgageRespository.payForMortageProcess(
-            { amount: Number(inspectionFee.base_price), email },
+            { amount: Number(inspectionFee.base_price), email, payment_id: '' },
             metaData,
             request_type,
             user_id,

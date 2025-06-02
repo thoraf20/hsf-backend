@@ -1268,12 +1268,12 @@ export class ApplicationService {
       input.documents.every((doc) => doc.id !== docType.id),
     )
 
-    // if (missingDocumentType) {
-    //   throw new ApplicationCustomError(
-    //     StatusCodes.FORBIDDEN,
-    //     `Missing document type: '${missingDocumentType.document_type}'. Please ensure all required documents are uploaded.`,
-    //   )
-    // }
+    if (missingDocumentType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Missing document type: '${missingDocumentType.document_type}'. Please ensure all required documents are uploaded.`,
+      )
+    }
 
     const hsfOrg = await this.organizationRepository.getHsfOrganization()
 

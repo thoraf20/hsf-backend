@@ -24,7 +24,6 @@ import { getEnv } from '@infrastructure/config/env/env.config'
 import { decryptToString } from '@shared/utils/encrypt'
 import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
 import { generateRandomPassword } from '@shared/utils/helpers'
-import template from '@infrastructure/email/template/template'
 
 export class UserService {
   private userRepository: IUserRepository
@@ -480,15 +479,6 @@ export class UserService {
       is_default_password: true,
       force_password_reset: true,
     })
-
-    const url = `${process.env.FRONTEND_URL}/auth/login`
-    // template.passwordResetForOrganization(
-    //   user.email,
-    //   `${user.first_name} ${user.last_name}`,
-    //   defaultPassword,
-    //   url,
-    //   organization.name,
-    // )
 
     return {
       email: user.email,
