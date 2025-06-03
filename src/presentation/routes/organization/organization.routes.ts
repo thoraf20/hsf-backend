@@ -150,19 +150,6 @@ router.get(
 )
 
 router.get(
-  '/developers/:developer_id',
-  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
-  asyncMiddleware(async (req, res) => {
-    const {
-      params: { developer_id },
-    } = req
-    const response =
-      await organizationController.getDeveloperByDeveloperId(developer_id)
-    res.status(response.statusCode).json(response)
-  }),
-)
-
-router.get(
   '/developers/required-docs',
   authorize(
     requireOrganizationType(
@@ -299,6 +286,19 @@ router.patch(
       body,
     )
 
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.get(
+  '/developers/:developer_id',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { developer_id },
+    } = req
+    const response =
+      await organizationController.getDeveloperByDeveloperId(developer_id)
     res.status(response.statusCode).json(response)
   }),
 )
