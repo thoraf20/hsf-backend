@@ -7,6 +7,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { ReviewRequestApprovalStatus } from '@entities/Request'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
@@ -152,6 +153,8 @@ export const applicationDocFilterSchema = z.object({
       DocumentGroupKind.ConditionPrecedent,
     ])
     .optional(),
+
+  pending: z.nativeEnum(QueryBoolean).optional(),
 })
 
 export type ApplicationDocFilters = z.infer<typeof applicationDocFilterSchema>
@@ -164,7 +167,8 @@ export const applicationDocUploadsSchema = z.object({
   documents: z
     .array(
       z.object({
-        id: z.string().nonempty(),
+        id: z.string().optional(),
+        document_group_type_id: z.string().nonempty(),
         file_url: z.string().url(),
         file_name: z.string(),
         file_size: z.number().optional(),
@@ -191,3 +195,21 @@ export const applicationFilterSchema = withPaginateSchema(
 )
 
 export type ApplicationFilters = z.infer<typeof applicationFilterSchema>
+
+export const applicationDocApprovalSchema = z.object({
+  approval_id: z.string().nonempty(),
+  application_doc_id: z.string().nonempty(),
+  approval: z.nativeEnum(ReviewRequestApprovalStatus),
+})
+
+export type ApplicationDocApprovalInput = z.infer<
+  typeof applicationDocApprovalSchema
+>
+
+export const hsfCompleteApplicationDocReviewSchema = z.object({
+  group: z.nativeEnum(DocumentGroupKind),
+})
+
+export type HSFCompleteApplicationDocReviewInput = z.infer<
+  typeof hsfCompleteApplicationDocReviewSchema
+>

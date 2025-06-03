@@ -7,6 +7,7 @@ import {
 } from '@domain/enums/propertyEnum'
 import { Application } from '@entities/Application'
 import { DIP } from '@entities/Mortage'
+import { ReviewRequestApprovalStatus } from '@entities/Request'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { createResponse } from '@presentation/response/responseType'
 import { Role } from '@routes/index.t'
@@ -16,11 +17,13 @@ import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import { PaymentUseCase } from '@use-cases/Payments/payments'
 import {
+  ApplicationDocApprovalInput,
   ApplicationDocFilters,
   ApplicationDocUploadsInput,
   ApplicationFilters,
   CreateApplicationInput,
   DipFilters,
+  HSFCompleteApplicationDocReviewInput,
   InitiateMortgagePayment,
   LenderDipResponse,
   OfferLetterFilters,
@@ -265,6 +268,22 @@ export class ApplicationController {
     )
   }
 
+  async getApplicationDocumentGroups(
+    applicationId: string,
+    authInfo: AuthInfo,
+  ) {
+    const contents = await this.applicationService.getApplicationDocGroups(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Document Required fetched successfully',
+      { documents: contents },
+    )
+  }
+
   async getFilledDocs(
     applicationId: string,
     filters: ApplicationDocFilters,
@@ -279,7 +298,7 @@ export class ApplicationController {
     return createResponse(
       StatusCodes.OK,
       'Document Filled fetched successfully',
-      { documents: contents },
+      contents,
     )
   }
 
@@ -488,4 +507,30 @@ export class ApplicationController {
       { reviews: documentReview },
     )
   }
+
+  async documentApprovalRespond(
+    applicationId: string,
+    input: ApplicationDocApprovalInput,
+    authInfo: AuthInfo,
+  ) {
+    const approval = await this.applicationService.documentApprovalRespond(
+      applicationId,
+      input,
+      authInfo,
+    )
+
+    console.log({ approval })
+    return createResponse(
+      StatusCodes.OK,
+      approval.approval_status === ReviewRequestApprovalStatus.Approved
+        ? 'Application document approved successfully'
+        : 'Application document rejected successfully',
+    )
+  }
+
+  async hsfCompleteDocumentReview(
+    applicationId: string,
+    input: HSFCompleteApplicationDocReviewInput,
+    authInfo: AuthInfo,
+  ) {}
 }

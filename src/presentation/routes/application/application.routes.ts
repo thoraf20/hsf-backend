@@ -20,10 +20,12 @@ import {
 
 import { ApplicationService } from '@use-cases/Application/application'
 import {
+  applicationDocApprovalSchema,
   applicationDocFilterSchema,
   applicationDocUploadsSchema,
   createApplicationSchema,
   dipFiltersSchema,
+  hsfCompleteApplicationDocReviewSchema,
   initiateMortgagePaymentSchema,
   lenderDipResponseSchema,
   offerLetterFiltersSchema,
@@ -466,6 +468,21 @@ applicationRoutes.get(
 )
 
 applicationRoutes.get(
+  '/:application_id/documents/groups',
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+    } = req
+    const response = await applicationController.getApplicationDocumentGroups(
+      application_id,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
   '/:application_id/documents/filled',
   validateRequestQuery(applicationDocFilterSchema),
   asyncMiddleware(async (req, res) => {
@@ -479,6 +496,25 @@ applicationRoutes.get(
       query,
       authInfo,
     )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/documents/approval',
+  validateRequest(applicationDocApprovalSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      body,
+      authInfo,
+      params: { application_id },
+    } = req
+    const response = await applicationController.documentApprovalRespond(
+      application_id,
+      body,
+      authInfo,
+    )
+
     res.status(response.statusCode).json(response)
   }),
 )
@@ -500,6 +536,23 @@ applicationRoutes.post(
     )
 
     res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.post(
+  '/:application_id/documents/hsf-complete-review',
+  validateRequest(hsfCompleteApplicationDocReviewSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+      body,
+    } = req
+    applicationController.handleApplicationDocUploads(
+      application_id,
+      body,
+      authInfo,
+    )
   }),
 )
 

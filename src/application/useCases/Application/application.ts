@@ -8,6 +8,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
+import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEmun'
 import { UserStatus } from '@domain/enums/userEum'
 import { getDeveloperClientView } from '@entities/Developer'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
@@ -35,12 +36,15 @@ import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurch
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { Role } from '@routes/index.t'
+import { QueryBoolean } from '@shared/utils/helpers'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import {
+  ApplicationDocApprovalInput,
   ApplicationDocFilters,
   ApplicationDocUploadsInput,
   ApplicationFilters,
   CreateApplicationInput,
+  HSFCompleteApplicationDocReviewInput,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
@@ -1127,9 +1131,50 @@ export class ApplicationService {
       }),
     )
 
+    if (filters.pending === QueryBoolean.YES) {
+      return documentTypes.flat(1).filter((type) => type.documents.length === 0)
+    }
     return documentTypes.flat(1)
   }
 
+  async getApplicationDocGroups(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    let requiredDocumentGroupTag: Array<DocumentGroupKind> = []
+
+    if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
+      requiredDocumentGroupTag.push(
+        DocumentGroupKind.MortgageUpload,
+        DocumentGroupKind.ConditionPrecedent,
+      )
+    }
+
+    return await Promise.all(
+      requiredDocumentGroupTag.map(async (kind) => {
+        const documentGroup =
+          await this.documentRepository.findDocumentGroupByTag(kind)
+        if (!documentGroup) return []
+
+        const groupDocumentTypes =
+          await this.documentRepository.findGroupDocumentTypesByGroupId(
+            documentGroup.id,
+          )
+
+        return {
+          ...documentGroup,
+          document_types: groupDocumentTypes,
+        }
+      }),
+    )
+  }
   async getFilledDocs(
     applicationId: string,
     filters: ApplicationDocFilters,
@@ -1155,6 +1200,8 @@ export class ApplicationService {
       filters.group!,
     )
 
+    console.log({ documentGroup })
+
     if (!documentGroup) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
@@ -1162,12 +1209,12 @@ export class ApplicationService {
       )
     }
 
-    const documentApplicationEntries =
+    let documentApplicationEntries =
       await this.documentRepository.findApplicationDocumentEntriesByApplicationId(
         application.application_id,
       )
 
-    return Promise.all(
+    const documentContents = await Promise.all(
       documentApplicationEntries.map(async (entry) => {
         const documentType =
           await this.documentRepository.findGroupDocumentTypeById(
@@ -1193,6 +1240,10 @@ export class ApplicationService {
           review_request_approvals: reviewRequestApprovals,
         }
       }),
+    )
+
+    return documentContents.filter(
+      (doc) => doc.document_type.group_id === documentGroup.id,
     )
   }
 
@@ -1331,9 +1382,8 @@ export class ApplicationService {
       )
     }
 
-    // Use a more descriptive name
     const missingDocumentType = documentGroupTypes.find((docType) =>
-      input.documents.every((doc) => doc.id !== docType.id),
+      input.documents.every((doc) => doc.document_group_type_id !== docType.id),
     )
 
     if (missingDocumentType) {
@@ -1344,8 +1394,6 @@ export class ApplicationService {
     }
 
     const hsfOrg = await this.organizationRepository.getHsfOrganization()
-
-    console.log({ hsfOrg })
 
     const reviewRequestType =
       await this.reviewRequestRepository.getReviewRequestTypeByKind(
@@ -1358,8 +1406,6 @@ export class ApplicationService {
         `Review request type '${ReviewRequestTypeKind.DipDocumentReview}' not found.`,
       )
     }
-
-    console.log({ reviewRequestType })
 
     const requestTypeStages =
       await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
@@ -1405,6 +1451,56 @@ export class ApplicationService {
 
     return Promise.all(
       input.documents.map(async (doc) => {
+        if (doc.id) {
+          const applicationDocument =
+            await this.documentRepository.findApplicationDocumentEntryById(
+              doc.id,
+            )
+
+          console.log({ applicationDocument })
+
+          if (applicationDocument) {
+            let reviewRequestApprovals =
+              await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+                applicationDocument.review_request_id,
+              )
+
+            console.log({ reviewRequestApprovals })
+
+            if (reviewRequestApprovals) {
+              const rejectedApproval = reviewRequestApprovals.find(
+                (approval) =>
+                  approval.approval_status ===
+                  ReviewRequestApprovalStatus.Rejected,
+              )
+
+              console.log({ rejectedApproval })
+
+              if (rejectedApproval) {
+                await Promise.all([
+                  this.reviewRequestRepository.updateReviewRequestApproval(
+                    rejectedApproval.approval_id,
+                    {
+                      approval_status: ReviewRequestApprovalStatus.Pending,
+                    },
+                  ),
+                  this.documentRepository.updateApplicationDocumentEntry(
+                    applicationDocument.id,
+                    { ...doc },
+                  ),
+                ])
+
+                reviewRequestApprovals =
+                  await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+                    applicationDocument.review_request_id,
+                  )
+              }
+            }
+
+            return reviewRequestApprovals[0]
+          }
+        }
+
         const reviewRequest =
           await this.reviewRequestRepository.createReviewRequest({
             candidate_name: `${user.first_name} ${user.last_name}`,
@@ -1426,7 +1522,7 @@ export class ApplicationService {
           await this.documentRepository.createApplicationDocumentEntry({
             review_request_id: reviewRequest.id,
             application_id: application.application_id,
-            document_group_type_id: doc.id,
+            document_group_type_id: doc.document_group_type_id,
             document_name: doc.file_name,
             document_size: String(doc.file_size),
             document_url: doc.file_url,
@@ -1439,5 +1535,129 @@ export class ApplicationService {
         }
       }),
     )
+  }
+
+  async documentApprovalRespond(
+    applicationId: string,
+    input: ApplicationDocApprovalInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    const applicationDocEntry =
+      await this.documentRepository.findApplicationDocumentEntryById(
+        input.application_doc_id,
+      )
+
+    if (!applicationDocEntry) {
+      throw new Error('Application document not found')
+    }
+
+    const approvals =
+      await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+        applicationDocEntry.review_request_id,
+      )
+
+    const currentApproval = approvals.find(
+      (approval) => approval.id === input.approval_id,
+    )
+
+    if (
+      !(
+        currentApproval &&
+        currentApproval.organization_id === authInfo.currentOrganizationId
+      ) ||
+      !(
+        ADMIN_LEVEL_ROLES.includes(authInfo.globalRole) ||
+        currentApproval.approval_id === authInfo.userId
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to approve this document',
+      )
+    }
+
+    const documentApprovalUpdated =
+      await this.reviewRequestRepository.updateReviewRequestApproval(
+        currentApproval.id,
+        {
+          approval_date: new Date(),
+          approval_id: authInfo.userId,
+          approval_status: input.approval,
+        },
+      )
+
+    return documentApprovalUpdated
+  }
+
+  async hsfCompleteDocumentReview(
+    applicationId: string,
+    input: HSFCompleteApplicationDocReviewInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    const documentGroup = await this.documentRepository.findDocumentGroupByTag(
+      input.group,
+    )
+
+    if (!documentGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Document group with tag '${input.group}' is not properly set up.`,
+      )
+    }
+
+    const documentApplicationEntries =
+      await this.documentRepository.findApplicationDocumentEntriesByApplicationId(
+        applicationId,
+      )
+
+    const applicationEntriesWithApproval = await Promise.all(
+      documentApplicationEntries.map(async (entry) => {
+        const approval =
+          await this.reviewRequestRepository.getReviewRequestApprovalByOrgRequestID(
+            entry.review_request_id,
+            authInfo.currentOrganizationId,
+          )
+        return {
+          ...entry,
+          approval,
+        }
+      }),
+    )
+
+    const nonApprovedEntry = applicationEntriesWithApproval.some(
+      (entry) =>
+        entry.approval.approval_status !== ReviewRequestApprovalStatus.Approved,
+    )
+
+    if (nonApprovedEntry) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Not all the document application are approved',
+      )
+    }
+
+    // this.reviewRequestRepository.getReviewRequestStageByKind(
+    //   ReviewRequestStageKind.DIPDeveloperDocumentReview,
+    // )
   }
 }
