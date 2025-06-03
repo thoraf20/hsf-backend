@@ -523,7 +523,7 @@ export class ManageOrganizations {
         (documentType) =>
           !data.documents.find(
             (providedDoc) => providedDoc.id === documentType.id,
-          ) || documentType.is_required_for_group,
+          ),
       )
 
     if (missingDocType) {
