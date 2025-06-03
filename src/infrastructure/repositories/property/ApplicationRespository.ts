@@ -1,9 +1,9 @@
 import { Application } from '@entities/Application'
-import db from '@infrastructure/database/knex'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import { SearchType, SortDateBy } from '@shared/types/repoTypes'
-import { PropertyFilters } from '@validators/propertyValidator'
+import { SearchType } from '@shared/types/repoTypes'
+import { ApplicationFilters } from '@validators/applicationValidator'
 import { Knex } from 'knex'
 
 export class ApplicationRepository implements IApplicationRespository {
@@ -11,91 +11,37 @@ export class ApplicationRepository implements IApplicationRespository {
 
   useFilter(
     query: Knex.QueryBuilder<any, any[]>,
-    filters?: PropertyFilters,
+    filters?: ApplicationFilters,
     tablename = '',
   ) {
     let q = query
 
     if (filters == null || Object.keys(filters).length < 1) return q
 
-    const createUnion = (searchType: SearchType) =>
-      searchType === SearchType.EXCLUSIVE
-        ? (q: Knex.QueryBuilder<any, any[]>) => q.and
-        : (q: Knex.QueryBuilder<any, any[]>) => q.or
+    const add = createUnion(SearchType.EXCLUSIVE)
 
-    const add = createUnion(filters.search_type)
-
-    // // do not remove this
-    // q = q.and.whereRaw(
-    //   `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
-    // )
-    if (filters.sort_by) {
-      switch (filters.sort_by) {
-        case SortDateBy.RecentlyAdded:
-          q = q.orderBy(tablename + 'created_at', 'desc') // Newest first
-          break
-        case SortDateBy.LastUpdated:
-          q = q.orderBy(tablename + 'updated_at', 'desc') // Recently updated first
-          break
-        case SortDateBy.Earliest:
-          q = q.orderBy(tablename + 'created_at', 'asc') // Oldest first
-          break
-      }
-    }
+    // if (filters.sort_by) {
+    //   switch (filters.sort_by) {
+    //     case SortDateBy.RecentlyAdded:
+    //       q = q.orderBy(tablename + 'created_at', 'desc') // Newest first
+    //       break
+    //     case SortDateBy.LastUpdated:
+    //       q = q.orderBy(tablename + 'updated_at', 'desc') // Recently updated first
+    //       break
+    //     case SortDateBy.Earliest:
+    //       q = q.orderBy(tablename + 'created_at', 'asc') // Oldest first
+    //       break
+    //   }
+    // }
 
     if (filters.property_type) {
-      const property_types = filters.property_type.split(',')
-
-      const qq = []
-
-      let index = 0
-      for (const alt_property_type of property_types) {
-        const property_type = alt_property_type.trim()
-        if (property_types.length > 1 && index < 1) {
-          qq.push('(')
-        }
-        if (index == 0) {
-          qq.push(`${tablename}property_type ILIKE '${property_type}'`)
-        } else {
-          qq.push(`OR ${tablename}property_type ILIKE '${property_type}' `)
-        }
-        index++
-      }
-      if (qq?.[0] == '(') qq.push(')')
-
-      q = add(q).whereRaw(qq.join(' '))
+      q = add(q).whereRaw(`p.property_type = ${filters.property_type}`)
     }
 
     if (filters.search) {
       q = add(q).whereRaw(
-        `( ${tablename}property_name ILIKE '%${filters.search}%'  or ${tablename}property_description ILIKE '%${filters.search}%' )`,
+        `( p.property_name ILIKE '%${filters.search}%'  or p.property_description ILIKE '%${filters.search}%' )`,
       )
-    }
-
-    if (filters.bedrooms) {
-      q = add(q).whereRaw(
-        `${tablename}numbers_of_bedroom >= '${filters.bedrooms}'`,
-      )
-    }
-
-    if (filters.bathrooms) {
-      q = add(q).whereRaw(
-        `${tablename}numbers_of_bathroom >= '${filters.bathrooms}'`,
-      )
-    }
-
-    if (filters.min_price || filters.max_price) {
-      const qq = []
-      if (filters.min_price) {
-        qq.push(`${tablename}property_price >= ${filters.min_price}`)
-      }
-      if (filters.max_price) {
-        qq.push(`${tablename}property_price <= ${filters.max_price}`)
-      }
-
-      const querystring = `( ${qq.join(' and ')} )`
-
-      q = add(q).whereRaw(querystring)
     }
 
     if (filters.organization_id) {
@@ -118,25 +64,10 @@ export class ApplicationRepository implements IApplicationRespository {
       )
     }
 
-    if (filters.offer_letter_id) {
-      q = add(q).whereRaw(
-        `${tablename}offer_letter_id = '${filters.offer_letter_id}'`,
-      )
-    }
-
     if (filters.status) {
-      q = add(q).whereRaw(`a.status = '${filters.status}'`)
+      q = add(q).whereRaw(`p.status = '${filters.status}'`)
     }
 
-    if (filters.property_features) {
-      const feat = filters.property_features
-        .split(',')
-        .map((i) => `'${i.trim()}'`)
-        .join(', ')
-      q = add(q).whereRaw(
-        `EXISTS ( SELECT 1 FROM unnest(${tablename}property_feature) AS ft WHERE ft ILIKE ANY (ARRAY[${feat}]) )`,
-      )
-    }
     return q
   }
   async createApplication(input: Application): Promise<Application> {
@@ -145,7 +76,7 @@ export class ApplicationRepository implements IApplicationRespository {
   }
 
   async getAllApplication(
-    filters?: PropertyFilters,
+    filters?: ApplicationFilters,
   ): Promise<SeekPaginationResult<Application>> {
     const page = filters?.page_number ?? 1
     const perPage = filters?.result_per_page ?? 10
@@ -159,7 +90,6 @@ export class ApplicationRepository implements IApplicationRespository {
 
     baseQuery = this.useFilter(baseQuery, {
       ...filters,
-      search_type: SearchType.EXCLUSIVE,
     })
     const [{ count: total }] = await baseQuery
       .clone()

@@ -1,11 +1,12 @@
 import { BaseEntity } from '.'
 
 export class LoginAttempt extends BaseEntity {
-  user_id: string
+  user_id?: string
   attempted_at: Date
   successful: boolean
   ip_address?: string
   user_agent?: string
+  identifier?: string
 
   constructor(data: Partial<LoginAttempt>) {
     super()

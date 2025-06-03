@@ -2,7 +2,6 @@ import {
   ApiResponse,
   createResponse,
 } from '@presentation/response/responseType'
-import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
 import { StatusCodes } from 'http-status-codes'
 import { manageProperty } from '@use-cases/Agent/ManageProperty'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
@@ -10,27 +9,54 @@ import { ApprovePrequalifyRequestInput } from '@validators/agentsValidator'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import {
+  SetPropertyIsLiveStatusInput,
+  SetPropertyStatusInput,
+} from '@validators/propertyValidator'
+import { PropertyApprovalStatus } from '@domain/enums/propertyEnum'
 
 export class MangagePropertyController {
   constructor(
     private readonly managePropertyService: manageProperty,
     private readonly escrowStatus: IPurchaseProperty,
   ) {}
-  async ApprovedOrDisApproveProperty(
+  async setPropertyGoLive(
     property_id: string,
-    input: propertyApprovalStatus,
+    input: SetPropertyIsLiveStatusInput,
+    authInfo: AuthInfo,
   ): Promise<ApiResponse<any>> {
-    const { is_live } =
-      await this.managePropertyService.ApproveOrDisApproveProperty(
-        property_id,
-        input,
-      )
+    const property = await this.managePropertyService.setPropertyGoLive(
+      property_id,
+      input,
+      authInfo,
+    )
 
-    const message = is_live
+    const message = property.is_live
       ? 'Property has been approved successfully'
       : 'Property has been disapproved successfully'
 
-    return createResponse(StatusCodes.OK, message, {})
+    return createResponse(StatusCodes.OK, message, property)
+  }
+
+  async hsfPropertyApproval(
+    property_id: string,
+    input: SetPropertyStatusInput,
+    authInfo: AuthInfo,
+  ) {
+    const property = await this.managePropertyService.hsfPropertyApproval(
+      property_id,
+      input,
+      authInfo,
+    )
+
+    const message =
+      property.status === PropertyApprovalStatus.APPROVED
+        ? 'Property has been approved successfully'
+        : property.status === PropertyApprovalStatus.DECLINED
+          ? 'Property has been disapproved successfully'
+          : 'Property approval set to pending successfully'
+
+    return createResponse(StatusCodes.OK, message, property)
   }
 
   async GetAllPropertiesToBeApproved(): Promise<ApiResponse<any>> {

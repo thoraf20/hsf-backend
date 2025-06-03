@@ -65,7 +65,7 @@ export interface IPropertyRepository {
   ApproveOrDisApproveProperties(
     property_id: string,
     input: Record<string, any>,
-  ): Promise<void | number>
+  ): Promise<Properties>
 
   getAllPropertiesTobeApproved(
     filters?: Record<string, any>,

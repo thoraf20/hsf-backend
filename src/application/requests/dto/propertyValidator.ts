@@ -1,15 +1,10 @@
 import {
   ApplicationPurchaseType,
-  ApplicationStatus,
   DocumentTypeEnum,
-  propertyApprovalStatus,
+  PropertyApprovalStatus,
   PropertyFeatureEnum,
 } from '@domain/enums/propertyEnum'
-import {
-  propertyStatusFilter,
-  SearchType,
-  SortDateBy,
-} from '@shared/types/repoTypes'
+import { SearchType, SortDateBy } from '@shared/types/repoTypes'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
@@ -124,9 +119,19 @@ export const UpdateSchema = z.object({
   payment_duration: z.string().optional(),
 })
 
-export const UpdatePropertyStatus = z.object({
-  status: z.nativeEnum(propertyApprovalStatus),
+export const setPropertyIsLiveStatus = z.object({
+  is_live: z.boolean(),
 })
+
+export type SetPropertyIsLiveStatusInput = z.infer<
+  typeof setPropertyIsLiveStatus
+>
+
+export const setPropertyStatusSchema = z.object({
+  status: z.nativeEnum(PropertyApprovalStatus),
+})
+
+export type SetPropertyStatusInput = z.infer<typeof setPropertyStatusSchema>
 
 export const sharePropertySchema = z.object({
   message: z.string().optional(),
@@ -157,12 +162,10 @@ export const propertyFiltersSchema = withPaginateSchema(
     min_price: z.coerce.number().positive().optional(),
     max_price: z.coerce.number().positive().optional(),
     financing_type: z.string().optional(),
-    property_status: z.nativeEnum(propertyStatusFilter).optional(),
+    status: z.nativeEnum(PropertyApprovalStatus).optional(),
     property_features: z.string().optional(),
     organization_id: z.string().optional(),
   }),
 )
 
-export type PropertyFilters = z.infer<typeof propertyFiltersSchema> & {
-  offer_letter_id?: string
-} & { status?: ApplicationStatus }
+export type PropertyFilters = z.infer<typeof propertyFiltersSchema>

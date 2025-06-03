@@ -1,4 +1,4 @@
-import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
+import { PropertyApprovalStatus } from '@domain/enums/propertyEnum'
 import { adminRole, subAdminRole } from '@domain/enums/rolesEmun'
 import { z } from 'zod'
 import { DocumentSchema } from './purchaseValidation'
@@ -20,7 +20,7 @@ export const AdminSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
+  phone_number: z.string().min(10, 'Phone number must have at least 10 digits'),
   image: z.string().url('Invalid image URL').optional(),
   role: z.nativeEnum(adminRole),
   street_address: z.string().nonempty(),
@@ -40,7 +40,7 @@ export const SubAdminSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
+  phone_number: z.string().min(10, 'Phone number must have at least 10 digits'),
   image: z.string().url('Invalid image URL').optional(),
   role: z.nativeEnum(subAdminRole),
   street_address: z.string().nonempty(),
@@ -60,7 +60,7 @@ export const DeveloperSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
+  phone_number: z.string().min(10, 'Phone number must have at least 10 digits'),
   image: z.string().url('Invalid image URL').optional(),
   street_address: z.string().nonempty(),
   city: z.string().nonempty(),
@@ -80,7 +80,6 @@ export const DeveloperSchema = z.object({
   documents: z.array(DocumentSchema),
 })
 
-
 export const LenderSchema = z.object({
   first_name: z
     .string()
@@ -91,11 +90,11 @@ export const LenderSchema = z.object({
     .min(2, 'Lastname must have at least 2 characters')
     .nonempty(),
   email: z.string().email('Invalid email format').nonempty(),
-  phone_number: z.string().min(10, "Phone number must have at least 10 digits"),
+  phone_number: z.string().min(10, 'Phone number must have at least 10 digits'),
   street_address: z.string().nonempty(),
   city: z.string().nonempty(),
   state: z.string().nonempty(),
-  lender_name: z.string().nonempty(), 
+  lender_name: z.string().nonempty(),
   lender_type: z.string().nonempty(),
   cac: z.string().url('Invalid image URL'),
   head_office_address: z.string().nonempty(),
@@ -119,7 +118,7 @@ export const AgentPasswordChangeSchema = z
       )
       .nonempty(),
     confirmPassword: z
-      .string() 
+      .string()
       .min(6, 'Password must be at least 6 characters long')
       .nonempty(),
   })
@@ -166,7 +165,7 @@ export type ApprovePrequalifyRequestInput = z.infer<
 >
 
 export const changeOfferLetterStatusSchema = z.object({
-  offer_letter_status: z.nativeEnum(propertyApprovalStatus),
+  offer_letter_status: z.nativeEnum(PropertyApprovalStatus),
   offer_letter_id: z.string().nonempty(),
   offer_letter_doc: z.string().nonempty(),
 })

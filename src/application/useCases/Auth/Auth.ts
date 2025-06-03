@@ -327,6 +327,72 @@ export class AuthService {
     )) as User
 
     if (!user) {
+      console.log({ user })
+      const nonExistentUserLockKey = `${CacheEnumKeys.LOGIN_ATTEMPT_LOCK}-${input.identifier}`
+      const isLocked = await this.client.getKey(nonExistentUserLockKey)
+
+      if (isLocked) {
+        const waitFor = new TimeSpan(
+          await this.client.getKeyTTL(nonExistentUserLockKey),
+          's',
+        ).toSeconds()
+
+        throw new ApplicationCustomError(
+          StatusCodes.TOO_MANY_REQUESTS,
+          `Too many failed login attempts. Please try again after ${Math.trunc(waitFor / 60)} minutes`,
+        )
+      }
+
+      const ipAddress = getIpAddress()
+      const userAgent = getUserAgent()
+
+      const TRIAL_DURATION = 10 // minute
+      const TRIAL_THRESHOLD = 5
+
+      let failedLoginAttempts =
+        ((await this.loginAttemptRepository.countFailedAttempts(
+          null,
+          TRIAL_DURATION,
+          input.identifier,
+        )) || 0) + 1
+
+      const loginAttempt = await this.loginAttemptRepository.create({
+        attempted_at: new Date(),
+        successful: false,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        user_id: null,
+        identifier: input.identifier,
+      })
+
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.FAILED_LOGIN,
+        performed_at: new Date(),
+        user_id: null,
+        title: 'Failed login attempt (non-existent user)',
+        description: `Failed login attempt for non-existent user: ${input.identifier} from IP: ${ipAddress ?? 'unknown'}`,
+        metadata: loginAttempt,
+      })
+
+      if (failedLoginAttempts > TRIAL_THRESHOLD) {
+        await this.client.setKey(nonExistentUserLockKey, true, 600)
+        await this.userActivityRepository.create({
+          activity_type: UserActivityKind.ACCOUNT_LOCKED,
+          ip_address: ipAddress,
+          user_agent: userAgent,
+          performed_at: new Date(),
+          user_id: null,
+          title: 'Account locked (non-existent user)',
+          description: `Account locked due to ${failedLoginAttempts} failed login attempts for non-existent user: ${input.identifier}`,
+          metadata: loginAttempt,
+        })
+
+        throw new ApplicationCustomError(
+          StatusCodes.TOO_MANY_REQUESTS,
+          'Too many failed login attempts. Please try again after 10 minutes',
+        )
+      }
+
       throw new ApplicationCustomError(
         StatusCodes.UNAUTHORIZED,
         'Invalid email or password.',
@@ -344,7 +410,7 @@ export class AuthService {
 
       throw new ApplicationCustomError(
         StatusCodes.TOO_MANY_REQUESTS,
-        `Too many failed login attempts. Please try again after ${Math.round(waitFor / 100)} minutes`,
+        `Too many failed login attempts. Please try again after ${Math.trunc(waitFor / 60)} minutes`,
       )
     }
 

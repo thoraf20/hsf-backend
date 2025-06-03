@@ -1,9 +1,6 @@
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { Properties } from '@domain/entities/Property'
-import {
-  ApplicationStatus,
-  propertyApprovalStatus,
-} from '@domain/enums/propertyEnum'
+import { ApplicationStatus } from '@domain/enums/propertyEnum'
 import { IPropertyRepository } from '@domain/interfaces/IPropertyRepository'
 import { PropertyBaseUtils } from '../utils'
 import { OfferLetter } from '@entities/PropertyPurchase'
@@ -16,6 +13,15 @@ import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IUserRepository } from '@interfaces/IUserRepository'
 import { getUserClientView, UserClientView } from '@entities/User'
 import { PropertyCount } from '@shared/types/repoTypes'
+import {
+  SetPropertyIsLiveStatusInput,
+  SetPropertyStatusInput,
+} from '@validators/propertyValidator'
+import { AuthInfo } from '@shared/utils/permission-policy'
+import { OrganizationType } from '@domain/enums/organizationEnum'
+import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
+import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
+import { UserActivityKind } from '@domain/enums/UserActivityKind'
 
 export class manageProperty {
   private readonly propertyRepository: IPropertyRepository
@@ -23,6 +29,7 @@ export class manageProperty {
   private readonly utilsProperty: PropertyBaseUtils
   private readonly developerRepository: IDeveloperRepository
   private readonly userRepository: IUserRepository
+  private readonly userActivityLogRepository: IUserActivityLogRepository
 
   private applicationRepository: IApplicationRespository
   constructor(
@@ -31,38 +38,77 @@ export class manageProperty {
     applicationRepository: IApplicationRespository,
     developerRepository: IDeveloperRepository,
     userRepository: IUserRepository,
+    userActivityLogRepository: IUserActivityLogRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.purchaseRepository = purchaseRepository
     this.applicationRepository = applicationRepository
     this.developerRepository = developerRepository
     this.userRepository = userRepository
+    this.userActivityLogRepository = userActivityLogRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
   }
 
-  public async ApproveOrDisApproveProperty(
+  public async setPropertyGoLive(
     property_id: string,
-    status: propertyApprovalStatus,
-  ): Promise<{ is_live: boolean }> {
-    await this.utilsProperty.getIfPropertyExist(property_id)
-    const newPropertyStatus = status === propertyApprovalStatus.APPROVED
-    let is_live: boolean
-    if (status === propertyApprovalStatus.APPROVED) {
-      is_live = true
-    } else {
-      is_live = false
+    input: SetPropertyIsLiveStatusInput,
+    authInfo: AuthInfo,
+  ) {
+    const property = await this.utilsProperty.getIfPropertyExist(property_id)
+
+    if (
+      authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY &&
+      property.organization_id !== property.organization_id
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Property not found',
+      )
     }
 
-    await this.propertyRepository.ApproveOrDisApproveProperties(property_id, {
-      is_live,
-      status,
+    await this.userActivityLogRepository.create({
+      performed_at: new Date(),
+      title: `Property Go-Live Status Changed: ${property.property_name}`,
+      description: `${authInfo.user.first_name} ${authInfo.user.last_name} set the go-live status of property "${property.property_name}" to ${input.is_live ? 'Live' : 'Not Live'}.`,
+      user_id: authInfo.userId,
+      ip_address: getIpAddress(),
+      user_agent: getUserAgent(),
+      activity_type: UserActivityKind.PROPERTY_GO_LIVE,
+      metadata: property,
     })
 
-    console.log(
-      `Property ${property_id} status updated to ${status}: is_live = ${newPropertyStatus}`,
-    )
+    const updatedProperty =
+      await this.propertyRepository.ApproveOrDisApproveProperties(property_id, {
+        is_live: input.is_live,
+      })
 
-    return { is_live: newPropertyStatus }
+    return updatedProperty
+  }
+
+  public async hsfPropertyApproval(
+    property_id: string,
+    input: SetPropertyStatusInput,
+    authInfo: AuthInfo,
+  ) {
+    const property = await this.utilsProperty.getIfPropertyExist(property_id)
+
+    const updatedProperty =
+      await this.propertyRepository.ApproveOrDisApproveProperties(property_id, {
+        status: input.status,
+      })
+
+    await this.userActivityLogRepository.create({
+      performed_at: new Date(),
+      title: `Property Status Updated: ${property.property_name}`,
+      description: `${authInfo.user.first_name} ${authInfo.user.last_name} updated the status of property "${property.property_name}" to ${input.status.replace(/\_/g, ' ')}.`,
+      user_id: authInfo.userId,
+      ip_address: getIpAddress(),
+      user_agent: getUserAgent(),
+      activity_type: UserActivityKind.PROPERTY_APPROVAL,
+      metadata: property,
+    })
+
+    return updatedProperty
   }
 
   public async GetPropertyToBeApprove(): Promise<

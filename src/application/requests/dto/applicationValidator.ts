@@ -2,6 +2,7 @@ import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import { MortgagePaymentType, PaymentEnum } from '@domain/enums/PaymentEnum'
 import {
   ApplicationPurchaseType,
+  ApplicationStatus,
   DIPStatus,
   OfferLetterStatus,
   PropertyClosingStatus,
@@ -176,3 +177,17 @@ export const applicationDocUploadsSchema = z.object({
 export type ApplicationDocUploadsInput = z.infer<
   typeof applicationDocUploadsSchema
 >
+
+export const applicationFilterSchema = withPaginateSchema(
+  z.object({
+    search: z.string().optional(),
+    property_type: z.string().optional(),
+    status: z.nativeEnum(ApplicationStatus).optional(),
+    user_id: z.string().optional(),
+    financing_type: z.string().optional(),
+    organization_id: z.string().optional(),
+    offer_letter_id: z.string().optional(),
+  }),
+)
+
+export type ApplicationFilters = z.infer<typeof applicationFilterSchema>

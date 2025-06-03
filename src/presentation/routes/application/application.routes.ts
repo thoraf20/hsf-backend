@@ -34,10 +34,7 @@ import {
   updateDipLoanSchema,
   userDipResponseSchema,
 } from '@validators/applicationValidator'
-import {
-  PropertyFilters,
-  propertyFiltersSchema,
-} from '@validators/propertyValidator'
+import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
 import { ReviewRequestRepository } from '@application/repositories/ReviewRequestRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
@@ -122,7 +119,7 @@ applicationRoutes.get(
     const { query, authInfo } = req
     const response = await applicationController.getByDeveloperOrg(
       authInfo.currentOrganizationId,
-      query as PropertyFilters,
+      query,
     )
     res.status(response.statusCode).json(response)
   }),
@@ -135,9 +132,7 @@ applicationRoutes.get(
   asyncMiddleware(async (req, res) => {
     const { query } = req
 
-    const response = await applicationController.getByHSF(
-      query as PropertyFilters,
-    )
+    const response = await applicationController.getByHSF(query)
     res.status(response.statusCode).json(response)
   }),
 )
@@ -149,10 +144,7 @@ applicationRoutes.get(
   asyncMiddleware(async (req, res) => {
     const { user: claim, query } = req
 
-    const response = await applicationController.getAllByUserId(
-      claim.id,
-      query as PropertyFilters,
-    )
+    const response = await applicationController.getAllByUserId(claim.id, query)
     res.status(response.statusCode).json(response)
   }),
 )
@@ -465,6 +457,24 @@ applicationRoutes.get(
       query,
     } = req
     const response = await applicationController.getRequiredDoc(
+      application_id,
+      query,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/documents/filled',
+  validateRequestQuery(applicationDocFilterSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+      query,
+    } = req
+    const response = await applicationController.getFilledDocs(
       application_id,
       query,
       authInfo,

@@ -38,7 +38,13 @@ const authenticate = asyncMiddleware(
       // 1. Fetch User from users table (including global role_id)
       const userRecord = await db('users')
         .where({ id: userId })
-        .select('id', 'role_id') // Select necessary fields
+        .select<{
+          id: string
+          first_name: string
+          last_name: string
+          email: string
+          role_id: string
+        }>('id', 'first_name', 'last_name', 'email', 'role_id') // Select necessary fields
         .first()
 
       if (!userRecord) {
@@ -76,6 +82,7 @@ const authenticate = asyncMiddleware(
       let authInfo: AuthInfo = {
         userId: userRecord.id,
         roleId: userRecord.role_id,
+        user: userRecord,
         globalRole: globalRole,
         organizationMembership: undefined,
         currentOrganizationId: undefined,

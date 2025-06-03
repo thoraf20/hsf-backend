@@ -10,7 +10,8 @@ import {
 } from '../index.t'
 import {
   approvePropertyClosingSchema,
-  UpdatePropertyStatus,
+  setPropertyIsLiveStatus,
+  setPropertyStatusSchema,
 } from '@application/requests/dto/propertyValidator'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import {
@@ -23,6 +24,7 @@ import { requireOrganizationType } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 
 const managePropertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -33,6 +35,7 @@ const service = new manageProperty(
   application,
   new DeveloperRespository(),
   new UserRepository(),
+  new UserActivityLogRepository(),
 )
 const controller = new MangagePropertyController(service, purchasrRepo)
 
@@ -45,24 +48,6 @@ managePropertyRoute.get(
   }),
 )
 
-managePropertyRoute.get(
-  '/property/:property_id',
-  authorize(
-    requireOrganizationType(
-      OrganizationType.HSF_INTERNAL,
-      OrganizationType.DEVELOPER_COMPANY,
-    ),
-  ),
-
-  asyncMiddleware(async (req, res) => {
-    const { params, authInfo } = req
-    const response = await controller.getPropertyById(
-      params.property_id,
-      authInfo,
-    )
-    res.status(response.statusCode).json(response)
-  }),
-)
 // managePropertyRoute.post(
 //   '/property/set-escrow',
 //   requireRoles([Role.SUPER_ADMIN]),
@@ -114,17 +99,57 @@ managePropertyRoute.put(
   }),
 )
 
-managePropertyRoute.put(
-  '/go-live/:property_id',
-  requireRoles([Role.SUPER_ADMIN]),
-  validateRequest(UpdatePropertyStatus),
+managePropertyRoute.patch(
+  '/property/:property_id/go-live',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+  validateRequest(setPropertyIsLiveStatus),
   asyncMiddleware(async (req, res) => {
-    const { params, body } = req
-    const property = await controller.ApprovedOrDisApproveProperty(
+    const { params, body, authInfo } = req
+    const property = await controller.setPropertyGoLive(
       params.property_id,
-      body.status,
+      body,
+      authInfo,
     )
     res.status(property.statusCode).json(property)
+  }),
+)
+
+managePropertyRoute.patch(
+  '/property/:property_id/status',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  validateRequest(setPropertyStatusSchema),
+  asyncMiddleware(async (req, res) => {
+    const { params, body, authInfo } = req
+    const property = await controller.hsfPropertyApproval(
+      params.property_id,
+      body,
+      authInfo,
+    )
+    res.status(property.statusCode).json(property)
+  }),
+)
+
+managePropertyRoute.get(
+  '/property/:property_id',
+  authorize(
+    requireOrganizationType(
+      OrganizationType.HSF_INTERNAL,
+      OrganizationType.DEVELOPER_COMPANY,
+    ),
+  ),
+
+  asyncMiddleware(async (req, res) => {
+    const { params, authInfo } = req
+    const response = await controller.getPropertyById(
+      params.property_id,
+      authInfo,
+    )
+    res.status(response.statusCode).json(response)
   }),
 )
 

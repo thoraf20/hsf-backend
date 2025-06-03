@@ -24,6 +24,7 @@ import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
+import { ApplicationFilters } from '@validators/applicationValidator'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -236,7 +237,7 @@ export class PropertyService {
   }
 
   public async propertyApplication(
-    filters: PropertyFilters,
+    filters: ApplicationFilters,
   ): Promise<SeekPaginationResult<any>> {
     return await this.applicationRepository.getAllApplication(filters)
   }

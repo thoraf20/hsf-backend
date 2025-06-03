@@ -9,6 +9,9 @@ import {
   CreatePropertyInput,
   PropertyFilters,
 } from '@validators/propertyValidator'
+import { QueryBoolean } from '@shared/utils/helpers'
+import { PropertyApprovalStatus } from '@domain/enums/propertyEnum'
+import { ApplicationFilters } from '@validators/applicationValidator'
 
 export class PropertyController {
   constructor(private readonly propertyService: PropertyService) {}
@@ -34,7 +37,11 @@ export class PropertyController {
     userId?: string,
   ): Promise<ApiResponse<any>> {
     const properties = await this.propertyService.getAllProperties(
-      { ...PropertyFilters, is_live: true },
+      {
+        ...PropertyFilters,
+        is_live: QueryBoolean.YES,
+        status: PropertyApprovalStatus.APPROVED,
+      },
       userRole,
       userId,
     )
@@ -160,7 +167,7 @@ export class PropertyController {
 
   async propertyApplication(
     user_id: string,
-    filter: PropertyFilters,
+    filter: ApplicationFilters,
   ): Promise<ApiResponse<any>> {
     const application = await this.propertyService.propertyApplication({
       ...filter,

@@ -1,7 +1,7 @@
 import { BaseEntity } from '.'
 
 export class UserActivityLog extends BaseEntity {
-  user_id: string
+  user_id?: string
   activity_type: string
   title: string
   description?: string
@@ -9,6 +9,7 @@ export class UserActivityLog extends BaseEntity {
   ip_address?: string
   user_agent?: string
   metadata?: any
+  identifier?: string
 
   constructor(data: Partial<UserActivityLog>) {
     super()

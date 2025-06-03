@@ -40,12 +40,8 @@ export class PropertyRepository implements IPropertyRepository {
         ? (q: Knex.QueryBuilder<any, any[]>) => q.and
         : (q: Knex.QueryBuilder<any, any[]>) => q.or
 
-    const add = createUnion(filters.search_type)
+    const add = createUnion(SearchType.EXCLUSIVE)
 
-    // do not remove this
-    // q = q.and.whereRaw(
-    //   `( ${filters.search_type == SearchType.EXCLUSIVE ? 'true' : 'false'} `,
-    // )
     if (filters.sort_by) {
       switch (filters.sort_by) {
         case SortDateBy.RecentlyAdded:
@@ -61,26 +57,9 @@ export class PropertyRepository implements IPropertyRepository {
     }
 
     if (filters.property_type) {
-      const property_types = filters.property_type.split(',')
-
-      const qq = []
-
-      let index = 0
-      for (const alt_property_type of property_types) {
-        const property_type = alt_property_type.trim()
-        if (property_types.length > 1 && index < 1) {
-          qq.push('(')
-        }
-        if (index == 0) {
-          qq.push(`${tablename}property_type ILIKE '${property_type}'`)
-        } else {
-          qq.push(`OR ${tablename}property_type ILIKE '${property_type}' `)
-        }
-        index++
-      }
-      if (qq?.[0] == '(') qq.push(')')
-
-      q = add(q).whereRaw(qq.join(' '))
+      q = add(q).whereRaw(
+        `${tablename}property_type = '${filters.property_type}'`,
+      )
     }
 
     if (filters.search) {
@@ -97,7 +76,7 @@ export class PropertyRepository implements IPropertyRepository {
 
     if (filters.is_live) {
       q = add(q).whereRaw(
-        `${tablename}numbers_of_bedroom >= '${filters.is_live === QueryBoolean.YES ? true : false}'::BOOLEAN`,
+        `${tablename}is_live >= '${filters.is_live === QueryBoolean.YES ? true : false}'::BOOLEAN`,
       )
     }
 
@@ -119,6 +98,10 @@ export class PropertyRepository implements IPropertyRepository {
       const querystring = `( ${qq.join(' and ')} )`
 
       q = add(q).whereRaw(querystring)
+    }
+
+    if (filters.status) {
+      q = add(q).whereRaw(`properties.status = '${filters.status}'`)
     }
 
     if (filters.financing_type) {
@@ -573,10 +556,11 @@ export class PropertyRepository implements IPropertyRepository {
   async ApproveOrDisApproveProperties(
     property_id: string,
     input: Record<string, any>,
-  ): Promise<void | number> {
-    const properties = await db('properties')
+  ): Promise<Properties> {
+    const [properties] = await db('properties')
       .update(input)
       .where('id', property_id)
+      .returning('*')
     return properties
   }
 

@@ -18,6 +18,7 @@ import { PaymentUseCase } from '@use-cases/Payments/payments'
 import {
   ApplicationDocFilters,
   ApplicationDocUploadsInput,
+  ApplicationFilters,
   CreateApplicationInput,
   DipFilters,
   InitiateMortgagePayment,
@@ -51,7 +52,7 @@ export class ApplicationController {
     )
   }
 
-  async getAllByUserId(userId: string, filter: PropertyFilters) {
+  async getAllByUserId(userId: string, filter: ApplicationFilters) {
     const applicationContents = await this.applicationService.getByUserId(
       userId,
       filter,
@@ -83,7 +84,7 @@ export class ApplicationController {
     })
   }
 
-  async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
+  async getByDeveloperOrg(organizationId: string, filter: ApplicationFilters) {
     const applicationContents = await this.applicationService.getByDeveloperOrg(
       organizationId,
       filter,
@@ -96,7 +97,7 @@ export class ApplicationController {
     )
   }
 
-  async getByHSF(filter: PropertyFilters) {
+  async getByHSF(filter: ApplicationFilters) {
     const applicationContents = await this.applicationService.getByHSF(filter)
 
     return createResponse(
@@ -260,6 +261,24 @@ export class ApplicationController {
     return createResponse(
       StatusCodes.OK,
       'Document Required fetched successfully',
+      { documents: contents },
+    )
+  }
+
+  async getFilledDocs(
+    applicationId: string,
+    filters: ApplicationDocFilters,
+    authInfo: AuthInfo,
+  ) {
+    const contents = await this.applicationService.getFilledDocs(
+      applicationId,
+      filters,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Document Filled fetched successfully',
       { documents: contents },
     )
   }

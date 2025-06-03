@@ -1,11 +1,11 @@
 import { Application } from '@entities/Application'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import { PropertyFilters } from '@validators/propertyValidator'
+import { ApplicationFilters } from '@validators/applicationValidator'
 
 export interface IApplicationRespository {
   createApplication(input: Application): Promise<Application>
   getAllApplication(
-    filters?: PropertyFilters,
+    filters?: ApplicationFilters,
   ): Promise<SeekPaginationResult<any>>
   getApplicationById(application_id: string): Promise<Application>
   getByUniqueID(

@@ -21,6 +21,13 @@ export interface OrganizationMembership {
 export interface AuthInfo {
   userId: string
   roleId: string
+  user?: {
+    id: string
+    first_name: string
+    last_name: string
+    email: string
+    role_id: string
+  }
   globalRole?: Role // The user\'s primary global role (from the \'users\' table)
   organizationMembership?: OrganizationMembership // The single organization the user is a member of, if any
   currentOrganizationId?: string // The organization ID relevant to the current request, if any

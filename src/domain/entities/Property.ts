@@ -1,4 +1,4 @@
-import { propertyApprovalStatus } from '@domain/enums/propertyEnum'
+import { PropertyApprovalStatus } from '@domain/enums/propertyEnum'
 
 export class Properties {
   id?: string
@@ -14,7 +14,7 @@ export class Properties {
   property_feature: string[]
   property_images: string[]
   documents: any
-  status?: propertyApprovalStatus
+  status?: PropertyApprovalStatus
   down_payment_percentage?: number
 
   organization_id: string

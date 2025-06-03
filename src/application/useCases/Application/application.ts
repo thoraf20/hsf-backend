@@ -15,6 +15,7 @@ import { Eligibility } from '@entities/prequalify/prequalify'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { EscrowInformation } from '@entities/PurchasePayment'
 import {
+  ReviewRequestApproval,
   ReviewRequestApprovalStatus,
   ReviewRequestStageKind,
   ReviewRequestStatus,
@@ -38,6 +39,7 @@ import { AuthInfo } from '@shared/utils/permission-policy'
 import {
   ApplicationDocFilters,
   ApplicationDocUploadsInput,
+  ApplicationFilters,
   CreateApplicationInput,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
@@ -148,7 +150,7 @@ export class ApplicationService {
     return newApplication
   }
 
-  async getByUserId(userId: string, filter: PropertyFilters) {
+  async getByUserId(userId: string, filter: ApplicationFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
       user_id: userId,
@@ -225,20 +227,20 @@ export class ApplicationService {
     return application
   }
 
-  async getByDeveloperOrg(organizationId: string, filter: PropertyFilters) {
+  async getByDeveloperOrg(organizationId: string, filter: ApplicationFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
       organization_id: organizationId,
     })
   }
 
-  async getByHSF(filter: PropertyFilters) {
+  async getByHSF(filter: ApplicationFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
     })
   }
 
-  async getAll(filter: PropertyFilters) {
+  async getAll(filter: ApplicationFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
     })
@@ -1126,6 +1128,72 @@ export class ApplicationService {
     )
 
     return documentTypes.flat(1)
+  }
+
+  async getFilledDocs(
+    applicationId: string,
+    filters: ApplicationDocFilters,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (
+      !(
+        application &&
+        (authInfo.globalRole !== Role.HOME_BUYER ||
+          application.user_id === authInfo.userId)
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
+    const documentGroup = await this.documentRepository.findDocumentGroupByTag(
+      filters.group!,
+    )
+
+    if (!documentGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Document group not found',
+      )
+    }
+
+    const documentApplicationEntries =
+      await this.documentRepository.findApplicationDocumentEntriesByApplicationId(
+        application.application_id,
+      )
+
+    return Promise.all(
+      documentApplicationEntries.map(async (entry) => {
+        const documentType =
+          await this.documentRepository.findGroupDocumentTypeById(
+            entry.document_group_type_id,
+          )
+        const reviewRequest =
+          await this.reviewRequestRepository.getReviewRequestID(
+            entry.review_request_id,
+          )
+        let reviewRequestApprovals: Array<ReviewRequestApproval> = []
+
+        if (reviewRequest) {
+          reviewRequestApprovals =
+            await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+              reviewRequest.id,
+            )
+        }
+
+        return {
+          ...entry,
+          document_type: documentType,
+          review_request: reviewRequest,
+          review_request_approvals: reviewRequestApprovals,
+        }
+      }),
+    )
   }
 
   async getEscrowMeetingStatus(applicationId: string, authInfo: AuthInfo) {
