@@ -10,6 +10,7 @@ import {
   SearchType,
   SortDateBy,
 } from '@shared/types/repoTypes'
+import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
 
@@ -151,6 +152,7 @@ export const propertyFiltersSchema = withPaginateSchema(
     property_type: z.string().optional(),
     bedrooms: z.coerce.number().int().positive().optional(),
     bathrooms: z.coerce.number().int().positive().optional(),
+    is_live: z.nativeEnum(QueryBoolean).optional(),
     user_id: z.string().optional(),
     min_price: z.coerce.number().positive().optional(),
     max_price: z.coerce.number().positive().optional(),

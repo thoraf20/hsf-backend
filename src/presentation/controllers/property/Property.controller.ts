@@ -27,13 +27,14 @@ export class PropertyController {
       property,
     )
   }
+
   public async getAllProperties(
     PropertyFilters: PropertyFilters,
     userRole: string,
     userId?: string,
   ): Promise<ApiResponse<any>> {
     const properties = await this.propertyService.getAllProperties(
-      PropertyFilters,
+      { ...PropertyFilters, is_live: true },
       userRole,
       userId,
     )

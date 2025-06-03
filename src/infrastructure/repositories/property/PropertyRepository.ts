@@ -18,6 +18,7 @@ import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { applyPagination } from '@shared/utils/paginate'
 import { PropertyFilters } from '@validators/propertyValidator'
+import { QueryBoolean } from '@shared/utils/helpers'
 
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
@@ -91,6 +92,12 @@ export class PropertyRepository implements IPropertyRepository {
     if (filters.bedrooms) {
       q = add(q).whereRaw(
         `${tablename}numbers_of_bedroom >= '${filters.bedrooms}'`,
+      )
+    }
+
+    if (filters.is_live) {
+      q = add(q).whereRaw(
+        `${tablename}numbers_of_bedroom >= '${filters.is_live === QueryBoolean.YES ? true : false}'::BOOLEAN`,
       )
     }
 
