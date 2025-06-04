@@ -40,6 +40,7 @@ import { IPropertyRepository } from '@interfaces/IPropertyRepository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import template from '@infrastructure/email/template/constant'
+import { runWithTransaction } from '@infrastructure/database/knex'
 
 export class ManageOrganizations {
   constructor(
@@ -191,62 +192,109 @@ export class ManageOrganizations {
       )
     }
 
-    const generatedPass = generateRandomPassword()
-    const hashedPassword =
-      await this.userRepository.hashedPassword(generatedPass)
-    const lenderOwner = await this.userRepository.create({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      email: data.email,
-      status: UserStatus.Pending,
-      password: hashedPassword,
-      phone_number: data.phone_number,
-      is_admin: true,
-      force_password_reset: true,
-      role_id: lenderRole.id,
+    return runWithTransaction(async () => {
+      const [
+        lenderWithName,
+        lenderWithCac,
+        lenderOwnerWithEmail,
+        lenderOwnerWithPhoneNo,
+      ] = await Promise.all([
+        this.lenderRepository.findLenderByName(data.lender_name),
+        this.lenderRepository.findLenderByCac(data.lender_registration_number),
+        this.userRepository.findByEmail(data.email),
+        this.userRepository.findByPhone(data.phone_number),
+      ])
+
+      if (lenderWithName) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Lender with this name already exists',
+        )
+      }
+
+      if (lenderWithCac) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Lender with this CAC already exists',
+        )
+      }
+
+      if (lenderOwnerWithEmail) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Lender with this email already exists',
+        )
+      }
+
+      if (lenderOwnerWithPhoneNo) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Lender with this phone number already exists',
+        )
+      }
+
+      const generatedPass = generateRandomPassword()
+      const hashedPassword =
+        await this.userRepository.hashedPassword(generatedPass)
+      const lenderOwner = await this.userRepository.create({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        status: UserStatus.Pending,
+        password: hashedPassword,
+        phone_number: data.phone_number,
+        is_admin: true,
+        force_password_reset: true,
+        role_id: lenderRole.id,
+      })
+
+      const lenderOrg = await this.organizationRepository.createOrganization({
+        name: data.lender_name,
+        owner_user_id: lenderOwner.id,
+        type: OrganizationType.LENDER_INSTITUTION,
+      })
+
+      await this.organizationRepository.addUserToOrganization({
+        role_id: lenderOwner.role_id,
+        organization_id: lenderOrg.id,
+        user_id: lenderOwner.id,
+      })
+
+      lenderOwner.membership =
+        await this.organizationRepository.getOrgenizationMemberByUserId(
+          lenderOwner.id,
+        )
+
+      // Send invitation email with credentials
+      const fullName = `${data.first_name} ${data.last_name}`
+      emailHelper.InvitationEmail(
+        lenderOwner.email,
+        fullName,
+        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        lenderOrg.name,
+        generatedPass,
+      )
+
+      const lender = await this.lenderRepository.createLender({
+        lender_name: data.lender_name,
+        lender_type: data.lender_institution_type,
+        cac: data.lender_registration_number,
+        state: data.lender_state,
+        head_office_address: data.lender_address_line,
+        organization_id: lenderOrg.id,
+      })
+
+      return {
+        ...lender,
+        organization: lenderOrg,
+        owner: {
+          ...getUserClientView(
+            await this.userRepository.findById(lenderOwner.id),
+          ),
+          password: generatedPass,
+        },
+      }
     })
-
-    const lenderOrg = await this.organizationRepository.createOrganization({
-      name: data.lender_name,
-      owner_user_id: lenderOwner.id,
-      type: OrganizationType.LENDER_INSTITUTION,
-    })
-
-    await this.organizationRepository.addUserToOrganization({
-      role_id: lenderOwner.role_id,
-      organization_id: lenderOrg.id,
-      user_id: lenderOwner.id,
-    })
-
-    // Send invitation email with credentials
-    const fullName = `${data.first_name} ${data.last_name}`
-    emailHelper.InvitationEmail(
-      lenderOwner.email,
-      fullName,
-      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
-      lenderOrg.name,
-      generatedPass,
-    )
-
-    const lender = await this.lenderRepository.createLender({
-      lender_name: data.lender_name,
-      lender_type: data.lender_institution_type,
-      cac: data.lender_registration_number,
-      state: data.lender_state,
-      head_office_address: data.lender_address_line,
-      organization_id: lenderOrg.id,
-    })
-
-    return {
-      ...lender,
-      organization: lenderOrg,
-      owner: {
-        ...getUserClientView(
-          await this.userRepository.findById(lenderOwner.id),
-        ),
-        password: generatedPass,
-      },
-    }
   }
 
   async createHSFSubAdmin(auth: AuthInfo, input: CreateHSFAdminInput) {
@@ -291,57 +339,60 @@ export class ManageOrganizations {
       )
     }
 
-    const generatedPass = generateRandomPassword()
-    const hashedPassword =
-      await this.userRepository.hashedPassword(generatedPass)
+    return runWithTransaction(async () => {
+      const generatedPass = generateRandomPassword()
+      const hashedPassword =
+        await this.userRepository.hashedPassword(generatedPass)
 
-    const newAdminUser = await this.userRepository.create({
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email,
-      status: UserStatus.Pending,
-      password: hashedPassword,
-      phone_number: input.phone_number,
-      is_admin: true,
-      force_password_reset: true,
-      role_id: newAdminRole.id,
+      const newAdminUser = await this.userRepository.create({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        status: UserStatus.Pending,
+        password: hashedPassword,
+        phone_number: input.phone_number,
+        is_admin: true,
+        force_password_reset: true,
+        role_id: newAdminRole.id,
+      })
+
+      await this.addressRepository.create({
+        user_id: newAdminUser.id,
+        city: input.city,
+        state: input.state,
+        country: input.country,
+        street_address: input.street_address,
+        address_type: AddressType.Home,
+      })
+
+      // Send invitation email with credentials
+      const fullName = `${input.first_name} ${input.last_name}`
+      emailHelper.InvitationEmail(
+        newAdminUser.email,
+        fullName,
+        'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
+        newAdminRole.name,
+        generatedPass,
+      )
+
+      const membership =
+        await this.organizationRepository.addUserToOrganization({
+          organization_id: auth.currentOrganizationId,
+          role_id: newAdminRole.id,
+          user_id: newAdminUser.id,
+        })
+
+      return {
+        ...getUserClientView({
+          ...newAdminUser,
+          role: newAdminRole.name as Role,
+        }),
+        membership: {
+          ...membership,
+          role: newAdminRole,
+        },
+      }
     })
-
-    await this.addressRepository.create({
-      user_id: newAdminUser.id,
-      city: input.city,
-      state: input.state,
-      country: input.country,
-      street_address: input.street_address,
-      address_type: AddressType.Home,
-    })
-
-    // Send invitation email with credentials
-    const fullName = `${input.first_name} ${input.last_name}`
-    emailHelper.InvitationEmail(
-      newAdminUser.email,
-      fullName,
-      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
-      newAdminRole.name,
-      generatedPass,
-    )
-
-    const membership = await this.organizationRepository.addUserToOrganization({
-      organization_id: auth.currentOrganizationId,
-      role_id: newAdminRole.id,
-      user_id: newAdminUser.id,
-    })
-
-    return {
-      ...getUserClientView({
-        ...newAdminUser,
-        role: newAdminRole.name as Role,
-      }),
-      membership: {
-        ...membership,
-        role: newAdminRole,
-      },
-    }
   }
 
   async createHSFAdmin(auth: AuthInfo, input: CreateHSFAdminInput) {
@@ -382,57 +433,60 @@ export class ManageOrganizations {
       )
     }
 
-    const generatedPass = generateRandomPassword()
-    const hashedPassword =
-      await this.userRepository.hashedPassword(generatedPass)
+    return runWithTransaction(async () => {
+      const generatedPass = generateRandomPassword()
+      const hashedPassword =
+        await this.userRepository.hashedPassword(generatedPass)
 
-    const newAdminUser = await this.userRepository.create({
-      first_name: input.first_name,
-      last_name: input.last_name,
-      email: input.email,
-      status: UserStatus.Pending,
-      password: hashedPassword,
-      phone_number: input.phone_number,
-      is_admin: true,
-      force_password_reset: true,
-      role_id: newAdminRole.id,
+      const newAdminUser = await this.userRepository.create({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        status: UserStatus.Pending,
+        password: hashedPassword,
+        phone_number: input.phone_number,
+        is_admin: true,
+        force_password_reset: true,
+        role_id: newAdminRole.id,
+      })
+
+      await this.addressRepository.create({
+        user_id: newAdminUser.id,
+        city: input.city,
+        state: input.state,
+        country: input.country,
+        street_address: input.street_address,
+        address_type: AddressType.Home,
+      })
+
+      // Send invitation email with credentials
+      const fullName = `${input.first_name} ${input.last_name}`
+      emailHelper.InvitationEmail(
+        newAdminUser.email,
+        fullName,
+        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        newAdminRole.name,
+        generatedPass,
+      )
+
+      const membership =
+        await this.organizationRepository.addUserToOrganization({
+          organization_id: auth.currentOrganizationId,
+          role_id: newAdminRole.id,
+          user_id: newAdminUser.id,
+        })
+
+      return {
+        ...getUserClientView({
+          ...newAdminUser,
+          role: newAdminRole.name as Role,
+        }),
+        membership: {
+          ...membership,
+          role: newAdminRole,
+        },
+      }
     })
-
-    await this.addressRepository.create({
-      user_id: newAdminUser.id,
-      city: input.city,
-      state: input.state,
-      country: input.country,
-      street_address: input.street_address,
-      address_type: AddressType.Home,
-    })
-
-    // Send invitation email with credentials
-    const fullName = `${input.first_name} ${input.last_name}`
-    emailHelper.InvitationEmail(
-      newAdminUser.email,
-      fullName,
-      'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
-      newAdminRole.name,
-      generatedPass,
-    )
-
-    const membership = await this.organizationRepository.addUserToOrganization({
-      organization_id: auth.currentOrganizationId,
-      role_id: newAdminRole.id,
-      user_id: newAdminUser.id,
-    })
-
-    return {
-      ...getUserClientView({
-        ...newAdminUser,
-        role: newAdminRole.name as Role,
-      }),
-      membership: {
-        ...membership,
-        role: newAdminRole,
-      },
-    }
   }
 
   async getDevelopers(filters: DeveloperFilters) {
@@ -486,9 +540,18 @@ export class ManageOrganizations {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
     }
 
-    const [existingEmailUser, existingPhoneUser] = await Promise.all([
+    const [
+      existingEmailUser,
+      existingPhoneUser,
+      existingCompanyRegistrationNumber,
+      existingCompanyName,
+    ] = await Promise.all([
       this.userRepository.findByEmail(data.email),
       this.userRepository.findByPhone(data.phone_number),
+      this.developerRepository.getCompanyRegistrationNumber(
+        data.company_registration_number,
+      ),
+      this.developerRepository.getCompanyName(data.company_name),
     ])
 
     if (existingEmailUser) {
@@ -502,6 +565,20 @@ export class ManageOrganizations {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         'Phone number not available',
+      )
+    }
+
+    if (existingCompanyRegistrationNumber) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Company registration number not available',
+      )
+    }
+
+    if (existingCompanyName) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Company name not available',
       )
     }
 
@@ -538,80 +615,84 @@ export class ManageOrganizations {
       )
     }
 
-    const generatedPass = generateRandomPassword()
-    const hashedPassword =
-      await this.userRepository.hashedPassword(generatedPass)
+    return runWithTransaction(async () => {
+      const generatedPass = generateRandomPassword()
+      const hashedPassword =
+        await this.userRepository.hashedPassword(generatedPass)
 
-    const developerOwner = await this.userRepository.create({
-      first_name: data.first_name,
-      last_name: data.last_name,
-      email: data.email,
-      status: UserStatus.Pending,
-      password: hashedPassword,
-      phone_number: data.phone_number,
-      is_admin: true,
-      force_password_reset: true,
-      role_id: developerRole.id,
-    })
-
-    const developerOrg = await this.organizationRepository.createOrganization({
-      name: data.company_name,
-      owner_user_id: developerOwner.id,
-      type: OrganizationType.DEVELOPER_COMPANY,
-    })
-
-    await Promise.all(
-      data.documents.map((document) =>
-        this.documentRepository.createApplicationDocumentEntry({
-          document_group_type_id: document.id,
-          document_name: document.file_name,
-          document_url: document.file_url,
-          document_size: String(document.file_size),
-          organization_id: developerOrg.id,
-        }),
-      ),
-    )
-
-    await this.organizationRepository.addUserToOrganization({
-      role_id: developerOwner.role_id,
-      organization_id: developerOrg.id,
-      user_id: developerOwner.id,
-    })
-
-    const developerProfile =
-      await this.developerRepository.createDeveloperProfile({
-        company_email: data.company_email,
-        company_image: data.company_image,
-        city: data.city,
-        company_name: data.company_name,
-        company_registration_number: data.company_registration_number,
-        organization_id: developerOrg.id,
-        office_address: data.office_address,
-        region_of_operation: data.operation_states,
-        specialization: data.specialization,
-        state: data.state,
-        years_in_business: data.year_in_business,
+      const developerOwner = await this.userRepository.create({
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        status: UserStatus.Pending,
+        password: hashedPassword,
+        phone_number: data.phone_number,
+        is_admin: true,
+        force_password_reset: true,
+        role_id: developerRole.id,
       })
 
-    const fullName = `${developerOwner.first_name} ${developerOwner.last_name}`
-    emailHelper.InvitationEmail(
-      developerOwner.email,
-      fullName,
-      'YOUR_ACTIVATION_LINK_PLACEHOLDER',
-      developerRole.name,
-      generatedPass,
-    )
+      const developerOrg = await this.organizationRepository.createOrganization(
+        {
+          name: data.company_name,
+          owner_user_id: developerOwner.id,
+          type: OrganizationType.DEVELOPER_COMPANY,
+        },
+      )
 
-    return {
-      ...developerProfile,
-      organization: developerOrg,
-      owner: {
-        ...getUserClientView(
-          await this.userRepository.findById(developerOwner.id),
+      await Promise.all(
+        data.documents.map((document) =>
+          this.documentRepository.createApplicationDocumentEntry({
+            document_group_type_id: document.id,
+            document_name: document.file_name,
+            document_url: document.file_url,
+            document_size: String(document.file_size),
+            organization_id: developerOrg.id,
+          }),
         ),
-        password: generatedPass,
-      },
-    }
+      )
+
+      await this.organizationRepository.addUserToOrganization({
+        role_id: developerOwner.role_id,
+        organization_id: developerOrg.id,
+        user_id: developerOwner.id,
+      })
+
+      const developerProfile =
+        await this.developerRepository.createDeveloperProfile({
+          company_email: data.company_email,
+          company_image: data.company_image,
+          city: data.city,
+          company_name: data.company_name,
+          company_registration_number: data.company_registration_number,
+          organization_id: developerOrg.id,
+          office_address: data.office_address,
+          region_of_operation: data.operation_states,
+          specialization: data.specialization,
+          state: data.state,
+          years_in_business: data.year_in_business,
+        })
+
+      const fullName = `${developerOwner.first_name} ${developerOwner.last_name}`
+      emailHelper.InvitationEmail(
+        developerOwner.email,
+        fullName,
+        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        developerRole.name,
+        generatedPass,
+      )
+
+      return {
+        ...developerProfile,
+        organization: developerOrg,
+        owner: {
+          ...getUserClientView(
+            await this.userRepository.findById(developerOwner.id),
+          ),
+          password: generatedPass,
+        },
+      }
+    })
   }
 
   async getDeveloperRegRequiredDoc() {
