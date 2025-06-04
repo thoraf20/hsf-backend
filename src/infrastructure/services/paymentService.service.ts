@@ -14,6 +14,7 @@ export class PaymentService {
       amount: Number(input.amount),
       email: input.email!,
       reference: input.reference,
+      metadata: input.metadata,
     })
   }
 

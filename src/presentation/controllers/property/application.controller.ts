@@ -1,14 +1,12 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { MortgagePaymentType } from '@domain/enums/PaymentEnum'
 import {
   DIPLenderStatus,
-  DIPStatus,
+  LoanOfferStatus,
   OfferLetterStatus,
 } from '@domain/enums/propertyEnum'
 import { Application } from '@entities/Application'
 import { DIP } from '@entities/Mortage'
 import { ReviewRequestApprovalStatus } from '@entities/Request'
-import { ApplicationCustomError } from '@middleware/errors/customError'
 import { createResponse } from '@presentation/response/responseType'
 import { Role } from '@routes/index.t'
 import { AuthInfo } from '@shared/utils/permission-policy'
@@ -23,7 +21,7 @@ import {
   ApplicationFilters,
   CreateApplicationInput,
   DipFilters,
-  HSFCompleteApplicationDocReviewInput,
+  CompleteApplicationDocReviewInput,
   InitiateMortgagePayment,
   LenderDipResponse,
   OfferLetterFilters,
@@ -32,6 +30,7 @@ import {
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
   UpdateDipLoanInput,
+  HomeBuyserLoanOfferRespondInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -101,7 +100,19 @@ export class ApplicationController {
   }
 
   async getByHSF(filter: ApplicationFilters) {
-    const applicationContents = await this.applicationService.getByHSF(filter)
+    const applicationContents =
+      await this.applicationService.getByLender(filter)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application retrived successfully',
+      applicationContents,
+    )
+  }
+
+  async getByLender(filter: ApplicationFilters) {
+    const applicationContents =
+      await this.applicationService.getByLender(filter)
 
     return createResponse(
       StatusCodes.OK,
@@ -430,38 +441,17 @@ export class ApplicationController {
       authInfo,
     )) as Application & { dip?: DIP }
 
-    if (input.payment_for === MortgagePaymentType.DECISION_IN_PRINCIPLE) {
-      if (!application.dip) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Dip not inititated',
-        )
-      }
-
-      if (application.dip.dip_status !== DIPStatus.PaymentPending) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Dip payment not initiated',
-        )
-      }
-
-      const paymentIntent =
-        await this.paymentService.inititateMortgagePaymentIntent(
-          authInfo,
-          application,
-          input,
-        )
-
-      return createResponse(
-        StatusCodes.OK,
-        'Payment intent generated',
-        paymentIntent,
+    const paymentIntent =
+      await this.paymentService.inititateMortgagePaymentIntent(
+        authInfo,
+        application,
+        input,
       )
-    }
 
-    throw new ApplicationCustomError(
-      StatusCodes.FORBIDDEN,
-      'Mortgage payment intent not setup',
+    return createResponse(
+      StatusCodes.OK,
+      'Payment intent generated',
+      paymentIntent,
     )
   }
 
@@ -530,7 +520,58 @@ export class ApplicationController {
 
   async hsfCompleteDocumentReview(
     applicationId: string,
-    input: HSFCompleteApplicationDocReviewInput,
+    input: CompleteApplicationDocReviewInput,
     authInfo: AuthInfo,
-  ) {}
+  ) {
+    const approvals = await this.applicationService.hsfCompleteDocumentReview(
+      applicationId,
+      input,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'HSF application approval completed',
+      approvals,
+    )
+  }
+
+  async lenderCompleteDocumentReview(
+    applicationId: string,
+    input: CompleteApplicationDocReviewInput,
+    authInfo: AuthInfo,
+  ) {
+    const approvals =
+      await this.applicationService.lenderCompleteDocumentReview(
+        applicationId,
+        input,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Lender application approval completed',
+      approvals,
+    )
+  }
+
+  async homeBuyerLoanOfferRespond(
+    input: HomeBuyserLoanOfferRespondInput,
+    applicationId: string,
+    authInfo: AuthInfo,
+  ) {
+    const loanOffer = await this.applicationService.homeBuyerLoanOfferRespond(
+      input,
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      loanOffer.offer_status === LoanOfferStatus.ACCEPTED
+        ? 'Loan offer accepted successfully'
+        : 'Loan offer declined successfully',
+      loanOffer,
+    )
+  }
 }

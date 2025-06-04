@@ -81,7 +81,18 @@ export enum EscrowMeetingStatus {
 
 export enum LoanOfferStatus {
   ACCEPTED = 'Accepted',
+  PENDING = 'Pending',
   DECLINED = 'Declined',
+}
+
+export enum LoanRepaymentFrequency {
+  DAILY = 'DAILY',
+  WEEKLY = 'WEEKLY',
+  BI_WEEKLY = 'BI_WEEKLY',
+  MONTHLY = 'MONTHLY',
+  QUARTERLY = 'QUARTERLY',
+  SEMI_ANNUALLY = 'SEMI_ANNUALLY',
+  ANNUALLY = 'ANNUALLY',
 }
 
 export enum InspectionStatus {
@@ -96,7 +107,15 @@ export enum DIPStatus {
   AwaitingLenderAction = 'Awaiting Lender Action',
   PaymentPending = 'Payment Pending',
   DocumentsPending = 'Documents Pending',
+  DocumentReviewing = 'Document Reviewing',
   Completed = 'Completed',
+}
+
+export enum DipDocumentReviewStatus {
+  NotUploaded = 'Not Uploaded',
+  Reviewing = 'Reviewing',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
 }
 
 export enum DIPLenderStatus {

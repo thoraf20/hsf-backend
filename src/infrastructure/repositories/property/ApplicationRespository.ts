@@ -51,7 +51,7 @@ export class ApplicationRepository implements IApplicationRespository {
     }
 
     if (filters.user_id) {
-      q = add(q).whereRaw(`${tablename}user_id = '${filters.user_id}'`)
+      q = add(q).whereRaw(`a.user_id = '${filters.user_id}'`)
     }
 
     if (filters.financing_type) {
@@ -62,6 +62,10 @@ export class ApplicationRepository implements IApplicationRespository {
       q = add(q).whereRaw(
         `EXISTS ( SELECT 1 FROM unnest(${tablename}financial_types) AS ft WHERE ft ILIKE ANY (ARRAY[${f_types}]) )`,
       )
+    }
+
+    if (filters.lender_id) {
+      q = add(q).whereRaw(`e.lender_id = '${filters.lender_id}'`)
     }
 
     if (filters.status) {
@@ -164,6 +168,7 @@ export class ApplicationRepository implements IApplicationRespository {
       .leftJoin('users as u', 'u.id', 'a.user_id')
       .leftJoin('organizations as o', 'a.developer_organization_id', 'o.id')
       .leftJoin('roles as r', 'r.id', 'u.role_id')
+      .leftJoin('eligibility as e', 'e.eligibility_id', 'a.eligibility_id')
       .limit(perPage)
       .offset(offset)
 
@@ -213,7 +218,8 @@ export class ApplicationRepository implements IApplicationRespository {
         'pqi.id',
       )
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
-      .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
+      .leftJoin('loan_offers as lo', 'a.loan_offer_id', 'lo.id')
+      .leftJoin('loan_decisions as ld', 'ld.loan_offer_id', 'lo.id')
       .leftJoin('dip as dp', (qb) => {
         // qb.on('dp.dip_id', 'dp.dip_id')
         qb.on('dp.eligibility_id', 'el.eligibility_id').andOn(
@@ -277,6 +283,7 @@ export class ApplicationRepository implements IApplicationRespository {
         db.raw(`row_to_json(ol) as offer_letter`),
         db.raw(`row_to_json(pc) as property_closing`),
         db.raw(`row_to_json(dp) as dip`),
+        db.raw(`row_to_json(ld) as loan_decision`),
         'p.*',
         'a.*',
       )
@@ -328,7 +335,7 @@ export class ApplicationRepository implements IApplicationRespository {
         'pqi.id',
       )
       .leftJoin('offer_letter as ol', 'a.offer_letter_id', 'ol.offer_letter_id')
-      .leftJoin('loan_offer as lo', 'a.loan_offer_id', 'lo.loan_offer_id')
+      .leftJoin('loan_offers as lo', 'a.loan_offer_id', 'lo.id')
       .leftJoin('dip as dp', 'a.dip_id', 'dp.dip_id')
       .select(
         'es.escrow_status',

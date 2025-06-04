@@ -1,5 +1,5 @@
 import { IUserRepository } from '@domain/interfaces/IUserRepository'
-import { User } from '@domain/entities/User'
+import { getUserClientView, User } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
@@ -555,6 +555,10 @@ export class AuthService {
       )
     }
 
+    if (!(user.role === Role.HOME_BUYER || user.is_mfa_enabled)) {
+      user = await this.userRepository.update(user.id, { is_mfa_enabled: true })
+    }
+
     if (user.is_mfa_enabled) {
       const token = await this.mfaTokenGen.accessCode(
         user.id ?? user.user_id,
@@ -722,7 +726,28 @@ export class AuthService {
 
       await this.client.deleteKey(key)
 
-      return { token, ...findUserById }
+      const ipAddress = getIpAddress()
+      const userAgent = getUserAgent()
+      const successfulLoginAttempt = await this.loginAttemptRepository.create({
+        attempted_at: new Date(),
+        successful: true,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        user_id: findUserById.id,
+      })
+
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.LOGIN,
+        performed_at: new Date(),
+        user_id: findUserById.id,
+        title: 'Login successful',
+        description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
+        metadata: successfulLoginAttempt,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
+
+      return { token, ...getUserClientView(findUserById) }
     }
 
     if (!findUserById.require_authenticator_mfa) {
@@ -770,6 +795,27 @@ export class AuthService {
         })
       }
 
+      const ipAddress = getIpAddress()
+      const userAgent = getUserAgent()
+      const successfulLoginAttempt = await this.loginAttemptRepository.create({
+        attempted_at: new Date(),
+        successful: true,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        user_id: findUserById.id,
+      })
+
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.LOGIN,
+        performed_at: new Date(),
+        user_id: findUserById.id,
+        title: 'Login successful',
+        description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
+        metadata: successfulLoginAttempt,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
+
       findUserById.membership =
         await this.manageOrganizations.getOrganizationsForUser(findUserById.id)
 
@@ -795,6 +841,27 @@ export class AuthService {
       await this.userRepository.updateRecoveryCodeById(usedCode.id, {
         used: true,
       })
+      const ipAddress = getIpAddress()
+      const userAgent = getUserAgent()
+      const successfulLoginAttempt = await this.loginAttemptRepository.create({
+        attempted_at: new Date(),
+        successful: true,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+        user_id: findUserById.id,
+      })
+
+      await this.userActivityRepository.create({
+        activity_type: UserActivityKind.LOGIN,
+        performed_at: new Date(),
+        user_id: findUserById.id,
+        title: 'Login successful',
+        description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
+        metadata: successfulLoginAttempt,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
+
       return { token, ...findUserById }
     }
 

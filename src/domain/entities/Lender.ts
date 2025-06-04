@@ -1,4 +1,5 @@
-import { User } from './User'
+import { Organization } from './Organization'
+import { User, UserClientView } from './User'
 
 export class Lender {
   id?: string
@@ -8,6 +9,8 @@ export class Lender {
   head_office_address: string
   state: string
   organization_id: string
+  organization?: Organization
+  owner?: UserClientView
   created_at?: Date
   updated_at?: Date
   constructor(data: Partial<Lender>) {

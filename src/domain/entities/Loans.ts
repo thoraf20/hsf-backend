@@ -1,9 +1,16 @@
-export class LoanOffer {
-  loan_offer_id: string
-  application_id: string
-  property_id: string
-  user_id: string
-  lender_id: string
+import {
+  LoanDecisionStatus,
+  LoanOfferWorkflowStatus,
+} from '@domain/enums/loanEnum'
+import { BaseEntity } from '.'
+import { LoanOfferStatus } from '@domain/enums/propertyEnum'
+
+export class LoanOffer extends BaseEntity {
+  application_id?: string
+  organization_id?: string
+
+  user_id?: string
+  lender_org_id: string
 
   loan_amount: number
   interest_rate: number
@@ -11,21 +18,24 @@ export class LoanOffer {
   repayment_frequency: string
 
   // When the offer expires if not accepted
-  offer_status: string
+  offer_status: LoanOfferStatus
   offer_date: Date
   expiry_date: Date
 
   // Estimated values for display on the offer document
-  total_interest_estimate: number
-  total_payable_estimate: number
-  estimated_periodic_payment: number
+  total_interest_estimate?: number
+  total_payable_estimate?: number
+  estimated_periodic_payment?: number
 
-  late_payment_penalty_details: string
-  financing_details: string
-  repayment_method_details: string
+  late_payment_penalty_details?: string
+  financing_details?: string
+  repayment_method_details?: string
   lender_comments?: Array<string>
 
+  workflow_status?: LoanOfferWorkflowStatus
+
   constructor(d: Partial<LoanOffer>) {
+    super()
     let data = {
       ...d,
       created_at: new Date(),
@@ -35,13 +45,13 @@ export class LoanOffer {
   }
 }
 
-export class Loan {
-  loan_id: string
+export class Loan extends BaseEntity {
   loan_offer_id: string
-  application_id: string
-  user_id: string
-  lender_id: string
-  property_id: string
+  application_id?: string
+  organization_id?: string
+
+  user_id?: string
+  lender_org_id: string
 
   principal_amount: number
   interest_rate: number
@@ -57,6 +67,7 @@ export class Loan {
   total_principal_paid: number
 
   constructor(d: Partial<Loan>) {
+    super()
     let data = {
       ...d,
       created_at: new Date(),
@@ -66,8 +77,7 @@ export class Loan {
   }
 }
 
-export class LoanRepaymentSchedule {
-  schedule_id: string
+export class LoanRepaymentSchedule extends BaseEntity {
   loan_id: string
 
   payment_number: number
@@ -80,6 +90,7 @@ export class LoanRepaymentSchedule {
   status: string
 
   constructor(d: Partial<LoanRepaymentSchedule>) {
+    super()
     let data = {
       ...d,
       created_at: new Date(),
@@ -89,8 +100,7 @@ export class LoanRepaymentSchedule {
   }
 }
 
-export class LoanRepaymentTransaction {
-  repayment_transaction_id: string
+export class LoanRepaymentTransaction extends BaseEntity {
   schedule_id: string
   loan_id: string
   transaction_id: string
@@ -101,6 +111,28 @@ export class LoanRepaymentTransaction {
   notes?: string
 
   constructor(d: Partial<LoanRepaymentTransaction>) {
+    super()
+    let data = {
+      ...d,
+      created_at: new Date(),
+      updated_at: new Date(),
+    }
+    Object.assign(this, data)
+  }
+}
+
+export class LoanDecision extends BaseEntity {
+  application_id: string
+  user_id: string
+  brokerage_fee_paid_at?: Date
+  brokerage_fee_payment_id?: string
+  loan_offer_id?: string
+
+  lender_org_id: string
+  status: LoanDecisionStatus
+
+  constructor(d: Partial<LoanRepaymentTransaction>) {
+    super()
     let data = {
       ...d,
       created_at: new Date(),

@@ -65,7 +65,6 @@ export class AuthController {
     flow: MfaFlow,
   ): Promise<ApiResponse<any>> {
     const user = await this.authService.verifyMfa(otp, userId, flow)
-    delete user.password
     return createResponse(StatusCodes.OK, 'user logged in successfully', user)
   }
 

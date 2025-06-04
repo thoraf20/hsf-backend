@@ -25,7 +25,7 @@ import {
   applicationDocUploadsSchema,
   createApplicationSchema,
   dipFiltersSchema,
-  hsfCompleteApplicationDocReviewSchema,
+  completeApplicationDocReviewSchema,
   initiateMortgagePaymentSchema,
   lenderDipResponseSchema,
   offerLetterFiltersSchema,
@@ -35,6 +35,7 @@ import {
   scheduleEscrowMeetingSchema,
   updateDipLoanSchema,
   userDipResponseSchema,
+  homeBuyerLoanOfferRespondSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -56,6 +57,8 @@ import { ServiceOfferingRepository } from '@repositories/serviceOffering/service
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 import { paymentFiltersSchema } from '@validators/paymentValidator'
+import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
+import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -68,6 +71,10 @@ const applicationService = new ApplicationService(
   new OrganizationRepository(),
   new DocumentRepository(),
   new DeveloperRespository(),
+  new MortageRepository(),
+  new LenderRepository(),
+  new LoanOfferRepository(),
+  new LoanDecisionRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -99,6 +106,7 @@ const applicationController = new ApplicationController(
     new UserRepository(),
     new PaymentService(new PaymentProcessorFactory()),
     new MortageRepository(),
+    new LoanDecisionRepository(),
   ),
 )
 const applicationRoutes = Router()
@@ -140,6 +148,18 @@ applicationRoutes.get(
 )
 
 applicationRoutes.get(
+  '/lender',
+  validateRequestQuery(propertyFiltersSchema),
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+
+    const response = await applicationController.getByHSF(query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
   '/user',
   validateRequestQuery(propertyFiltersSchema),
   requireRoles(Role.HOME_BUYER),
@@ -165,7 +185,7 @@ applicationRoutes.get(
 applicationRoutes.get(
   '/property-closings',
   authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
-  asyncMiddleware(async (req, res, next) => {
+  asyncMiddleware(async (req, res) => {
     const { query } = req
     const response =
       await applicationController.getAllPropertyClosingsByHSF(query)
@@ -541,18 +561,39 @@ applicationRoutes.post(
 
 applicationRoutes.post(
   '/:application_id/documents/hsf-complete-review',
-  validateRequest(hsfCompleteApplicationDocReviewSchema),
+  validateRequest(completeApplicationDocReviewSchema),
   asyncMiddleware(async (req, res) => {
     const {
       authInfo,
       params: { application_id },
       body,
     } = req
-    applicationController.handleApplicationDocUploads(
+    const response = await applicationController.hsfCompleteDocumentReview(
       application_id,
       body,
       authInfo,
     )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.post(
+  '/:application_id/documents/lender-complete-review',
+  validateRequest(completeApplicationDocReviewSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      params: { application_id },
+      body,
+    } = req
+    const response = await applicationController.lenderCompleteDocumentReview(
+      application_id,
+      body,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
   }),
 )
 
@@ -634,6 +675,26 @@ applicationRoutes.get(
       authInfo,
       application_id,
       query,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/loan-offer/respond',
+  authorize(isHomeBuyer),
+  validateRequest(homeBuyerLoanOfferRespondSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      body,
+      params: { application_id },
+      authInfo,
+    } = req
+    const response = await applicationController.homeBuyerLoanOfferRespond(
+      body,
+      application_id,
+      authInfo,
     )
 
     res.status(response.statusCode).json(response)

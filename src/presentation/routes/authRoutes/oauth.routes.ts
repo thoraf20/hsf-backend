@@ -1,3 +1,4 @@
+import { UserActivityKind } from '@domain/enums/UserActivityKind'
 import { UserStatus } from '@domain/enums/userEum'
 import { User } from '@entities/User'
 import { getEnv } from '@infrastructure/config/env/env.config'
@@ -6,10 +7,13 @@ import { IAccountRepository } from '@interfaces/IAccountRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import logger from '@middleware/logger'
 import { createResponse } from '@presentation/response/responseType'
+import { LoginAttemptRepository } from '@repositories/LoginAttemptRepository'
 import { AccountRepository } from '@repositories/user/AccountRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { Role } from '@routes/index.t'
 import { Hashing } from '@shared/utils/hashing'
+import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
 import { createDate, TimeSpan } from '@shared/utils/time-unit'
 import arctic, { generateCodeVerifier, generateState } from 'arctic'
 import { Request, Response, Router } from 'express'
@@ -17,6 +21,8 @@ import { StatusCodes } from 'http-status-codes'
 
 const accountRepository: IAccountRepository = new AccountRepository()
 const userRepository = new UserRepository()
+const loginAttemptRepository = new LoginAttemptRepository()
+const userActivityRepository = new UserActivityLogRepository()
 const hash = new Hashing()
 const oauthRoutes = Router()
 
@@ -151,6 +157,27 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       maxAge: 0,
     })
 
+    const ipAddress = getIpAddress()
+    const userAgent = getUserAgent()
+    const successfulLoginAttempt = await loginAttemptRepository.create({
+      attempted_at: new Date(),
+      successful: true,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      user_id: user.id,
+    })
+
+    await userActivityRepository.create({
+      activity_type: UserActivityKind.LOGIN,
+      performed_at: new Date(),
+      user_id: user.id,
+      title: 'Login successful',
+      description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
+      metadata: successfulLoginAttempt,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    })
+
     const token = await hash.accessCode(user.id, user.role)
     const response = createResponse(
       StatusCodes.OK,
@@ -158,6 +185,7 @@ oauthRoutes.get('/google/callback', async (req: Request, res: Response) => {
       {
         token,
         ...user,
+        user_id: user.id,
       },
     )
 

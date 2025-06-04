@@ -191,6 +191,7 @@ export const applicationFilterSchema = withPaginateSchema(
     financing_type: z.string().optional(),
     organization_id: z.string().optional(),
     offer_letter_id: z.string().optional(),
+    lender_id: z.string().optional(),
   }),
 )
 
@@ -206,10 +207,19 @@ export type ApplicationDocApprovalInput = z.infer<
   typeof applicationDocApprovalSchema
 >
 
-export const hsfCompleteApplicationDocReviewSchema = z.object({
+export const completeApplicationDocReviewSchema = z.object({
   group: z.nativeEnum(DocumentGroupKind),
 })
 
-export type HSFCompleteApplicationDocReviewInput = z.infer<
-  typeof hsfCompleteApplicationDocReviewSchema
+export type CompleteApplicationDocReviewInput = z.infer<
+  typeof completeApplicationDocReviewSchema
+>
+
+export const homeBuyerLoanOfferRespondSchema = z.object({
+  accepts: z.boolean(),
+  loan_offer_id: z.string().nonempty(),
+})
+
+export type HomeBuyserLoanOfferRespondInput = z.infer<
+  typeof homeBuyerLoanOfferRespondSchema
 >

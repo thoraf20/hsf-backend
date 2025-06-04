@@ -1,13 +1,24 @@
 import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
-import { PaymentStatus } from '@domain/enums/PaymentEnum'
+import {
+  DipPaymentStatus,
+  MortgagePaymentType,
+  PaymentStatus,
+} from '@domain/enums/PaymentEnum'
 import { asyncMiddleware } from '@routes/index.t'
 import { SseService } from '@infrastructure/services/sse.service'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
+import { MortageRepository } from '@repositories/property/MortageRepository'
+import { DipDocumentReviewStatus, DIPStatus } from '@domain/enums/propertyEnum'
 
 const WebhookRouter: Router = Router()
+const applicationRepository = new ApplicationRepository()
+const loanDecisionRepository = new LoanDecisionRepository()
+const mortgageRepository = new MortageRepository()
 const sse = new SseService()
 
 const paymentRepository = new PaymentRepostory()
@@ -31,6 +42,7 @@ WebhookRouter.post(
     try {
       const event = req.body
       const metadata = event.data.metadata
+      console.log({ data: event.data, event: event.event })
 
       const transaction_id = metadata?.reference
       if (!transaction_id) {
@@ -43,11 +55,45 @@ WebhookRouter.post(
         return res.status(404).json({ message: 'Transaction not found' })
       }
 
-      if (event.event === 'transfer.success') {
+      if (
+        event.event === 'transfer.success' ||
+        event.event === 'charge.success'
+      ) {
         transaction = await paymentRepository.update({
           payment_id: transaction.payment_id,
           payment_status: PaymentStatus.SUCCESS,
         })
+
+        if (transaction.payment_type === MortgagePaymentType.BROKER_FEE) {
+          const application = await applicationRepository.getApplicationById(
+            transaction.metadata.application_id,
+          )
+
+          const loanDecision = await loanDecisionRepository.getByApplicationId(
+            application.application_id,
+          )
+
+          await loanDecisionRepository.update(loanDecision.id, {
+            brokerage_fee_paid_at: new Date(),
+          })
+        } else if (
+          transaction.payment_type === MortgagePaymentType.DUE_DILIGENT
+        ) {
+          const application = await applicationRepository.getApplicationById(
+            transaction.metadata.application_id,
+          )
+
+          const dip = await mortgageRepository.getDipByEligibilityID(
+            application.eligibility_id,
+          )
+
+          await mortgageRepository.updateDipById({
+            dip_id: dip.dip_id,
+            dip_status: DIPStatus.DocumentsPending,
+            payment_status: DipPaymentStatus.Completed,
+            documents_status: DipDocumentReviewStatus.NotUploaded,
+          })
+        }
 
         // await addVerifyInspectionPaymentJob({
         //   inspectionId: inspection_id,

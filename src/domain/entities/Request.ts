@@ -15,6 +15,7 @@ export enum ReviewRequestStageKind {
 
   DIPHsfDocumentReview = 'DIP Hsf Document Review',
   DIPDeveloperDocumentReview = 'DIP Developer Document Review',
+  DIPLenderDocumentReview = 'DIP Lender Document Review',
 }
 
 export enum ReviewRequestStatus {

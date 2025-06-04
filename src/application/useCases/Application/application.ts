@@ -1,10 +1,19 @@
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
+import {
+  LoanDecisionStatus,
+  LoanOfferWorkflowStatus,
+} from '@domain/enums/loanEnum'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 
 import {
   ApplicationPurchaseType,
   ApplicationStatus,
+  DipDocumentReviewStatus,
+  DIPStatus,
   EscrowMeetingStatus,
+  LoanOfferStatus,
+  LoanRepaymentFrequency,
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
@@ -24,8 +33,13 @@ import {
   ReviewRequestTypeKind,
 } from '@entities/Request'
 import { getUserClientView } from '@entities/User'
+import { runWithTransaction } from '@infrastructure/database/knex'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
+import { ILenderRepository } from '@interfaces/ILenderRepository'
+import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
+import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
+import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
@@ -38,18 +52,20 @@ import { UserRepository } from '@repositories/user/UserRepository'
 import { Role } from '@routes/index.t'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { AuthInfo } from '@shared/utils/permission-policy'
+import { createDate, TimeSpan } from '@shared/utils/time-unit'
 import {
   ApplicationDocApprovalInput,
   ApplicationDocFilters,
   ApplicationDocUploadsInput,
   ApplicationFilters,
   CreateApplicationInput,
-  HSFCompleteApplicationDocReviewInput,
+  CompleteApplicationDocReviewInput,
   OfferLetterFilters,
   RequestOfferLetterRespondInput,
   RequestPropertyClosingInput,
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
+  HomeBuyserLoanOfferRespondInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
@@ -66,6 +82,10 @@ export class ApplicationService {
     private readonly organizationRepository: IOrganizationRepository,
     private readonly documentRepository: IDocumentRepository,
     private readonly developerRepository: IDeveloperRepository,
+    private readonly mortgageRepository: IMortageRespository,
+    private readonly lenderRepository: ILenderRepository,
+    private readonly loanOfferRepository: ILoanOfferRepository,
+    private readonly loanDecisionRepository: ILoanDecisionRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -245,6 +265,12 @@ export class ApplicationService {
   }
 
   async getAll(filter: ApplicationFilters) {
+    return this.applicationRepository.getAllApplication({
+      ...filter,
+    })
+  }
+
+  async getByLender(filter: ApplicationFilters) {
     return this.applicationRepository.getAllApplication({
       ...filter,
     })
@@ -1601,7 +1627,7 @@ export class ApplicationService {
 
   async hsfCompleteDocumentReview(
     applicationId: string,
-    input: HSFCompleteApplicationDocReviewInput,
+    input: CompleteApplicationDocReviewInput,
     authInfo: AuthInfo,
   ) {
     const application =
@@ -1611,6 +1637,39 @@ export class ApplicationService {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
         `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.dip) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are yet to initiate dip',
+      )
+    }
+
+    if (
+      input.group === DocumentGroupKind.MortgageUpload &&
+      application.dip.hsf_document_review_completed
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `HSF document review already completed for application ID '${applicationId}'`,
+      )
+    }
+
+    const eligibility = await this.prequalifyRepository.findEligiblityById(
+      application.dip.eligibility_id,
+    )
+
+    if (
+      !(
+        eligibility &&
+        eligibility?.eligiblity_status === EligibilityStatus.APPROVED
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your eligibility not approved for this application',
       )
     }
 
@@ -1625,12 +1684,24 @@ export class ApplicationService {
       )
     }
 
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        documentGroup.id,
+      )
+
+    if (!documentGroupTypes.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'No document group types found for the specified group.',
+      )
+    }
+
     const documentApplicationEntries =
       await this.documentRepository.findApplicationDocumentEntriesByApplicationId(
         applicationId,
       )
 
-    const applicationEntriesWithApproval = await Promise.all(
+    let applicationEntriesWithApproval = await Promise.all(
       documentApplicationEntries.map(async (entry) => {
         const approval =
           await this.reviewRequestRepository.getReviewRequestApprovalByOrgRequestID(
@@ -1644,20 +1715,396 @@ export class ApplicationService {
       }),
     )
 
-    const nonApprovedEntry = applicationEntriesWithApproval.some(
+    applicationEntriesWithApproval = applicationEntriesWithApproval.filter(
+      (approvalEntry) =>
+        documentGroupTypes.find(
+          (groupType) => groupType.id === approvalEntry.document_group_type_id,
+        ),
+    )
+
+    if (applicationEntriesWithApproval.length !== documentGroupTypes.length) {
+      const missingGroupType = documentGroupTypes.find(
+        (groupType) =>
+          !applicationEntriesWithApproval.find(
+            (approval) => approval.document_group_type_id === groupType.id,
+          ),
+      )
+
+      if (missingGroupType) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          `Missing document group type: ${missingGroupType.display_label}.`,
+        )
+      } else {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Missing document group type.',
+        )
+      }
+    }
+
+    const nonApprovedEntry = applicationEntriesWithApproval.find(
       (entry) =>
         entry.approval.approval_status !== ReviewRequestApprovalStatus.Approved,
     )
 
     if (nonApprovedEntry) {
+      const nonApprovedDocumentType = documentGroupTypes.find(
+        (groupType) => groupType.id === nonApprovedEntry.document_group_type_id,
+      )
+
+      if (nonApprovedDocumentType) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          `The document application '${nonApprovedDocumentType.display_label}' is not approved.`,
+        )
+      } else {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Not all the document applications are approved.',
+        )
+      }
+    }
+
+    const reviewRequests = await Promise.all(
+      applicationEntriesWithApproval.map((approval) =>
+        this.reviewRequestRepository.getReviewRequestID(
+          approval.review_request_id,
+        ),
+      ),
+    )
+
+    const lenderStage =
+      await this.reviewRequestRepository.getReviewRequestStageByKind(
+        ReviewRequestStageKind.DIPLenderDocumentReview,
+      )
+
+    console.log({ lenderStage })
+    if (!lenderStage) {
       throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'Not all the document application are approved',
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Lender stage not found',
       )
     }
 
-    // this.reviewRequestRepository.getReviewRequestStageByKind(
-    //   ReviewRequestStageKind.DIPDeveloperDocumentReview,
-    // )
+    const reviewRequestType =
+      await this.reviewRequestRepository.getReviewRequestTypeByKind(
+        ReviewRequestTypeKind.DipDocumentReview,
+      )
+
+    if (!reviewRequestType) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `${ReviewRequestTypeKind.DipDocumentReview} not found`,
+      )
+    }
+
+    const reviewRequestTypeStages =
+      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+        reviewRequestType.id,
+      )
+
+    const lenderReviewRequestTypeStage = reviewRequestTypeStages.find(
+      (typeStage) => typeStage.stage_id === lenderStage.id,
+    )
+
+    if (!lenderReviewRequestTypeStage) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Lender review request type stage not found',
+      )
+    }
+
+    const lender = await this.lenderRepository.getLenderById(
+      eligibility.lender_id,
+    )
+
+    if (!lender) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Lender not found',
+      )
+    }
+
+    console.log({ lenderReviewRequestTypeStage })
+
+    return runWithTransaction(async () => {
+      const approvals = await Promise.all(
+        reviewRequests.map((reviewRequest) =>
+          this.reviewRequestRepository.createReviewRequestApproval({
+            request_id: reviewRequest.id,
+            approval_status: ReviewRequestApprovalStatus.Pending,
+            organization_id: lender.organization_id,
+            review_request_stage_type_id: lenderReviewRequestTypeStage.id,
+          }),
+        ),
+      )
+
+      if (input.group === DocumentGroupKind.MortgageUpload) {
+        await this.mortgageRepository.updateDipById({
+          dip_id: application.dip.dip_id,
+          hsf_document_review_completed: true,
+        })
+      }
+
+      return approvals
+    })
+  }
+
+  async lenderCompleteDocumentReview(
+    applicationId: string,
+    input: CompleteApplicationDocReviewInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.dip) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are yet to initiate dip',
+      )
+    }
+
+    if (
+      input.group === DocumentGroupKind.MortgageUpload &&
+      application.dip.lender_document_review_completed
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `HSF document review already completed for application ID '${applicationId}'`,
+      )
+    }
+
+    const eligibility = await this.prequalifyRepository.findEligiblityById(
+      application.dip.eligibility_id,
+    )
+
+    if (
+      !(
+        eligibility &&
+        eligibility?.eligiblity_status === EligibilityStatus.APPROVED
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Your eligibility not approved for this application',
+      )
+    }
+
+    const documentGroup = await this.documentRepository.findDocumentGroupByTag(
+      input.group,
+    )
+
+    if (!documentGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        `Document group with tag '${input.group}' is not properly set up.`,
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        documentGroup.id,
+      )
+
+    if (!documentGroupTypes.length) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'No document group types found for the specified group.',
+      )
+    }
+
+    const documentApplicationEntries =
+      await this.documentRepository.findApplicationDocumentEntriesByApplicationId(
+        applicationId,
+      )
+
+    let applicationEntriesWithApproval = await Promise.all(
+      documentApplicationEntries.map(async (entry) => {
+        const approval =
+          await this.reviewRequestRepository.getReviewRequestApprovalByOrgRequestID(
+            entry.review_request_id,
+            authInfo.currentOrganizationId,
+          )
+        return {
+          ...entry,
+          approval,
+        }
+      }),
+    )
+
+    applicationEntriesWithApproval = applicationEntriesWithApproval.filter(
+      (approvalEntry) =>
+        documentGroupTypes.find(
+          (groupType) => groupType.id === approvalEntry.document_group_type_id,
+        ),
+    )
+
+    if (applicationEntriesWithApproval.length !== documentGroupTypes.length) {
+      const missingGroupType = documentGroupTypes.find(
+        (groupType) =>
+          !applicationEntriesWithApproval.find(
+            (approval) => approval.document_group_type_id === groupType.id,
+          ),
+      )
+
+      if (missingGroupType) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          `Missing document group type: ${missingGroupType.display_label}.`,
+        )
+      } else {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Missing document group type.',
+        )
+      }
+    }
+
+    const nonApprovedEntry = applicationEntriesWithApproval.find(
+      (entry) =>
+        entry.approval.approval_status !== ReviewRequestApprovalStatus.Approved,
+    )
+
+    if (nonApprovedEntry) {
+      const nonApprovedDocumentType = documentGroupTypes.find(
+        (groupType) => groupType.id === nonApprovedEntry.document_group_type_id,
+      )
+
+      if (nonApprovedDocumentType) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          `The document application '${nonApprovedDocumentType.display_label}' is not approved.`,
+        )
+      } else {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Not all the document applications are approved.',
+        )
+      }
+    }
+
+    const lenderOrg = await this.lenderRepository.getLenderById(
+      eligibility.lender_id,
+    )
+
+    if (!lenderOrg) {
+      throw new Error('Lender not found')
+    }
+
+    return runWithTransaction(async () => {
+      if (input.group === DocumentGroupKind.MortgageUpload) {
+        const loanOffer = await this.loanOfferRepository.createLoanOffer({
+          user_id: application.user_id,
+          application_id: application.application_id,
+          lender_org_id: lenderOrg.organization_id,
+          offer_date: new Date(),
+          offer_status: LoanOfferStatus.PENDING,
+          expiry_date: createDate(new TimeSpan(14, 'd')),
+          interest_rate: application.dip.interest_rate,
+          loan_amount: application.dip.approved_loan_amount,
+          loan_term_months: Number(application.dip.loan_term),
+          repayment_frequency: LoanRepaymentFrequency.MONTHLY,
+        })
+
+        await this.loanDecisionRepository.create({
+          application_id: application.application_id,
+          user_id: application.user_id,
+          status: LoanDecisionStatus.PENDING,
+          lender_org_id: lenderOrg.organization_id,
+          loan_offer_id: loanOffer.id,
+        })
+
+        await this.applicationRepository.updateApplication({
+          application_id: application.application_id,
+          loan_offer_id: loanOffer.id,
+        })
+      }
+
+      await Promise.all(
+        applicationEntriesWithApproval.map((approval) =>
+          this.reviewRequestRepository.updateReviewRequest(
+            approval.approval.request_id,
+            {
+              status: ReviewRequestStatus.Approved,
+            },
+          ),
+        ),
+      )
+
+      return this.mortgageRepository.updateDipById({
+        dip_id: application.dip.dip_id,
+        lender_document_review_completed: true,
+        dip_status: DIPStatus.Completed,
+        documents_status: DipDocumentReviewStatus.Approved,
+      })
+    })
+  }
+
+  async homeBuyerLoanOfferRespond(
+    input: HomeBuyserLoanOfferRespondInput,
+    applicationId: string,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!(application && application.user_id === authInfo.userId)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan offer found',
+      )
+    }
+
+    if (application.loan_offer_id !== input.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Loan offer ID mismatch. Expected '${application.loan_offer_id}', but got '${input.loan_offer_id}'.`,
+      )
+    }
+
+    const loanOffer = await this.loanOfferRepository.getLoanOfferById(
+      application.loan_offer_id,
+    )
+
+    if (!loanOffer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan offer not found',
+      )
+    }
+
+    if (loanOffer.workflow_status !== LoanOfferWorkflowStatus.READY) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan offer is not ready to be processed.',
+      )
+    }
+
+    const updateLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+      loanOffer.id,
+      {
+        offer_status: input.accepts
+          ? LoanOfferStatus.ACCEPTED
+          : LoanOfferStatus.DECLINED,
+      },
+    )
+
+    return updateLoanOffer
   }
 }

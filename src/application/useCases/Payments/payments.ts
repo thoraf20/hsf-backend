@@ -1,9 +1,12 @@
+import { LoanDecisionStatus } from '@domain/enums/loanEnum'
 import { MortgagePaymentType, PaymentStatus } from '@domain/enums/PaymentEnum'
 import { Application } from '@entities/Application'
+import { LoanDecision } from '@entities/Loans'
 import { DIP } from '@entities/Mortage'
 import { Payment } from '@entities/Payment'
 import { getUserClientView, UserClientView, UserRole } from '@entities/User'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
+import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { PaymentIntent } from '@interfaces/IPaymentProcessor'
 import { IPaymentRepository } from '@interfaces/IPaymentRepository'
@@ -24,6 +27,7 @@ export class PaymentUseCase {
     private readonly userRepository: IUserRepository,
     private readonly paymentService: PaymentService,
     private readonly mortgageRepository: IMortageRespository,
+    private readonly loanDecisionRepository: ILoanDecisionRepository,
   ) {}
 
   async getById(id: string): Promise<Payment & { payer?: UserClientView }> {
@@ -104,13 +108,74 @@ export class PaymentUseCase {
     }
 
     const user = await this.userRepository.findById(authInfo.userId)
+    let loanDecision: LoanDecision
+    let payment: Payment
 
-    let payment = await this.paymentRepository.getByType(input.payment_for)
+    if (input.payment_for === MortgagePaymentType.BROKER_FEE) {
+      loanDecision = await this.loanDecisionRepository.getByApplicationId(
+        application.application_id,
+      )
 
-    if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
+      if (!loanDecision) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'Loan decision not initiated',
+        )
+      }
+
+      if (
+        loanDecision.status === LoanDecisionStatus.REJECTED ||
+        loanDecision.status === LoanDecisionStatus.EXPIRED ||
+        loanDecision.status === LoanDecisionStatus.WITHDRAWN
+      ) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You cannot proceed with this loan decision at the moment',
+        )
+      }
+
+      if (loanDecision.brokerage_fee_payment_id) {
+        payment = await this.paymentRepository.getById(
+          loanDecision.brokerage_fee_payment_id,
+        )
+
+        if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
+          throw new ApplicationCustomError(
+            StatusCodes.CONFLICT,
+            'Payment intent already completed',
+          )
+        }
+      }
+    } else if (
+      input.payment_for === MortgagePaymentType.DECISION_IN_PRINCIPLE
+    ) {
+      const dip = await this.mortgageRepository.getDipByEligibilityID(
+        application.eligibility_id,
+      )
+
+      if (!dip) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'DIP not initiated',
+        )
+      }
+
+      if (dip.payment_transaction_id) {
+        payment = await this.paymentRepository.getById(
+          dip.payment_transaction_id,
+        )
+
+        if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
+          throw new ApplicationCustomError(
+            StatusCodes.CONFLICT,
+            'Payment intent already completed',
+          )
+        }
+      }
+    } else {
       throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        'Payment intent already completed',
+        StatusCodes.FORBIDDEN,
+        'Invalid payment type',
       )
     }
 
@@ -153,6 +218,10 @@ export class PaymentUseCase {
       await this.mortgageRepository.updateDipById({
         dip_id: (application as Application & { dip: DIP }).dip.dip_id,
         payment_transaction_id: payment.payment_id,
+      })
+    } else if (payment.payment_type === MortgagePaymentType.BROKER_FEE) {
+      await this.loanDecisionRepository.update(loanDecision.id, {
+        brokerage_fee_payment_id: payment.payment_id,
       })
     }
 

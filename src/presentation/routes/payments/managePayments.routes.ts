@@ -1,6 +1,7 @@
 import { PaymentController } from '@controllers/PaymentController'
 import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
+import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
 import { MortageRepository } from '@repositories/property/MortageRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
@@ -17,6 +18,7 @@ const paymentService = new PaymentUseCase(
   new UserRepository(),
   new PaymentService(new PaymentProcessorFactory()),
   new MortageRepository(),
+  new LoanDecisionRepository(),
 )
 const controller = new PaymentController(paymentService)
 const managePaymentRoutes = Router()

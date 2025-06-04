@@ -245,6 +245,7 @@ export class ManageOrganizations {
         phone_number: data.phone_number,
         is_admin: true,
         force_password_reset: true,
+        is_mfa_enabled: true,
         role_id: lenderRole.id,
       })
 
@@ -288,9 +289,10 @@ export class ManageOrganizations {
         ...lender,
         organization: lenderOrg,
         owner: {
-          ...getUserClientView(
-            await this.userRepository.findById(lenderOwner.id),
-          ),
+          ...getUserClientView({
+            ...lenderOwner,
+            role: lenderRole.name as Role,
+          }),
           password: generatedPass,
         },
       }
@@ -447,6 +449,7 @@ export class ManageOrganizations {
         phone_number: input.phone_number,
         is_admin: true,
         force_password_reset: true,
+        is_mfa_enabled: true,
         role_id: newAdminRole.id,
       })
 
@@ -628,6 +631,7 @@ export class ManageOrganizations {
         password: hashedPassword,
         phone_number: data.phone_number,
         is_admin: true,
+        is_mfa_enabled: true,
         force_password_reset: true,
         role_id: developerRole.id,
       })

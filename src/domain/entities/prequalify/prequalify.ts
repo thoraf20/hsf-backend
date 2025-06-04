@@ -1,4 +1,8 @@
-import { Gender, MARITAL_STATUS } from '@domain/enums/prequalifyEnum'
+import {
+  EligibilityStatus,
+  Gender,
+  MARITAL_STATUS,
+} from '@domain/enums/prequalifyEnum'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { QueryBoolean } from '@shared/utils/helpers'
 
@@ -26,7 +30,7 @@ export class personalinformation {
 
 export class Eligibility {
   eligibility_id?: string
-  eligiblity_status?: string
+  eligiblity_status?: EligibilityStatus
   is_eligible?: boolean
   property_id?: string
   rsa?: string

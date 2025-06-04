@@ -23,6 +23,8 @@ export class DIP {
   payment_transaction_id?: string
   documents_status?: string
   documents_review_request_id?: string
+  hsf_document_review_completed?: boolean
+  lender_document_review_completed?: boolean
   user_id: string
   created_at?: Date
   updated_at?: Date

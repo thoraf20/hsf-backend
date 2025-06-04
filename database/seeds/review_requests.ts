@@ -59,6 +59,11 @@ async function reviewRequestStageSeed(knex: Knex): Promise<void> {
       name: ReviewRequestStageKind.DIPDeveloperDocumentReview,
       organization_type: OrganizationType.DEVELOPER_COMPANY,
     },
+
+    {
+      name: ReviewRequestStageKind.DIPLenderDocumentReview,
+      organization_type: OrganizationType.LENDER_INSTITUTION,
+    },
   ]
 
   for (const stage of stages) {
@@ -456,8 +461,8 @@ async function DIPDocumentReviewRequest(knex: Knex): Promise<void> {
     },
 
     {
-      name: ReviewRequestStageKind.DIPDeveloperDocumentReview,
-      roles: [Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT],
+      name: ReviewRequestStageKind.DIPLenderDocumentReview,
+      roles: [Role.LENDER_ADMIN, Role.LENDER_LOAN_OFFICER],
     },
   ]
 
