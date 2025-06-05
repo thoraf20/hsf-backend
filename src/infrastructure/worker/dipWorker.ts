@@ -63,7 +63,7 @@ async function processDipGen(job: Job<DipGenerationJobPayload>) {
       eligibility_id: eligibility.eligibility_id,
       property_id: application.property_id,
       user_id: application.user_id,
-      dip_status: DIPStatus.Generated,
+      dip_status: DIPStatus.AwaitingLenderAction,
     })
 
     logger.info(
