@@ -247,7 +247,7 @@ export class PrequalifyRepository implements IPreQualify {
       industry_type: input.industry_type,
     }
 
-    let existing = db<PrequalificationInput>('prequalification_inputs')
+    let existing = await db<PrequalificationInput>('prequalification_inputs')
       .select()
       .where({ user_id: input.user_id })
       .first()
