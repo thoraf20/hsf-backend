@@ -107,7 +107,6 @@ export class PaymentRepostory implements IPaymentRepository {
 
     baseQuery = this.useFilters(baseQuery, filters)
 
-    console.log({ sql: baseQuery.toSQL().sql })
     baseQuery = baseQuery.orderBy('p.created_at', 'desc')
     return applyPagination(baseQuery, filters)
   }

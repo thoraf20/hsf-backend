@@ -834,8 +834,6 @@ export class ManageOrganizations {
         organization.id,
       )
 
-    console.log({ member, organization })
-
     if (!member) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,

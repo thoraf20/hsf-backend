@@ -1,14 +1,13 @@
 import { generateRandomString, type RandomReader } from '@oslojs/crypto/random'
 import crypto from 'crypto'
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon'
 
 export const changeTimeStamp = (isoString: string) => {
-  const dt = DateTime.fromISO(isoString, { zone: "utc" }); 
-  if (!dt.isValid) throw new Error("Invalid ISO string");
+  const dt = DateTime.fromISO(isoString, { zone: 'utc' })
+  if (!dt.isValid) throw new Error('Invalid ISO string')
 
-  return dt.toFormat("HH:mm"); 
-};
-
+  return dt.toFormat('HH:mm')
+}
 
 const random: RandomReader = {
   read(bytes) {
@@ -18,7 +17,7 @@ const random: RandomReader = {
 
 const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-export function generateRandomPassword() { 
+export function generateRandomPassword() {
   return generateRandomString(random, alphabet, 8)
 }
 
@@ -78,7 +77,7 @@ export function addQueryUnionFilter(
 
   for (let i = 0; i < values.length; i++) {
     const type = values[i].trim()
-    let condition = `${tablename}${column} ILIKE '${type}'`
+    let condition = `${tablename}${column} = '${type}'`
     conditions.push(condition)
   }
 

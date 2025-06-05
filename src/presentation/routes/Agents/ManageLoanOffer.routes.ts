@@ -83,7 +83,6 @@ manageLoanOfferRoutes.put(
       params: { loanOfferId },
     } = req
 
-    console.log({ body })
     const response = await manageLoanOfferController.updateLoanOffer(
       loanOfferId,
       body,

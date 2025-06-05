@@ -73,6 +73,10 @@ export class ApplicationRepository implements IApplicationRespository {
       q = add(q).whereRaw(`p.status = '${filters.status}'`)
     }
 
+    if (filters.offer_letter_id) {
+      q = add(q).whereRaw(`a.offer_letter_id = '${filters.offer_letter_id}'`)
+    }
+
     return q
   }
   async createApplication(input: Application): Promise<Application> {
@@ -154,9 +158,6 @@ export class ApplicationRepository implements IApplicationRespository {
         'p.landmark',
         'p.payment_duration',
         'p.postal_code',
-        'p.created_at',
-        'p.updated_at',
-        'p.deleted_at',
         db.raw(`DATE_PART('day', NOW() - a.created_at) AS days_Applied`),
       )
       .innerJoin('organizations', 'p.organization_id', 'organizations.id')

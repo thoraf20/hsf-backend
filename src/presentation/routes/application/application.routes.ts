@@ -155,7 +155,7 @@ applicationRoutes.get(
   asyncMiddleware(async (req, res) => {
     const { query } = req
 
-    const response = await applicationController.getByHSF(query)
+    const response = await applicationController.getByLender(query)
     res.status(response.statusCode).json(response)
   }),
 )

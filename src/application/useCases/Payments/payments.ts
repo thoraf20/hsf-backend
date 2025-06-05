@@ -68,7 +68,6 @@ export class PaymentUseCase {
   }
 
   async getAll(filters: PaymentFilters) {
-    console.log({ filters })
     const paymentContents = await this.paymentRepository.getAll(filters)
     //@ts-ignore
     paymentContents.result = paymentContents.result.map((payment) => {
@@ -144,8 +143,6 @@ export class PaymentUseCase {
             ? loanDecision.brokerage_fee_payment_id
             : loanDecision.management_fee_payment_id,
         )
-
-        console.log(payment)
 
         if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
           throw new ApplicationCustomError(
@@ -258,8 +255,6 @@ export class PaymentUseCase {
           payment.payment_method,
           payment,
         )
-
-        console.log({ info })
 
         if (info.status === PaymentStatus.ABANDONED) {
           trials--

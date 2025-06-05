@@ -101,8 +101,7 @@ export class ApplicationController {
   }
 
   async getByHSF(filter: ApplicationFilters) {
-    const applicationContents =
-      await this.applicationService.getByLender(filter)
+    const applicationContents = await this.applicationService.getByHSF(filter)
 
     return createResponse(
       StatusCodes.OK,
@@ -510,7 +509,6 @@ export class ApplicationController {
       authInfo,
     )
 
-    console.log({ approval })
     return createResponse(
       StatusCodes.OK,
       approval.approval_status === ReviewRequestApprovalStatus.Approved

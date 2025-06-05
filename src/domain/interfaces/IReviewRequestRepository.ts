@@ -63,11 +63,6 @@ export interface IReviewRequestRepository {
     })[]
   >
 
-  getHsfReviewRequests(
-    hsfOrgId: string,
-    filter: ReviewRequestFilters,
-  ): Promise<SeekPaginationResult<ReviewRequest>>
-
   getOrgReviewRequests(
     filter: ReviewRequestFilters,
   ): Promise<SeekPaginationResult<ReviewRequest>>

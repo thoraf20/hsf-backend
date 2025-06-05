@@ -150,8 +150,6 @@ export class ManageDipUseCase {
 
     const dip = await this.mortgageRepository.getDipByID(dipId)
 
-    console.log({ dip })
-
     if (!dip) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Dip not found')
     }

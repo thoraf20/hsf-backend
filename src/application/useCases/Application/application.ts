@@ -171,13 +171,6 @@ export class ApplicationService {
         },
       )
 
-      console.log(newApplication, {
-        stage: MortgageApplicationStage.PreQualification,
-        entry_time: new Date(),
-        application_id: newApplication.application_id,
-        user_id: newApplication.user_id,
-      })
-
       if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
         await this.prequalifyRepository.storePaymentCalculator({
           application_id: newApplication.application_id,
@@ -369,7 +362,10 @@ export class ApplicationService {
       )
 
       if (offerLetter) {
-        throw new ApplicationCustomError(StatusCodes.FORBIDDEN, '')
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You have an active offer letter request',
+        )
       }
     }
 
@@ -380,7 +376,7 @@ export class ApplicationService {
     if (!property || property.is_sold) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        'Sorry you can place a request for offer letter to this property',
+        'Sorry you cannot place a request for offer letter to this property',
       )
     }
 
@@ -1099,15 +1095,15 @@ export class ApplicationService {
   }
 
   async getOfferLetters(authInfo: AuthInfo, filters: OfferLetterFilters) {
-    // if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
-    filters.organization_id = authInfo.currentOrganizationId
+    if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
+      filters.organization_id = authInfo.currentOrganizationId
 
-    if (
-      ![Role.DEVELOPER_ADMIN, Role.LENDER_ADMIN].includes(authInfo.globalRole)
-    ) {
-      filters.approver_id = authInfo.userId
+      if (
+        ![Role.DEVELOPER_ADMIN, Role.LENDER_ADMIN].includes(authInfo.globalRole)
+      ) {
+        filters.approver_id = authInfo.userId
+      }
     }
-    // }
 
     let reviewTypeKinds = await Promise.all(
       [ReviewRequestTypeKind.OfferLetterOutright].map((kind) =>
@@ -1130,11 +1126,14 @@ export class ApplicationService {
           ),
         )
 
-        return stages.find(
-          (stage) => stage.organization_type === authInfo.organizationType,
-        )
-          ? type
-          : null
+        if (authInfo.organizationType !== OrganizationType.HSF_INTERNAL) {
+          return stages.find(
+            (stage) => stage.organization_type === authInfo.organizationType,
+          )
+            ? type
+            : null
+        }
+        return type
       }),
     )
 
@@ -1142,16 +1141,11 @@ export class ApplicationService {
       (typeKind): typeKind is ReviewRequestType => !!typeKind,
     )
 
-    const reviewRequestContent = await (authInfo.organizationType ===
-    OrganizationType.HSF_INTERNAL
-      ? this.reviewRequestRepository.getHsfReviewRequests(
-          authInfo.currentOrganizationId,
-          {
-            ...filters,
-            request_stage_type_ids: reviewTypeKinds.map((type) => type.id),
-          },
-        )
-      : this.reviewRequestRepository.getOrgReviewRequests({ ...filters }))
+    const reviewRequestContent =
+      await this.reviewRequestRepository.getOrgReviewRequests({
+        ...filters,
+        request_stage_type_ids: reviewTypeKinds.map((type) => type.id),
+      })
 
     reviewRequestContent.result = await Promise.all(
       reviewRequestContent.result.map(async (request) => {
@@ -1321,8 +1315,6 @@ export class ApplicationService {
     const documentGroup = await this.documentRepository.findDocumentGroupByTag(
       filters.group!,
     )
-
-    console.log({ documentGroup })
 
     if (!documentGroup) {
       throw new ApplicationCustomError(
@@ -1588,15 +1580,11 @@ export class ApplicationService {
                 doc.id,
               )
 
-            console.log({ applicationDocument })
-
             if (applicationDocument) {
               let reviewRequestApprovals =
                 await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
                   applicationDocument.review_request_id,
                 )
-
-              console.log({ reviewRequestApprovals })
 
               if (reviewRequestApprovals) {
                 const rejectedApproval = reviewRequestApprovals.find(
@@ -1604,8 +1592,6 @@ export class ApplicationService {
                     approval.approval_status ===
                     ReviewRequestApprovalStatus.Rejected,
                 )
-
-                console.log({ rejectedApproval })
 
                 if (rejectedApproval) {
                   await Promise.all([
@@ -1931,8 +1917,6 @@ export class ApplicationService {
         'Lender not found',
       )
     }
-
-    console.log({ lenderReviewRequestTypeStage })
 
     return runWithTransaction(async () => {
       const approvals = await Promise.all(

@@ -137,7 +137,6 @@ export class AuthService {
     await this.existingUsers.beforeCreatePhone(input.phone_number)
     input.password = await this.userRepository.hashedPassword(input.password)
     const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
-    console.log(input)
     //@ts-ignore
     delete input.user_id
     let user = await this.userRepository.create({
@@ -238,7 +237,6 @@ export class AuthService {
   async requestPasswordReset(email: string): Promise<void | boolean> {
     const user = await this.userRepository.findByEmail(email)
 
-    console.log({ user })
     if (!user) {
       return false
     }

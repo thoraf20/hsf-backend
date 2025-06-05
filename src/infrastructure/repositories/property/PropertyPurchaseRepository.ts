@@ -161,9 +161,6 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
         .insert(input)
         .returning('*')
 
-      console.log(
-        attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
-      )
       await tx<EscrowAttendee>('escrow_attendee')
         .insert(
           attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
