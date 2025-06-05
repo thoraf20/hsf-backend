@@ -128,7 +128,8 @@ export class preQualifyService {
       user_id,
     } as PrequalificationInput)
 
-    if (eligibility) {
+    console.log({ prequalifyInput })
+    if (eligibility && prequalifyInput) {
       const property = await this.propertyRepository.getPropertyById(
         eligibility.property_id,
       )
