@@ -14,6 +14,7 @@ import { ApplicationRepository } from '@repositories/property/ApplicationResposi
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { MortageRepository } from '@repositories/property/MortageRepository'
 import { DipDocumentReviewStatus, DIPStatus } from '@domain/enums/propertyEnum'
+import { LoanDecisionStatus } from '@domain/enums/loanEnum'
 
 const WebhookRouter: Router = Router()
 const applicationRepository = new ApplicationRepository()
@@ -64,7 +65,10 @@ WebhookRouter.post(
           payment_status: PaymentStatus.SUCCESS,
         })
 
-        if (transaction.payment_type === MortgagePaymentType.BROKER_FEE) {
+        if (
+          transaction.payment_type === MortgagePaymentType.BROKER_FEE ||
+          transaction.payment_type === MortgagePaymentType.MANAGEMENT_FEE
+        ) {
           const application = await applicationRepository.getApplicationById(
             transaction.metadata.application_id,
           )
@@ -73,9 +77,18 @@ WebhookRouter.post(
             application.application_id,
           )
 
-          await loanDecisionRepository.update(loanDecision.id, {
-            brokerage_fee_paid_at: new Date(),
-          })
+          if (transaction.payment_type === MortgagePaymentType.BROKER_FEE) {
+            await loanDecisionRepository.update(loanDecision.id, {
+              brokerage_fee_paid_at: new Date(),
+              status: LoanDecisionStatus.APPROVED,
+            })
+          } else if (
+            transaction.payment_type === MortgagePaymentType.MANAGEMENT_FEE
+          ) {
+            await loanDecisionRepository.update(loanDecision.id, {
+              management_fee_paid_at: new Date(),
+            })
+          }
         } else if (
           transaction.payment_type === MortgagePaymentType.DUE_DILIGENT
         ) {

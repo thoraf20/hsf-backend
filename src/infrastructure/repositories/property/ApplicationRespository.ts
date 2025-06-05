@@ -1,4 +1,4 @@
-import { Application } from '@entities/Application'
+import { Application, ApplicationStage } from '@entities/Application'
 import db, { createUnion } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { SeekPaginationResult } from '@shared/types/paginate'
@@ -8,6 +8,7 @@ import { Knex } from 'knex'
 
 export class ApplicationRepository implements IApplicationRespository {
   private readonly tableName = 'application'
+  private readonly stageTableName = 'application_stages'
 
   useFilter(
     query: Knex.QueryBuilder<any, any[]>,
@@ -174,7 +175,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
     const totalPages = Math.ceil(Number(total) / perPage)
 
-    return new SeekPaginationResult<Application>({
+    const paginatedResult = new SeekPaginationResult<Application>({
       result: paginatedResults,
       page,
       result_per_page: perPage,
@@ -183,10 +184,23 @@ export class ApplicationRepository implements IApplicationRespository {
       next_page: page < totalPages ? page + 1 : null,
       prev_page: page > 1 ? page - 1 : null,
     })
+
+    paginatedResult.result = await Promise.all(
+      paginatedResult.result.map(async (application) => {
+        const stages = await db<ApplicationStage>(this.stageTableName)
+          .where('application_id', application.application_id)
+          .orderBy('entry_time')
+
+        application.stages = stages
+        return application
+      }),
+    )
+
+    return paginatedResult
   }
 
   async getApplicationById(application_id: string): Promise<Application> {
-    const result = await db('application as a')
+    const application = await db('application as a')
       .leftJoin('properties as p', 'a.property_id', 'p.id')
       .innerJoin('organizations', 'p.organization_id', 'organizations.id')
       .innerJoin(
@@ -291,7 +305,12 @@ export class ApplicationRepository implements IApplicationRespository {
 
       .first()
 
-    return result
+    const stages = await db<ApplicationStage>(this.stageTableName)
+      .where('application_id', application.application_id)
+      .orderBy('entry_time')
+
+    application.stages = stages
+    return application
   }
 
   async getByUniqueID(
@@ -411,7 +430,18 @@ export class ApplicationRepository implements IApplicationRespository {
       }
     })
 
-    return query.first()
+    const application = await query.first()
+
+    if (!application) {
+      return null
+    }
+
+    const stages = await db<ApplicationStage>(this.stageTableName)
+      .where('application_id', application.application_id)
+      .orderBy('entry_time')
+
+    application.stages = stages
+    return application
   }
 
   async updateApplication(input: Partial<Application>): Promise<void> {
@@ -430,5 +460,35 @@ export class ApplicationRepository implements IApplicationRespository {
       .andWhere('user_id', user_id)
       .orderBy('created_at', 'desc')
       .first()
+  }
+
+  async addApplicationStage(
+    applicationId: string,
+    stage: ApplicationStage,
+  ): Promise<ApplicationStage> {
+    const [newStage] = await db<ApplicationStage>(this.stageTableName)
+      .insert({
+        application_id: applicationId,
+        stage: stage.stage,
+        entry_time: stage.entry_time,
+        exit_time: stage.exit_time,
+        additional_info: stage.additional_info,
+        user_id: stage.user_id,
+      })
+      .returning('*')
+
+    return newStage
+  }
+
+  async updateApplicationStage(
+    applicationStageId: string,
+    stage: Partial<ApplicationStage>,
+  ): Promise<ApplicationStage> {
+    const [updatedStage] = await db(this.stageTableName)
+      .where('id', applicationStageId)
+      .update(stage)
+      .returning('*')
+
+    return updatedStage
   }
 }

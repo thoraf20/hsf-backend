@@ -88,10 +88,10 @@ export enum LoanOfferStatus {
 export enum LoanRepaymentFrequency {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
-  BI_WEEKLY = 'BI_WEEKLY',
+  BI_WEEKLY = 'BI-WEEKLY',
   MONTHLY = 'MONTHLY',
   QUARTERLY = 'QUARTERLY',
-  SEMI_ANNUALLY = 'SEMI_ANNUALLY',
+  SEMI_ANNUALLY = 'SEMI-ANNUALLY',
   ANNUALLY = 'ANNUALLY',
 }
 
@@ -102,7 +102,6 @@ export enum InspectionStatus {
 }
 
 export enum DIPStatus {
-  Generated = 'Generated',
   AwaitingUserAction = 'Awaiting User Action',
   AwaitingLenderAction = 'Awaiting Lender Action',
   PaymentPending = 'Payment Pending',

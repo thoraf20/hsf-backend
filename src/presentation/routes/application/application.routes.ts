@@ -36,6 +36,7 @@ import {
   updateDipLoanSchema,
   userDipResponseSchema,
   homeBuyerLoanOfferRespondSchema,
+  submitSignedLoanOfferLetterSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -697,6 +698,26 @@ applicationRoutes.patch(
       authInfo,
     )
 
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/loan-offer/submit-letter',
+  authorize(isHomeBuyer),
+  validateRequest(submitSignedLoanOfferLetterSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      body,
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.submitSignedLoanOfferLetter(
+      application_id,
+      body,
+      authInfo,
+    )
     res.status(response.statusCode).json(response)
   }),
 )

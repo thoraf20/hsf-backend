@@ -5,7 +5,9 @@ import {
   DIPStatus,
   UserAction,
 } from '@domain/enums/propertyEnum'
+import { MortgageApplicationStage } from '@entities/Application'
 import { Address, getUserClientView, UserClientView } from '@entities/User'
+import { runWithTransaction } from '@infrastructure/database/knex'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
@@ -275,6 +277,13 @@ export class ManageDipUseCase {
       )
     }
 
+    if (dip.dip_status !== DIPStatus.AwaitingUserAction) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not allowed to repond to this DIP at the moment',
+      )
+    }
+
     if (
       dip.user_action === UserAction.Accept &&
       input.approve === QueryBoolean.YES
@@ -295,16 +304,25 @@ export class ManageDipUseCase {
       )
     }
 
-    const updatedDip = await this.mortgageRepository.updateDipById({
-      dip_id: dip.dip_id,
-      user_action:
-        input.approve === QueryBoolean.YES
-          ? UserAction.Accept
-          : UserAction.Reject,
+    return runWithTransaction(async () => {
+      const updatedDip = await this.mortgageRepository.updateDipById({
+        dip_id: dip.dip_id,
+        user_action:
+          input.approve === QueryBoolean.YES
+            ? UserAction.Accept
+            : UserAction.Reject,
 
-      dip_status: DIPStatus.PaymentPending,
+        dip_status: DIPStatus.PaymentPending,
+      })
+
+      await this.applicationRepository.addApplicationStage(applicationId, {
+        application_id: applicationId,
+        user_id: application.user_id,
+        stage: MortgageApplicationStage.DecisionInPrinciple,
+        entry_time: new Date(),
+      })
+
+      return updatedDip
     })
-
-    return updatedDip
   }
 }

@@ -3,6 +3,61 @@ import {
   ApplicationStatus,
 } from '@domain/enums/propertyEnum'
 import { DIP } from './Mortage'
+import { BaseEntity } from '.'
+
+export enum OutrightApplicationStage {
+  OfferLetter = 'Offer Letter',
+  PropertyClosing = 'Property Closing',
+  EscrowMeeting = 'Escrow Info',
+  PaymentTracker = 'Payment Tracker',
+  Purchased = 'Purchased',
+}
+
+export enum MortgageApplicationStage {
+  PreQualification = 'Pre-Qualification',
+  DecisionInPrinciple = 'Decision In Principle',
+  UploadDocument = 'Upload Document',
+  LoanDecision = 'Loan Decision',
+  LoanOffer = 'Loan Offer',
+  ConditionPrecedent = 'Condition Precedent',
+  Repayment = 'Repayment',
+  Purchased = 'Purchased',
+}
+
+export enum InstallmentApplicationStage {
+  PaymentCalculator = 'Payment Calculator',
+  PreQualification = 'Pre-Qualification',
+  OfferLetter = 'Offer Letter',
+  PropertyClosing = 'Property Closing',
+  Repayment = 'Repayment',
+  Purchased = 'Purchased',
+}
+
+export class ApplicationStage extends BaseEntity {
+  stage:
+    | OutrightApplicationStage
+    | MortgageApplicationStage
+    | InstallmentApplicationStage
+  entry_time: Date
+  exit_time?: Date
+  additional_info?: any
+
+  application_id: string
+  user_id: string
+
+  constructor(
+    stage:
+      | OutrightApplicationStage
+      | MortgageApplicationStage
+      | InstallmentApplicationStage,
+    additional_info?: any,
+  ) {
+    super()
+    this.stage = stage
+    this.entry_time = new Date()
+    this.additional_info = additional_info
+  }
+}
 
 export class Application {
   application_id?: string
@@ -27,6 +82,7 @@ export class Application {
   created_at?: Date
   updated_at?: Date
   eligibility_id?: string
+  stages?: ApplicationStage[]
   constructor(d: Partial<Application>) {
     let data = {
       ...d,

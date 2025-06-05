@@ -4,6 +4,10 @@ import { createResponse } from '@presentation/response/responseType'
 import { Role } from '@routes/index.t'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { ManageLoanOfferService } from '@use-cases/Loan/ManageLoanOffer'
+import {
+  SetLoanOfferWorkflowStatusInput,
+  UpdateLoanOfferInput,
+} from '@validators/loanOfferValidator'
 import { LoanOfferFilters } from '@validators/loanValidator'
 import { StatusCodes } from 'http-status-codes'
 
@@ -31,7 +35,6 @@ export class ManageLoanOfferController {
     const loanOffer =
       await this.manageLoanOfferService.getLoanOfferById(loanOfferId)
 
-    console.log(loanOffer)
     if (
       !(
         loanOffer &&
@@ -49,6 +52,43 @@ export class ManageLoanOfferController {
       StatusCodes.OK,
       'Loan offer retrieved successfully',
       loanOffer,
+    )
+  }
+
+  async updateLoanOffer(
+    loanOfferId: string,
+    input: UpdateLoanOfferInput,
+    authInfo: AuthInfo,
+  ) {
+    const updatedLoanOffer = await this.manageLoanOfferService.updateLoanOffer(
+      loanOfferId,
+      input,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Loan offer updated succesfully',
+      updatedLoanOffer,
+    )
+  }
+
+  async updateLoanOfferWorkflow(
+    loanOfferId: string,
+    input: SetLoanOfferWorkflowStatusInput,
+    authInfo: AuthInfo,
+  ) {
+    const updatedLoanOffer =
+      await this.manageLoanOfferService.updateLoanOfferWorkflow(
+        loanOfferId,
+        input,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      `Loan offer workflow status set as ${updatedLoanOffer.workflow_status} succesfully`,
+      updatedLoanOffer,
     )
   }
 }

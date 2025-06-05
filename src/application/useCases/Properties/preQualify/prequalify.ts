@@ -24,7 +24,16 @@ import { getDeveloperClientView } from '@entities/Developer'
 import { getUserClientView } from '@entities/User'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
-import { DIPStatus } from '@domain/enums/propertyEnum'
+import {
+  ApplicationPurchaseType,
+  DipDocumentReviewStatus,
+  DIPStatus,
+} from '@domain/enums/propertyEnum'
+import { runWithTransaction } from '@infrastructure/database/knex'
+import {
+  InstallmentApplicationStage,
+  MortgageApplicationStage,
+} from '@entities/Application'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
@@ -244,24 +253,54 @@ export class preQualifyService {
       )
     }
 
-    eligibility = await this.prequalify.updateEligibility(input)
-    const application = await this.applicationRepository.getByUniqueID({
-      eligibility_id: eligibility.eligibility_id,
-    })
-
-    if (
-      application &&
-      eligibility.eligiblity_status === EligibilityStatus.APPROVED
-    ) {
-      await this.mortgageRepository.initiate({
-        application_id: application.application_id,
+    return runWithTransaction(async () => {
+      eligibility = await this.prequalify.updateEligibility(input)
+      const application = await this.applicationRepository.getByUniqueID({
         eligibility_id: eligibility.eligibility_id,
-        property_id: application.property_id,
-        user_id: application.user_id,
-        dip_status: DIPStatus.Generated,
       })
-    }
 
-    return eligibility
+      if (
+        application &&
+        eligibility.eligiblity_status === EligibilityStatus.APPROVED
+      ) {
+        await this.mortgageRepository.initiate({
+          application_id: application.application_id,
+          eligibility_id: eligibility.eligibility_id,
+          property_id: application.property_id,
+          user_id: application.user_id,
+          dip_status: DIPStatus.AwaitingLenderAction,
+          documents_status: DipDocumentReviewStatus.NotUploaded,
+        })
+
+        const preQualifierStage = application.stages.find(
+          (stage) =>
+            stage.stage === InstallmentApplicationStage.PreQualification ||
+            stage.stage === MortgageApplicationStage.PreQualification,
+        )
+
+        if (preQualifierStage) {
+          await this.applicationRepository.updateApplicationStage(
+            preQualifierStage.id,
+            { exit_time: new Date() },
+          )
+        }
+
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            application_id: application.application_id,
+            entry_time: new Date(),
+            user_id: application.user_id,
+            stage:
+              application.application_type ===
+              ApplicationPurchaseType.INSTALLMENT
+                ? InstallmentApplicationStage.OfferLetter
+                : MortgageApplicationStage.DecisionInPrinciple,
+          },
+        )
+      }
+
+      return eligibility
+    })
   }
 }

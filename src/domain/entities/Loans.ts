@@ -34,6 +34,9 @@ export class LoanOffer extends BaseEntity {
 
   workflow_status?: LoanOfferWorkflowStatus
 
+  loan_offer_letter_url?: string
+  signed_loan_offer_letter_url?: string
+
   constructor(d: Partial<LoanOffer>) {
     super()
     let data = {
@@ -127,6 +130,9 @@ export class LoanDecision extends BaseEntity {
   brokerage_fee_paid_at?: Date
   brokerage_fee_payment_id?: string
   loan_offer_id?: string
+
+  management_fee_payment_id?: string
+  management_fee_paid_at?: Date
 
   lender_org_id: string
   status: LoanDecisionStatus

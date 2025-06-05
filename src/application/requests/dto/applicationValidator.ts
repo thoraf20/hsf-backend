@@ -223,3 +223,12 @@ export const homeBuyerLoanOfferRespondSchema = z.object({
 export type HomeBuyserLoanOfferRespondInput = z.infer<
   typeof homeBuyerLoanOfferRespondSchema
 >
+
+export const submitSignedLoanOfferLetterSchema = z.object({
+  signed_loan_offer_letter_url: z.string().url(),
+  loan_offer_id: z.string().nonempty(),
+})
+
+export type SubmitSignedLoanOfferLetterInput = z.infer<
+  typeof submitSignedLoanOfferLetterSchema
+>

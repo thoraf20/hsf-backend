@@ -1,3 +1,4 @@
+import { LoanOfferWorkflowStatus } from '@domain/enums/loanEnum'
 import { LoanRepaymentFrequency } from '@domain/enums/propertyEnum'
 import { z } from 'zod'
 
@@ -18,3 +19,15 @@ export const updateLoanOfferSchema = z.object({
 })
 
 export type UpdateLoanOfferInput = z.infer<typeof updateLoanOfferSchema>
+
+export const setLoanOfferWorkflowStatusSchema = z.object({
+  workflow_status: z.enum([
+    LoanOfferWorkflowStatus.READY,
+    LoanOfferWorkflowStatus.UNDER_REVIEW,
+  ]),
+  loan_offer_letter_url: z.string().url().optional(),
+})
+
+export type SetLoanOfferWorkflowStatusInput = z.infer<
+  typeof setLoanOfferWorkflowStatusSchema
+>

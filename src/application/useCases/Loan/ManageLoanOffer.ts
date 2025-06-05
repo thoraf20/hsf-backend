@@ -1,3 +1,4 @@
+import { LoanOfferWorkflowStatus } from '@domain/enums/loanEnum'
 import { Application } from '@entities/Application'
 import { Lender } from '@entities/Lender'
 import { Organization } from '@entities/Organization'
@@ -7,7 +8,14 @@ import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
+import { ApplicationCustomError } from '@middleware/errors/customError'
+import { AuthInfo } from '@shared/utils/permission-policy'
+import {
+  SetLoanOfferWorkflowStatusInput,
+  UpdateLoanOfferInput,
+} from '@validators/loanOfferValidator'
 import { LoanOfferFilters } from '@validators/loanValidator'
+import { StatusCodes } from 'http-status-codes'
 
 export class ManageLoanOfferService {
   constructor(
@@ -135,6 +143,76 @@ export class ManageLoanOfferService {
       lender_org: lenderOrg,
       user: userClientView,
     }
+  }
+
+  async updateLoanOffer(
+    loanOfferId: string,
+    input: UpdateLoanOfferInput,
+    authInfo: AuthInfo,
+  ) {
+    const loanOffer =
+      await this.loanOfferRepository.getLoanOfferById(loanOfferId)
+
+    if (
+      !(loanOffer && loanOffer.lender_org_id === authInfo.currentOrganizationId)
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan offer not found',
+      )
+    }
+
+    const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+      loanOffer.id,
+      {
+        ...input,
+        workflow_status: !(
+          loanOffer.workflow_status ||
+          loanOffer.workflow_status === LoanOfferWorkflowStatus.GENERATED
+        )
+          ? LoanOfferWorkflowStatus.UNDER_REVIEW
+          : loanOffer.workflow_status,
+      },
+    )
+
+    return updatedLoanOffer
+  }
+
+  async updateLoanOfferWorkflow(
+    loanOfferId: string,
+    input: SetLoanOfferWorkflowStatusInput,
+    authInfo: AuthInfo,
+  ) {
+    const loanOffer =
+      await this.loanOfferRepository.getLoanOfferById(loanOfferId)
+
+    if (
+      !(loanOffer && loanOffer.lender_org_id === authInfo.currentOrganizationId)
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan offer not found',
+      )
+    }
+
+    if (loanOffer.workflow_status === input.workflow_status) {
+      if (!input.loan_offer_letter_url) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          `Loan offer is already in the '${loanOffer.workflow_status}' state.`,
+        )
+      }
+    }
+
+    const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+      loanOffer.id,
+      {
+        workflow_status: input.workflow_status,
+        loan_offer_letter_url: input.loan_offer_letter_url,
+      },
+    )
+
+    return updatedLoanOffer
   }
 }
 

@@ -1,5 +1,6 @@
 import { LoanDecisionStatus } from '@domain/enums/loanEnum'
 import { MortgagePaymentType, PaymentStatus } from '@domain/enums/PaymentEnum'
+import { DIPStatus } from '@domain/enums/propertyEnum'
 import { Application } from '@entities/Application'
 import { LoanDecision } from '@entities/Loans'
 import { DIP } from '@entities/Mortage'
@@ -111,7 +112,10 @@ export class PaymentUseCase {
     let loanDecision: LoanDecision
     let payment: Payment
 
-    if (input.payment_for === MortgagePaymentType.BROKER_FEE) {
+    if (
+      input.payment_for === MortgagePaymentType.BROKER_FEE ||
+      input.payment_for === MortgagePaymentType.MANAGEMENT_FEE
+    ) {
       loanDecision = await this.loanDecisionRepository.getByApplicationId(
         application.application_id,
       )
@@ -136,8 +140,12 @@ export class PaymentUseCase {
 
       if (loanDecision.brokerage_fee_payment_id) {
         payment = await this.paymentRepository.getById(
-          loanDecision.brokerage_fee_payment_id,
+          input.payment_for === MortgagePaymentType.BROKER_FEE
+            ? loanDecision.brokerage_fee_payment_id
+            : loanDecision.management_fee_payment_id,
         )
+
+        console.log(payment)
 
         if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
           throw new ApplicationCustomError(
@@ -157,6 +165,13 @@ export class PaymentUseCase {
         throw new ApplicationCustomError(
           StatusCodes.FORBIDDEN,
           'DIP not initiated',
+        )
+      }
+
+      if (dip.dip_status !== DIPStatus.PaymentPending) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'You are not allow to respond to this DIP at the moment',
         )
       }
 
@@ -222,6 +237,10 @@ export class PaymentUseCase {
     } else if (payment.payment_type === MortgagePaymentType.BROKER_FEE) {
       await this.loanDecisionRepository.update(loanDecision.id, {
         brokerage_fee_payment_id: payment.payment_id,
+      })
+    } else if (payment.payment_type === MortgagePaymentType.MANAGEMENT_FEE) {
+      await this.loanDecisionRepository.update(loanDecision.id, {
+        management_fee_payment_id: payment.payment_id,
       })
     }
 

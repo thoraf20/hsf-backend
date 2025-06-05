@@ -19,6 +19,11 @@ import {
 } from '@domain/enums/propertyEnum'
 import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEmun'
 import { UserStatus } from '@domain/enums/userEum'
+import {
+  InstallmentApplicationStage,
+  MortgageApplicationStage,
+  OutrightApplicationStage,
+} from '@entities/Application'
 import { getDeveloperClientView } from '@entities/Developer'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { Eligibility } from '@entities/prequalify/prequalify'
@@ -66,6 +71,7 @@ import {
   ScheduleEscrowMeetingInput,
   ScheduleEscrowMeetingRespondInput,
   HomeBuyserLoanOfferRespondInput,
+  SubmitSignedLoanOfferLetterInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
@@ -152,26 +158,85 @@ export class ApplicationService {
       }
     }
 
-    const newApplication = await this.applicationRepository.createApplication({
-      user_id: userId,
-      status: ApplicationStatus.PENDING,
-      property_id: property.id,
-      prequalifier_id: preQualifier?.id ?? null,
-      application_type: input.purchase_type,
-      eligibility_id: eligibility?.eligibility_id ?? null,
-      developer_organization_id: property.organization_id,
-    })
+    return runWithTransaction(async () => {
+      const newApplication = await this.applicationRepository.createApplication(
+        {
+          user_id: userId,
+          status: ApplicationStatus.PENDING,
+          property_id: property.id,
+          prequalifier_id: preQualifier?.id ?? null,
+          application_type: input.purchase_type,
+          eligibility_id: eligibility?.eligibility_id ?? null,
+          developer_organization_id: property.organization_id,
+        },
+      )
 
-    if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
-      await this.prequalifyRepository.storePaymentCalculator({
+      console.log(newApplication, {
+        stage: MortgageApplicationStage.PreQualification,
+        entry_time: new Date(),
         application_id: newApplication.application_id,
-        interest_rate: input.payment_calculator.interest_rate,
-        repayment_type: input.payment_calculator.repayment_type,
-        terms: input.payment_calculator.terms,
+        user_id: newApplication.user_id,
       })
-    }
 
-    return newApplication
+      if (input.purchase_type === ApplicationPurchaseType.INSTALLMENT) {
+        await this.prequalifyRepository.storePaymentCalculator({
+          application_id: newApplication.application_id,
+          interest_rate: input.payment_calculator.interest_rate,
+          repayment_type: input.payment_calculator.repayment_type,
+          terms: input.payment_calculator.terms,
+        })
+      }
+
+      switch (input.purchase_type) {
+        case ApplicationPurchaseType.INSTALLMENT:
+          await Promise.all([
+            this.applicationRepository.addApplicationStage(
+              newApplication.application_id,
+              {
+                stage: InstallmentApplicationStage.PaymentCalculator,
+                entry_time: new Date(),
+                exit_time: new Date(),
+                application_id: newApplication.application_id,
+                user_id: newApplication.user_id,
+              },
+            ),
+            this.applicationRepository.addApplicationStage(
+              newApplication.application_id,
+              {
+                stage: InstallmentApplicationStage.PreQualification,
+                entry_time: new Date(),
+                application_id: newApplication.application_id,
+                user_id: newApplication.user_id,
+              },
+            ),
+          ])
+          break
+        case ApplicationPurchaseType.MORTGAGE:
+          await this.applicationRepository.addApplicationStage(
+            newApplication.application_id,
+            {
+              stage: MortgageApplicationStage.PreQualification,
+              entry_time: new Date(),
+              application_id: newApplication.application_id,
+              user_id: newApplication.user_id,
+            },
+          )
+          break
+        case ApplicationPurchaseType.OUTRIGHT:
+          await this.applicationRepository.addApplicationStage(
+            newApplication.application_id,
+            {
+              stage: OutrightApplicationStage.OfferLetter,
+              entry_time: new Date(),
+              application_id: newApplication.application_id,
+              user_id: newApplication.user_id,
+            },
+          )
+          break
+      }
+
+      return newApplication
+    })
   }
 
   async getByUserId(userId: string, filter: ApplicationFilters) {
@@ -479,18 +544,34 @@ export class ApplicationService {
       )
     }
 
-    const propertyClsoing =
-      await this.purchaseRepository.requestForPropertyClosing(
-        application.application_id,
-        userId,
-      )
+    return runWithTransaction(async () => {
+      const propertyClosing =
+        await this.purchaseRepository.requestForPropertyClosing(
+          application.application_id,
+          userId,
+        )
 
-    await this.applicationRepository.updateApplication({
-      application_id: applicationId,
-      property_closing_id: propertyClosing.property_closing_id,
+      await this.applicationRepository.updateApplication({
+        application_id: applicationId,
+        property_closing_id: propertyClosing.property_closing_id,
+      })
+
+      if (
+        application.application_type === ApplicationPurchaseType.INSTALLMENT ||
+        application.application_type === ApplicationPurchaseType.OUTRIGHT
+      ) {
+        await this.applicationRepository.addApplicationStage(applicationId, {
+          application_id: application.application_id,
+          entry_time: new Date(),
+          user_id: application.user_id,
+          stage:
+            application.application_type === ApplicationPurchaseType.INSTALLMENT
+              ? InstallmentApplicationStage.PropertyClosing
+              : OutrightApplicationStage.PropertyClosing,
+        })
+      }
+      return propertyClosing
     })
-
-    return propertyClsoing
   }
 
   async propertyClosingRespond(
@@ -758,66 +839,81 @@ export class ApplicationService {
       (stageA, stageB) => (stageA.stage_order > stageB.stage_order ? 1 : -1),
     )
 
-    const reviewRequest =
-      await this.reviewRequestRepository.createReviewRequest({
-        candidate_name: `${applicantUser.first_name} ${applicantUser.last_name}`,
-        initiator_id: application.user_id,
-        request_type_id: escrowMeetingRequestType.id,
-        submission_date: new Date(),
-        status: ReviewRequestStatus.Pending,
+    return runWithTransaction(async () => {
+      const reviewRequest =
+        await this.reviewRequestRepository.createReviewRequest({
+          candidate_name: `${applicantUser.first_name} ${applicantUser.last_name}`,
+          initiator_id: application.user_id,
+          request_type_id: escrowMeetingRequestType.id,
+          submission_date: new Date(),
+          status: ReviewRequestStatus.Pending,
+        })
+
+      const firstRequestTypeStage = escrowMeetingRequestStage[0]
+
+      const firstStage =
+        await this.reviewRequestRepository.getReviewRequestStageByID(
+          firstRequestTypeStage.stage_id,
+        )
+
+      let organizationId = application.developer_organization_id
+
+      if (firstStage.organization_type === OrganizationType.HSF_INTERNAL) {
+        organizationId = authInfo.currentOrganizationId
+      } else if (
+        firstStage.organization_type === OrganizationType.DEVELOPER_COMPANY
+      ) {
+        organizationId = application.developer_organization_id
+      }
+
+      await this.reviewRequestRepository.createReviewRequestApproval({
+        request_id: reviewRequest.id,
+        review_request_stage_type_id: firstRequestTypeStage.id,
+        approval_status: ReviewRequestApprovalStatus.Pending,
+        organization_id: organizationId,
       })
 
-    const firstRequestTypeStage = escrowMeetingRequestStage[0]
+      const escrowAttendance =
+        await this.purchaseRepository.setEscrowAttendance(
+          {
+            date: new Date(input.date),
+            time: input.time,
+            property_buyer_id: application.user_id,
+            property_name: property.property_name,
+            property_id: property.id,
+            location: input.location,
+            property_types: application.application_type,
+            review_request_id: reviewRequest.id,
+            application_id: application.application_id,
+            organization_id: application.developer_organization_id,
+          },
+          input.attendees,
+        )
 
-    const firstStage =
-      await this.reviewRequestRepository.getReviewRequestStageByID(
-        firstRequestTypeStage.stage_id,
+      await this.applicationRepository.updateApplication({
+        application_id: application.application_id,
+        escrow_information_id: escrowAttendance.escrow_id,
+      })
+
+      await this.purchaseRepository.updateEscrowStatus(
+        application.application_id,
+        { escrow_information_id: escrowAttendance.escrow_id },
       )
 
-    let organizationId = application.developer_organization_id
+      if (application.application_type === ApplicationPurchaseType.OUTRIGHT) {
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            application_id: application.application_id,
+            stage: OutrightApplicationStage.EscrowMeeting,
+            entry_time: new Date(),
+            user_id: application.user_id,
+          },
+        )
+      }
 
-    if (firstStage.organization_type === OrganizationType.HSF_INTERNAL) {
-      organizationId = authInfo.currentOrganizationId
-    } else if (
-      firstStage.organization_type === OrganizationType.DEVELOPER_COMPANY
-    ) {
-      organizationId = application.developer_organization_id
-    }
-
-    await this.reviewRequestRepository.createReviewRequestApproval({
-      request_id: reviewRequest.id,
-      review_request_stage_type_id: firstRequestTypeStage.id,
-      approval_status: ReviewRequestApprovalStatus.Pending,
-      organization_id: organizationId,
+      return escrowAttendance
     })
-
-    const escrowAttendance = await this.purchaseRepository.setEscrowAttendance(
-      {
-        date: new Date(input.date),
-        time: input.time,
-        property_buyer_id: application.user_id,
-        property_name: property.property_name,
-        property_id: property.id,
-        location: input.location,
-        property_types: application.application_type,
-        review_request_id: reviewRequest.id,
-        application_id: application.application_id,
-        organization_id: application.developer_organization_id,
-      },
-      input.attendees,
-    )
-
-    await this.applicationRepository.updateApplication({
-      application_id: application.application_id,
-      escrow_information_id: escrowAttendance.escrow_id,
-    })
-
-    await this.purchaseRepository.updateEscrowStatus(
-      application.application_id,
-      { escrow_information_id: escrowAttendance.escrow_id },
-    )
-
-    return escrowAttendance
   }
 
   async scheduleEscrowMeetingRespond(
@@ -1475,92 +1571,102 @@ export class ApplicationService {
       )
     }
 
-    return Promise.all(
-      input.documents.map(async (doc) => {
-        if (doc.id) {
-          const applicationDocument =
-            await this.documentRepository.findApplicationDocumentEntryById(
-              doc.id,
-            )
+    return runWithTransaction(async () => {
+      if (application.dip) {
+        await this.mortgageRepository.updateDipById({
+          dip_id: application.dip.dip_id,
+          documents_status: DipDocumentReviewStatus.Reviewing,
+          dip_status: DIPStatus.DocumentReviewing,
+        })
+      }
 
-          console.log({ applicationDocument })
-
-          if (applicationDocument) {
-            let reviewRequestApprovals =
-              await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
-                applicationDocument.review_request_id,
+      return Promise.all(
+        input.documents.map(async (doc) => {
+          if (doc.id) {
+            const applicationDocument =
+              await this.documentRepository.findApplicationDocumentEntryById(
+                doc.id,
               )
 
-            console.log({ reviewRequestApprovals })
+            console.log({ applicationDocument })
 
-            if (reviewRequestApprovals) {
-              const rejectedApproval = reviewRequestApprovals.find(
-                (approval) =>
-                  approval.approval_status ===
-                  ReviewRequestApprovalStatus.Rejected,
-              )
+            if (applicationDocument) {
+              let reviewRequestApprovals =
+                await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+                  applicationDocument.review_request_id,
+                )
 
-              console.log({ rejectedApproval })
+              console.log({ reviewRequestApprovals })
 
-              if (rejectedApproval) {
-                await Promise.all([
-                  this.reviewRequestRepository.updateReviewRequestApproval(
-                    rejectedApproval.approval_id,
-                    {
-                      approval_status: ReviewRequestApprovalStatus.Pending,
-                    },
-                  ),
-                  this.documentRepository.updateApplicationDocumentEntry(
-                    applicationDocument.id,
-                    { ...doc },
-                  ),
-                ])
+              if (reviewRequestApprovals) {
+                const rejectedApproval = reviewRequestApprovals.find(
+                  (approval) =>
+                    approval.approval_status ===
+                    ReviewRequestApprovalStatus.Rejected,
+                )
 
-                reviewRequestApprovals =
-                  await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
-                    applicationDocument.review_request_id,
-                  )
+                console.log({ rejectedApproval })
+
+                if (rejectedApproval) {
+                  await Promise.all([
+                    this.reviewRequestRepository.updateReviewRequestApproval(
+                      rejectedApproval.approval_id,
+                      {
+                        approval_status: ReviewRequestApprovalStatus.Pending,
+                      },
+                    ),
+                    this.documentRepository.updateApplicationDocumentEntry(
+                      applicationDocument.id,
+                      { ...doc },
+                    ),
+                  ])
+
+                  reviewRequestApprovals =
+                    await this.reviewRequestRepository.getReviewRequestApprovalByRequestID(
+                      applicationDocument.review_request_id,
+                    )
+                }
               }
+
+              return reviewRequestApprovals[0]
             }
-
-            return reviewRequestApprovals[0]
           }
-        }
 
-        const reviewRequest =
-          await this.reviewRequestRepository.createReviewRequest({
-            candidate_name: `${user.first_name} ${user.last_name}`,
-            initiator_id: user.id,
-            status: ReviewRequestStatus.Pending,
-            submission_date: new Date(),
-            request_type_id: reviewRequestType.id,
-          })
+          const reviewRequest =
+            await this.reviewRequestRepository.createReviewRequest({
+              candidate_name: `${user.first_name} ${user.last_name}`,
+              initiator_id: user.id,
+              status: ReviewRequestStatus.Pending,
+              submission_date: new Date(),
+              request_type_id: reviewRequestType.id,
+            })
 
-        const reviewRequestApproval =
-          await this.reviewRequestRepository.createReviewRequestApproval({
-            organization_id: hsfOrg.id,
-            request_id: reviewRequest.id,
-            review_request_stage_type_id: hsfRequestTypeStage.id,
-            approval_status: ReviewRequestApprovalStatus.Pending,
-          })
+          const reviewRequestApproval =
+            await this.reviewRequestRepository.createReviewRequestApproval({
+              organization_id: hsfOrg.id,
+              request_id: reviewRequest.id,
+              review_request_stage_type_id: hsfRequestTypeStage.id,
+              approval_status: ReviewRequestApprovalStatus.Pending,
+            })
 
-        const applicationDocument =
-          await this.documentRepository.createApplicationDocumentEntry({
-            review_request_id: reviewRequest.id,
-            application_id: application.application_id,
-            document_group_type_id: doc.document_group_type_id,
-            document_name: doc.file_name,
-            document_size: String(doc.file_size),
-            document_url: doc.file_url,
-          })
+          const applicationDocument =
+            await this.documentRepository.createApplicationDocumentEntry({
+              review_request_id: reviewRequest.id,
+              application_id: application.application_id,
+              document_group_type_id: doc.document_group_type_id,
+              document_name: doc.file_name,
+              document_size: String(doc.file_size),
+              document_url: doc.file_url,
+            })
 
-        return {
-          review_request: reviewRequest,
-          review_approval: reviewRequestApproval,
-          application_document: applicationDocument,
-        }
-      }),
-    )
+          return {
+            review_request: reviewRequest,
+            review_approval: reviewRequestApproval,
+            application_document: applicationDocument,
+          }
+        }),
+      )
+    })
   }
 
   async documentApprovalRespond(
@@ -2106,5 +2212,62 @@ export class ApplicationService {
     )
 
     return updateLoanOffer
+  }
+
+  async submitSignedLoanOfferLetter(
+    applicationId: string,
+    input: SubmitSignedLoanOfferLetterInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!(application && application.user_id === authInfo.userId)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan offer found',
+      )
+    }
+
+    if (application.loan_offer_id !== input.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        `Loan offer ID mismatch. Expected '${application.loan_offer_id}', but got '${input.loan_offer_id}'.`,
+      )
+    }
+
+    const loanOffer = await this.loanOfferRepository.getLoanOfferById(
+      application.loan_offer_id,
+    )
+
+    if (!loanOffer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan offer not found',
+      )
+    }
+
+    if (loanOffer.workflow_status !== LoanOfferWorkflowStatus.READY) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan offer is not ready to be processed.',
+      )
+    }
+
+    const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+      loanOffer.id,
+      {
+        signed_loan_offer_letter_url: input.signed_loan_offer_letter_url,
+      },
+    )
+
+    return updatedLoanOffer
   }
 }

@@ -1,4 +1,4 @@
-import { Application } from '@entities/Application'
+import { Application, ApplicationStage } from '@entities/Application'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { ApplicationFilters } from '@validators/applicationValidator'
 
@@ -22,4 +22,13 @@ export interface IApplicationRespository {
     property_id: string,
     user_id: string,
   ): Promise<Application>
+
+  addApplicationStage(
+    applicationId: string,
+    stage: ApplicationStage,
+  ): Promise<ApplicationStage>
+  updateApplicationStage(
+    applicationStageId: string,
+    stage: Partial<ApplicationStage>,
+  ): Promise<ApplicationStage>
 }

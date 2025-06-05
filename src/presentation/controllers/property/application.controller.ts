@@ -31,6 +31,7 @@ import {
   ScheduleEscrowMeetingRespondInput,
   UpdateDipLoanInput,
   HomeBuyserLoanOfferRespondInput,
+  SubmitSignedLoanOfferLetterInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -571,6 +572,24 @@ export class ApplicationController {
       loanOffer.offer_status === LoanOfferStatus.ACCEPTED
         ? 'Loan offer accepted successfully'
         : 'Loan offer declined successfully',
+      loanOffer,
+    )
+  }
+
+  async submitSignedLoanOfferLetter(
+    applicationId: string,
+    input: SubmitSignedLoanOfferLetterInput,
+    authInfo: AuthInfo,
+  ) {
+    const loanOffer = await this.applicationService.submitSignedLoanOfferLetter(
+      applicationId,
+      input,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      `Signed Loan offer letter submitted successfully`,
       loanOffer,
     )
   }
