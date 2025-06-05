@@ -518,10 +518,10 @@ export class ApplicationService {
       application.property_id,
     )
 
-    if (!(property && property.is_sold)) {
+    if (!property) {
       throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        'Sorry you can place a request for property closing to this property',
+        StatusCodes.NOT_FOUND,
+        'Property not found',
       )
     }
     const propertyClosing =
