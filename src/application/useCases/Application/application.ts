@@ -543,7 +543,7 @@ export class ApplicationService {
     return runWithTransaction(async () => {
       const propertyClosing =
         await this.purchaseRepository.requestForPropertyClosing(
-          application.application_id,
+          application.property_id,
           userId,
         )
 
