@@ -882,6 +882,7 @@ export class ApplicationService {
             review_request_id: reviewRequest.id,
             application_id: application.application_id,
             organization_id: application.developer_organization_id,
+            user_id: application.user_id,
           },
           input.attendees,
         )
