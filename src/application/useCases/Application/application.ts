@@ -1040,59 +1040,63 @@ export class ApplicationService {
         nextStageType.stage_id,
       )
 
-    if (
-      currentStage.name ===
-        ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
-      updatedApproval.approval_status === ReviewRequestApprovalStatus.Approved
-    ) {
-      await this.purchaseRepository.updateEscrowStatus(
-        application.escrow_status_id,
-        {
-          escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
-        },
-      )
-    }
+    return runWithTransaction(async () => {
+      if (
+        currentStage.name ===
+          ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
+        updatedApproval.approval_status === ReviewRequestApprovalStatus.Approved
+      ) {
+        await this.purchaseRepository.updateEscrowStatus(
+          application.escrow_status_id,
+          {
+            escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
+          },
+        )
+      }
 
-    if (requestStageTypes.at(-1).id === approval.review_request_stage_type_id) {
-      await this.reviewRequestRepository.updateReviewRequest(
-        approval.request_id,
-        {
-          status: input.confirm_attendance
-            ? ReviewRequestStatus.Approved
-            : ReviewRequestStatus.Rejected,
-        },
-      )
+      if (
+        requestStageTypes.at(-1).id === approval.review_request_stage_type_id
+      ) {
+        await this.reviewRequestRepository.updateReviewRequest(
+          approval.request_id,
+          {
+            status: input.confirm_attendance
+              ? ReviewRequestStatus.Approved
+              : ReviewRequestStatus.Rejected,
+          },
+        )
 
-      await this.purchaseRepository.confirmPropertyEscrowMeeting(
-        application.escrow_status_id,
-        input.confirm_attendance
-          ? EscrowMeetingStatus.CONFIRMED
-          : EscrowMeetingStatus.DECLINED,
-      )
+        await this.purchaseRepository.confirmPropertyEscrowMeeting(
+          application.escrow_status_id,
+          input.confirm_attendance
+            ? EscrowMeetingStatus.CONFIRMED
+            : EscrowMeetingStatus.DECLINED,
+        )
+        return updatedApproval
+      }
+
+      let organizationId: string | null = null
+      let approverId: string | null = null
+      if (
+        nextStage.name === ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
+      ) {
+        approverId = application.user_id
+      } else if (
+        nextStage.name === ReviewRequestStageKind.DeveloperEscrowMeetingRespond
+      ) {
+        organizationId = application.developer_organization_id
+      }
+
+      await this.reviewRequestRepository.createReviewRequestApproval({
+        request_id: approval.request_id,
+        review_request_stage_type_id: nextStageType.id,
+        approval_status: ReviewRequestApprovalStatus.Pending,
+        organization_id: organizationId,
+        approval_id: approverId,
+      })
+
       return updatedApproval
-    }
-
-    let organizationId: string | null = null
-    let approverId: string | null = null
-    if (
-      nextStage.name === ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
-    ) {
-      approverId = application.user_id
-    } else if (
-      nextStage.name === ReviewRequestStageKind.DeveloperEscrowMeetingRespond
-    ) {
-      organizationId = application.developer_organization_id
-    }
-
-    await this.reviewRequestRepository.createReviewRequestApproval({
-      request_id: approval.request_id,
-      review_request_stage_type_id: nextStageType.id,
-      approval_status: ReviewRequestApprovalStatus.Pending,
-      organization_id: organizationId,
-      approval_id: approverId,
     })
-
-    return updatedApproval
   }
 
   async getOfferLetters(authInfo: AuthInfo, filters: OfferLetterFilters) {
