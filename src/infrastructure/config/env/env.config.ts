@@ -49,6 +49,9 @@ export const envSchema = z.object({
   BACKEND_URL: z.string().url(),
   MFA_SECRET_LENGTH: z.coerce.number().int(),
   PLATFORM_NAME: z.string().nonempty(),
+  ELASTICSEARCH_NODE: z.string().nonempty(),
+  ELASTICSEARCH_API_KEY: z.string().nonempty(),
+  ELASTICSEARCH_INDEX : z.string().nonempty(),
 })
 
 export const formatErrors = (

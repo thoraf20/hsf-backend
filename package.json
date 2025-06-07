@@ -26,6 +26,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
+    "@elastic/elasticsearch": "^9.0.2",
     "@oslojs/binary": "^1.0.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
