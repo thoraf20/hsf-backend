@@ -25,7 +25,7 @@ import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import { ApplicationPurchaseType, ElasticEnum } from '@domain/enums/propertyEnum'
 import { ApplicationFilters } from '@validators/applicationValidator'
-import { indexPropertyToES } from '@config/elasticSearch.config'
+import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -35,6 +35,7 @@ export class PropertyService {
   private readonly userRepository: IUserRepository
   private readonly developerRepository: IDeveloperRepository
   private readonly documentRepository: IDocumentRepository
+  private readonly elasticSearchRepository: elasticSearchRespository
   constructor(
     propertyRepository: IPropertyRepository,
     applicationRepository: IApplicationRespository,
@@ -43,6 +44,7 @@ export class PropertyService {
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
     documentRepository: IDocumentRepository,
+    elasticSearchRepository: elasticSearchRespository
   ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository
@@ -52,6 +54,7 @@ export class PropertyService {
     this.userRepository = userRepository
     this.documentRepository = documentRepository
     this.utilsProperty = new PropertyBaseUtils(this.propertyRepository)
+    this.elasticSearchRepository = elasticSearchRepository
   }
 
   async createProperty(
@@ -105,11 +108,9 @@ export class PropertyService {
     }),
   );
 
-  await indexPropertyToES(ElasticEnum.PROPERTIES, {
-      ...input,
-      property_id: address.id,
-      property_price: String(input.property_price),
-      documents: JSON.stringify(input.documents),
+  await this.elasticSearchRepository.indexPropertyToES(ElasticEnum.PROPERTIES, {
+      ...address,
+      documents: JSON.stringify(address.documents),
       organization_id,
   });
 
