@@ -1,3 +1,7 @@
+export enum ElasticEnum {
+ PROPERTIES = 'properties'
+}
+
 export enum PreQualifierEnum {
   MORTGAGE = 'Mortgage',
   INSTALLMENT = 'Installment',

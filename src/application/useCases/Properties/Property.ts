@@ -23,7 +23,7 @@ import {
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
-import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
+import { ApplicationPurchaseType, ElasticEnum } from '@domain/enums/propertyEnum'
 import { ApplicationFilters } from '@validators/applicationValidator'
 import { indexPropertyToES } from '@config/elasticSearch.config'
 export class PropertyService {
@@ -105,8 +105,9 @@ export class PropertyService {
     }),
   );
 
-  await indexPropertyToES({
+  await indexPropertyToES(ElasticEnum.PROPERTIES, {
       ...input,
+      property_id: address.id,
       property_price: String(input.property_price),
       documents: JSON.stringify(input.documents),
       organization_id,

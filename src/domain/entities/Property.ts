@@ -34,12 +34,6 @@ export class Properties {
 
   constructor(data: Partial<Properties>) {
     let complete_data = {
-      documents:
-        typeof data.documents === 'string'
-          ? JSON.stringify(data.documents)
-          : Array.isArray(data.documents)
-            ? data.documents
-            : [],
       ...data,
     }
     if (data) {
