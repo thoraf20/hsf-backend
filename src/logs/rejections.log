@@ -826,3 +826,30 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
 2025-06-04 13:59:11 [ERROR]: TypeError: this.lenderProfileRepository.getLenderByOrgId is not a function
     at /home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/Loan/ManageLoanOffer.ts:47:59
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-06-07 01:22:05 [ERROR]: ConnectionError: 
+    at SniffingTransport._request (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:660:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:697:22
+    at SniffingTransport.request (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:694:14)
+    at Indices.putMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\src\api\api\indices.ts:3164:12)
+    at updateMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\config\elasticSearch.config.ts:22:20)
+2025-06-07 01:25:48 [ERROR]: ResponseError: security_exception
+	Root causes:
+		security_exception: missing authentication credentials for REST request [/hsf/_mapping]
+    at SniffingTransport._request (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:591:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:697:22
+    at SniffingTransport.request (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\transport\src\Transport.ts:694:14)
+    at Indices.putMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\src\api\api\indices.ts:3164:12)
+    at updateMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\config\elasticSearch.config.ts:22:20)
+2025-06-07 01:26:10 [ERROR]: TypeError: Cannot read properties of undefined (reading 'toString')
+    at Indices.putMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\@elastic\src\api\api\indices.ts:3157:54)
+    at updateMapping (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\config\elasticSearch.config.ts:22:41)
+    at Object.<anonymous> (C:\Users\jarvis\Documents\Github\HSF-Backend-New\src\config\elasticSearch.config.ts:29:1)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1554:14)
+    at Module._compile (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\source-map-support\source-map-support.js:568:25)
+    at Module.m._compile (C:\Users\jarvis\AppData\Local\Temp\ts-node-dev-hook-5371570759714259.js:69:33)
+    at node:internal/modules/cjs/loader:1706:10
+    at require.extensions..jsx.require.extensions..js (C:\Users\jarvis\AppData\Local\Temp\ts-node-dev-hook-5371570759714259.js:114:20)
+    at require.extensions.<computed> (C:\Users\jarvis\AppData\Local\Temp\ts-node-dev-hook-5371570759714259.js:71:20)
+    at Object.nodeDevHook [as .ts] (C:\Users\jarvis\Documents\Github\HSF-Backend-New\node_modules\ts-node-dev\lib\hook.js:63:13)

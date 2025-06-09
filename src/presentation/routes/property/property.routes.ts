@@ -31,9 +31,11 @@ import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { ElasticSearchRespository } from '@repositories/Elastic Search/ElasticSearchRespository'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
+const elasticSearch = new ElasticSearchRespository()
 const service = new PropertyService(
   new PropertyRepository(),
   application,
@@ -42,6 +44,7 @@ const service = new PropertyService(
   new UserRepository(),
   new DeveloperRespository(),
   new DocumentRepository(),
+  elasticSearch
 )
 const controller = new PropertyController(service)
 
