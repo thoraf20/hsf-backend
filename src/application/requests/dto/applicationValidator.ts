@@ -66,12 +66,15 @@ export type RequestOfferLetterRespondInput = z.infer<
 >
 
 export const scheduleEscrowMeetingSchema = z.object({
-  date: z.string().date(),
+  date: z.coerce.date(),
   time: z.string().time(),
   location: z.string().nonempty(),
   attendees: z.array(z.string()).nonempty({
-    message: 'need, you need to select at least one person',
+    message: 'need, you need to select at least user group',
   }),
+  agent_phone_number: z.string().optional(),
+  agent_name: z.string().optional(),
+  meeting_details: z.string().optional(),
 })
 
 export type ScheduleEscrowMeetingInput = z.infer<

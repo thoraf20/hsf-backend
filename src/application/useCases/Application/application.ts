@@ -9,6 +9,8 @@ import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 import {
   ApplicationPurchaseType,
   ApplicationStatus,
+  ConditionPrecedentDocumentStatus,
+  ConditionPrecedentStatus,
   DipDocumentReviewStatus,
   DIPStatus,
   EscrowMeetingStatus,
@@ -20,10 +22,12 @@ import {
 import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEmun'
 import { UserStatus } from '@domain/enums/userEum'
 import {
+  ApplicationStage,
   InstallmentApplicationStage,
   MortgageApplicationStage,
   OutrightApplicationStage,
 } from '@entities/Application'
+import { ConditionPrecedent } from '@entities/ConditionPrecedent'
 import { getDeveloperClientView } from '@entities/Developer'
 import { PrequalificationInput } from '@entities/PrequalificationInput'
 import { Eligibility } from '@entities/prequalify/prequalify'
@@ -39,6 +43,7 @@ import {
 } from '@entities/Request'
 import { getUserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
+import { IConditionPrecedentRepository } from '@interfaces/IConditionPrecedentRepository'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
@@ -55,8 +60,9 @@ import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurch
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { Role } from '@routes/index.t'
+import { getApplicationStages } from '@shared/utils/application-stages'
 import { QueryBoolean } from '@shared/utils/helpers'
-import { AuthInfo } from '@shared/utils/permission-policy'
+import { AuthInfo, canAccessApplication } from '@shared/utils/permission-policy'
 import { createDate, TimeSpan } from '@shared/utils/time-unit'
 import {
   ApplicationDocApprovalInput,
@@ -92,6 +98,7 @@ export class ApplicationService {
     private readonly lenderRepository: ILenderRepository,
     private readonly loanOfferRepository: ILoanOfferRepository,
     private readonly loanDecisionRepository: ILoanDecisionRepository,
+    private readonly conditionPrecedentRepository: IConditionPrecedentRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -556,6 +563,16 @@ export class ApplicationService {
         application.application_type === ApplicationPurchaseType.INSTALLMENT ||
         application.application_type === ApplicationPurchaseType.OUTRIGHT
       ) {
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) return null
+
+            await this.applicationRepository.updateApplicationStage(stage.id, {
+              exit_time: new Date(),
+            })
+          }),
+        )
+
         await this.applicationRepository.addApplicationStage(applicationId, {
           application_id: application.application_id,
           entry_time: new Date(),
@@ -612,31 +629,42 @@ export class ApplicationService {
       )
     }
 
-    const updatePropertyClosing =
-      await this.purchaseRepository.updatePropertyClosing(
-        application.property_closing_id,
-        {
-          closing_status: input.closing_status,
-        },
-      )
+    return runWithTransaction(async () => {
+      const updatePropertyClosing =
+        await this.purchaseRepository.updatePropertyClosing(
+          application.property_closing_id,
+          {
+            closing_status: input.closing_status,
+          },
+        )
 
-    if (
-      input.closing_status === PropertyClosingStatus.Approved &&
-      application.application_type === ApplicationPurchaseType.OUTRIGHT
-    ) {
-      const escrowStatus = await this.purchaseRepository.createEscrowStatus({
-        property_id: application.property_id,
-        user_id: application.user_id,
-        escrow_status: EscrowMeetingStatus.AWAITING,
-      })
+      if (
+        input.closing_status === PropertyClosingStatus.Approved &&
+        application.application_type === ApplicationPurchaseType.OUTRIGHT
+      ) {
+        const escrowStatus = await this.purchaseRepository.createEscrowStatus({
+          property_id: application.property_id,
+          user_id: application.user_id,
+          escrow_status: EscrowMeetingStatus.AWAITING,
+        })
 
-      await this.applicationRepository.updateApplication({
-        application_id: application.application_id,
-        escrow_status_id: escrowStatus.escrow_status_id,
-      })
-    }
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) return
+            this.applicationRepository.updateApplicationStage(stage.id, {
+              exit_time: new Date(),
+            })
+          }),
+        )
 
-    return updatePropertyClosing
+        await this.applicationRepository.updateApplication({
+          application_id: application.application_id,
+          escrow_status_id: escrowStatus.escrow_status_id,
+        })
+      }
+
+      return updatePropertyClosing
+    })
   }
 
   async requestOfferLetterRespond(
@@ -645,6 +673,16 @@ export class ApplicationService {
     applicationId: string,
     input: RequestOfferLetterRespondInput,
   ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!application) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Application not found',
+      )
+    }
+
     let offerLetter = await this.getOfferLetterByApplicationId(applicationId)
 
     if (
@@ -700,47 +738,49 @@ export class ApplicationService {
       )
     }
 
-    await this.reviewRequestRepository.updateReviewRequestApproval(
-      approval.id,
-      {
-        approval_date: new Date(),
-        approval_status:
-          input.offer_letter_status === OfferLetterStatus.Approved
-            ? ReviewRequestApprovalStatus.Approved
-            : ReviewRequestApprovalStatus.Rejected,
-
-        approval_id: userId,
-      },
-    )
-
-    const requestTypeStage =
-      await this.reviewRequestRepository.getReviewRequestTypeStageByID(
-        approval.review_request_stage_type_id,
-      )
-
-    const requestTypeStageList =
-      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
-        requestTypeStage.request_type_id,
-      )
-
-    const lastTypeStage = requestTypeStageList.at(-1)
-    if (lastTypeStage.id === approval.review_request_stage_type_id) {
-      await this.reviewRequestRepository.updateReviewRequest(
-        approval.request_id,
+    return runWithTransaction(async () => {
+      await this.reviewRequestRepository.updateReviewRequestApproval(
+        approval.id,
         {
-          status:
+          approval_date: new Date(),
+          approval_status:
             input.offer_letter_status === OfferLetterStatus.Approved
-              ? ReviewRequestStatus.Approved
-              : ReviewRequestStatus.Rejected,
+              ? ReviewRequestApprovalStatus.Approved
+              : ReviewRequestApprovalStatus.Rejected,
+
+          approval_id: userId,
         },
       )
-      await this.purchaseRepository.updateOfferLetterStatus(
-        offerLetter.offer_letter_id,
-        { offer_letter_status: input.offer_letter_status },
-      )
-    }
 
-    return offerLetter
+      const requestTypeStage =
+        await this.reviewRequestRepository.getReviewRequestTypeStageByID(
+          approval.review_request_stage_type_id,
+        )
+
+      const requestTypeStageList =
+        await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+          requestTypeStage.request_type_id,
+        )
+
+      const lastTypeStage = requestTypeStageList.at(-1)
+      if (lastTypeStage.id === approval.review_request_stage_type_id) {
+        await this.reviewRequestRepository.updateReviewRequest(
+          approval.request_id,
+          {
+            status:
+              input.offer_letter_status === OfferLetterStatus.Approved
+                ? ReviewRequestStatus.Approved
+                : ReviewRequestStatus.Rejected,
+          },
+        )
+        await this.purchaseRepository.updateOfferLetterStatus(
+          offerLetter.offer_letter_id,
+          { offer_letter_status: input.offer_letter_status },
+        )
+      }
+
+      return offerLetter
+    })
   }
 
   async scheduleEscrowMeeting(
@@ -787,30 +827,32 @@ export class ApplicationService {
       )
     }
 
-    const members = await this.organizationRepository.getOrganizationMembers(
-      authInfo.currentOrganizationId,
-      {
-        page_number: 1,
-        result_per_page: Number.MAX_SAFE_INTEGER,
-      },
-    )
+    // const members = await this.organizationRepository.getOrganizationMembers(
+    //   authInfo.currentOrganizationId,
+    //   {
+    //     page_number: 1,
+    //     result_per_page: Number.MAX_SAFE_INTEGER,
+    //   },
+    // )
 
-    const notMember = input.attendees.find(
-      (attendeeId) =>
-        !members.result.find((member) => member.user_id === attendeeId),
-    )
+    // const notMember = input.attendees.find(
+    //   (attendeeId) =>
+    //     !members.result.find((member) => member.user_id === attendeeId),
+    // )
 
-    if (notMember) {
-      throw new ApplicationCustomError(
-        StatusCodes.FORBIDDEN,
-        `We found the user with id '${notMember} not an HSF member'`,
-      )
-    }
+    // if (notMember) {
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.FORBIDDEN,
+    //     `We found the user with id '${notMember} not an HSF member'`,
+    //   )
+    // }
 
     const escrowMeetingRequestType =
       await this.reviewRequestRepository.getReviewRequestTypeByKind(
         ReviewRequestTypeKind.EscrowMeetingRequest,
       )
+
+    console.log({ escrowMeetingRequestType })
 
     if (!escrowMeetingRequestType) {
       throw new ApplicationCustomError(
@@ -881,6 +923,9 @@ export class ApplicationService {
             property_types: application.application_type,
             review_request_id: reviewRequest.id,
             application_id: application.application_id,
+            agent_name: input.agent_name,
+            agent_phone_number: input.agent_phone_number,
+            meeting_details: input.meeting_details,
             organization_id: application.developer_organization_id,
             user_id: application.user_id,
           },
@@ -1577,6 +1622,68 @@ export class ApplicationService {
         })
       }
 
+      const documentStage = application.stages?.find((stage) =>
+        input.group === DocumentGroupKind.MortgageUpload
+          ? stage.stage === MortgageApplicationStage.UploadDocument
+          : stage.stage === MortgageApplicationStage.ConditionPrecedent,
+      )
+
+      if (!documentStage) {
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) return null
+
+            await this.applicationRepository.updateApplicationStage(stage.id, {
+              exit_time: new Date(),
+            })
+          }),
+        )
+
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            entry_time: new Date(),
+            application_id: application.application_id,
+            user_id: application.user_id,
+            stage:
+              input.group === DocumentGroupKind.MortgageUpload
+                ? MortgageApplicationStage.UploadDocument
+                : MortgageApplicationStage.ConditionPrecedent,
+          },
+        )
+      }
+
+      if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
+        let conditionPrecedent: ConditionPrecedent
+        if (application.condition_precedent_id) {
+          conditionPrecedent = await this.conditionPrecedentRepository.findById(
+            application.condition_precedent_id,
+          )
+        }
+
+        if (!conditionPrecedent) {
+          conditionPrecedent = await this.conditionPrecedentRepository.create({
+            application_id: application.application_id,
+            status: ConditionPrecedentStatus.Pending,
+            documents_status: ConditionPrecedentDocumentStatus.Reviewing,
+            documents_uploaded: true,
+          })
+          await this.applicationRepository.updateApplication({
+            application_id: application.application_id,
+            condition_precedent_id: conditionPrecedent.id,
+          })
+        } else {
+          conditionPrecedent = await this.conditionPrecedentRepository.update(
+            conditionPrecedent.id,
+            {
+              documents_uploaded: true,
+              status: ConditionPrecedentStatus.Pending,
+              documents_status: ConditionPrecedentDocumentStatus.Reviewing,
+            },
+          )
+        }
+      }
+
       return Promise.all(
         input.documents.map(async (doc) => {
           if (doc.id) {
@@ -1745,12 +1852,32 @@ export class ApplicationService {
     }
 
     if (
+      input.group === DocumentGroupKind.ConditionPrecedent &&
+      !application.condition_precedent
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are yet to initiate the condition precedent stage',
+      )
+    }
+
+    if (
       input.group === DocumentGroupKind.MortgageUpload &&
       application.dip.hsf_document_review_completed
     ) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
         `HSF document review already completed for application ID '${applicationId}'`,
+      )
+    }
+
+    if (
+      input.group === DocumentGroupKind.ConditionPrecedent &&
+      application.condition_precedent?.hsf_docs_reviewed
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `HSF condition precedent review already completed for application ID '${applicationId}'`,
       )
     }
 
@@ -1876,7 +2003,6 @@ export class ApplicationService {
         ReviewRequestStageKind.DIPLenderDocumentReview,
       )
 
-    console.log({ lenderStage })
     if (!lenderStage) {
       throw new ApplicationCustomError(
         StatusCodes.INTERNAL_SERVER_ERROR,
@@ -1940,6 +2066,11 @@ export class ApplicationService {
           dip_id: application.dip.dip_id,
           hsf_document_review_completed: true,
         })
+      } else if (input.group === DocumentGroupKind.ConditionPrecedent) {
+        await this.conditionPrecedentRepository.update(
+          application.condition_precedent.id,
+          { hsf_docs_reviewed: true },
+        )
       }
 
       return approvals
@@ -1969,12 +2100,32 @@ export class ApplicationService {
     }
 
     if (
+      input.group === DocumentGroupKind.ConditionPrecedent &&
+      !application.condition_precedent
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are yet to initiate the condition precedent stage',
+      )
+    }
+
+    if (
       input.group === DocumentGroupKind.MortgageUpload &&
       application.dip.lender_document_review_completed
     ) {
       throw new ApplicationCustomError(
         StatusCodes.CONFLICT,
-        `HSF document review already completed for application ID '${applicationId}'`,
+        `Lender document review already completed for application ID '${applicationId}'`,
+      )
+    }
+
+    if (
+      input.group === DocumentGroupKind.ConditionPrecedent &&
+      application.condition_precedent?.lender_docs_reviewed
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `Lender condition precedent review already completed for application ID '${applicationId}'`,
       )
     }
 
@@ -2096,6 +2247,15 @@ export class ApplicationService {
     }
 
     return runWithTransaction(async () => {
+      await Promise.all(
+        application.stages?.map(async (stage) => {
+          if (stage.exit_time) return null
+          await this.applicationRepository.updateApplicationStage(stage.id, {
+            exit_time: new Date(),
+          })
+        }),
+      )
+
       if (input.group === DocumentGroupKind.MortgageUpload) {
         const loanOffer = await this.loanOfferRepository.createLoanOffer({
           user_id: application.user_id,
@@ -2110,6 +2270,16 @@ export class ApplicationService {
           repayment_frequency: LoanRepaymentFrequency.MONTHLY,
         })
 
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            entry_time: new Date(),
+            application_id: application.application_id,
+            user_id: application.user_id,
+            stage: MortgageApplicationStage.LoanDecision,
+          },
+        )
+
         await this.loanDecisionRepository.create({
           application_id: application.application_id,
           user_id: application.user_id,
@@ -2122,6 +2292,28 @@ export class ApplicationService {
           application_id: application.application_id,
           loan_offer_id: loanOffer.id,
         })
+
+        await this.mortgageRepository.updateDipById({
+          dip_id: application.dip.dip_id,
+          lender_document_review_completed: true,
+          dip_status: DIPStatus.Completed,
+          documents_status: DipDocumentReviewStatus.Approved,
+        })
+      } else if (input.group === DocumentGroupKind.ConditionPrecedent) {
+        await this.conditionPrecedentRepository.update(
+          application.condition_precedent.id,
+          { lender_docs_reviewed: true },
+        )
+
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            entry_time: new Date(),
+            application_id: application.application_id,
+            user_id: application.user_id,
+            stage: MortgageApplicationStage.Repayment,
+          },
+        )
       }
 
       await Promise.all(
@@ -2134,13 +2326,6 @@ export class ApplicationService {
           ),
         ),
       )
-
-      return this.mortgageRepository.updateDipById({
-        dip_id: application.dip.dip_id,
-        lender_document_review_completed: true,
-        dip_status: DIPStatus.Completed,
-        documents_status: DipDocumentReviewStatus.Approved,
-      })
     })
   }
 
@@ -2191,16 +2376,56 @@ export class ApplicationService {
       )
     }
 
-    const updateLoanOffer = await this.loanOfferRepository.updateLoanOffer(
-      loanOffer.id,
-      {
-        offer_status: input.accepts
-          ? LoanOfferStatus.ACCEPTED
-          : LoanOfferStatus.DECLINED,
-      },
-    )
+    return runWithTransaction(async () => {
+      const updateLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+        loanOffer.id,
+        {
+          offer_status: input.accepts
+            ? LoanOfferStatus.ACCEPTED
+            : LoanOfferStatus.DECLINED,
+        },
+      )
 
-    return updateLoanOffer
+      if (updateLoanOffer.offer_status === LoanOfferStatus.ACCEPTED) {
+        const conditionPrecedent =
+          await this.conditionPrecedentRepository.create({
+            application_id: application.application_id,
+            status: ConditionPrecedentStatus.Pending,
+            documents_status: ConditionPrecedentDocumentStatus.NotUploaded,
+            documents_uploaded: false,
+          })
+
+        await this.applicationRepository.updateApplication({
+          application_id: application.application_id,
+          condition_precedent_id: conditionPrecedent.application_id,
+        })
+
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) {
+              await this.applicationRepository.updateApplicationStage(
+                stage.id,
+                {
+                  exit_time: new Date(),
+                },
+              )
+            }
+          }),
+        )
+
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            entry_time: new Date(),
+            application_id: application.application_id,
+            user_id: application.user_id,
+            stage: MortgageApplicationStage.ConditionPrecedent,
+          },
+        )
+      }
+
+      return updateLoanOffer
+    })
   }
 
   async submitSignedLoanOfferLetter(
@@ -2258,5 +2483,37 @@ export class ApplicationService {
     )
 
     return updatedLoanOffer
+  }
+
+  async getApplicationStages(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    const stages = getApplicationStages(application.application_type)
+
+    const stageMap: Map<string, ApplicationStage> = new Map(
+      application.stages?.map((stage) => [stage.stage, stage]) ?? [],
+    )
+
+    return stages.map<ApplicationStage>((stage) => {
+      const existingStage = stageMap.get(stage.stage)
+      return {
+        id: existingStage?.id ?? null,
+        stage: stage.stage,
+        user_id: application.user_id,
+        entry_time: new Date(),
+        exit_time: existingStage?.exit_time ?? null,
+        application_id: application.application_id,
+        created_at: application.created_at ?? new Date(),
+        updated_at: application.updated_at ?? new Date(),
+      }
+    })
   }
 }

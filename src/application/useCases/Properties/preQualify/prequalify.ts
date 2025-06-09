@@ -226,8 +226,36 @@ export class preQualifyService {
     return await this.prequalify.getPreQualifyRequest()
   }
 
-  public async getAllPreQualifierById(id: string): Promise<preQualify> {
-    return await this.prequalify.getPreQualifyRequestById(id)
+  public async getPreQualifyRequestById(id: string) {
+    const preQualifier = await this.prequalify.getPreQualifyRequestById(id)
+
+    if (!preQualifier) {
+      return null
+    }
+
+    const property = await this.propertyRepository.getPropertyById(
+      preQualifier.property_id,
+    )
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      property.organization_id,
+    )
+
+    const developer = await this.developerRepository.getDeveloperByOrgId(
+      property.organization_id,
+    )
+
+    const requestedBy = await this.userRepository.findById(preQualifier.user_id)
+
+    return {
+      ...preQualifier,
+      requested_by: getUserClientView(requestedBy),
+      property: {
+        ...property,
+        organization,
+        developer: getDeveloperClientView(developer),
+      },
+    }
   }
 
   public async updatePrequalifierEligibility(

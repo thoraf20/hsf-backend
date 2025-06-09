@@ -35,6 +35,8 @@ export class PaystackProcessor implements PaymentProcessor {
       requestBody,
     )
 
+    console.log({ data: response.data })
+
     if (!response.data.status) {
       return null
     }

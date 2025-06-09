@@ -41,19 +41,19 @@ export class LoanOfferRepository implements ILoanOfferRepository {
     const add = createUnion(SearchType.EXCLUSIVE)
 
     if (filters.user_id) {
-      q = add(q).whereRaw(`user_id = '${filters.user_id}'`)
+      q = add(q).whereRaw(`lf.user_id = '${filters.user_id}'`)
     }
 
     if (filters.organization_id) {
-      q = add(q).whereRaw(`organization_id = '${filters.organization_id}'`)
+      q = add(q).whereRaw(`lf.organization_id = '${filters.organization_id}'`)
     }
 
     if (filters.lender_org_id) {
-      q = add(q).whereRaw(`lender_org_id = '${filters.lender_org_id}'`)
+      q = add(q).whereRaw(`lf.lender_org_id = '${filters.lender_org_id}'`)
     }
 
     if (filters.status) {
-      q = add(q).whereRaw(`status = '${filters.status}'`)
+      q = add(q).whereRaw(`lf.status = '${filters.status}'`)
     }
     return q
   }
@@ -61,10 +61,12 @@ export class LoanOfferRepository implements ILoanOfferRepository {
   async getLoanOffers(
     filters: LoanOfferFilters,
   ): Promise<SeekPaginationResult<LoanOffer>> {
-    let baseQuery = db<LoanOffer>(this.tableName)
+    let baseQuery = db<LoanOffer>(`${this.tableName} as lf`)
+      .innerJoin('application as a', 'a.loan_offer_id', 'lf.id')
+      .select(`lf.*`)
 
     baseQuery = this.useFilter(baseQuery, filters)
-    baseQuery = baseQuery.select('*').orderBy('created_at', 'desc')
+    baseQuery = baseQuery.select('*').orderBy('lf.created_at', 'desc')
 
     return applyPagination(baseQuery, filters)
   }

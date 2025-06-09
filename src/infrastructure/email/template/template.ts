@@ -1109,4 +1109,173 @@ export default {
 </body>
 </html>
 `,
+
+  recoveryCodeNotification: `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <title>Recovery Code Used</title>
+  </head>
+  <body>
+    <p>Dear {{userName}},</p>
+    <p>This is to notify you that one of your recovery codes was recently used to access your account.</p>
+    <p>If you initiated this action, you can disregard this email.</p>
+    <p>However, if you did not use a recovery code to access your account, we strongly recommend that you reset your recovery codes immediately to prevent unauthorized access.</p>
+    <p>You can reset your recovery codes in your account settings.</p>
+    <p>Sincerely,</p>
+    <p>The ${process.env.PLATFORM_NAME} Team</p>
+  </body>
+  </html>
+`,
+  organizationSuspended: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organization Suspended</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .message {
+      font-size: 16px;
+      color: #666;
+    }
+    .footer {
+      font-size: 14px;
+      color: #999;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="header">Organization Suspended</p>
+    <p class="message">Dear {{organizationName}},</p>
+    <p class="message">Your organization has been suspended. Please contact support for more information.</p>
+    <p class="footer">The HSF Team</p>
+  </div>
+</body>
+</html>
+`,
+  organizationDeleted: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organization Deleted</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px auto;
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+     .header {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .message {
+      font-size: 16px;
+      color: #666;
+    }
+    .footer {
+      font-size: 14px;
+      color: #999;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p class="header">Organization Deleted</p>
+    <p class="message">Dear {{organizationName}},</p>
+    <p class="message">Your organization has been deleted. Please contact support for more information.</p>
+    <p class="footer">The HSF Team</p>
+  </div>
+</body>
+</html>
+`,
+
+  organizationActivated: `<!DOCTYPE html>
+ <html>
+ <head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Organization Activated</title>
+   <style>
+     body {
+       font-family: Arial, sans-serif;
+       background-color: #f4f4f4;
+       margin: 0;
+       padding: 0;
+     }
+     .container {
+       width: 100%;
+       max-width: 600px;
+       margin: 20px auto;
+       background-color: #ffffff;
+       padding: 20px;
+       border-radius: 8px;
+       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+     }
+     .header {
+       font-size: 24px;
+       font-weight: bold;
+       color: #333;
+       text-align: center;
+       margin-bottom: 20px;
+     }
+     .message {
+       font-size: 16px;
+       color: #666;
+     }
+     .footer {
+       font-size: 14px;
+       color: #999;
+       margin-top: 20px;
+     }
+   </style>
+ </head>
+ <body>
+   <div class="container">
+     <p class="header">Organization Activated</p>
+     <p class="message">Dear {{organizationName}},</p>
+     <p class="message">Your organization has been activated.</p>
+     <p class="footer">The HSF Team</p>
+   </div>
+ </body>
+ </html>
+ `,
 }

@@ -36,6 +36,7 @@ export const exculedPasswordUserInfo = [
   'u.phone_number',
   'u.profile',
   'u.image',
+  'u.status',
   'u.date_of_birth',
   'u.force_password_reset',
   'u.user_agent',

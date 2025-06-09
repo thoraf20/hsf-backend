@@ -190,7 +190,7 @@ export class ApplicationRepository implements IApplicationRespository {
       paginatedResult.result.map(async (application) => {
         const stages = await db<ApplicationStage>(this.stageTableName)
           .where('application_id', application.application_id)
-          .orderBy('entry_time')
+          .orderBy('entry_time', 'asc')
 
         application.stages = stages
         return application
@@ -225,6 +225,11 @@ export class ApplicationRepository implements IApplicationRespository {
         'property_closing as pc',
         'a.property_closing_id',
         'pc.property_closing_id',
+      )
+      .leftJoin(
+        'condition_precedents as cp',
+        'cp.id',
+        'a.condition_precedent_id',
       )
       .leftJoin('eligibility as el', 'a.eligibility_id', 'el.eligibility_id')
       .leftJoin(
@@ -299,6 +304,7 @@ export class ApplicationRepository implements IApplicationRespository {
         db.raw(`row_to_json(pc) as property_closing`),
         db.raw(`row_to_json(dp) as dip`),
         db.raw(`row_to_json(ld) as loan_decision`),
+        db.raw(`row_to_json(cp) as condition_precedent`),
         'p.*',
         'a.*',
       )
@@ -308,7 +314,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
     const stages = await db<ApplicationStage>(this.stageTableName)
       .where('application_id', application.application_id)
-      .orderBy('entry_time')
+      .orderBy('entry_time', 'asc')
 
     application.stages = stages
     return application
@@ -439,7 +445,7 @@ export class ApplicationRepository implements IApplicationRespository {
 
     const stages = await db<ApplicationStage>(this.stageTableName)
       .where('application_id', application.application_id)
-      .orderBy('entry_time')
+      .orderBy('entry_time', 'asc')
 
     application.stages = stages
     return application
@@ -467,6 +473,18 @@ export class ApplicationRepository implements IApplicationRespository {
     applicationId: string,
     stage: ApplicationStage,
   ): Promise<ApplicationStage> {
+    const prevStage = await db<ApplicationStage>(this.stageTableName)
+      .where({
+        application_id: applicationId,
+        stage: stage.stage,
+        user_id: stage.user_id,
+      })
+      .first()
+
+    if (prevStage) {
+      return prevStage
+    }
+
     const [newStage] = await db<ApplicationStage>(this.stageTableName)
       .insert({
         application_id: applicationId,

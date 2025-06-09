@@ -37,25 +37,3 @@ export enum MartialStatus {
   DIVORCED = 'Divorced',
   WIDOWED = 'Widowed',
 }
-
-export enum UserActivityKind {
-  LOGIN = 'login',
-  LOGOUT = 'logout',
-  REGISTER = 'register',
-  VERIFY_ACCOUNT = 'verify_account',
-  REQUEST_PASSWORD_RESET = 'request_password_reset',
-  RESET_PASSWORD = 'reset_password',
-  UPDATE_PROFILE = 'update_profile',
-  CHANGE_PASSWORD = 'change_password',
-  MFA_ENABLED = 'mfa_enabled',
-  MFA_DISABLED = 'mfa_disabled',
-  MFA_VERIFIED = 'mfa_verified',
-  ACCOUNT_LOCKED = 'account_locked',
-  ACCOUNT_UNLOCKED = 'account_unlocked',
-  FAILED_LOGIN = 'failed_login',
-  DELETE_ACCOUNT = 'delete_account',
-  SUSPEND_ACCOUNT = 'suspend_account',
-  UNSUSPEND_ACCOUNT = 'unsuspend_account',
-  BAN_ACCOUNT = 'ban_account',
-  UNBAN_ACCOUNT = 'unban_account',
-}

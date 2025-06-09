@@ -28,6 +28,7 @@ export const createDeveloperSchema = z.object({
   company_image: z.string().nonempty(),
   year_in_business: z.coerce.number().int(),
   operation_states: z.string().nonempty(),
+  is_active: z.boolean().default(true),
 
   first_name: z.string().nonempty().max(100),
   last_name: z.string().nonempty().max(100),

@@ -5,12 +5,14 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import { createResponse } from '@presentation/response/responseType'
 import {
+  CreateEmployeeInput,
   CreateHSFAdminInput,
   CreateLenderInput,
   Disable2faOrgMemberInput,
   LenderFilters,
   OrgMemberRoleFilters,
   ResetOrgOwnerPasswordInput,
+  SuspendOrgInput,
   UpdateOrganizationInput,
 } from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
@@ -26,6 +28,7 @@ import {
   DeveloperFilters,
 } from '@validators/developerValidator'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -39,6 +42,7 @@ export class OrganizationController {
       new DeveloperRespository(),
       new PropertyRepository(),
       new DocumentRepository(),
+      new UserActivityLogRepository(),
     )
   }
 
@@ -318,6 +322,49 @@ export class OrganizationController {
       StatusCodes.OK,
       'Authenicator mfa disabled successfully.',
       disabled2faUser,
+    )
+  }
+
+  async suspendOrganization(id: string, input: SuspendOrgInput) {
+    const organization = await this.manageOrganizations.suspendOrganization(
+      id,
+      input,
+    )
+
+    if (!organization) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      'Organization suspended successfully',
+      { organization },
+    )
+  }
+
+  async activateOrganization(id: string) {
+    const organization = await this.manageOrganizations.activateOrganization(id)
+
+    return createResponse(
+      StatusCodes.OK,
+      'Organization activated successfully',
+      { organization },
+    )
+  }
+
+  async createEmployee(authInfo: AuthInfo, input: CreateEmployeeInput) {
+    const newEmployee = await this.manageOrganizations.createEmployee(
+      authInfo,
+      input,
+    )
+
+    return createResponse(
+      StatusCodes.CREATED,
+      'Employee created successfully',
+      newEmployee,
     )
   }
 }

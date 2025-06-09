@@ -145,3 +145,16 @@ export enum PropertyClosingStatus {
   Pending = 'Pending',
   Rejected = 'Rejected',
 }
+
+export enum ConditionPrecedentStatus {
+  Pending = 'Pending',
+  Completed = 'Completed',
+  Rejected = 'Rejected',
+}
+
+export enum ConditionPrecedentDocumentStatus {
+  NotUploaded = 'Not Uploaded',
+  Reviewing = 'Reviewing',
+  Verified = 'Verified',
+  Rejected = 'Rejected',
+}

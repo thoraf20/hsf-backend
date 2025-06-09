@@ -155,20 +155,14 @@ export class PrequalifyRepository implements IPreQualify {
   }
 
   public async getPreQualifyRequestById(id: string): Promise<preQualify> {
-    const prequalify = await db('prequalify_status as ps')
-      .join(
-        'prequalify_personal_information as ppi',
-        'ps.personal_information_id',
-        'ppi.personal_information_id',
+    const prequalify = await db<Eligibility>('eligibility as e')
+      .innerJoin(
+        'prequalification_inputs as pqi',
+        'pqi.id',
+        'e.prequalifier_input_id',
       )
-      .join(
-        'prequalify_other_info as info',
-        'ps.personal_information_id',
-        'info.personal_information_id',
-      )
-      .join('users as u', 'ps.loaner_id', 'u.id')
-      .where('ps.status_id', id)
-      .select('ps.*', 'ppi.*', 'info.*')
+      .where('e.eligibility_id', id)
+      .select('e.*', db.raw('row_to_json(pqi) as prequalification_input'))
       .first()
 
     return prequalify

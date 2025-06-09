@@ -1,8 +1,10 @@
 import { LoanOfferWorkflowStatus } from '@domain/enums/loanEnum'
-import { Application } from '@entities/Application'
+import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
+import { Application, MortgageApplicationStage } from '@entities/Application'
 import { Lender } from '@entities/Lender'
 import { Organization } from '@entities/Organization'
 import { getUserClientView, UserClientView } from '@entities/User'
+import { runWithTransaction } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
@@ -204,15 +206,50 @@ export class ManageLoanOfferService {
       }
     }
 
-    const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
-      loanOffer.id,
-      {
-        workflow_status: input.workflow_status,
-        loan_offer_letter_url: input.loan_offer_letter_url,
-      },
-    )
+    return runWithTransaction(async () => {
+      const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+        loanOffer.id,
+        {
+          workflow_status: input.workflow_status,
+          loan_offer_letter_url: input.loan_offer_letter_url,
+        },
+      )
 
-    return updatedLoanOffer
+      const application = await this.applicationRepository.getByUniqueID({
+        loan_offer_id: updatedLoanOffer.id,
+      })
+
+      if (application?.application_type === ApplicationPurchaseType.MORTGAGE) {
+        if (
+          updatedLoanOffer.workflow_status === LoanOfferWorkflowStatus.READY
+        ) {
+          await Promise.all(
+            application.stages?.map(async (stage) => {
+              if (stage.exit_time) return null
+
+              await this.applicationRepository.updateApplicationStage(
+                stage.id,
+                {
+                  exit_time: new Date(),
+                },
+              )
+            }),
+          )
+
+          await this.applicationRepository.addApplicationStage(
+            application.application_id,
+            {
+              entry_time: new Date(),
+              application_id: application.application_id,
+              user_id: application.user_id,
+              stage: MortgageApplicationStage.LoanOffer,
+            },
+          )
+        }
+      }
+
+      return updatedLoanOffer
+    })
   }
 }
 

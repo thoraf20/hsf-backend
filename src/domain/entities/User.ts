@@ -39,6 +39,8 @@ export class User extends BaseEntity {
   is_phone_verified?: boolean
   is_mfa_enabled?: boolean
   is_default_password?: boolean
+  deleted_at?: Date
+  supended_at?: Date
   constructor(data: Partial<User>) {
     super()
     Object.assign(this, {

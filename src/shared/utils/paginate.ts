@@ -75,8 +75,13 @@ export async function applyPagination<T>(
   const [{ count }] = await Promise.all([totalRecordsQuery])
   const total = Number(count)
 
+  let dataQuery: Knex.QueryBuilder<any, any[]>
+  if (offset === Number.MAX_SAFE_INTEGER) {
+    dataQuery = baseQuery
+  } else {
+    dataQuery = baseQuery.limit(perPage).offset(offset)
+  }
   // Apply limit and offset to the data query
-  const dataQuery = baseQuery.limit(perPage).offset(offset)
 
   const data = await dataQuery
 

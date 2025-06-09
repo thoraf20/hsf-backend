@@ -76,13 +76,10 @@ manageUserRoutes.patch(
   asyncMiddleware(async (req, res) => {
     const {
       params: { user_id },
-      query,
+      body,
     } = req
 
-    const response = await userController.getUserActivites({
-      ...query,
-      user_id: user_id,
-    })
+    const response = await userController.resetPassword(body, user_id)
     res.status(response.statusCode).json(response)
   }),
 )

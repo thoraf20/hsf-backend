@@ -51,6 +51,9 @@ export class EscrowInformation {
   property_buyer_id: string
   review_request_id: string
   application_id?: string
+  meeting_details?: string
+  agent_phone_number?: string
+  agent_name?: string
   user_id: string
   organization_id: string
   created_at?: Date

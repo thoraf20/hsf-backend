@@ -60,6 +60,7 @@ import { PaymentProcessorFactory } from '@infrastructure/services/factoryProduce
 import { paymentFiltersSchema } from '@validators/paymentValidator'
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
+import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -76,6 +77,7 @@ const applicationService = new ApplicationService(
   new LenderRepository(),
   new LoanOfferRepository(),
   new LoanDecisionRepository(),
+  new ConditionPrecedentRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -100,7 +102,6 @@ const applicationController = new ApplicationController(
     new InspectionRepository(),
   ),
   manageDipService,
-
   new PaymentUseCase(
     new PaymentRepostory(),
     new ServiceOfferingRepository(),
@@ -168,6 +169,23 @@ applicationRoutes.get(
     const { user: claim, query } = req
 
     const response = await applicationController.getAllByUserId(claim.id, query)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/stages',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getApplicationStages(
+      application_id,
+      authInfo,
+    )
+
     res.status(response.statusCode).json(response)
   }),
 )

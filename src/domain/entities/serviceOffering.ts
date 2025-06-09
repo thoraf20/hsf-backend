@@ -1,12 +1,15 @@
+import { ServiceOfferingComputeType } from '@domain/enums/serviceOfferingEnum'
 import { PartialInstantiable } from '@shared/types/partials'
 
 export class ServiceOffering extends PartialInstantiable<ServiceOffering> {
   id?: string
   service_name: string
   description?: string
-  base_price: number
+  percentage?: number
+  base_price?: number
   image_url: string
   product_code: string
+  compute_type?: ServiceOfferingComputeType
   currency?: string
   is_active: boolean
   deleted_at?: Date

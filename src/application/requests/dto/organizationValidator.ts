@@ -1,5 +1,8 @@
 import { z } from 'zod'
-import { OrganizationType } from '@domain/enums/organizationEnum'
+import {
+  OrganizationMemberStatus,
+  OrganizationType,
+} from '@domain/enums/organizationEnum'
 import { Role, RoleSelect } from '@domain/enums/rolesEmun'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { parse } from 'date-fns'
@@ -130,3 +133,42 @@ export const disable2faOrgMemberSchema = z.object({
 })
 
 export type Disable2faOrgMemberInput = z.infer<typeof disable2faOrgMemberSchema>
+
+export const suspendOrgSchema = z.object({
+  reason: z.string().nonempty().max(1000).optional(),
+})
+
+export type SuspendOrgInput = z.infer<typeof suspendOrgSchema>
+
+export const organizationMemberFilterSchema = withPaginateSchema(
+  z.object({
+    status: z.nativeEnum(OrganizationMemberStatus).optional(),
+    organization_id: z.string().optional(),
+  }),
+)
+
+export type OrganizationMemberFilter = z.infer<
+  typeof organizationMemberFilterSchema
+>
+
+export const createEmployeeSchema = z.object({
+  first_name: z.string().min(2).max(100),
+  last_name: z.string().min(2).max(100),
+  phone_number: z.string().nonempty(),
+  email: z.string().email().max(255),
+  date_of_birth: z
+    .string()
+    .refine((datestr) => parse(datestr, 'dd/MM/yyyy', '05/02/2025'), {
+      message: 'Invalid date format',
+    }),
+  role_id: z.string().nonempty(),
+  country: z.string().nonempty().max(50),
+  is_active: z.boolean().default(false),
+  state: z.string().nonempty().max(50),
+  city: z.string().nonempty().max(50),
+  street_address: z.string().nonempty().max(500),
+  state_code: z.string().optional(),
+  country_code: z.string().optional(),
+})
+
+export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>

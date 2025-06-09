@@ -21,7 +21,11 @@ import { Lender, LenderProfile } from '@entities/Lender'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { UserStatus } from '@domain/enums/userEum'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
-import { OrganizationType } from '@domain/enums/organizationEnum'
+import {
+  OrganizationMemberStatus,
+  OrganizationStatus,
+  OrganizationType,
+} from '@domain/enums/organizationEnum'
 
 export class Agents {
   private readonly userRepository: IUserRepository
@@ -376,6 +380,7 @@ export class Agents {
     const developerOrg = await this.organizationRepository.createOrganization({
       name: input.company_name,
       type: OrganizationType.DEVELOPER_COMPANY,
+      status: OrganizationStatus.ACTIVE,
     })
 
     const password = await this.userRepository.hashedPassword(defaultPassword)
@@ -396,6 +401,7 @@ export class Agents {
       role_id: findRole.id,
       user_id: user.id,
       organization_id: developerOrg.id,
+      status: OrganizationMemberStatus.ACTIVE,
     })
 
     const developer = await this.developerRepository.createDeveloperProfile(
@@ -461,6 +467,7 @@ export class Agents {
     const lenderOrg = await this.organizationRepository.createOrganization({
       name: input.lender_name,
       type: OrganizationType.LENDER_INSTITUTION,
+      status: OrganizationStatus.ACTIVE,
     })
 
     const defaultPassword = generateDefaultPassword()

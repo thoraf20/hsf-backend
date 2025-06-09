@@ -1,5 +1,6 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { Role } from '@domain/enums/rolesEmun'
+import { Application } from '@entities/Application'
 import { UserRolePermission } from '@entities/User'
 
 /**
@@ -98,6 +99,11 @@ export const RequireAny = (...checks: PermissionCheck[]): PermissionCheck => {
   }
 }
 
+export const Not = (check: PermissionCheck): PermissionCheck => {
+  return (authInfo: AuthInfo) => {
+    return !check(authInfo)
+  }
+}
 /**
  * Combines multiple permission checks. Returns true if ALL of the checks pass.
  */
@@ -141,4 +147,23 @@ export function isHigherRoleLevel(
   targetRole: Role,
 ): boolean {
   return getRoleLevel(requesterRole) > getRoleLevel(targetRole)
+}
+
+export const canAccessApplication = (
+  application: Application,
+): ((authInfo: AuthInfo) => boolean) => {
+  return (authInfo: AuthInfo) => {
+    return (
+      !!(
+        application &&
+        (authInfo.organizationType === OrganizationType.HSF_INTERNAL ||
+          authInfo.organizationType === OrganizationType.LENDER_INSTITUTION ||
+          (authInfo.globalRole === Role.HOME_BUYER &&
+            application.user_id === authInfo.userId))
+      ) ||
+      (authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY &&
+        application.developer_organization_id ===
+          authInfo.currentOrganizationId)
+    )
+  }
 }

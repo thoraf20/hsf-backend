@@ -100,6 +100,8 @@ WebhookRouter.post(
             application.eligibility_id,
           )
 
+          console.log({ application, dip })
+
           await mortgageRepository.updateDipById({
             dip_id: dip.dip_id,
             dip_status: DIPStatus.DocumentsPending,

@@ -17,12 +17,6 @@ import { ErrorCode } from '@shared/utils/error'
 import { MfaToken } from '@shared/utils/mfa_token'
 import { TimeSpan } from '@shared/utils/time-unit'
 import { MfaFlow, UserStatus } from '@domain/enums/userEum'
-import { decryptToString } from '@shared/utils/encrypt'
-import { decodeBase64 } from '@oslojs/encoding'
-import { verifyTOTP } from '@oslojs/otp'
-import { getEnv } from '@infrastructure/config/env/env.config'
-import { verifyCodeFromRecoveryCodeList } from '@shared/utils/totp'
-import { ManageOrganizations } from '@use-cases/ManageOrganizations'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
@@ -35,6 +29,14 @@ import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLo
 import { UserActivityKind } from '@domain/enums/UserActivityKind'
 import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
 import { hashData } from '@shared/utils/sha-hash'
+import { UserService } from '@use-cases/User/User'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
+import { ManageOrganizations } from '@use-cases/ManageOrganizations'
+
+const userService = new UserService(
+  new UserRepository(),
+  new UserActivityLogRepository(),
+)
 
 export class AuthService {
   private userRepository: IUserRepository
@@ -66,6 +68,7 @@ export class AuthService {
       new DeveloperRespository(),
       new PropertyRepository(),
       new DocumentRepository(),
+      new UserActivityLogRepository(),
     )
   }
 
@@ -325,7 +328,6 @@ export class AuthService {
     )) as User
 
     if (!user) {
-      console.log({ user })
       const nonExistentUserLockKey = `${CacheEnumKeys.LOGIN_ATTEMPT_LOCK}-${input.identifier}`
       const isLocked = await this.client.getKey(nonExistentUserLockKey)
 
@@ -492,7 +494,7 @@ export class AuthService {
     if ([UserStatus.Banned, UserStatus.Suspended].includes(user.status)) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        `Your account is currently ${user.status}. You can contact our support team to inquire about recovering your account.`,
+        `Your account is currently ${user.status}. Please contact support for further information.`,
       )
     }
 
@@ -755,117 +757,41 @@ export class AuthService {
       )
     }
 
-    if (flow === MfaFlow.TOTP) {
-      const decryptedSecret = decryptToString(
-        decodeBase64(findUserById.mfa_totp_secret),
-      )
-
-      const isValidGeneratedSecretCode = verifyTOTP(
-        decodeBase64(decryptedSecret),
-        getEnv('TOTP_EXPIRES_IN'),
-        getEnv('TOTP_LENGTH'),
-        otp,
-      )
-
-      if (!isValidGeneratedSecretCode) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Invalid otp code',
-        )
-      }
-
-      findUserById.accounts = await this.accountRepository.findByUserID(
-        findUserById.id,
-      )
-      findUserById.accounts.forEach((account) => {
-        delete account.access_token
-        delete account.refresh_token
-        delete account.token_type
+    await userService.verifyTOTP(findUserById, flow, otp)
+    if (
+      !findUserById.is_email_verified ||
+      findUserById.status === UserStatus.Pending
+    ) {
+      await this.userRepository.update(findUserById.id, {
+        is_email_verified: true,
+        status: UserStatus.Active,
       })
-
-      if (
-        !findUserById.is_email_verified ||
-        findUserById.status === UserStatus.Pending
-      ) {
-        await this.userRepository.update(findUserById.id, {
-          is_email_verified: true,
-          status: UserStatus.Active,
-        })
-      }
-
-      const ipAddress = getIpAddress()
-      const userAgent = getUserAgent()
-      const successfulLoginAttempt = await this.loginAttemptRepository.create({
-        attempted_at: new Date(),
-        successful: true,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        user_id: findUserById.id,
-      })
-
-      await this.userActivityRepository.create({
-        activity_type: UserActivityKind.LOGIN,
-        performed_at: new Date(),
-        user_id: findUserById.id,
-        title: 'Login successful',
-        description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
-        metadata: successfulLoginAttempt,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-      })
-
-      findUserById.membership =
-        await this.manageOrganizations.getOrganizationsForUser(findUserById.id)
-
-      return { token, ...findUserById }
     }
 
-    if (flow === MfaFlow.RecoveryCode) {
-      const recoveryCodes = (
-        await this.userRepository.getRecoveryCodes(userId)
-      ).filter((code) => !code.used)
+    const ipAddress = getIpAddress()
+    const userAgent = getUserAgent()
+    const successfulLoginAttempt = await this.loginAttemptRepository.create({
+      attempted_at: new Date(),
+      successful: true,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      user_id: findUserById.id,
+    })
 
-      const plainRecoveryCodes = recoveryCodes.map((code) => code.code)
-      const match = verifyCodeFromRecoveryCodeList(otp, plainRecoveryCodes)
+    await this.userActivityRepository.create({
+      activity_type: UserActivityKind.LOGIN,
+      performed_at: new Date(),
+      user_id: findUserById.id,
+      title: 'Login successful',
+      description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
+      metadata: successfulLoginAttempt,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+    })
 
-      if (!match) {
-        throw new ApplicationCustomError(
-          StatusCodes.FORBIDDEN,
-          'Invalid recovery code',
-        )
-      }
+    findUserById.membership =
+      await this.manageOrganizations.getOrganizationsForUser(findUserById.id)
 
-      const usedCode = recoveryCodes.find(({ code: hash }) => hash === match)
-      await this.userRepository.updateRecoveryCodeById(usedCode.id, {
-        used: true,
-      })
-      const ipAddress = getIpAddress()
-      const userAgent = getUserAgent()
-      const successfulLoginAttempt = await this.loginAttemptRepository.create({
-        attempted_at: new Date(),
-        successful: true,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-        user_id: findUserById.id,
-      })
-
-      await this.userActivityRepository.create({
-        activity_type: UserActivityKind.LOGIN,
-        performed_at: new Date(),
-        user_id: findUserById.id,
-        title: 'Login successful',
-        description: `Successful login from IP: ${getIpAddress() ?? 'unknown'}`,
-        metadata: successfulLoginAttempt,
-        ip_address: ipAddress,
-        user_agent: userAgent,
-      })
-
-      return { token, ...findUserById }
-    }
-
-    throw new ApplicationCustomError(
-      StatusCodes.FORBIDDEN,
-      `Invalid MFA flow ${flow}`,
-    )
+    return { token, ...findUserById }
   }
 }

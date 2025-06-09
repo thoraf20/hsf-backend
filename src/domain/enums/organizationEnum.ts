@@ -29,3 +29,20 @@ export enum OrganizationType {
 }
 
 export enum HsfRole {}
+
+export enum OrganizationStatus {
+  ACTIVE = 'Active',
+  INACTIVE = 'Inactive',
+  PENDING_APPROVAL = 'Pending Approval',
+  SUSPENDED = 'Suspended',
+  DELETED = 'Deleted',
+}
+
+export enum OrganizationMemberStatus {
+  PENDING = 'Pending',
+  ACTIVE = 'Active',
+  INACTIVE = 'Inactive',
+  SUSPENDED = 'Suspended',
+  INVITED = 'Invited',
+  DECLINED = 'Declined',
+}
