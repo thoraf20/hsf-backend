@@ -1,15 +1,11 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
-  ApplicationPurchaseType,
   ApplicationStatus,
   DIPLenderStatus,
   DIPStatus,
   UserAction,
 } from '@domain/enums/propertyEnum'
-import {
-  InstallmentApplicationStage,
-  MortgageApplicationStage,
-} from '@entities/Application'
+import { MortgageApplicationStage } from '@entities/Application'
 import { Address, getUserClientView, UserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
