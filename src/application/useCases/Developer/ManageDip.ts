@@ -1,11 +1,15 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
+  ApplicationPurchaseType,
   ApplicationStatus,
   DIPLenderStatus,
   DIPStatus,
   UserAction,
 } from '@domain/enums/propertyEnum'
-import { MortgageApplicationStage } from '@entities/Application'
+import {
+  InstallmentApplicationStage,
+  MortgageApplicationStage,
+} from '@entities/Application'
 import { Address, getUserClientView, UserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
@@ -226,17 +230,42 @@ export class ManageDipUseCase {
       )
     }
 
-    const updatedDip = await this.mortgageRepository.updateDipById({
-      dip_id: dip.dip_id,
-      dip_lender_status:
-        input.approve === QueryBoolean.YES
-          ? DIPLenderStatus.Accepted
-          : DIPLenderStatus.Rejected,
+    return runWithTransaction(async () => {
+      const updatedDip = await this.mortgageRepository.updateDipById({
+        dip_id: dip.dip_id,
+        dip_lender_status:
+          input.approve === QueryBoolean.YES
+            ? DIPLenderStatus.Accepted
+            : DIPLenderStatus.Rejected,
 
-      dip_status: DIPStatus.AwaitingUserAction,
+        dip_status: DIPStatus.AwaitingUserAction,
+      })
+
+      await Promise.all(
+        application.stages?.map(async (stage) => {
+          if (stage.exit_time) return
+
+          await this.applicationRepository.updateApplicationStage(stage.id, {
+            exit_time: new Date(),
+          })
+        }),
+      )
+
+      await this.applicationRepository.addApplicationStage(
+        application.application_id,
+        {
+          application_id: application.application_id,
+          entry_time: new Date(),
+          user_id: application.user_id,
+          stage:
+            application.application_type === ApplicationPurchaseType.INSTALLMENT
+              ? InstallmentApplicationStage.OfferLetter
+              : MortgageApplicationStage.DecisionInPrinciple,
+        },
+      )
+
+      return updatedDip
     })
-
-    return updatedDip
   }
 
   async userDipResponse(

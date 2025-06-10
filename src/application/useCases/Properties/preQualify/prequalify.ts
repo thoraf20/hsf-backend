@@ -300,33 +300,6 @@ export class preQualifyService {
           dip_status: DIPStatus.AwaitingLenderAction,
           documents_status: DipDocumentReviewStatus.NotUploaded,
         })
-
-        const preQualifierStage = application.stages.find(
-          (stage) =>
-            stage.stage === InstallmentApplicationStage.PreQualification ||
-            stage.stage === MortgageApplicationStage.PreQualification,
-        )
-
-        if (preQualifierStage) {
-          await this.applicationRepository.updateApplicationStage(
-            preQualifierStage.id,
-            { exit_time: new Date() },
-          )
-        }
-
-        await this.applicationRepository.addApplicationStage(
-          application.application_id,
-          {
-            application_id: application.application_id,
-            entry_time: new Date(),
-            user_id: application.user_id,
-            stage:
-              application.application_type ===
-              ApplicationPurchaseType.INSTALLMENT
-                ? InstallmentApplicationStage.OfferLetter
-                : MortgageApplicationStage.DecisionInPrinciple,
-          },
-        )
       }
 
       return eligibility
