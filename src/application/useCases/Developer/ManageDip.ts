@@ -241,29 +241,6 @@ export class ManageDipUseCase {
         dip_status: DIPStatus.AwaitingUserAction,
       })
 
-      await Promise.all(
-        application.stages?.map(async (stage) => {
-          if (stage.exit_time) return
-
-          await this.applicationRepository.updateApplicationStage(stage.id, {
-            exit_time: new Date(),
-          })
-        }),
-      )
-
-      await this.applicationRepository.addApplicationStage(
-        application.application_id,
-        {
-          application_id: application.application_id,
-          entry_time: new Date(),
-          user_id: application.user_id,
-          stage:
-            application.application_type === ApplicationPurchaseType.INSTALLMENT
-              ? InstallmentApplicationStage.OfferLetter
-              : MortgageApplicationStage.DecisionInPrinciple,
-        },
-      )
-
       return updatedDip
     })
   }

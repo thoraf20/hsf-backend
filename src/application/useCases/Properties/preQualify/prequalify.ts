@@ -24,16 +24,8 @@ import { getDeveloperClientView } from '@entities/Developer'
 import { getUserClientView } from '@entities/User'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
-import {
-  ApplicationPurchaseType,
-  DipDocumentReviewStatus,
-  DIPStatus,
-} from '@domain/enums/propertyEnum'
+import { DipDocumentReviewStatus, DIPStatus } from '@domain/enums/propertyEnum'
 import { runWithTransaction } from '@infrastructure/database/knex'
-import {
-  InstallmentApplicationStage,
-  MortgageApplicationStage,
-} from '@entities/Application'
 
 export class preQualifyService {
   private readonly prequalify: IPreQualify
