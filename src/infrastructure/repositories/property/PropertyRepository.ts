@@ -156,11 +156,7 @@ export class PropertyRepository implements IPropertyRepository {
         'developers_profile.organization_id',
         'properties.organization_id',
       )
-
-    // Apply filters using the useFilter function
     let dataQuery = this.useFilter(baseQuery.clone(), filters, 'properties.')
-
-    // Select the necessary fields
     dataQuery = dataQuery.select(
       [
         'properties.*',
@@ -191,17 +187,12 @@ export class PropertyRepository implements IPropertyRepository {
             `),
       ].filter(Boolean),
     )
-
-    // Group by property id.
     dataQuery = dataQuery.groupBy(
       'properties.id',
       'organizations.id',
       'developers_profile.profile_id',
     )
-    // Order the results
     dataQuery = dataQuery.orderBy('properties.id', 'desc')
-
-    // Apply pagination
     const paginationResult = await applyPagination<Properties>(
       dataQuery,
       filters,
