@@ -1077,50 +1077,49 @@ export class ApplicationService {
           currentStageType.stage_id,
         )
 
+      if (
+        currentStage.name ===
+          ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
+        updatedApproval.approval_status === ReviewRequestApprovalStatus.Approved
+      ) {
+        await this.purchaseRepository.updateEscrowStatus(
+          application.escrow_status_id,
+          {
+            escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
+          },
+        )
+      }
+
+      if (
+        requestStageTypes.at(-1).id === approval.review_request_stage_type_id
+      ) {
+        await this.reviewRequestRepository.updateReviewRequest(
+          approval.request_id,
+          {
+            status: input.confirm_attendance
+              ? ReviewRequestStatus.Approved
+              : ReviewRequestStatus.Rejected,
+          },
+        )
+
+        await this.purchaseRepository.confirmPropertyEscrowMeeting(
+          application.escrow_status_id,
+          input.confirm_attendance
+            ? EscrowMeetingStatus.CONFIRMED
+            : EscrowMeetingStatus.DECLINED,
+        )
+        return updatedApproval
+      }
+
       const nextStageType = requestStageTypes.find(
         (type) => type.stage_order > currentStageType.stage_order,
       )
 
-      const nextStage =
-        await this.reviewRequestRepository.getReviewRequestStageByID(
-          nextStageType.stage_id,
-        )
-
-      return runWithTransaction(async () => {
-        if (
-          currentStage.name ===
-            ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
-          updatedApproval.approval_status ===
-            ReviewRequestApprovalStatus.Approved
-        ) {
-          await this.purchaseRepository.updateEscrowStatus(
-            application.escrow_status_id,
-            {
-              escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
-            },
+      if (nextStageType) {
+        const nextStage =
+          await this.reviewRequestRepository.getReviewRequestStageByID(
+            nextStageType.stage_id,
           )
-        }
-
-        if (
-          requestStageTypes.at(-1).id === approval.review_request_stage_type_id
-        ) {
-          await this.reviewRequestRepository.updateReviewRequest(
-            approval.request_id,
-            {
-              status: input.confirm_attendance
-                ? ReviewRequestStatus.Approved
-                : ReviewRequestStatus.Rejected,
-            },
-          )
-
-          await this.purchaseRepository.confirmPropertyEscrowMeeting(
-            application.escrow_status_id,
-            input.confirm_attendance
-              ? EscrowMeetingStatus.CONFIRMED
-              : EscrowMeetingStatus.DECLINED,
-          )
-          return updatedApproval
-        }
 
         let organizationId: string | null = null
         let approverId: string | null = null
@@ -1143,9 +1142,9 @@ export class ApplicationService {
           organization_id: organizationId,
           approval_id: approverId,
         })
+      }
 
-        return updatedApproval
-      })
+      return updatedApproval
     })
   }
 
