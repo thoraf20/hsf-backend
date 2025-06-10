@@ -2401,7 +2401,7 @@ export class ApplicationService {
 
         await this.applicationRepository.updateApplication({
           application_id: application.application_id,
-          condition_precedent_id: conditionPrecedent.application_id,
+          condition_precedent_id: conditionPrecedent.id,
         })
 
         await Promise.all(
