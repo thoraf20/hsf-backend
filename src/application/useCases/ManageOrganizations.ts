@@ -1,15 +1,24 @@
 // HSF-Backend-New/src/application/useCases/ManageOrganizations.ts
 import { Organization } from '@domain/entities/Organization'
 import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
-import { OrganizationType } from '@domain/enums/organizationEnum'
+import {
+  OrganizationMemberStatus,
+  OrganizationStatus,
+  OrganizationType,
+} from '@domain/enums/organizationEnum'
 import {
   ADMIN_LEVEL_ROLES,
   DEVELOPER_COMPANY_ROLES,
   HSF_INTERNAL_ROLES,
+  isDeveloperCompanyRole,
+  isHsfInternalRole,
+  isLenderInstitutionRole,
   LENDER_INSTITUTION_ROLES,
   Role,
 } from '@domain/enums/rolesEmun'
 import { AddressType, UserStatus } from '@domain/enums/userEum'
+import emailTemplates from '@infrastructure/email/template/constant'
+
 import { IOrganizationRepository } from '@domain/interfaces/IOrganizationRepository'
 import { getUserClientView, User } from '@entities/User' // Import User
 import { IAddressRepository } from '@interfaces/IAddressRepository'
@@ -24,10 +33,12 @@ import { generateRandomPassword } from '@shared/utils/helpers'
 import emailHelper from '@infrastructure/email/template/constant' // Import email helper
 import { AuthInfo, isHigherRoleLevel } from '@shared/utils/permission-policy'
 import {
+  CreateEmployeeInput,
   CreateHSFAdminInput,
   CreateLenderInput,
   LenderFilters,
   ResetOrgOwnerPasswordInput,
+  SuspendOrgInput,
 } from '@validators/organizationValidator'
 import { StatusCodes } from 'http-status-codes'
 import { UserFilters } from '@validators/userValidator'
@@ -41,6 +52,9 @@ import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import template from '@infrastructure/email/template/constant'
 import { runWithTransaction } from '@infrastructure/database/knex'
+import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
+import { UserActivityKind } from '@domain/enums/UserActivityKind'
+import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
 
 export class ManageOrganizations {
   constructor(
@@ -51,6 +65,7 @@ export class ManageOrganizations {
     private readonly developerRepository: IDeveloperRepository,
     private readonly propertyRepository: IPropertyRepository,
     private readonly documentRepository: IDocumentRepository,
+    private readonly userActivityLogRepository: IUserActivityLogRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -66,10 +81,6 @@ export class ManageOrganizations {
     organization: Partial<Organization>,
   ): Promise<Organization | null> {
     return this.organizationRepository.updateOrganization(id, organization)
-  }
-
-  async deleteOrganization(id: string): Promise<void> {
-    return this.organizationRepository.deleteOrganization(id)
   }
 
   async addUserToOrganization(
@@ -253,12 +264,21 @@ export class ManageOrganizations {
         name: data.lender_name,
         owner_user_id: lenderOwner.id,
         type: OrganizationType.LENDER_INSTITUTION,
+        status: data.is_active
+          ? OrganizationStatus.ACTIVE
+          : OrganizationStatus.INACTIVE,
+        address: data.lender_address_line,
+        state: data.lender_state,
+        city: data.lender_city,
+        logo_url: data.lender_logo,
+        org_reg_no: data.lender_registration_number,
       })
 
       await this.organizationRepository.addUserToOrganization({
         role_id: lenderOwner.role_id,
         organization_id: lenderOrg.id,
         user_id: lenderOwner.id,
+        status: OrganizationMemberStatus.ACTIVE,
       })
 
       lenderOwner.membership =
@@ -382,6 +402,7 @@ export class ManageOrganizations {
           organization_id: auth.currentOrganizationId,
           role_id: newAdminRole.id,
           user_id: newAdminUser.id,
+          status: OrganizationMemberStatus.ACTIVE,
         })
 
       return {
@@ -477,6 +498,7 @@ export class ManageOrganizations {
           organization_id: auth.currentOrganizationId,
           role_id: newAdminRole.id,
           user_id: newAdminUser.id,
+          status: OrganizationMemberStatus.ACTIVE,
         })
 
       return {
@@ -641,6 +663,15 @@ export class ManageOrganizations {
           name: data.company_name,
           owner_user_id: developerOwner.id,
           type: OrganizationType.DEVELOPER_COMPANY,
+          status: data.is_active
+            ? OrganizationStatus.ACTIVE
+            : OrganizationStatus.INACTIVE,
+          org_reg_no: data.company_registration_number,
+          city: data.city,
+          state: data.state,
+          logo_url: data.company_image,
+          address: data.office_address,
+          contact_email: data.company_email,
         },
       )
 
@@ -660,6 +691,7 @@ export class ManageOrganizations {
         role_id: developerOwner.role_id,
         organization_id: developerOrg.id,
         user_id: developerOwner.id,
+        status: OrganizationMemberStatus.ACTIVE,
       })
 
       const developerProfile =
@@ -925,5 +957,271 @@ export class ManageOrganizations {
     )
 
     return getUserClientView(user)
+  }
+
+  async suspendOrganization(
+    id: string,
+    input: SuspendOrgInput,
+  ): Promise<Organization | null> {
+    const organization =
+      await this.organizationRepository.getOrganizationById(id)
+
+    if (!organization) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    if (
+      organization.status === OrganizationStatus.SUSPENDED ||
+      organization.status === OrganizationStatus.DELETED
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `Organization is already ${organization.status.toLowerCase()}`,
+      )
+    }
+
+    return runWithTransaction(async () => {
+      const updatedOrganization =
+        await this.organizationRepository.updateOrganization(id, {
+          status: OrganizationStatus.SUSPENDED,
+          suspension_date: new Date(),
+        })
+
+      const orgMembers =
+        await this.organizationRepository.getOrganizationMembers(id, {
+          page_number: 1,
+          result_per_page: Number.MAX_SAFE_INTEGER,
+        })
+
+      await Promise.all(
+        orgMembers.result.map((member) =>
+          this.userRepository.update(member.user_id, {
+            status: UserStatus.Suspended,
+            supended_at: new Date(),
+          }),
+        ),
+      )
+
+      const ipAddress = getIpAddress()
+      const userAgent = getUserAgent()
+      await this.userActivityLogRepository.create({
+        activity_type: UserActivityKind.ORGANIZAION_SUSPENDED,
+        title: `Organization "${organization.name}" Suspended`,
+        description: input.reason,
+        performed_at: new Date(),
+        organization_id: organization.id,
+        ip_address: ipAddress,
+        user_agent: userAgent,
+      })
+
+      return updatedOrganization
+    })
+  }
+
+  async activateOrganization(id: string): Promise<Organization | null> {
+    const organization =
+      await this.organizationRepository.getOrganizationById(id)
+
+    if (!organization) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    if (organization.status === OrganizationStatus.ACTIVE) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Organization is already active',
+      )
+    }
+
+    if (organization.status === OrganizationStatus.DELETED) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Cannot activate a deleted organization',
+      )
+    }
+
+    return runWithTransaction(async () => {
+      const updatedOrganization =
+        await this.organizationRepository.updateOrganization(id, {
+          status: OrganizationStatus.ACTIVE,
+        })
+
+      const orgMembers =
+        await this.organizationRepository.getOrganizationMembers(id, {
+          page_number: 1,
+          result_per_page: Number.MAX_SAFE_INTEGER,
+        })
+
+      await Promise.all(
+        orgMembers.result.map((member) =>
+          this.userRepository.update(member.user_id, {
+            status: UserStatus.Deleted,
+            deleted_at: new Date(),
+          }),
+        ),
+      )
+
+      if (
+        updatedOrganization &&
+        updatedOrganization.contact_email &&
+        updatedOrganization.name
+      ) {
+        emailTemplates.sendOrganizationActivatedEmail(
+          updatedOrganization.contact_email,
+          updatedOrganization.name,
+        )
+      }
+
+      return updatedOrganization
+    })
+  }
+
+  async deleteOrganization(id: string) {
+    const organization =
+      await this.organizationRepository.getOrganizationById(id)
+
+    if (!organization) {
+      throw new Error('Organization not found')
+    }
+
+    if (organization.status === OrganizationStatus.DELETED) {
+      throw new Error(
+        `Organization is already ${organization.status.toLowerCase()}`,
+      )
+    }
+
+    return runWithTransaction(async () => {
+      // Potentially add checks here to ensure no active resources are linked to the organization
+      // e.g., active properties, active users, etc.
+
+      const updateOrg = await this.organizationRepository.updateOrganization(
+        id,
+        {
+          status: OrganizationStatus.DELETED,
+          deletion_date: new Date(),
+        },
+      )
+
+      const orgMembers =
+        await this.organizationRepository.getOrganizationMembers(id, {
+          page_number: 1,
+          result_per_page: Number.MAX_SAFE_INTEGER,
+        })
+
+      await Promise.all(
+        orgMembers.result.map((member) =>
+          this.userRepository.update(member.user_id, {
+            status: UserStatus.Deleted,
+            deleted_at: new Date(),
+          }),
+        ),
+      )
+
+      if (organization.contact_email && organization.name) {
+        emailTemplates.sendOrganizationDeletedEmail(
+          organization.contact_email,
+          organization.name,
+        )
+      }
+
+      return updateOrg
+    })
+  }
+
+  async createEmployee(authInfo: AuthInfo, input: CreateEmployeeInput) {
+    const orgMemberRole = await this.userRepository.getRoleById(input.role_id)
+    if (!orgMemberRole) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Role not found')
+    }
+
+    let checkOrgRole =
+      authInfo.organizationType === OrganizationType.HSF_INTERNAL
+        ? isHsfInternalRole
+        : authInfo.organizationType === OrganizationType.DEVELOPER_COMPANY
+          ? isDeveloperCompanyRole
+          : authInfo.organizationType === OrganizationType.LENDER_INSTITUTION
+            ? isLenderInstitutionRole
+            : null
+
+    if (!(checkOrgRole && checkOrgRole(orgMemberRole.name as Role))) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Role ${orgMemberRole.name} not available for this organization`,
+      )
+    }
+
+    const [existingEmailUser, existingPhoneUser] = await Promise.all([
+      this.userRepository.findByEmail(input.email),
+      this.userRepository.findByPhone(input.phone_number),
+    ])
+
+    if (existingEmailUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Email not available',
+      )
+    }
+
+    if (existingPhoneUser) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        'Phone number not available',
+      )
+    }
+
+    return runWithTransaction(async () => {
+      const generatedPass = generateRandomPassword()
+      const hashedPassword =
+        await this.userRepository.hashedPassword(generatedPass)
+
+      const memberUser = await this.userRepository.create({
+        first_name: input.first_name,
+        last_name: input.last_name,
+        email: input.email,
+        status: UserStatus.Pending,
+        password: hashedPassword,
+        phone_number: input.phone_number,
+        is_admin: true,
+        force_password_reset: true,
+        is_mfa_enabled: true,
+        role_id: orgMemberRole.id,
+      })
+
+      await this.organizationRepository.addUserToOrganization({
+        role_id: orgMemberRole.id,
+        organization_id: authInfo.currentOrganizationId,
+        user_id: memberUser.id,
+        status: OrganizationMemberStatus.ACTIVE,
+      })
+
+      memberUser.membership =
+        await this.organizationRepository.getOrgenizationMemberByUserId(
+          memberUser.id,
+        )
+
+      const fullName = `${memberUser.first_name} ${memberUser.last_name}`
+
+      emailHelper.InvitationEmail(
+        memberUser.email,
+        fullName,
+        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        fullName,
+        generatedPass,
+      )
+
+      return {
+        ...getUserClientView({
+          ...memberUser,
+          role: orgMemberRole.name as Role,
+        }),
+        password: generatedPass,
+      }
+    })
   }
 }

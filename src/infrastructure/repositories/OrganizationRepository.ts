@@ -2,15 +2,15 @@
 import { Organization } from '@domain/entities/Organization'
 import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
 import { IOrganizationRepository } from '@domain/interfaces/IOrganizationRepository'
-import db from '@infrastructure/database/knex'
-import paginate from '@infrastructure/database/paginator'
+import db, { createUnion } from '@infrastructure/database/knex'
 import { User } from '@entities/User'
-import {
-  SeekPaginationOption,
-  SeekPaginationResult,
-} from '@shared/types/paginate'
+import { SeekPaginationResult } from '@shared/types/paginate'
 import { exculedPasswordUserInfo } from '@shared/respositoryValues'
 import { OrganizationType } from '@domain/enums/organizationEnum'
+import { OrganizationMemberFilter } from '@validators/organizationValidator'
+import { Knex } from 'knex'
+import { SearchType } from '@shared/types/repoTypes'
+import { applyPagination } from '@shared/utils/paginate'
 
 export class OrganizationRepository implements IOrganizationRepository {
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -72,9 +72,26 @@ export class OrganizationRepository implements IOrganizationRepository {
       .delete()
   }
 
+  useOrgMemberFilter(
+    q: Knex.QueryBuilder<any, any[]>,
+    filters: OrganizationMemberFilter,
+  ) {
+    const add = createUnion(SearchType.EXCLUSIVE)
+
+    if (filters.status) {
+      q = add(q).whereRaw(`uom.status = '${filters.status}'`)
+    }
+
+    if (filters.organization_id) {
+      q = add(q).whereRaw(`uom.organization_id = '${filters.organization_id}'`)
+    }
+
+    return q
+  }
+
   async getOrganizationMembers(
     organizationId: string,
-    paginateOption?: SeekPaginationOption,
+    filters: OrganizationMemberFilter,
   ): Promise<
     SeekPaginationResult<
       UserOrganizationMember & {
@@ -83,7 +100,7 @@ export class OrganizationRepository implements IOrganizationRepository {
       }
     >
   > {
-    const query = db('user_organization_memberships as uom')
+    let query = db('user_organization_memberships as uom')
       .where('uom.organization_id', organizationId)
       .join('users as u', 'uom.user_id', 'u.id')
       .join('roles as r', 'uom.role_id', 'r.id')
@@ -96,7 +113,12 @@ export class OrganizationRepository implements IOrganizationRepository {
       )
       .groupBy('uom.id', 'r.id', 'u.id')
 
-    return paginate(query, paginateOption as any) // Cast to any due to generic paginate type
+    query = this.useOrgMemberFilter(query, filters).orderBy(
+      'uom.created_at',
+      'asc',
+    )
+
+    return applyPagination(query, filters)
   }
 
   async getOrgenizationMemberByUserId(userId: string): Promise<

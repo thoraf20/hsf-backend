@@ -52,6 +52,19 @@ preQualifierRoutes.get(
   }),
 )
 
+preQualifierRoutes.get(
+  '/:id/info',
+  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  validateRequest(preQualifierFiltersSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { id },
+    } = req
+    const response = await controller.getPreQualifyRequestById(id)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 preQualifierRoutes.post(
   '/request',
   requireRoles(Role.HOME_BUYER),
@@ -84,15 +97,6 @@ preQualifierRoutes.get(
   }),
 )
 
-preQualifierRoutes.get(
-  '/agents/fetch-all',
-  requireRoles([Role.SUPER_ADMIN]),
-  asyncMiddleware(async (req, res) => {
-    const { body } = req
-    const prequalify = await controller.verification(body)
-    res.status(prequalify.statusCode).json(prequalify)
-  }),
-)
 preQualifierRoutes.get(
   '/status',
   validateRequestQuery(preQualifierStatusQuerySchema),

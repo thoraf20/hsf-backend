@@ -147,13 +147,11 @@ export class PaymentUseCase {
         if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
           throw new ApplicationCustomError(
             StatusCodes.CONFLICT,
-            'Payment intent already completed',
+            `It appears you have already completed a payment for ${input.payment_for}.  No further action is required.`,
           )
         }
       }
-    } else if (
-      input.payment_for === MortgagePaymentType.DECISION_IN_PRINCIPLE
-    ) {
+    } else if (input.payment_for === MortgagePaymentType.DUE_DILIGENT) {
       const dip = await this.mortgageRepository.getDipByEligibilityID(
         application.eligibility_id,
       )
@@ -180,7 +178,7 @@ export class PaymentUseCase {
         if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
           throw new ApplicationCustomError(
             StatusCodes.CONFLICT,
-            'Payment intent already completed',
+            `It appears you have already completed a payment for ${input.payment_for}.  No further action is required.`,
           )
         }
       }
@@ -226,7 +224,7 @@ export class PaymentUseCase {
       })
     }
 
-    if (payment.payment_type === MortgagePaymentType.DECISION_IN_PRINCIPLE) {
+    if (payment.payment_type === MortgagePaymentType.DUE_DILIGENT) {
       await this.mortgageRepository.updateDipById({
         dip_id: (application as Application & { dip: DIP }).dip.dip_id,
         payment_transaction_id: payment.payment_id,
@@ -288,10 +286,17 @@ export class PaymentUseCase {
       break
     }
 
-    if (!intent) {
+    if (!intent && payment.payment_status === PaymentStatus.PENDING) {
       throw new ApplicationCustomError(
         StatusCodes.SERVICE_UNAVAILABLE,
         'We are unable to process your transaction at the moment',
+      )
+    }
+
+    if (payment.payment_status === PaymentStatus.SUCCESS) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `It appears you have already completed a payment for ${input.payment_for}.  No further action is required.`,
       )
     }
 

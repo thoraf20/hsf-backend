@@ -4,7 +4,7 @@ import {
   OfferLetter,
   PropertyClosing,
 } from '@entities/PropertyPurchase'
-import { EscrowAttendee, EscrowInformation } from '@entities/PurchasePayment'
+import { EscrowInformation } from '@entities/PurchasePayment'
 import db from '@infrastructure/database/knex'
 import { IPurchaseProperty } from '@interfaces/IPropertyPurchaseRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
@@ -161,11 +161,11 @@ export class PropertyPurchaseRepository implements IPurchaseProperty {
         .insert(input)
         .returning('*')
 
-      await tx<EscrowAttendee>('escrow_attendee')
-        .insert(
-          attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
-        )
-        .returning('*')
+      // await tx<EscrowAttendee>('escrow_attendee')
+      //   .insert(
+      //     attendee.map((id) => ({ escrow_id: escrow.escrow_id, user_id: id })),
+      //   )
+      //   .returning('*')
       return new EscrowInformation(escrow) ? escrow : null
     })
   }

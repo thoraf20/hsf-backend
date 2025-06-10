@@ -5,6 +5,8 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
 import { RedisClient } from '@infrastructure/cache/redisClient'
+import emailTemplates from '@infrastructure/email/template/constant'
+
 import { v4 as uuidv4 } from 'uuid'
 import { changePassword } from '@shared/types/userType'
 import { Role } from '@routes/index.t'
@@ -366,6 +368,8 @@ export class UserService {
           'Invalid otp code',
         )
       }
+
+      return null
     }
 
     if (flow === MfaFlow.RecoveryCode) {
@@ -397,10 +401,18 @@ export class UserService {
           used: true,
         })
       }
+
+      emailTemplates.recoveryCodeNotificationEmail(
+        user.email,
+        `${user.first_name} ${user.last_name}`,
+      )
       return usedCode
     }
 
-    return null
+    throw new ApplicationCustomError(
+      StatusCodes.FORBIDDEN,
+      `Invalid OTP flow ${flow}`,
+    )
   }
 
   async completeChangePassword(

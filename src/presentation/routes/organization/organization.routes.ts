@@ -12,18 +12,21 @@ import {
 import {
   All,
   isOrganizationUser,
+  Not,
   requireOrganizationRole,
   requireOrganizationType,
   requireRoleLevel,
 } from '@shared/utils/permission-policy'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import {
+  createEmployeeSchema,
   createHsfAdminSchema,
   createLenderAdminSchema,
   getLenderFilterSchema,
   getOrgMemberRoleFilterSchema,
   hsfResetOrgMemberPasswordSchema,
   resetOrgMemberPasswordSchema,
+  suspendOrgSchema,
 } from '@validators/organizationValidator'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { createDeveloperSchema } from '@validators/developerValidator'
@@ -190,6 +193,18 @@ router.get(
   }),
 )
 
+router.post(
+  '/members',
+  authenticate,
+  authorize(Not(requireOrganizationType(OrganizationType.HSF_INTERNAL))),
+  validateRequest(createEmployeeSchema),
+  asyncMiddleware(async (req, res) => {
+    const { authInfo, body } = req
+    const response = await organizationController.createEmployee(authInfo, body)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 router.get(
   '/:organization_id/members',
   authenticate,
@@ -288,6 +303,52 @@ router.patch(
 
     res.status(response.statusCode).json(response)
   }),
+)
+
+router.patch(
+  '/:id/activate',
+  authenticate,
+  asyncMiddleware(async (req, res) => {
+    const response = await organizationController.activateOrganization(
+      req.params.id,
+    )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+router.patch(
+  '/:id/suspend',
+  authorize(
+    All(
+      requireOrganizationType(OrganizationType.HSF_INTERNAL),
+      requireOrganizationRole([Role.HSF_ADMIN, Role.SUPER_ADMIN]),
+    ),
+  ),
+  validateRequest(suspendOrgSchema),
+  async (req, res) => {
+    const {
+      params: { id },
+      body,
+    } = req
+    const response = await organizationController.suspendOrganization(id, body)
+    res.status(response.statusCode).json(response)
+  },
+)
+
+router.delete(
+  '/:id',
+  authorize(
+    All(
+      requireOrganizationType(OrganizationType.HSF_INTERNAL),
+      requireOrganizationRole([Role.HSF_ADMIN, Role.SUPER_ADMIN]),
+    ),
+  ),
+  async (req, res) => {
+    const response = await organizationController.deleteOrganization(
+      req.params.id,
+    )
+    res.status(response.statusCode).json(response)
+  },
 )
 
 router.get(

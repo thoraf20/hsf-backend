@@ -4,6 +4,7 @@ import {
 } from '@domain/enums/propertyEnum'
 import { DIP } from './Mortage'
 import { BaseEntity } from '.'
+import { ConditionPrecedent } from './ConditionPrecedent'
 
 export enum OutrightApplicationStage {
   OfferLetter = 'Offer Letter',
@@ -76,6 +77,8 @@ export class Application {
   dip?: DIP
   document_upload_id?: string
   property_closing_id?: string
+  condition_precedent_id?: string
+  condition_precedent?: ConditionPrecedent
   loan_offer_id?: string
   developer_organization_id: string
   dip_id?: string

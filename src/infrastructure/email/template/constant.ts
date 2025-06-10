@@ -451,4 +451,99 @@ export default {
       )
     }
   },
+
+  recoveryCodeNotificationEmail(email: string, userName: string) {
+    let subject = `Recovery Code Used`
+    let text = `Notification that your recovery code was used`
+    let html = templates.recoveryCodeNotification.replace(
+      `{{userName}}`,
+      userName,
+    )
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  sendOrganizationSuspendedEmail(email: string, organizationName: string) {
+    let subject = `Organization Suspended`
+    let text = `Your organization has been suspended`
+    let html = templates.organizationSuspended.replace(
+      `{{organizationName}}`,
+      organizationName,
+    )
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(
+        `Organization suspended email was sent successfully to ${email}`,
+      )
+    } catch (error) {
+      logger.error(
+        `Unable to send organization suspended email to ${email}: ${error.message}`,
+      )
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  sendOrganizationDeletedEmail(email: string, organizationName: string) {
+    let subject = `Organization Deleted`
+    let text = `Your organization has been deleted`
+    let html = templates.organizationDeleted.replace(
+      `{{organizationName}}`,
+      organizationName,
+    )
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(
+        `Organization deleted email was sent successfully to ${email}`,
+      )
+    } catch (error) {
+      logger.error(
+        `Unable to send organization deleted email to ${email}: ${error.message}`,
+      )
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  sendOrganizationActivatedEmail(email: string, organizationName: string) {
+    let subject = `Organization Activated`
+    let text = `Your organization has been activated`
+    let html = templates.organizationActivated.replace(
+      `{{organizationName}}`,
+      organizationName,
+    )
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(
+        `Organization activated email was sent successfully to ${email}`,
+      )
+    } catch (error) {
+      logger.error(
+        `Unable to send organization activated email to ${email}: ${error.message}`,
+      )
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

@@ -3,10 +3,8 @@ import { Organization } from '@domain/entities/Organization'
 import { UserOrganizationMember } from '@domain/entities/UserOrganizationMember'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { User } from '@entities/User'
-import {
-  SeekPaginationOption,
-  SeekPaginationResult,
-} from '@shared/types/paginate'
+import { SeekPaginationResult } from '@shared/types/paginate'
+import { OrganizationMemberFilter } from '@validators/organizationValidator'
 
 export interface IOrganizationRepository {
   createOrganization(organization: Organization): Promise<Organization>
@@ -30,7 +28,7 @@ export interface IOrganizationRepository {
 
   getOrganizationMembers(
     organizationId: string,
-    paginate?: SeekPaginationOption,
+    filter: OrganizationMemberFilter,
   ): Promise<
     SeekPaginationResult<
       UserOrganizationMember & {

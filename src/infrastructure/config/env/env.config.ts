@@ -51,7 +51,7 @@ export const envSchema = z.object({
   PLATFORM_NAME: z.string().nonempty(),
   ELASTICSEARCH_NODE: z.string().nonempty(),
   ELASTICSEARCH_API_KEY: z.string().nonempty(),
-  ELASTICSEARCH_INDEX : z.string().nonempty(),
+  ELASTICSEARCH_INDEX: z.string().nonempty(),
 })
 
 export const formatErrors = (

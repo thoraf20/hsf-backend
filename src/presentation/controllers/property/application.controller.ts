@@ -243,7 +243,7 @@ export class ApplicationController {
         input,
       )
 
-    return createResponse(StatusCodes.FORBIDDEN, '', {
+    return createResponse(StatusCodes.OK, 'Escrow Meeting Accepted', {
       escrow_meeting: escrowMeeting,
     })
   }
@@ -589,6 +589,19 @@ export class ApplicationController {
       StatusCodes.OK,
       `Signed Loan offer letter submitted successfully`,
       loanOffer,
+    )
+  }
+
+  async getApplicationStages(applicationId: string, authInfo: AuthInfo) {
+    const stages = await this.applicationService.getApplicationStages(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application stages retrieved successfully',
+      stages,
     )
   }
 }

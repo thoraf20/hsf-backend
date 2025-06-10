@@ -4,6 +4,7 @@ export enum ReviewRequestTypeKind {
   OfferLetterOutright = 'Offer Letter Outright',
   EscrowMeetingRequest = 'Escrow Metting Request',
   DipDocumentReview = 'DIP Document Review',
+  ConditionPrecedent = 'Condition Precedent',
 }
 
 export enum ReviewRequestStageKind {
@@ -16,6 +17,9 @@ export enum ReviewRequestStageKind {
   DIPHsfDocumentReview = 'DIP Hsf Document Review',
   DIPDeveloperDocumentReview = 'DIP Developer Document Review',
   DIPLenderDocumentReview = 'DIP Lender Document Review',
+
+  HSFConditionPrecedentReview = 'HSF Condition Precedent Review',
+  LenderConditionPrecendentReview = 'Lender Condition Precendent Review',
 }
 
 export enum ReviewRequestStatus {

@@ -10,6 +10,7 @@ export class UserActivityLog extends BaseEntity {
   user_agent?: string
   metadata?: any
   identifier?: string
+  organization_id?: string
 
   constructor(data: Partial<UserActivityLog>) {
     super()

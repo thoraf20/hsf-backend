@@ -22,6 +22,7 @@ import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
+import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 
 export class UserController {
   private manageOrganizations: ManageOrganizations
@@ -38,6 +39,7 @@ export class UserController {
       new DeveloperRespository(),
       new PropertyRepository(),
       new DocumentRepository(),
+      new UserActivityLogRepository(),
     )
   }
 

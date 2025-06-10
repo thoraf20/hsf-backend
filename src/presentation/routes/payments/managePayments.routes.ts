@@ -34,4 +34,18 @@ managePaymentRoutes.get(
   }),
 )
 
+managePaymentRoutes.get(
+  '/payments/:paymentId',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { paymentId },
+    } = req
+
+    console.log({ paymentId })
+
+    const response = await controller.getById(paymentId)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
 export default managePaymentRoutes

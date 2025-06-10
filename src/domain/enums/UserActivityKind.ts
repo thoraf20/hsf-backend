@@ -21,4 +21,5 @@ export enum UserActivityKind {
   UNBAN_ACCOUNT = 'unban_account',
   PROPERTY_APPROVAL = 'property_approval',
   PROPERTY_GO_LIVE = 'property-go-live',
+  ORGANIZAION_SUSPENDED = 'organization_suspended',
 }

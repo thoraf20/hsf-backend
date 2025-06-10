@@ -25,7 +25,12 @@ export class PaymentRepostory implements IPaymentRepository {
   getById(id: string): Promise<Payment & { payer?: User }> {
     return db('payments as p')
       .leftJoin('users as u', 'u.id', 'p.user_id')
-      .select('p.*', db.raw('row_to_json(u) as payer'))
+      .leftJoin('roles as r', 'u.role_id', 'r.id')
+      .select(
+        'p.*',
+        db.raw('row_to_json(u) as payer'),
+        db.raw('row_to_json(r) as role'),
+      )
       .where({ payment_id: id })
       .first()
   }

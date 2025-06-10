@@ -1,3 +1,4 @@
+import { ApplicationCustomError } from '@middleware/errors/customError'
 import {
   ApiResponse,
   createResponse,
@@ -42,9 +43,22 @@ export class preQualifyController {
     const preQualifier = await this.service.getAllPreQualifierToBeapproved()
     return createResponse(StatusCodes.OK, `Success`, preQualifier)
   }
-  public async getAllPreQualifierById(id: string): Promise<ApiResponse<any>> {
-    const preQualifier = await this.service.getAllPreQualifierById(id)
-    return createResponse(StatusCodes.OK, `Success`, preQualifier)
+
+  public async getPreQualifyRequestById(id: string): Promise<ApiResponse<any>> {
+    const preQualifier = await this.service.getPreQualifyRequestById(id)
+
+    if (!preQualifier) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Prequalifier not found',
+      )
+    }
+
+    return createResponse(
+      StatusCodes.OK,
+      `Prequalifier retrived successfully`,
+      preQualifier,
+    )
   }
 
   public async getAllPreQualifiers(
