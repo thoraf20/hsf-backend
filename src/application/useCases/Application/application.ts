@@ -1047,45 +1047,36 @@ export class ApplicationService {
       )
     }
 
-    const updatedApproval =
-      await this.reviewRequestRepository.updateReviewRequestApproval(
-        approval.id,
-        {
-          approval_status: input.confirm_attendance
-            ? ReviewRequestApprovalStatus.Approved
-            : ReviewRequestApprovalStatus.Rejected,
-        },
-      )
-
-    const currentReviewTypeStage =
-      await this.reviewRequestRepository.getReviewRequestTypeStageByID(
-        approval.review_request_stage_type_id,
-      )
-
-    const requestStageTypes =
-      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
-        currentReviewTypeStage.request_type_id,
-      )
-
-    const currentStageType = requestStageTypes.find(
-      (type) => type.id === approval.review_request_stage_type_id,
-    )
-
-    const currentStage =
-      await this.reviewRequestRepository.getReviewRequestStageByID(
-        currentStageType.stage_id,
-      )
-
-    const nextStageType = requestStageTypes.find(
-      (type) => type.stage_order > currentStageType.stage_order,
-    )
-
-    const nextStage =
-      await this.reviewRequestRepository.getReviewRequestStageByID(
-        nextStageType.stage_id,
-      )
-
     return runWithTransaction(async () => {
+      const updatedApproval =
+        await this.reviewRequestRepository.updateReviewRequestApproval(
+          approval.id,
+          {
+            approval_status: input.confirm_attendance
+              ? ReviewRequestApprovalStatus.Approved
+              : ReviewRequestApprovalStatus.Rejected,
+          },
+        )
+
+      const currentReviewTypeStage =
+        await this.reviewRequestRepository.getReviewRequestTypeStageByID(
+          approval.review_request_stage_type_id,
+        )
+
+      const requestStageTypes =
+        await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+          currentReviewTypeStage.request_type_id,
+        )
+
+      const currentStageType = requestStageTypes.find(
+        (type) => type.id === approval.review_request_stage_type_id,
+      )
+
+      const currentStage =
+        await this.reviewRequestRepository.getReviewRequestStageByID(
+          currentStageType.stage_id,
+        )
+
       if (
         currentStage.name ===
           ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
@@ -1120,25 +1111,38 @@ export class ApplicationService {
         return updatedApproval
       }
 
-      let organizationId: string | null = null
-      let approverId: string | null = null
-      if (
-        nextStage.name === ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
-      ) {
-        approverId = application.user_id
-      } else if (
-        nextStage.name === ReviewRequestStageKind.DeveloperEscrowMeetingRespond
-      ) {
-        organizationId = application.developer_organization_id
-      }
+      const nextStageType = requestStageTypes.find(
+        (type) => type.stage_order > currentStageType.stage_order,
+      )
 
-      await this.reviewRequestRepository.createReviewRequestApproval({
-        request_id: approval.request_id,
-        review_request_stage_type_id: nextStageType.id,
-        approval_status: ReviewRequestApprovalStatus.Pending,
-        organization_id: organizationId,
-        approval_id: approverId,
-      })
+      if (nextStageType) {
+        const nextStage =
+          await this.reviewRequestRepository.getReviewRequestStageByID(
+            nextStageType.stage_id,
+          )
+
+        let organizationId: string | null = null
+        let approverId: string | null = null
+        if (
+          nextStage.name ===
+          ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
+        ) {
+          approverId = application.user_id
+        } else if (
+          nextStage.name ===
+          ReviewRequestStageKind.DeveloperEscrowMeetingRespond
+        ) {
+          organizationId = application.developer_organization_id
+        }
+
+        await this.reviewRequestRepository.createReviewRequestApproval({
+          request_id: approval.request_id,
+          review_request_stage_type_id: nextStageType.id,
+          approval_status: ReviewRequestApprovalStatus.Pending,
+          organization_id: organizationId,
+          approval_id: approverId,
+        })
+      }
 
       return updatedApproval
     })
