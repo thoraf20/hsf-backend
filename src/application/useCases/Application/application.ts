@@ -1047,100 +1047,105 @@ export class ApplicationService {
       )
     }
 
-    const updatedApproval =
-      await this.reviewRequestRepository.updateReviewRequestApproval(
-        approval.id,
-        {
-          approval_status: input.confirm_attendance
-            ? ReviewRequestApprovalStatus.Approved
-            : ReviewRequestApprovalStatus.Rejected,
-        },
-      )
-
-    const currentReviewTypeStage =
-      await this.reviewRequestRepository.getReviewRequestTypeStageByID(
-        approval.review_request_stage_type_id,
-      )
-
-    const requestStageTypes =
-      await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
-        currentReviewTypeStage.request_type_id,
-      )
-
-    const currentStageType = requestStageTypes.find(
-      (type) => type.id === approval.review_request_stage_type_id,
-    )
-
-    const currentStage =
-      await this.reviewRequestRepository.getReviewRequestStageByID(
-        currentStageType.stage_id,
-      )
-
-    const nextStageType = requestStageTypes.find(
-      (type) => type.stage_order > currentStageType.stage_order,
-    )
-
-    const nextStage =
-      await this.reviewRequestRepository.getReviewRequestStageByID(
-        nextStageType.stage_id,
-      )
-
     return runWithTransaction(async () => {
-      if (
-        currentStage.name ===
-          ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
-        updatedApproval.approval_status === ReviewRequestApprovalStatus.Approved
-      ) {
-        await this.purchaseRepository.updateEscrowStatus(
-          application.escrow_status_id,
+      const updatedApproval =
+        await this.reviewRequestRepository.updateReviewRequestApproval(
+          approval.id,
           {
-            escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
-          },
-        )
-      }
-
-      if (
-        requestStageTypes.at(-1).id === approval.review_request_stage_type_id
-      ) {
-        await this.reviewRequestRepository.updateReviewRequest(
-          approval.request_id,
-          {
-            status: input.confirm_attendance
-              ? ReviewRequestStatus.Approved
-              : ReviewRequestStatus.Rejected,
+            approval_status: input.confirm_attendance
+              ? ReviewRequestApprovalStatus.Approved
+              : ReviewRequestApprovalStatus.Rejected,
           },
         )
 
-        await this.purchaseRepository.confirmPropertyEscrowMeeting(
-          application.escrow_status_id,
-          input.confirm_attendance
-            ? EscrowMeetingStatus.CONFIRMED
-            : EscrowMeetingStatus.DECLINED,
+      const currentReviewTypeStage =
+        await this.reviewRequestRepository.getReviewRequestTypeStageByID(
+          approval.review_request_stage_type_id,
         )
+
+      const requestStageTypes =
+        await this.reviewRequestRepository.getReviewRequestTypeStagesByRequestTypeID(
+          currentReviewTypeStage.request_type_id,
+        )
+
+      const currentStageType = requestStageTypes.find(
+        (type) => type.id === approval.review_request_stage_type_id,
+      )
+
+      const currentStage =
+        await this.reviewRequestRepository.getReviewRequestStageByID(
+          currentStageType.stage_id,
+        )
+
+      const nextStageType = requestStageTypes.find(
+        (type) => type.stage_order > currentStageType.stage_order,
+      )
+
+      const nextStage =
+        await this.reviewRequestRepository.getReviewRequestStageByID(
+          nextStageType.stage_id,
+        )
+
+      return runWithTransaction(async () => {
+        if (
+          currentStage.name ===
+            ReviewRequestStageKind.DeveloperEscrowMeetingRespond &&
+          updatedApproval.approval_status ===
+            ReviewRequestApprovalStatus.Approved
+        ) {
+          await this.purchaseRepository.updateEscrowStatus(
+            application.escrow_status_id,
+            {
+              escrow_status: EscrowMeetingStatus.AWAITING_ACCEPTANCE,
+            },
+          )
+        }
+
+        if (
+          requestStageTypes.at(-1).id === approval.review_request_stage_type_id
+        ) {
+          await this.reviewRequestRepository.updateReviewRequest(
+            approval.request_id,
+            {
+              status: input.confirm_attendance
+                ? ReviewRequestStatus.Approved
+                : ReviewRequestStatus.Rejected,
+            },
+          )
+
+          await this.purchaseRepository.confirmPropertyEscrowMeeting(
+            application.escrow_status_id,
+            input.confirm_attendance
+              ? EscrowMeetingStatus.CONFIRMED
+              : EscrowMeetingStatus.DECLINED,
+          )
+          return updatedApproval
+        }
+
+        let organizationId: string | null = null
+        let approverId: string | null = null
+        if (
+          nextStage.name ===
+          ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
+        ) {
+          approverId = application.user_id
+        } else if (
+          nextStage.name ===
+          ReviewRequestStageKind.DeveloperEscrowMeetingRespond
+        ) {
+          organizationId = application.developer_organization_id
+        }
+
+        await this.reviewRequestRepository.createReviewRequestApproval({
+          request_id: approval.request_id,
+          review_request_stage_type_id: nextStageType.id,
+          approval_status: ReviewRequestApprovalStatus.Pending,
+          organization_id: organizationId,
+          approval_id: approverId,
+        })
+
         return updatedApproval
-      }
-
-      let organizationId: string | null = null
-      let approverId: string | null = null
-      if (
-        nextStage.name === ReviewRequestStageKind.HomeBuyerEscrowMeetingRespond
-      ) {
-        approverId = application.user_id
-      } else if (
-        nextStage.name === ReviewRequestStageKind.DeveloperEscrowMeetingRespond
-      ) {
-        organizationId = application.developer_organization_id
-      }
-
-      await this.reviewRequestRepository.createReviewRequestApproval({
-        request_id: approval.request_id,
-        review_request_stage_type_id: nextStageType.id,
-        approval_status: ReviewRequestApprovalStatus.Pending,
-        organization_id: organizationId,
-        approval_id: approverId,
       })
-
-      return updatedApproval
     })
   }
 
