@@ -86,9 +86,9 @@ export class LoanRepaymentSchedule extends BaseEntity {
   payment_number: number
   due_date: Date
 
-  principal_due: Date
-  interest_due: Date
-  total_due: Date
+  principal_due: number
+  interest_due: number
+  total_due: number
 
   status: string
 
