@@ -37,6 +37,11 @@ export const envSchema = z.object({
     .refine(isSupportedTimeUnit, { message: 'invalid time unit value' })
     .transform((value) => parseStrTimeUnit(value).toSeconds()!),
 
+  REMEMBER_ME_PERIOD: z
+    .string()
+    .refine(isSupportedTimeUnit, { message: 'invalid time unit value' })
+    .transform((value) => parseStrTimeUnit(value).toSeconds()!),
+
   AWS_REGION: z.string().optional(),
   AWS_ACCESS_KEY_ID: z.string().optional(),
   AWS_SECRET_ACCESS_KEY: z.string().optional(),

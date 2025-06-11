@@ -547,4 +547,65 @@ export default {
       )
     }
   },
+
+  sendLoanRepaymentOverdueEmail({
+    email,
+    borrowerName,
+    dueDate,
+    daysOverdue,
+    loanId,
+    propertyAddress,
+    overdueAmount,
+    currency = '$',
+    supportEmail,
+    supportPhone,
+    supportLink,
+    companyName,
+  }: {
+    email: string
+    borrowerName: string
+    dueDate: string
+    daysOverdue: number
+    loanId: string
+    overdueAmount: string
+    currency?: string
+    propertyAddress?: string
+    supportEmail?: string
+    supportPhone?: string
+    supportLink?: string
+    companyName?: string
+  }) {
+    const subject = `URGENT: Loan Payment Overdue - ${daysOverdue} Days`
+    const text = `Your loan payment is ${daysOverdue} days overdue. Amount due: ${currency}${overdueAmount}`
+
+    let html = templates.loanRepaymentOverdue
+      .replace(/\{\{borrower_name\}\}/g, borrowerName)
+      .replace(/\{\{due_date\}\}/g, dueDate)
+      .replace(/\{\{days_overdue\}\}/g, daysOverdue.toString())
+      .replace(/\{\{loan_id\}\}/g, loanId)
+      .replace(/\{\{property_address\}\}/g, propertyAddress)
+      .replace(/\{\{overdue_amount\}\}/g, overdueAmount)
+      .replace(/\{\{currency\}\}/g, currency)
+      .replace(/\{\{support_email\}\}/g, supportEmail)
+      .replace(/\{\{support_phone\}\}/g, supportPhone)
+      .replace(/\{\{SUPPORT_LINK\}\}/g, supportLink)
+      .replace(/\{\{company_name\}\}/g, companyName)
+      .replace(/\{\{year\}\}/g, new Date().getFullYear().toString())
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(
+        `Loan repayment overdue email was sent successfully to ${email}`,
+      )
+    } catch (error) {
+      logger.error(
+        `Unable to send loan repayment overdue email to ${email}: ${error.message}`,
+      )
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

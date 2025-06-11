@@ -15,6 +15,13 @@ export class LoanRepository implements ILoanRepository {
     return loan ? new Loan(loan) : null
   }
 
+  async getLoanByOfferId(offerId: string): Promise<Loan | null> {
+    const loan = await db<Loan>(this.tableName)
+      .where({ loan_offer_id: offerId })
+      .first()
+    return loan ? new Loan(loan) : null
+  }
+
   async createLoan(loan: Loan): Promise<Loan> {
     const [newLoan] = await db(this.tableName).insert(loan).returning('*')
     return new Loan(newLoan)

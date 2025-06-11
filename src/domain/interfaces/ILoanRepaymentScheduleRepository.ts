@@ -1,6 +1,10 @@
 import { LoanRepaymentSchedule } from '@entities/Loans'
 
 export interface ILoanRepaymentScheduleRepository {
+  getLoanRepaymentScheduleByLoanId(
+    loan_id: string,
+  ): Promise<LoanRepaymentSchedule[]>
+
   getLoanRepaymentScheduleById(
     schedule_id: string,
   ): Promise<LoanRepaymentSchedule | null>

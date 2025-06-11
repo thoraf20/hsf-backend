@@ -604,4 +604,17 @@ export class ApplicationController {
       stages,
     )
   }
+
+  async getActiveApplicationLoan(applicationId: string, authInfo: AuthInfo) {
+    const loan = await this.applicationService.getActiveApplicationLoan(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application Loan retrieved successfully',
+      loan,
+    )
+  }
 }

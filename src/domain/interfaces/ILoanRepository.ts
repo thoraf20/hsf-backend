@@ -4,6 +4,7 @@ import { LoanFilters } from '@validators/loanValidator'
 
 export interface ILoanRepository {
   getLoanById(loan_id: string): Promise<Loan | null>
+  getLoanByOfferId(offer_id: string): Promise<Loan | null>
   createLoan(loan: Loan): Promise<Loan>
   updateLoan(loan_id: string, loan: Partial<Loan>): Promise<Loan | null>
   deleteLoan(loan_id: string): Promise<void>

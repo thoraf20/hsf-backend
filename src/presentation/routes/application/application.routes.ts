@@ -61,6 +61,8 @@ import { paymentFiltersSchema } from '@validators/paymentValidator'
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
+import { LoanRepository } from '@repositories/loans/LoanRepository'
+import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepaymentRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -78,6 +80,8 @@ const applicationService = new ApplicationService(
   new LoanOfferRepository(),
   new LoanDecisionRepository(),
   new ConditionPrecedentRepository(),
+  new LoanRepository(),
+  new LoanRepaymentScheduleRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -736,6 +740,23 @@ applicationRoutes.patch(
       body,
       authInfo,
     )
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/loans/active',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getActiveApplicationLoan(
+      application_id,
+      authInfo,
+    )
+
     res.status(response.statusCode).json(response)
   }),
 )

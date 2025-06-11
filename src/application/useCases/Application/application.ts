@@ -49,6 +49,8 @@ import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
+import { ILoanRepaymentScheduleRepository } from '@interfaces/ILoanRepaymentScheduleRepository'
+import { ILoanRepository } from '@interfaces/ILoanRepository'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
@@ -99,6 +101,8 @@ export class ApplicationService {
     private readonly loanOfferRepository: ILoanOfferRepository,
     private readonly loanDecisionRepository: ILoanDecisionRepository,
     private readonly conditionPrecedentRepository: IConditionPrecedentRepository,
+    private readonly loanRepository: ILoanRepository,
+    private readonly loanRepaymentScheduleRepository: ILoanRepaymentScheduleRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -2523,5 +2527,57 @@ export class ApplicationService {
         updated_at: application.updated_at ?? new Date(),
       }
     })
+  }
+
+  async getActiveApplicationLoan(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan found for this application',
+      )
+    }
+
+    const loanOffer = await this.loanOfferRepository.getLoanOfferById(
+      application.loan_offer_id,
+    )
+
+    if (!loanOffer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Unable to find the loan offer',
+      )
+    }
+
+    const loan = await this.loanRepository.getLoanByOfferId(
+      application.loan_offer_id,
+    )
+
+    if (!loan) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan found for this application',
+      )
+    }
+
+    const repayments =
+      await this.loanRepaymentScheduleRepository.getLoanRepaymentScheduleByLoanId(
+        loan.id,
+      )
+
+    return {
+      ...loan,
+      loan_offer: loanOffer,
+      repayments,
+    }
   }
 }
