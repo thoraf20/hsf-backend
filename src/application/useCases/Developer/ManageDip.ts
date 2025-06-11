@@ -226,17 +226,19 @@ export class ManageDipUseCase {
       )
     }
 
-    const updatedDip = await this.mortgageRepository.updateDipById({
-      dip_id: dip.dip_id,
-      dip_lender_status:
-        input.approve === QueryBoolean.YES
-          ? DIPLenderStatus.Accepted
-          : DIPLenderStatus.Rejected,
+    return runWithTransaction(async () => {
+      const updatedDip = await this.mortgageRepository.updateDipById({
+        dip_id: dip.dip_id,
+        dip_lender_status:
+          input.approve === QueryBoolean.YES
+            ? DIPLenderStatus.Accepted
+            : DIPLenderStatus.Rejected,
 
-      dip_status: DIPStatus.AwaitingUserAction,
+        dip_status: DIPStatus.AwaitingUserAction,
+      })
+
+      return updatedDip
     })
-
-    return updatedDip
   }
 
   async userDipResponse(
@@ -313,22 +315,27 @@ export class ManageDipUseCase {
         dip_status: DIPStatus.PaymentPending,
       })
 
-      await Promise.all(
-        application.stages?.map(async (stage) => {
-          if (stage.exit_time) {
-            await this.applicationRepository.updateApplicationStage(stage.id, {
-              exit_time: new Date(),
-            })
-          }
-        }),
-      )
+      if (updatedDip.user_action === UserAction.Accept) {
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) {
+              await this.applicationRepository.updateApplicationStage(
+                stage.id,
+                {
+                  exit_time: new Date(),
+                },
+              )
+            }
+          }),
+        )
 
-      await this.applicationRepository.addApplicationStage(applicationId, {
-        application_id: applicationId,
-        user_id: application.user_id,
-        stage: MortgageApplicationStage.DecisionInPrinciple,
-        entry_time: new Date(),
-      })
+        await this.applicationRepository.addApplicationStage(applicationId, {
+          application_id: applicationId,
+          user_id: application.user_id,
+          stage: MortgageApplicationStage.DecisionInPrinciple,
+          entry_time: new Date(),
+        })
+      }
 
       return updatedDip
     })

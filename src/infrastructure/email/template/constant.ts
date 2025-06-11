@@ -31,7 +31,7 @@ export default {
       `{{Date}}`,
       new Date().toUTCString(),
     )
-
+    console.log({ emailVerify: html })
     try {
       const emailData = { to: email, subject, text, html }
       sendMailInWorker(emailData)
@@ -75,6 +75,7 @@ export default {
     let text = `Welcome to hrf`
     let html = templates.welcomeEmail.replace(`{{NAME}}`, fullname)
 
+    console.log({ html })
     try {
       const emailData = { to: email, subject, text, html }
       sendMailInWorker(emailData)

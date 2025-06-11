@@ -1,3 +1,4 @@
+import { ConditionPrecedentStatus } from '@domain/enums/propertyEnum'
 import { ConditionPrecedent } from '@entities/ConditionPrecedent'
 import db from '@infrastructure/database/knex'
 import { IConditionPrecedentRepository } from '@interfaces/IConditionPrecedentRepository'
@@ -50,5 +51,42 @@ export class ConditionPrecedentRepository
       .where({ id })
       .del()
     return result > 0
+  }
+
+  async findCompletedConditionPrecedentsWithoutLoan(
+    batchSize: number = 100,
+  ): Promise<ConditionPrecedent[]> {
+    let allCompletedConditionPrecedents: ConditionPrecedent[] = []
+    let offset = 0
+
+    while (true) {
+      const completedConditionPrecedents = await db<ConditionPrecedent>(
+        'condition_precedents',
+      )
+        .where({ status: ConditionPrecedentStatus.Completed })
+        .limit(batchSize)
+        .offset(offset)
+
+      if (completedConditionPrecedents.length === 0) {
+        break
+      }
+
+      // Filter out condition precedents that have associated loans
+      const filteredConditionPrecedents = completedConditionPrecedents.filter(
+        async (conditionPrecedent) => {
+          const existingLoan = await db('loans')
+            .where({ application_id: conditionPrecedent.application_id })
+            .first()
+          return !existingLoan // Keep only if no loan exists
+        },
+      )
+
+      allCompletedConditionPrecedents = allCompletedConditionPrecedents.concat(
+        filteredConditionPrecedents,
+      )
+      offset += batchSize
+    }
+
+    return allCompletedConditionPrecedents
   }
 }

@@ -2306,7 +2306,11 @@ export class ApplicationService {
       } else if (input.group === DocumentGroupKind.ConditionPrecedent) {
         await this.conditionPrecedentRepository.update(
           application.condition_precedent.id,
-          { lender_docs_reviewed: true },
+          {
+            lender_docs_reviewed: true,
+            status: ConditionPrecedentStatus.Completed,
+            documents_status: ConditionPrecedentDocumentStatus.Verified,
+          },
         )
 
         await this.applicationRepository.addApplicationStage(
@@ -2401,7 +2405,7 @@ export class ApplicationService {
 
         await this.applicationRepository.updateApplication({
           application_id: application.application_id,
-          condition_precedent_id: conditionPrecedent.application_id,
+          condition_precedent_id: conditionPrecedent.id,
         })
 
         await Promise.all(
