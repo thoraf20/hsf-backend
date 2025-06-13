@@ -16,6 +16,15 @@ export class LoanRepaymentTransactionRepository
     return transaction ? new LoanRepaymentTransaction(transaction) : null
   }
 
+  async getLoanRepaymentTransactionRepaymentId(
+    repayment_id: string,
+  ): Promise<LoanRepaymentTransaction | null> {
+    const transaction = await db<LoanRepaymentTransaction>(this.tableName)
+      .where({ schedule_id: repayment_id })
+      .first()
+    return transaction
+  }
+
   async createLoanRepaymentTransaction(
     loanRepaymentTransaction: LoanRepaymentTransaction,
   ): Promise<LoanRepaymentTransaction> {

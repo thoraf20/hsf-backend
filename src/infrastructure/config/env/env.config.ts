@@ -73,6 +73,7 @@ export const formatErrors = (
 const _serverEnv = envSchema.safeParse(process.env)
 
 if (!_serverEnv.success) {
+  console.log(_serverEnv.error)
   logger.error(
     '❌ Invalid environment variables:\n',
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

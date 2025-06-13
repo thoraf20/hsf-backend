@@ -165,6 +165,12 @@ export class ManageLoanOfferService {
       )
     }
 
+    if (input.interest_rate <= 1) {
+      //the calculate loan metric expect interest rate to be in the ratio of hundred (i.e 1 - 100%)
+      //while the interest rate migth be sent as unit less than 1 (i.e 0.00 - 1) so 0.23 -> 23%
+      input.interest_rate = input.interest_rate * 100
+    }
+
     const loanMetrics = calculateLoanMetrics(
       input.loan_amount,
       input.interest_rate,

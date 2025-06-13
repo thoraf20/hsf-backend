@@ -118,7 +118,7 @@ export type DipFilters = z.infer<typeof dipFiltersSchema>
 
 export const updateDipLoanSchema = z.object({
   approved_loan_amount: z.coerce.number(),
-  interest_rate: z.coerce.number(),
+  interest_rate: z.coerce.number().max(1).min(0),
   loan_term: z.coerce.number().int(),
 })
 

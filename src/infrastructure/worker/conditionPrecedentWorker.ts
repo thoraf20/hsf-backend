@@ -142,7 +142,11 @@ async function processCPLoanGen(job: Job<AddGenerateLoanJob>) {
       }
 
       // Recalculate interestRatePerPeriod based on the total number of payments
-      const annualInterestRate = loanOffer.interest_rate / 100
+      const annualInterestRate =
+        loanOffer.interest_rate > 1
+          ? loanOffer.interest_rate / 100
+          : loanOffer.interest_rate
+
       const interestRatePerPeriod = annualInterestRate / numberOfPayments
       const principalAmount = loanOffer.loan_amount
 

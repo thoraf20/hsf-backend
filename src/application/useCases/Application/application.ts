@@ -50,6 +50,7 @@ import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { ILoanRepaymentScheduleRepository } from '@interfaces/ILoanRepaymentScheduleRepository'
+import { ILoanRepaymentTransactionRepository } from '@interfaces/ILoanRepaymentTransactionRepository'
 import { ILoanRepository } from '@interfaces/ILoanRepository'
 import { IMortageRespository } from '@interfaces/IMortageRespository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
@@ -103,6 +104,7 @@ export class ApplicationService {
     private readonly conditionPrecedentRepository: IConditionPrecedentRepository,
     private readonly loanRepository: ILoanRepository,
     private readonly loanRepaymentScheduleRepository: ILoanRepaymentScheduleRepository,
+    private readonly loanRepaymentTransactionRepository: ILoanRepaymentTransactionRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -2398,44 +2400,6 @@ export class ApplicationService {
         },
       )
 
-      if (updateLoanOffer.offer_status === LoanOfferStatus.ACCEPTED) {
-        const conditionPrecedent =
-          await this.conditionPrecedentRepository.create({
-            application_id: application.application_id,
-            status: ConditionPrecedentStatus.Pending,
-            documents_status: ConditionPrecedentDocumentStatus.NotUploaded,
-            documents_uploaded: false,
-          })
-
-        await this.applicationRepository.updateApplication({
-          application_id: application.application_id,
-          condition_precedent_id: conditionPrecedent.id,
-        })
-
-        await Promise.all(
-          application.stages?.map(async (stage) => {
-            if (stage.exit_time) {
-              await this.applicationRepository.updateApplicationStage(
-                stage.id,
-                {
-                  exit_time: new Date(),
-                },
-              )
-            }
-          }),
-        )
-
-        await this.applicationRepository.addApplicationStage(
-          application.application_id,
-          {
-            entry_time: new Date(),
-            application_id: application.application_id,
-            user_id: application.user_id,
-            stage: MortgageApplicationStage.ConditionPrecedent,
-          },
-        )
-      }
-
       return updateLoanOffer
     })
   }
@@ -2487,14 +2451,54 @@ export class ApplicationService {
       )
     }
 
-    const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
-      loanOffer.id,
-      {
-        signed_loan_offer_letter_url: input.signed_loan_offer_letter_url,
-      },
-    )
+    return runWithTransaction(async () => {
+      const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
+        loanOffer.id,
+        {
+          signed_loan_offer_letter_url: input.signed_loan_offer_letter_url,
+        },
+      )
 
-    return updatedLoanOffer
+      if (updatedLoanOffer.offer_status === LoanOfferStatus.ACCEPTED) {
+        const conditionPrecedent =
+          await this.conditionPrecedentRepository.create({
+            application_id: application.application_id,
+            status: ConditionPrecedentStatus.Pending,
+            documents_status: ConditionPrecedentDocumentStatus.NotUploaded,
+            documents_uploaded: false,
+          })
+
+        await this.applicationRepository.updateApplication({
+          application_id: application.application_id,
+          condition_precedent_id: conditionPrecedent.id,
+        })
+
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) {
+              await this.applicationRepository.updateApplicationStage(
+                stage.id,
+                {
+                  exit_time: new Date(),
+                },
+              )
+            }
+          }),
+        )
+
+        await this.applicationRepository.addApplicationStage(
+          application.application_id,
+          {
+            entry_time: new Date(),
+            application_id: application.application_id,
+            user_id: application.user_id,
+            stage: MortgageApplicationStage.ConditionPrecedent,
+          },
+        )
+      }
+
+      return updatedLoanOffer
+    })
   }
 
   async getApplicationStages(applicationId: string, authInfo: AuthInfo) {
@@ -2579,5 +2583,64 @@ export class ApplicationService {
       loan_offer: loanOffer,
       repayments,
     }
+  }
+
+  async getApplicationLoanRepayment(
+    applicationId: string,
+    loanId: string,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan found for this application',
+      )
+    }
+
+    const loan = await this.loanRepository.getLoanById(loanId)
+
+    if (!(loan && loan.user_id === application.user_id)) {
+      throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'Loan not found ')
+    }
+
+    const loanOffer = await this.loanOfferRepository.getLoanOfferById(
+      application.loan_offer_id,
+    )
+
+    if (loanOffer && loanOffer.id !== loan.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan not linked to this application',
+      )
+    }
+
+    const loanRepayments =
+      await this.loanRepaymentScheduleRepository.getLoanRepaymentScheduleByLoanId(
+        loanId,
+      )
+
+    return Promise.all(
+      loanRepayments.map(async (repayment) => {
+        const transaction =
+          await this.loanRepaymentTransactionRepository.getLoanRepaymentTransactionRepaymentId(
+            repayment.id,
+          )
+
+        return {
+          ...repayment,
+          transaction,
+        }
+      }),
+    )
   }
 }

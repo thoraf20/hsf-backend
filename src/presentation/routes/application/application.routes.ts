@@ -63,6 +63,7 @@ import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionReposito
 import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
 import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepaymentRepository'
+import { LoanRepaymentTransactionRepository } from '@repositories/loans/LoanRepaymentTransactionRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -82,6 +83,7 @@ const applicationService = new ApplicationService(
   new ConditionPrecedentRepository(),
   new LoanRepository(),
   new LoanRepaymentScheduleRepository(),
+  new LoanRepaymentTransactionRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -754,6 +756,24 @@ applicationRoutes.get(
 
     const response = await applicationController.getActiveApplicationLoan(
       application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/loans/:loan_id/repayments',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id, loan_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getApplicationLoanRepayment(
+      application_id,
+      loan_id,
       authInfo,
     )
 

@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 export const updateLoanOfferSchema = z.object({
   loan_amount: z.coerce.number(),
-  interest_rate: z.coerce.number(),
+  interest_rate: z.coerce.number().max(1),
   loan_term_months: z.coerce.number(),
   repayment_frequency: z.nativeEnum(LoanRepaymentFrequency),
   offer_date: z.coerce.date(),

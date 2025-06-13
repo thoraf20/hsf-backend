@@ -114,8 +114,6 @@ WebhookRouter.post(
         //   inspectionId: inspection_id,
         //   transactionId: transaction.id,
         // })
-
-        return res.sendStatus(200)
       } else if (event.event === 'transfer.failed') {
         transaction = await paymentRepository.update({
           payment_id: transaction.payment_id,
