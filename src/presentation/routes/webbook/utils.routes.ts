@@ -13,13 +13,21 @@ import { PaymentRepostory } from '@repositories/PaymentRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { MortageRepository } from '@repositories/property/MortageRepository'
-import { DipDocumentReviewStatus, DIPStatus } from '@domain/enums/propertyEnum'
+import {
+  ConditionPrecedentDocumentStatus,
+  ConditionPrecedentStatus,
+  DipDocumentReviewStatus,
+  DIPStatus,
+} from '@domain/enums/propertyEnum'
 import { LoanDecisionStatus } from '@domain/enums/loanEnum'
+import { MortgageApplicationStage } from '@entities/Application'
+import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
 
 const WebhookRouter: Router = Router()
 const applicationRepository = new ApplicationRepository()
 const loanDecisionRepository = new LoanDecisionRepository()
 const mortgageRepository = new MortageRepository()
+const conditionPrecedentRepository = new ConditionPrecedentRepository()
 const sse = new SseService()
 
 const paymentRepository = new PaymentRepostory()
@@ -88,6 +96,40 @@ WebhookRouter.post(
             await loanDecisionRepository.update(loanDecision.id, {
               management_fee_paid_at: new Date(),
             })
+
+            const conditionPrecedent =
+              await conditionPrecedentRepository.create({
+                application_id: application.application_id,
+                status: ConditionPrecedentStatus.Pending,
+                documents_status: ConditionPrecedentDocumentStatus.NotUploaded,
+                documents_uploaded: false,
+              })
+
+            await applicationRepository.updateApplication({
+              application_id: application.application_id,
+              condition_precedent_id: conditionPrecedent.id,
+            })
+
+            await Promise.all(
+              application.stages?.map(async (stage) => {
+                if (stage.exit_time) {
+                  return
+                }
+                await applicationRepository.updateApplicationStage(stage.id, {
+                  exit_time: new Date(),
+                })
+              }),
+            )
+
+            await applicationRepository.addApplicationStage(
+              application.application_id,
+              {
+                entry_time: new Date(),
+                application_id: application.application_id,
+                user_id: application.user_id,
+                stage: MortgageApplicationStage.ConditionPrecedent,
+              },
+            )
           }
         } else if (
           transaction.payment_type === MortgagePaymentType.DUE_DILIGENT

@@ -2459,44 +2459,6 @@ export class ApplicationService {
         },
       )
 
-      if (updatedLoanOffer.offer_status === LoanOfferStatus.ACCEPTED) {
-        const conditionPrecedent =
-          await this.conditionPrecedentRepository.create({
-            application_id: application.application_id,
-            status: ConditionPrecedentStatus.Pending,
-            documents_status: ConditionPrecedentDocumentStatus.NotUploaded,
-            documents_uploaded: false,
-          })
-
-        await this.applicationRepository.updateApplication({
-          application_id: application.application_id,
-          condition_precedent_id: conditionPrecedent.id,
-        })
-
-        await Promise.all(
-          application.stages?.map(async (stage) => {
-            if (stage.exit_time) {
-              await this.applicationRepository.updateApplicationStage(
-                stage.id,
-                {
-                  exit_time: new Date(),
-                },
-              )
-            }
-          }),
-        )
-
-        await this.applicationRepository.addApplicationStage(
-          application.application_id,
-          {
-            entry_time: new Date(),
-            application_id: application.application_id,
-            user_id: application.user_id,
-            stage: MortgageApplicationStage.ConditionPrecedent,
-          },
-        )
-      }
-
       return updatedLoanOffer
     })
   }
