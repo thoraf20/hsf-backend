@@ -37,6 +37,7 @@ import {
   userDipResponseSchema,
   homeBuyerLoanOfferRespondSchema,
   submitSignedLoanOfferLetterSchema,
+  uploadLoanAgreementDocSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -64,6 +65,7 @@ import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrece
 import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepaymentRepository'
 import { LoanRepaymentTransactionRepository } from '@repositories/loans/LoanRepaymentTransactionRepository'
+import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -84,6 +86,7 @@ const applicationService = new ApplicationService(
   new LoanRepository(),
   new LoanRepaymentScheduleRepository(),
   new LoanRepaymentTransactionRepository(),
+  new LoanAgreementRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -798,4 +801,28 @@ applicationRoutes.get(
   }),
 )
 
+applicationRoutes.patch(
+  '/:application_id/loan-agreements/doc-upload/lender',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(uploadLoanAgreementDocSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      body,
+      params: { application_id },
+    } = req
+
+    applicationController.setLenderLoanAgreementDoc(
+      application_id,
+      body,
+      authInfo,
+    )
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/loan-agreements/doc-upload/buyer',
+  authorize(isHomeBuyer),
+  asyncMiddleware(async () => {}),
+)
 export default applicationRoutes

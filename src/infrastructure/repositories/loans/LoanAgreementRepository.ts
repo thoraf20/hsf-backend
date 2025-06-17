@@ -19,6 +19,15 @@ export class LoanAgreementRepository implements ILoanAgreementRepository {
     return loanAgreement
   }
 
+  async getLoanAgreementByOfferId(
+    loan_offer_id: string,
+  ): Promise<LoanAgreement | null> {
+    const loanAgreement = await db<LoanAgreement>(this.tableName)
+      .where({ loan_offer_id })
+      .first()
+    return loanAgreement
+  }
+
   async createLoanAgreement(
     loanAgreement: LoanAgreement,
   ): Promise<LoanAgreement> {

@@ -32,6 +32,7 @@ import {
   UpdateDipLoanInput,
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
+  UploadLoanAgreementDocInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -647,6 +648,18 @@ export class ApplicationController {
       StatusCodes.OK,
       'Lender retrieved successfully',
       lender,
+    )
+  }
+
+  async setLenderLoanAgreementDoc(
+    applicationId: string,
+    input: UploadLoanAgreementDocInput,
+    authInfo: AuthInfo,
+  ) {
+    this.applicationService.setLenderLoanAgreementDoc(
+      applicationId,
+      input,
+      authInfo,
     )
   }
 }

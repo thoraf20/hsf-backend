@@ -10,6 +10,7 @@ export enum DocumentGroupKind {
   ConditionPrecedent = 'ConditionPrecedent',
   MortgageUpload = 'MortgageUpload',
   PropertyReport = 'PropertyReport',
+  LoanAgreement = 'LoanAgreement',
 }
 
 export enum DeveloperVerificationDocType {
@@ -51,4 +52,9 @@ export enum MortgageUploadDocType {
 export enum PropertyReportDocType {
   LandReport = 'LandReport',
   VerificationReport = 'VerificationReport',
+}
+
+export enum LoanAgreementType {
+  LenderSignedAgreementLetter = 'LenderSignedAgreementLetter',
+  BuyerSignedAgreementLetter = 'BuyerSignedAgreementLetter',
 }

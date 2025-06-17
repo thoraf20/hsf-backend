@@ -6,7 +6,9 @@ import {
   MortgageUploadDocType,
   ConditionPrecedentDocType,
   PropertyReportDocType,
+  LoanAgreementType,
 } from '../../src/domain/enums/documentEnum'
+import { UserRole } from '../../src/domain/entities/User'
 import { Role } from '../../src/domain/enums/rolesEmun'
 
 export async function seed(knex: Knex): Promise<void> {
@@ -25,20 +27,14 @@ export async function seed(knex: Knex): Promise<void> {
   })
 }
 
-async function getRoleIds(trx: Knex.Transaction): Promise<{
-  developerAdminRole: { id: string; name: string } | undefined
-  hsfAdminRole: { id: string; name: string } | undefined
-  homeBuyerRole: { id: string; name: string } | undefined
-}> {
-  const developerAdminRole = await trx('roles')
-    .where({ name: Role.DEVELOPER_ADMIN })
-    .first()
-  const hsfAdminRole = await trx('roles')
-    .where({ name: Role.HSF_ADMIN })
-    .first()
-  const homeBuyerRole = await trx('roles')
-    .where({ name: Role.HOME_BUYER })
-    .first()
+async function getRoleIds(trx: Knex.Transaction) {
+  const [developerAdminRole, hsfAdminRole, homeBuyerRole, lenderAdminRole] =
+    await Promise.all([
+      trx<UserRole>('roles').where({ name: Role.DEVELOPER_ADMIN }).first(),
+      trx<UserRole>('roles').where({ name: Role.HSF_ADMIN }).first(),
+      trx<UserRole>('roles').where({ name: Role.HOME_BUYER }).first(),
+      trx<UserRole>('roles').where({ name: Role.LENDER_ADMIN }).first(),
+    ])
 
   if (!developerAdminRole)
     console.warn(
@@ -53,8 +49,15 @@ async function getRoleIds(trx: Knex.Transaction): Promise<{
       'HOMEBUYER role not found. GroupDocumentTypes depending on it will have null uploaded_by_role_id.',
     )
 
-  return { developerAdminRole, hsfAdminRole, homeBuyerRole }
+  if (!lenderAdminRole)
+    console.warn(
+      'Lender Admin role not found. GroupDocumentTypes depending on it will have null uploaded_by_role_id.',
+    )
+
+  return { developerAdminRole, hsfAdminRole, homeBuyerRole, lenderAdminRole }
 }
+
+type AllowedRoles = Awaited<ReturnType<typeof getRoleIds>>
 
 async function seedDocumentGroups(
   trx: Knex.Transaction,
@@ -83,6 +86,13 @@ async function seedDocumentGroups(
       name: 'Property Document',
       description:
         'Documents required to verification the authenicity of the property',
+    },
+
+    {
+      tag: DocumentGroupEnum.LoanAgreement,
+      name: 'Loan Agreement',
+      description:
+        'Documents related to the loan agreement and financing terms for the property purchase',
     },
   ]
 
@@ -119,11 +129,7 @@ async function seedDocumentGroups(
 async function seedGroupDocumentTypes(
   trx: Knex.Transaction,
   groupIds: { [key: string]: string },
-  roleIds: {
-    developerAdminRole: { id: string; name: string } | undefined
-    hsfAdminRole: { id: string; name: string } | undefined
-    homeBuyerRole: { id: string; name: string } | undefined
-  },
+  roleIds: AllowedRoles,
 ): Promise<void> {
   console.log('Seeding Group Document Types...')
 
@@ -369,6 +375,24 @@ async function seedGroupDocumentTypes(
       display_label: 'Verification Report',
       is_user_uploadable: false, // Assuming HSF admin uploads these
       uploaded_by_role_id: roleIds.hsfAdminRole?.id || null, // Assuming HSF admin uploads these
+      is_required_for_group: true, // Assuming they are required
+    },
+
+    // Property Report Doc Types
+    {
+      group_id: groupIds[DocumentGroupEnum.LoanAgreement],
+      document_type: LoanAgreementType.LenderSignedAgreementLetter,
+      display_label: 'Lender Loan Agreement Signed Letter',
+      is_user_uploadable: false, // Assuming Lender admin uploads these
+      uploaded_by_role_id: roleIds.lenderAdminRole?.id || null, // Assuming HSF admin uploads these
+      is_required_for_group: true, // Assuming they are required
+    },
+    {
+      group_id: groupIds[DocumentGroupEnum.LoanAgreement],
+      document_type: LoanAgreementType.BuyerSignedAgreementLetter,
+      display_label: 'Buyer Loan Agreement Signed Letter',
+      is_user_uploadable: true, // Assuming HomeBuyer admin uploads these
+      uploaded_by_role_id: roleIds.homeBuyerRole?.id || null, // Assuming HSF admin uploads these
       is_required_for_group: true, // Assuming they are required
     },
   ]

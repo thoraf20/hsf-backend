@@ -4,6 +4,9 @@ import { LoanAgreementFilters } from '@validators/loanAgreementValidator'
 
 export interface ILoanAgreementRepository {
   getLoanAgreementById(loan_agreement_id: string): Promise<LoanAgreement | null>
+  getLoanAgreementByOfferId(
+    loan_offer_id: string,
+  ): Promise<LoanAgreement | null>
   createLoanAgreement(loanAgreement: LoanAgreement): Promise<LoanAgreement>
   updateLoanAgreement(
     loan_agreement_id: string,

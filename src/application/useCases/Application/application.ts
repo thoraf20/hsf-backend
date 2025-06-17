@@ -1,5 +1,6 @@
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import {
+  LoanAgreementStatus,
   LoanDecisionStatus,
   LoanOfferWorkflowStatus,
 } from '@domain/enums/loanEnum'
@@ -57,6 +58,7 @@ import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
+import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
@@ -81,6 +83,7 @@ import {
   ScheduleEscrowMeetingRespondInput,
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
+  UploadLoanAgreementDocInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
@@ -105,6 +108,7 @@ export class ApplicationService {
     private readonly loanRepository: ILoanRepository,
     private readonly loanRepaymentScheduleRepository: ILoanRepaymentScheduleRepository,
     private readonly loanRepaymentTransactionRepository: ILoanRepaymentTransactionRepository,
+    private readonly loanAgreementRepository: LoanAgreementRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -2283,6 +2287,14 @@ export class ApplicationService {
           repayment_frequency: LoanRepaymentFrequency.MONTHLY,
         })
 
+        await this.loanAgreementRepository.createLoanAgreement({
+          lender_org_id: lenderOrg.organization_id,
+          loan_offer_id: loanOffer.id,
+          status: LoanAgreementStatus.PendingApproval,
+          user_id: application.user_id,
+          application_id: application.application_id,
+        })
+
         await this.applicationRepository.addApplicationStage(
           application.application_id,
           {
@@ -2658,5 +2670,65 @@ export class ApplicationService {
       ...organization,
       lender_profile: lender,
     }
+  }
+
+  async setLenderLoanAgreementDoc(
+    applicationId: string,
+    input: UploadLoanAgreementDocInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    let loanOffer = application.loan_offer_id
+      ? await this.loanOfferRepository.getLoanOfferById(
+          application.loan_offer_id,
+        )
+      : null
+
+    if (!loanOffer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No loan offer found',
+      )
+    }
+
+    const loanAgreement =
+      await this.loanAgreementRepository.getLoanAgreementById(
+        input.loan_agreement_id,
+      )
+
+    const currentOfferAgreement =
+      await this.loanAgreementRepository.getLoanAgreementByOfferId(loanOffer.id)
+
+    if (!currentOfferAgreement) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'No loan agreement set on this application',
+      )
+    }
+
+    if (!(loanAgreement && loanAgreement.id === currentOfferAgreement.id)) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan agreement not found or match what on the application',
+      )
+    }
+
+    return runWithTransaction(async () => {
+      this.documentRepository.createApplicationDocumentEntry({
+        document_name: 'Loan agreement',
+        document_url: input.url,
+      })
+    })
+
+    // this.loanAgreementRepository.getLoanAgreementById(loan_agreement_id)
   }
 }
