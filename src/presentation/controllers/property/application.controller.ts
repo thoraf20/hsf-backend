@@ -636,4 +636,17 @@ export class ApplicationController {
       repayments,
     )
   }
+
+  async getApplicationLender(applicationId: string, authInfo: AuthInfo) {
+    const lender = await this.applicationService.getApplicationLender(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Lender retrieved successfully',
+      lender,
+    )
+  }
 }

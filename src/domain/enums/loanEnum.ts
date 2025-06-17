@@ -42,3 +42,18 @@ export enum LoanRepaymentFrequency {
   SEMI_ANNUALLY = 'SEMI-ANNUALLY',
   ANNUALLY = 'ANNUALLY',
 }
+
+export enum LoanType {
+  FIXED = 'fixed',
+  VARIABLE = 'variable',
+  ADJUSTABLE_RATE = 'adjustable_rate',
+}
+
+export enum LoanAgreementStatus {
+  Draft = 'Draft',
+  PendingApproval = 'Pending Approval',
+  Approved = 'Approved',
+  Active = 'Active',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled',
+}

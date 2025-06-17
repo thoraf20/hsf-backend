@@ -5,6 +5,8 @@ import {
 import { DIP } from './Mortage'
 import { BaseEntity } from '.'
 import { ConditionPrecedent } from './ConditionPrecedent'
+import { Eligibility } from './prequalify/prequalify'
+import { PreQualifyRequestInput } from '@validators/prequalifyValidation'
 
 export enum OutrightApplicationStage {
   OfferLetter = 'Offer Letter',
@@ -85,6 +87,10 @@ export class Application {
   created_at?: Date
   updated_at?: Date
   eligibility_id?: string
+  prequalify_personal_information?: {
+    eligibility: Eligibility
+    prequalification_input: PreQualifyRequestInput
+  }
   stages?: ApplicationStage[]
   constructor(d: Partial<Application>) {
     let data = {

@@ -7,6 +7,7 @@ export const updateLoanOfferSchema = z.object({
   interest_rate: z.coerce.number().max(1),
   loan_term_months: z.coerce.number(),
   repayment_frequency: z.nativeEnum(LoanRepaymentFrequency),
+  loan_start_date: z.coerce.date(),
   offer_date: z.coerce.date(),
   expiry_date: z.coerce.date(),
   total_interest_estimate: z.number().optional(),

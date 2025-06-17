@@ -93,7 +93,7 @@ async function processCPLoanGen(job: Job<AddGenerateLoanJob>) {
         repayment_frequency: loanOffer.repayment_frequency,
         loan_status: LoanStatusEnum.Active,
         principal_amount: loanOffer.loan_amount,
-        start_date: now,
+        start_date: loanOffer.loan_start_date ?? loanOffer.expiry_date,
         end_date: addMonths(now, loanOffer.loan_term_months),
         remaning_balance: loanOffer.loan_amount, //initially equals loan amount
         total_interest_paid: 0,

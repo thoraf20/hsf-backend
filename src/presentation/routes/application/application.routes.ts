@@ -197,6 +197,23 @@ applicationRoutes.get(
 )
 
 applicationRoutes.get(
+  '/:application_id/lender',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getApplicationLender(
+      application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
   '/offer-letters',
   validateRequestQuery(offerLetterFiltersSchema),
   authorize(isOrganizationUser),

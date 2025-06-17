@@ -1663,7 +1663,10 @@ export class ApplicationService {
         )
       }
 
-      if (application.application_type === ApplicationPurchaseType.MORTGAGE) {
+      if (
+        application.application_type === ApplicationPurchaseType.MORTGAGE &&
+        input.group === DocumentGroupKind.ConditionPrecedent
+      ) {
         let conditionPrecedent: ConditionPrecedent
         if (application.condition_precedent_id) {
           conditionPrecedent = await this.conditionPrecedentRepository.findById(
@@ -2604,5 +2607,56 @@ export class ApplicationService {
         }
       }),
     )
+  }
+
+  async getApplicationLender(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (!application.loan_offer_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No active loan found for this application',
+      )
+    }
+
+    if (
+      !(
+        application.prequalify_personal_information &&
+        application.prequalify_personal_information.eligibility.lender_id
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No lender institution found',
+      )
+    }
+
+    const lender = await this.lenderRepository.getLenderById(
+      application.prequalify_personal_information.eligibility.lender_id,
+    )
+
+    if (lender) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'No lender institution found',
+      )
+    }
+
+    const organization = await this.organizationRepository.getOrganizationById(
+      lender.organization_id,
+    )
+
+    return {
+      ...organization,
+      lender_profile: lender,
+    }
   }
 }

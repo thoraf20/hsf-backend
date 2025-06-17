@@ -1,5 +1,5 @@
 // src/domain/services/loanCalculationService.ts
-import { LoanRepaymentFrequency } from '@domain/enums/loanEnum'
+import { LoanRepaymentFrequency, LoanType } from '@domain/enums/loanEnum'
 
 interface LoanMetrics {
   periodicPayment: number
@@ -10,33 +10,83 @@ interface LoanMetrics {
 
 const calculateLoanMetrics = (
   loanAmount: number,
-  interestRate: number,
+  annualInterestRate: number,
   termMonths: number,
   frequency: LoanRepaymentFrequency,
+  loanType: LoanType = LoanType.FIXED,
 ): LoanMetrics => {
-  const monthlyRate = interestRate / 100 / 12
+  // Apply loan type adjustment to base rate
+  let adjustedAnnualRate = annualInterestRate
 
-  // Calculate number of payments based on frequency
-  const paymentsPerMonth: { [key in LoanRepaymentFrequency]: number } = {
-    [LoanRepaymentFrequency.DAILY]: 30.44, // approximately 365 days per year / 12 months
-    [LoanRepaymentFrequency.WEEKLY]: 4.33, // approximately 52 weeks per year / 12 months
-    [LoanRepaymentFrequency.BI_WEEKLY]: 2.17, // approximately 26 payments per year / 12 months
-    [LoanRepaymentFrequency.MONTHLY]: 1,
-    [LoanRepaymentFrequency.QUARTERLY]: 0.33, // 4 payments per year / 12 months
-    [LoanRepaymentFrequency.SEMI_ANNUALLY]: 0.17, // 2 payments per year / 12 months
-    [LoanRepaymentFrequency.ANNUALLY]: 0.083, // 1 payment per year / 12 months
+  switch (loanType) {
+    case LoanType.VARIABLE:
+    case LoanType.ADJUSTABLE_RATE:
+      adjustedAnnualRate = annualInterestRate + 1 // Add 1% for variable/adjustable loans
+      break
+    case LoanType.FIXED:
+      // No adjustment for fixed rate
+      break
+    default:
+      break
   }
 
-  const totalPayments = termMonths * paymentsPerMonth[frequency]
-  const paymentRate = monthlyRate / paymentsPerMonth[frequency]
+  // Convert annual rate to decimal
+  const annualRateDecimal = adjustedAnnualRate / 100
 
-  // Calculate periodic payment using loan formula
-  const periodicPayment =
-    paymentRate > 0
-      ? (loanAmount * paymentRate * Math.pow(1 + paymentRate, totalPayments)) /
-        (Math.pow(1 + paymentRate, totalPayments) - 1)
-      : loanAmount / totalPayments
+  // Calculate payments per year and periodic interest rate based on frequency
+  let paymentsPerYear: number
+  let periodicRate: number
 
+  switch (frequency) {
+    case LoanRepaymentFrequency.DAILY:
+      paymentsPerYear = 365
+      periodicRate = annualRateDecimal / 365
+      break
+    case LoanRepaymentFrequency.WEEKLY:
+      paymentsPerYear = 52
+      periodicRate = annualRateDecimal / 52
+      break
+    case LoanRepaymentFrequency.BI_WEEKLY:
+      paymentsPerYear = 26
+      periodicRate = annualRateDecimal / 26
+      break
+    case LoanRepaymentFrequency.MONTHLY:
+      paymentsPerYear = 12
+      periodicRate = annualRateDecimal / 12
+      break
+    case LoanRepaymentFrequency.QUARTERLY:
+      paymentsPerYear = 4
+      periodicRate = annualRateDecimal / 4
+      break
+    case LoanRepaymentFrequency.SEMI_ANNUALLY:
+      paymentsPerYear = 2
+      periodicRate = annualRateDecimal / 2
+      break
+    case LoanRepaymentFrequency.ANNUALLY:
+      paymentsPerYear = 1
+      periodicRate = annualRateDecimal
+      break
+    default:
+      throw new Error(`Unsupported payment frequency: ${frequency}`)
+  }
+
+  // Calculate total number of payments
+  const totalPayments = Math.round((termMonths / 12) * paymentsPerYear)
+
+  // Calculate periodic payment using the standard loan payment formula
+  let periodicPayment: number
+
+  if (periodicRate > 0) {
+    // Standard amortization formula: PMT = PV * [r(1+r)^n] / [(1+r)^n - 1]
+    const powerTerm = Math.pow(1 + periodicRate, totalPayments)
+    periodicPayment =
+      (loanAmount * (periodicRate * powerTerm)) / (powerTerm - 1)
+  } else {
+    // If interest rate is 0, simple division
+    periodicPayment = loanAmount / totalPayments
+  }
+
+  // Calculate totals
   const totalPayable = periodicPayment * totalPayments
   const totalInterest = totalPayable - loanAmount
 
@@ -44,7 +94,7 @@ const calculateLoanMetrics = (
     periodicPayment: Math.round(periodicPayment * 100) / 100,
     totalPayable: Math.round(totalPayable * 100) / 100,
     totalInterest: Math.round(totalInterest * 100) / 100,
-    totalPayments: Math.round(totalPayments),
+    totalPayments: totalPayments,
   }
 }
 

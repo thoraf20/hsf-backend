@@ -91,11 +91,9 @@ export class ApplicationRepository implements IApplicationRespository {
     const perPage = filters?.result_per_page ?? 10
     const offset = (page - 1) * perPage
 
-    let baseQuery: Knex.QueryBuilder = db('application as a').leftJoin(
-      'properties as p',
-      'a.property_id',
-      'p.id',
-    )
+    let baseQuery: Knex.QueryBuilder = db('application as a')
+      .leftJoin('properties as p', 'a.property_id', 'p.id')
+      .orderBy('a.created_at', 'desc')
 
     baseQuery = this.useFilter(baseQuery, {
       ...filters,
