@@ -87,7 +87,7 @@ import {
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
-
+import emailTemplete from '@infrastructure/email/template/constant'
 export class ApplicationService {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
@@ -1842,6 +1842,23 @@ export class ApplicationService {
           approval_status: input.approval,
         },
       )
+    const user = await this.userRepository.findById(application.user_id)
+    const getClientView = user ? getUserClientView(user) : null
+    const getProperty = await this.propertyRepository.getPropertyById(
+      application.property_id,
+    )
+    const getOrganizationName =
+      await this.organizationRepository.getOrganizationById(
+        currentApproval.organization_id,
+      )
+    emailTemplete.DocumentApproval(
+      getClientView.id,
+      `${getClientView.first_name}`,
+      `${getClientView.last_name}`,
+      getProperty.property_name,
+      input.approval,
+      getOrganizationName.name,
+    )
 
     return documentApprovalUpdated
   }
@@ -2089,7 +2106,23 @@ export class ApplicationService {
           { hsf_docs_reviewed: true },
         )
       }
-
+      const user = await this.userRepository.findById(application.user_id)
+      const getClientView = user ? getUserClientView(user) : null
+      const getProperty = await this.propertyRepository.getPropertyById(
+        application.property_id,
+      )
+      const getOrganizationName =
+        await this.organizationRepository.getOrganizationById(
+          lender.organization_id,
+        )
+      emailTemplete.DocumentApproval(
+        getClientView.id,
+        `${getClientView.first_name}`,
+        `${getClientView.last_name}`,
+        getProperty.property_name,
+        ReviewRequestApprovalStatus.Pending,
+        getOrganizationName.name,
+      )
       return approvals
     })
   }
@@ -2354,6 +2387,23 @@ export class ApplicationService {
             },
           ),
         ),
+      )
+      const user = await this.userRepository.findById(application.user_id)
+      const getClientView = user ? getUserClientView(user) : null
+      const getProperty = await this.propertyRepository.getPropertyById(
+        application.property_id,
+      )
+      const getOrganizationName =
+        await this.organizationRepository.getOrganizationById(
+          getProperty.organization_id,
+        )
+      emailTemplete.DocumentCompleteReview(
+        getClientView.id,
+        `${getClientView.first_name}`,
+        `${getClientView.last_name}`,
+        getProperty.property_name,
+        application.application_id,
+        getOrganizationName.name,
       )
     })
   }

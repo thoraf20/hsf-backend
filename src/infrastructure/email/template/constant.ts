@@ -608,4 +608,64 @@ export default {
       )
     }
   },
+    DocumentApproval(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    approvalStatus: string,
+    link: string,
+    org: string,
+  ) {
+    let subject = `Document Approval`
+    let text = `Update on your document uploaded for ${propertyName}` 
+    let html = templates.DocumentApproval
+      .replace('{{name}}', fullname)
+      .replace('{{propertyName}}', propertyName)
+      .replace('{{approvalStatus}}', approvalStatus)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{link}}', link)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  DocumentCompleteReview(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    applicationId: string,
+    link: string,
+    org: string,
+  ) {
+    let subject = `Document Approval`
+    let text = `Update on your document uploaded for ${propertyName}` 
+    let html = templates.DocumentCompleteReview
+      .replace('{{name}}', fullname)
+      .replace('{{applicationId}}', applicationId)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{link}}', link)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
 }

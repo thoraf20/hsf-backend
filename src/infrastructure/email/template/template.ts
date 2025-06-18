@@ -1452,4 +1452,173 @@ export default {
  </body>
  </html>
  `,
+
+ DocumentCompleteReview: `
+ <!-- hsf-review-completed.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>HSF Document Review Complete</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #eef2f7;
+      padding: 20px;
+      color: #444;
+    }
+    .card {
+      background: #ffffff;
+      max-width: 600px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.07);
+    }
+    h2 {
+      color: #28a745;
+      font-size: 20px;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .cta-button {
+      background-color: #28a745;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 5px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>HSF Document Review Completed</h2>
+    <p>Hello {{name}},</p>
+    <p>We’ve completed the HSF review for your application ID: <strong>{{applicationId}}</strong>.</p>
+    <p>Please check your dashboard to proceed with the next stage.</p>
+    <a href="{{link}}" class="cta-button">Go to Dashboard</a>
+    <p style="margin-top: 25px;">Regards,<br>{{org}} Team © {{year}} </p>
+  </div>
+</body>
+</html>
+ `,
+
+ FailedDocumentApproval : `<!-- document-not-approved.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Document Not Approved</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      padding: 20px;
+      color: #444;
+    }
+    .email-container {
+      background-color: #fff;
+      max-width: 600px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      color: #dc3545;
+      font-size: 22px;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 16px;
+      background-color: #dc3545;
+      color: #fff;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <h1>Document Not Approved</h1>
+    <p>Hello {{name}},</p>
+    <p>We regret to inform you that your document for <strong>{{propertyName}}</strong> was <strong>not approved</strong>.</p>
+    <p>Reason: <em>{{reason}}</em></p>
+    <p>Please review the document and submit a revised version for approval.</p>
+    <a href="{{uploadLink}}" class="button">Resubmit Document</a>
+    <div class="footer">
+      <p>If you have questions, please contact support.</p>
+      <p>Thanks,<br>The Review Team</p>
+    </div>
+  </div>
+</body>
+</html>
+`,
+ DocumentApproval: `
+ <!-- document-approval-notification.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Document Approval Notification</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fa;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      font-size: 20px;
+      color: #1a73e8;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .button {
+      display: inline-block;
+      background: #1a73e8;
+      color: #fff;
+      padding: 12px 18px;
+      margin-top: 20px;
+      border-radius: 5px;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Document Approval Update</h1>
+    <p>Dear {{name}},</p>
+    <p>Your document for property <strong>{{propertyName}}</strong> has been reviewed.</p>
+    <p>Status: <strong>{{approvalStatus}}</strong></p>
+    <a href="{{link}}" class="button">View Document</a>
+    <p style="margin-top: 30px;">Thanks,<br>{{org}} Team © {{year}} </p>
+  </div>
+</body>
+</html>
+ `,
 }
