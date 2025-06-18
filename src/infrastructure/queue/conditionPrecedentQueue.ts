@@ -12,7 +12,7 @@ export const conditionPrecedentLoanGenerationJob =
 export enum ConditionPrecedentJobType {
   GENERATE_LOAN = 'generateLoan',
 }
-
+ 
 export type AddGenerateLoanJob = {
   conditionPrecedentId: string
 }
@@ -20,8 +20,9 @@ export type AddGenerateLoanJob = {
 export function addGenerateLoanJob(data: AddGenerateLoanJob) {
   return conditionPrecedentQueue.add(
     ConditionPrecedentJobType.GENERATE_LOAN,
-    data,
+    data
   )
 }
 
 export default conditionPrecedentQueue
+ 
