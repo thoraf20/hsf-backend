@@ -608,7 +608,7 @@ export default {
       )
     }
   },
-    DocumentApproval(
+  DocumentApproval(
     email: string,
     fullname: string,
     propertyName: string,
@@ -617,9 +617,8 @@ export default {
     org: string,
   ) {
     let subject = `Document Approval`
-    let text = `Update on your document uploaded for ${propertyName}` 
-    let html = templates.DocumentApproval
-      .replace('{{name}}', fullname)
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.DocumentApproval.replace('{{name}}', fullname)
       .replace('{{propertyName}}', propertyName)
       .replace('{{approvalStatus}}', approvalStatus)
       .replace('{{year}}', new Date().getFullYear().toString())
@@ -648,12 +647,41 @@ export default {
     org: string,
   ) {
     let subject = `Document Approval`
-    let text = `Update on your document uploaded for ${propertyName}` 
-    let html = templates.DocumentCompleteReview
-      .replace('{{name}}', fullname)
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.DocumentCompleteReview.replace('{{name}}', fullname)
       .replace('{{applicationId}}', applicationId)
       .replace('{{year}}', new Date().getFullYear().toString())
       .replace('{{link}}', link)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      sendMailInWorker(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  failedDocumentApproval(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    reason: string,
+    uploadLink: string,
+    org: string,
+  ) {
+    let subject = `Failed document uploaded`
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.FailedDocumentApproval
+       .replace('{{name}}', fullname)
+       .replace('{{propertyName}}', propertyName)
+      .replace('{{reason}}', reason)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{uploadLink}}', uploadLink)
       .replace('{{org}}', org)
 
     try {

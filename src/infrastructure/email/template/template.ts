@@ -1562,7 +1562,7 @@ export default {
     <a href="{{uploadLink}}" class="button">Resubmit Document</a>
     <div class="footer">
       <p>If you have questions, please contact support.</p>
-      <p>Thanks,<br>The Review Team</p>
+      <p>Thanks,<br>{{org}} Team © {{year}}</p>
     </div>
   </div>
 </body>
@@ -1621,4 +1621,71 @@ export default {
 </body>
 </html>
  `,
+
+ EscrowMeeting: `<!-- escrow-meeting-invite.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Escrow Meeting Scheduled</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #ffffff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    h2 {
+      color: #007bff;
+    }
+    p {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .details {
+      background-color: #f9f9f9;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 20px;
+      border: 1px solid #ddd;
+    }
+    .details p {
+      margin: 5px 0;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Escrow Meeting Scheduled</h2>
+    <p>Hello {{name}},</p>
+    <p>You have been scheduled for an escrow meeting regarding the property <strong>{{propertyName}}</strong>.</p>
+    <div class="details">
+      <p><strong>Date:</strong> {{date}}</p>
+      <p><strong>Time:</strong> {{time}}</p>
+      <p><strong>Location:</strong> {{location}}</p>
+      <p><strong>Agent:</strong> {{agentName}}</p>
+      <p><strong>Agent Phone:</strong> {{agentPhone}}</p>
+      <p><strong>Meeting Details:</strong> {{meetingDetails}}</p>
+    </div>
+    <p>If you have any questions or need to reschedule, please contact your agent.</p>
+    <div class="footer">
+      <p>Thank you,<br/>The Escrow Coordination Team</p>
+    </div>
+  </div>
+</body>
+</html>
+`
 }
