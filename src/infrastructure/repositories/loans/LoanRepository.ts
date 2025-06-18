@@ -11,7 +11,14 @@ export class LoanRepository implements ILoanRepository {
   private readonly tableName = 'loans'
 
   async getLoanById(loan_id: string): Promise<Loan | null> {
-    const loan = await db(this.tableName).where({ loan_id }).first()
+    const loan = await db(this.tableName).where({ id: loan_id }).first()
+    return loan ? new Loan(loan) : null
+  }
+
+  async getLoanByOfferId(offerId: string): Promise<Loan | null> {
+    const loan = await db<Loan>(this.tableName)
+      .where({ loan_offer_id: offerId })
+      .first()
     return loan ? new Loan(loan) : null
   }
 
@@ -21,13 +28,13 @@ export class LoanRepository implements ILoanRepository {
   }
 
   async updateLoan(loan_id: string, loan: Partial<Loan>): Promise<Loan | null> {
-    await db(this.tableName).where({ loan_id }).update(loan)
+    await db(this.tableName).where({ id: loan_id }).update(loan)
     const updatedLoan = await this.getLoanById(loan_id)
     return updatedLoan
   }
 
   async deleteLoan(loan_id: string): Promise<void> {
-    await db(this.tableName).where({ loan_id }).del()
+    await db(this.tableName).where({ id: loan_id }).del()
   }
 
   useFilter(q: Knex.QueryBuilder<any, any[]>, filters: LoanFilters) {

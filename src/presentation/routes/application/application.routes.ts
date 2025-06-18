@@ -37,6 +37,7 @@ import {
   userDipResponseSchema,
   homeBuyerLoanOfferRespondSchema,
   submitSignedLoanOfferLetterSchema,
+  uploadLoanAgreementDocSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -61,6 +62,10 @@ import { paymentFiltersSchema } from '@validators/paymentValidator'
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
+import { LoanRepository } from '@repositories/loans/LoanRepository'
+import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepaymentRepository'
+import { LoanRepaymentTransactionRepository } from '@repositories/loans/LoanRepaymentTransactionRepository'
+import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -78,6 +83,10 @@ const applicationService = new ApplicationService(
   new LoanOfferRepository(),
   new LoanDecisionRepository(),
   new ConditionPrecedentRepository(),
+  new LoanRepository(),
+  new LoanRepaymentScheduleRepository(),
+  new LoanRepaymentTransactionRepository(),
+  new LoanAgreementRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -182,6 +191,23 @@ applicationRoutes.get(
     } = req
 
     const response = await applicationController.getApplicationStages(
+      application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/lender',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getApplicationLender(
       application_id,
       authInfo,
     )
@@ -740,4 +766,63 @@ applicationRoutes.patch(
   }),
 )
 
+applicationRoutes.get(
+  '/:application_id/loans/active',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getActiveApplicationLoan(
+      application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/:application_id/loans/:loan_id/repayments',
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id, loan_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getApplicationLoanRepayment(
+      application_id,
+      loan_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/loan-agreements/doc-upload/lender',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(uploadLoanAgreementDocSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      authInfo,
+      body,
+      params: { application_id },
+    } = req
+
+    applicationController.setLenderLoanAgreementDoc(
+      application_id,
+      body,
+      authInfo,
+    )
+  }),
+)
+
+applicationRoutes.patch(
+  '/:application_id/loan-agreements/doc-upload/buyer',
+  authorize(isHomeBuyer),
+  asyncMiddleware(async () => {}),
+)
 export default applicationRoutes

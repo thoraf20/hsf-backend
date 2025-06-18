@@ -237,6 +237,28 @@ export class ManageDipUseCase {
         dip_status: DIPStatus.AwaitingUserAction,
       })
 
+      if (updatedDip.dip_lender_status === DIPLenderStatus.Accepted) {
+        await Promise.all(
+          application.stages?.map(async (stage) => {
+            if (stage.exit_time) {
+              await this.applicationRepository.updateApplicationStage(
+                stage.id,
+                {
+                  exit_time: new Date(),
+                },
+              )
+            }
+          }),
+        )
+
+        await this.applicationRepository.addApplicationStage(applicationId, {
+          application_id: applicationId,
+          user_id: application.user_id,
+          stage: MortgageApplicationStage.DecisionInPrinciple,
+          entry_time: new Date(),
+        })
+      }
+
       return updatedDip
     })
   }
@@ -314,28 +336,6 @@ export class ManageDipUseCase {
 
         dip_status: DIPStatus.PaymentPending,
       })
-
-      if (updatedDip.user_action === UserAction.Accept) {
-        await Promise.all(
-          application.stages?.map(async (stage) => {
-            if (stage.exit_time) {
-              await this.applicationRepository.updateApplicationStage(
-                stage.id,
-                {
-                  exit_time: new Date(),
-                },
-              )
-            }
-          }),
-        )
-
-        await this.applicationRepository.addApplicationStage(applicationId, {
-          application_id: applicationId,
-          user_id: application.user_id,
-          stage: MortgageApplicationStage.DecisionInPrinciple,
-          entry_time: new Date(),
-        })
-      }
 
       return updatedDip
     })

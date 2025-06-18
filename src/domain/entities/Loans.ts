@@ -1,4 +1,5 @@
 import {
+  LoanAgreementStatus,
   LoanDecisionStatus,
   LoanOfferWorkflowStatus,
 } from '@domain/enums/loanEnum'
@@ -21,6 +22,9 @@ export class LoanOffer extends BaseEntity {
   offer_status: LoanOfferStatus
   offer_date: Date
   expiry_date: Date
+  loan_start_date?: Date
+
+  type?: string
 
   // Estimated values for display on the offer document
   total_interest_estimate?: number
@@ -40,9 +44,9 @@ export class LoanOffer extends BaseEntity {
   constructor(d: Partial<LoanOffer>) {
     super()
     let data = {
-      ...d,
       created_at: new Date(),
       updated_at: new Date(),
+      ...d,
     }
     Object.assign(this, data)
   }
@@ -72,9 +76,9 @@ export class Loan extends BaseEntity {
   constructor(d: Partial<Loan>) {
     super()
     let data = {
-      ...d,
       created_at: new Date(),
       updated_at: new Date(),
+      ...d,
     }
     Object.assign(this, data)
   }
@@ -95,9 +99,9 @@ export class LoanRepaymentSchedule extends BaseEntity {
   constructor(d: Partial<LoanRepaymentSchedule>) {
     super()
     let data = {
-      ...d,
       created_at: new Date(),
       updated_at: new Date(),
+      ...d,
     }
     Object.assign(this, data)
   }
@@ -116,9 +120,9 @@ export class LoanRepaymentTransaction extends BaseEntity {
   constructor(d: Partial<LoanRepaymentTransaction>) {
     super()
     let data = {
-      ...d,
       created_at: new Date(),
       updated_at: new Date(),
+      ...d,
     }
     Object.assign(this, data)
   }
@@ -140,10 +144,28 @@ export class LoanDecision extends BaseEntity {
   constructor(d: Partial<LoanRepaymentTransaction>) {
     super()
     let data = {
-      ...d,
       created_at: new Date(),
       updated_at: new Date(),
+      ...d,
     }
     Object.assign(this, data)
   }
+}
+
+export class LoanAgreement extends BaseEntity {
+  loan_id?: string
+  loan_offer_id: string
+
+  agreement_date?: Date
+
+  status: LoanAgreementStatus
+  borrower_signature?: string
+  lender_signature?: string
+
+  application_id?: string
+  lender_org_id: string
+
+  user_id: string
+  lender_sign_uploaded_at?: Date
+  borower_sign_uploaded_at?: Date
 }

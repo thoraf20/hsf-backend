@@ -11,6 +11,7 @@ import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
+import calculateLoanMetrics from '@shared/respositoryValues/loanCalculationService'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import {
   SetLoanOfferWorkflowStatusInput,
@@ -164,16 +165,31 @@ export class ManageLoanOfferService {
       )
     }
 
+    if (input.interest_rate <= 1) {
+      //the calculate loan metric expect interest rate to be in the ratio of hundred (i.e 1 - 100%)
+      //while the interest rate migth be sent as unit less than 1 (i.e 0.00 - 1) so 0.23 -> 23%
+      input.interest_rate = input.interest_rate * 100
+    }
+
+    const loanMetrics = calculateLoanMetrics(
+      input.loan_amount,
+      input.interest_rate,
+      input.loan_term_months,
+      input.repayment_frequency,
+    )
+
     const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
       loanOffer.id,
       {
         ...input,
-        workflow_status: !(
-          loanOffer.workflow_status ||
+        estimated_periodic_payment: loanMetrics.periodicPayment,
+        total_payable_estimate: loanMetrics.totalPayable,
+        total_interest_estimate: loanMetrics.totalInterest,
+        workflow_status:
+          !loanOffer.workflow_status ||
           loanOffer.workflow_status === LoanOfferWorkflowStatus.GENERATED
-        )
-          ? LoanOfferWorkflowStatus.UNDER_REVIEW
-          : loanOffer.workflow_status,
+            ? LoanOfferWorkflowStatus.UNDER_REVIEW
+            : loanOffer.workflow_status,
       },
     )
 

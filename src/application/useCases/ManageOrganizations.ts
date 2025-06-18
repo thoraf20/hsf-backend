@@ -132,7 +132,7 @@ export class ManageOrganizations {
 
       case OrganizationType.LENDER_INSTITUTION:
         types = LENDER_INSTITUTION_ROLES
-
+        break
       default:
         return null
     }

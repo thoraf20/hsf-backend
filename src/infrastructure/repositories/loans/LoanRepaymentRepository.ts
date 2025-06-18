@@ -1,3 +1,4 @@
+import { LoanRepaymentScheduleStatusEnum } from '@domain/enums/loanEnum'
 import { LoanRepaymentSchedule } from '@entities/Loans'
 import db from '@infrastructure/database/knex'
 import { ILoanRepaymentScheduleRepository } from '@interfaces/ILoanRepaymentScheduleRepository'
@@ -12,6 +13,12 @@ export class LoanRepaymentScheduleRepository
   ): Promise<LoanRepaymentSchedule | null> {
     const schedule = await db(this.tableName).where({ schedule_id }).first()
     return schedule ? new LoanRepaymentSchedule(schedule) : null
+  }
+
+  async getLoanRepaymentScheduleByLoanId(
+    loan_id: string,
+  ): Promise<LoanRepaymentSchedule[]> {
+    return db<LoanRepaymentSchedule>(this.tableName).select().where({ loan_id })
   }
 
   async createLoanRepaymentSchedule(
@@ -36,5 +43,25 @@ export class LoanRepaymentScheduleRepository
 
   async deleteLoanRepaymentSchedule(schedule_id: string): Promise<void> {
     await db(this.tableName).where({ schedule_id }).del()
+  }
+
+  async findRepaymentsDueOn(
+    date: Date,
+    batchSize: number = 100,
+  ): Promise<LoanRepaymentSchedule[]> {
+    return await db(this.tableName)
+      .whereRaw('DATE(due_date) = ?', [date.toISOString().slice(0, 10)])
+      .andWhere({ status: LoanRepaymentScheduleStatusEnum.Pending })
+      .limit(batchSize)
+  }
+
+  async findOverdueRepayments(
+    date: Date,
+    batchSize: number = 100,
+  ): Promise<LoanRepaymentSchedule[]> {
+    return db(this.tableName)
+      .where('due_date', '<', date.toISOString().slice(0, 10))
+      .andWhere({ status: LoanRepaymentScheduleStatusEnum.Pending })
+      .limit(batchSize)
   }
 }

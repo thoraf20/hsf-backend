@@ -93,7 +93,7 @@ async function processCPLoanGen(job: Job<AddGenerateLoanJob>) {
         repayment_frequency: loanOffer.repayment_frequency,
         loan_status: LoanStatusEnum.Active,
         principal_amount: loanOffer.loan_amount,
-        start_date: now,
+        start_date: loanOffer.loan_start_date ?? loanOffer.expiry_date,
         end_date: addMonths(now, loanOffer.loan_term_months),
         remaning_balance: loanOffer.loan_amount, //initially equals loan amount
         total_interest_paid: 0,
@@ -101,24 +101,74 @@ async function processCPLoanGen(job: Job<AddGenerateLoanJob>) {
         loan_terms_months: loanOffer.loan_term_months,
       })
 
-      // Generate repayment schedule
-      const monthlyInterestRate = loanOffer.interest_rate / 1200 //Monthly interest rate (decimal)
-      const numberOfPayments = loanOffer.loan_term_months
+      // New: Determine the number of payments and the interval based on repayment frequency
+      let numberOfPayments: number
+      let paymentInterval: { months?: number; days?: number; weeks?: number } =
+        {}
+
+      switch (loanOffer.repayment_frequency) {
+        case 'DAILY':
+          numberOfPayments = loanOffer.loan_term_months * 30 // Approximation
+          paymentInterval = { days: 1 }
+          break
+        case 'WEEKLY':
+          numberOfPayments = loanOffer.loan_term_months * 4 // Approximation
+          paymentInterval = { weeks: 1 }
+          break
+        case 'BI-WEEKLY':
+          numberOfPayments = loanOffer.loan_term_months * 2
+          paymentInterval = { weeks: 2 }
+          break
+        case 'MONTHLY':
+          numberOfPayments = loanOffer.loan_term_months
+          paymentInterval = { months: 1 }
+          break
+        case 'QUARTERLY':
+          numberOfPayments = loanOffer.loan_term_months / 3
+          paymentInterval = { months: 3 }
+          break
+        case 'SEMI-ANNUALLY':
+          numberOfPayments = loanOffer.loan_term_months / 6
+          paymentInterval = { months: 6 }
+          break
+        case 'ANNUALLY':
+          numberOfPayments = loanOffer.loan_term_months / 12
+          paymentInterval = { months: 12 }
+          break
+        default:
+          throw new Error(
+            `Unsupported repayment frequency: ${loanOffer.repayment_frequency}`,
+          )
+      }
+
+      // Recalculate interestRatePerPeriod based on the total number of payments
+      const annualInterestRate =
+        loanOffer.interest_rate > 1
+          ? loanOffer.interest_rate / 100
+          : loanOffer.interest_rate
+
+      const interestRatePerPeriod = annualInterestRate / numberOfPayments
       const principalAmount = loanOffer.loan_amount
 
-      const monthlyPayment =
-        (principalAmount * monthlyInterestRate) /
-        (1 - Math.pow(1 + monthlyInterestRate, -numberOfPayments))
+      // Calculate  paymentAmount
+      let paymentAmount: number
+      if (interestRatePerPeriod === 0) {
+        paymentAmount = principalAmount / numberOfPayments
+      } else {
+        paymentAmount =
+          (principalAmount * interestRatePerPeriod) /
+          (1 - Math.pow(1 + interestRatePerPeriod, -numberOfPayments))
+      }
 
       let runningBalance = principalAmount
       let paymentDate = now
 
       for (let i = 1; i <= numberOfPayments; i++) {
-        const interestPayment = runningBalance * monthlyInterestRate
-        const principalPayment = monthlyPayment - interestPayment
+        const interestPayment = runningBalance * interestRatePerPeriod
+        const principalPayment = paymentAmount - interestPayment
 
         runningBalance -= principalPayment
-        paymentDate = add(paymentDate, { months: 1 })
+        paymentDate = add(paymentDate, paymentInterval)
 
         const repaymentSchedule = new LoanRepaymentSchedule({
           loan_id: loan.id,
@@ -126,7 +176,7 @@ async function processCPLoanGen(job: Job<AddGenerateLoanJob>) {
           due_date: paymentDate,
           principal_due: principalPayment,
           interest_due: interestPayment,
-          total_due: monthlyPayment,
+          total_due: paymentAmount,
           status: LoanRepaymentScheduleStatusEnum.Pending,
         })
 

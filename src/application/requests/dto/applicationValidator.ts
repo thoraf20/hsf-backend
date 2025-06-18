@@ -118,7 +118,7 @@ export type DipFilters = z.infer<typeof dipFiltersSchema>
 
 export const updateDipLoanSchema = z.object({
   approved_loan_amount: z.coerce.number(),
-  interest_rate: z.coerce.number(),
+  interest_rate: z.coerce.number().max(1).min(0),
   loan_term: z.coerce.number().int(),
 })
 
@@ -234,4 +234,13 @@ export const submitSignedLoanOfferLetterSchema = z.object({
 
 export type SubmitSignedLoanOfferLetterInput = z.infer<
   typeof submitSignedLoanOfferLetterSchema
+>
+
+export const uploadLoanAgreementDocSchema = z.object({
+  url: z.string().url().nullable(),
+  loan_agreement_id: z.string().nullable(),
+})
+
+export type UploadLoanAgreementDocInput = z.infer<
+  typeof uploadLoanAgreementDocSchema
 >

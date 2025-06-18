@@ -1319,4 +1319,137 @@ export default {
  </body>
  </html>
  `,
+  loanRepaymentOverdue: `<!DOCTYPE html>
+ <html>
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Loan Payment Overdue</title>
+     <style>
+         body {
+             font-family: Arial, sans-serif;
+             background-color: #f4f4f4;
+             margin: 0;
+             padding: 0;
+         }
+         .container {
+             width: 100%;
+             max-width: 600px;
+             margin: 20px auto;
+             background-color: #ffffff;
+             padding: 20px;
+             border-radius: 8px;
+             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+         }
+         .header {
+             font-size: 24px;
+             font-weight: bold;
+             color: #d9534f;
+             text-align: center;
+             margin-bottom: 20px;
+         }
+         .urgent-banner {
+             background-color: #f2dede;
+             border: 1px solid #ebccd1;
+             color: #a94442;
+             padding: 15px;
+             border-radius: 5px;
+             margin-bottom: 20px;
+             text-align: center;
+             font-weight: bold;
+         }
+         .loan-details {
+             background-color: #f8f9fa;
+             padding: 15px;
+             border-radius: 5px;
+             margin: 20px 0;
+         }
+         .loan-details h3 {
+             margin-top: 0;
+             color: #333;
+         }
+         .loan-details p {
+             margin: 5px 0;
+             color: #666;
+         }
+         .amount-due {
+             font-size: 24px;
+             font-weight: bold;
+             color: #d9534f;
+             text-align: center;
+             margin: 20px 0;
+         }
+         .message {
+             font-size: 16px;
+             color: #666;
+             line-height: 1.6;
+         }
+         .action-button {
+             display: inline-block;
+             padding: 12px 24px;
+             background-color: #d9534f;
+             color: #ffffff;
+             text-decoration: none;
+             border-radius: 5px;
+             font-weight: bold;
+             margin: 20px auto;
+             text-align: center;
+         }
+         .payment-methods {
+             background-color: #e8f4fd;
+             padding: 15px;
+             border-radius: 5px;
+             margin: 20px 0;
+         }
+         .footer {
+             font-size: 14px;
+             color: #999;
+             margin-top: 20px;
+             text-align: center;
+         }
+         .footer a {
+             color: #007bff;
+             text-decoration: none;
+         }
+         .warning-text {
+             color: #d9534f;
+             font-weight: bold;
+         }
+     </style>
+ </head>
+ <body>
+     <div class="container">
+         <p class="header">⚠️ Payment Overdue Notice</p>
+
+         <div class="urgent-banner">
+             URGENT: Your loan payment is now overdue
+         </div>
+
+         <p class="message">Dear {{borrower_name}},</p>
+
+         <p class="message">This is an important notice regarding your loan payment that was due on <strong>{{due_date}}</strong>. Your payment is now <span class="warning-text">{{days_overdue}} days overdue</span>.</p>
+
+         <div class="loan-details">
+             <h3>Loan Details:</h3>
+             <p><strong>Loan ID:</strong> {{loan_id}}</p>
+             <p><strong>Property Address:</strong> {{property_address}}</p>
+             <p><strong>Original Due Date:</strong> {{due_date}}</p>
+             <p><strong>Days Overdue:</strong> {{days_overdue}} days</p>
+         </div>
+
+         <div class="amount-due">
+             Amount Due: {{currency}}{{overdue_amount}}
+         </div>
+
+         <p class="message">To avoid additional late fees and potential impact to your credit score, please make your payment immediately.</p>
+         <p class="footer">
+             Questions? Contact us at {{support_email}} or {{support_phone}}<br>
+             <a href="{{SUPPORT_LINK}}">Customer Support Portal</a><br><br>
+             This is an automated notice. Please retain this email for your records.<br>
+             © {{year}} {{company_name}}. All rights reserved.
+         </p>
+     </div>
+ </body>
+ </html>
+ `,
 }

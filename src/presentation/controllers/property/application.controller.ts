@@ -32,6 +32,7 @@ import {
   UpdateDipLoanInput,
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
+  UploadLoanAgreementDocInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -602,6 +603,63 @@ export class ApplicationController {
       StatusCodes.OK,
       'Application stages retrieved successfully',
       stages,
+    )
+  }
+
+  async getActiveApplicationLoan(applicationId: string, authInfo: AuthInfo) {
+    const loan = await this.applicationService.getActiveApplicationLoan(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application Loan retrieved successfully',
+      loan,
+    )
+  }
+
+  async getApplicationLoanRepayment(
+    applicationId: string,
+    loanId: string,
+    authInfo: AuthInfo,
+  ) {
+    const repayments =
+      await this.applicationService.getApplicationLoanRepayment(
+        applicationId,
+        loanId,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Loan repayments retrieved successfully',
+      repayments,
+    )
+  }
+
+  async getApplicationLender(applicationId: string, authInfo: AuthInfo) {
+    const lender = await this.applicationService.getApplicationLender(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Lender retrieved successfully',
+      lender,
+    )
+  }
+
+  async setLenderLoanAgreementDoc(
+    applicationId: string,
+    input: UploadLoanAgreementDocInput,
+    authInfo: AuthInfo,
+  ) {
+    this.applicationService.setLenderLoanAgreementDoc(
+      applicationId,
+      input,
+      authInfo,
     )
   }
 }

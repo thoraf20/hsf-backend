@@ -4,6 +4,10 @@ export interface ILoanRepaymentTransactionRepository {
   getLoanRepaymentTransactionById(
     repayment_transaction_id: string,
   ): Promise<LoanRepaymentTransaction | null>
+
+  getLoanRepaymentTransactionRepaymentId(
+    repayment_id: string,
+  ): Promise<LoanRepaymentTransaction | null>
   createLoanRepaymentTransaction(
     loanRepaymentTransaction: LoanRepaymentTransaction,
   ): Promise<LoanRepaymentTransaction>
