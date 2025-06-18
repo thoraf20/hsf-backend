@@ -2126,16 +2126,17 @@ export class ApplicationService {
         getOrganizationName.name,
       )
         
-     } else {
-            emailTemplete.failedDocumentApproval(
-          getClientView.email,
-          `${getClientView.first_name}`,
-          `${getClientView.last_name}`,
-          getProperty.property_name,
-          `The document application  is not approved.`, // Reason will be added latter
-          getOrganizationName.name,
-        )
      }
+    //   else {
+    //         emailTemplete.failedDocumentApproval(
+    //       getClientView.email,
+    //       `${getClientView.first_name}`,
+    //       `${getClientView.last_name}`,
+    //       getProperty.property_name,
+    //       `The document application  is not approved.`, // Reason will be added latter
+    //       getOrganizationName.name,
+    //     )
+    //  }
   
       return approvals
     })
