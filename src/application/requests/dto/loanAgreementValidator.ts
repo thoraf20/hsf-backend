@@ -14,3 +14,19 @@ export const loanAgreementFilterSchema = withPaginateSchema(
 )
 
 export type LoanAgreementFilters = z.infer<typeof loanAgreementFilterSchema>
+
+export const setLoanAgreementLetterSchema = z.object({
+  application_id: z.string().nullish(),
+  document: z
+    .object({
+      name: z.string().nullish(),
+      url: z.string().url(),
+      size: z.number().nullish(),
+      ext: z.string().nullish(),
+    })
+    .nullable(),
+})
+
+export type SetLoanAgreementLetterInput = z.infer<
+  typeof setLoanAgreementLetterSchema
+>

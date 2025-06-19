@@ -1,6 +1,6 @@
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
-import { asyncMiddleware } from '@routes/index.t'
+import { asyncMiddleware, validateRequest } from '@routes/index.t'
 import { Router } from 'express'
 import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { ManageLoanAgreementService } from '@use-cases/Loan/ManageLoanAgreement'
@@ -8,7 +8,10 @@ import { ApplicationRepository } from '@repositories/property/ApplicationResposi
 import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { ManageLoanAgreementController } from '@controllers/Agent/ManageLoanAgreement.controller'
 import { validateRequestQuery } from '@shared/utils/paginate'
-import { loanAgreementFilterSchema } from '@validators/loanAgreementValidator'
+import {
+  loanAgreementFilterSchema,
+  setLoanAgreementLetterSchema,
+} from '@validators/loanAgreementValidator'
 import { authorize } from '@middleware/authorization'
 import {
   isHomeBuyer,
@@ -17,6 +20,7 @@ import {
 } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { UserRepository } from '@repositories/user/UserRepository'
+import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 
 const manageLoanAgreementRoutes = Router()
 
@@ -26,6 +30,7 @@ const organizationRepository = new OrganizationRepository()
 const loanRepository = new LoanRepository()
 const applicationRepository = new ApplicationRepository()
 const userRepository = new UserRepository()
+const documentRepository = new DocumentRepository()
 const manageLoanAgreementService = new ManageLoanAgreementService(
   loanAgreementRepository,
   loanRepository,
@@ -33,6 +38,7 @@ const manageLoanAgreementService = new ManageLoanAgreementService(
   organizationRepository,
   applicationRepository,
   userRepository,
+  documentRepository,
 )
 const manageLoanAgreementController = new ManageLoanAgreementController(
   manageLoanAgreementService,
@@ -79,16 +85,25 @@ manageLoanAgreementRoutes.get(
   }),
 )
 
-// manageLoanAgreementRoutes.post(
-//   '/loan-agreements',
-//   validateRequest(createLoanAgreementSchema),
-//   asyncMiddleware(async (req, res) => {
-//     const loanAgreement = req.body
-//     const response =
-//       await manageLoanAgreementController.createLoanAgreement(loanAgreement)
-//     res.status(response.statusCode).json(response)
-//   }),
-// )
+manageLoanAgreementRoutes.post(
+  '/loan-agreements/:loanAgreementId/agreement-letter',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(setLoanAgreementLetterSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { loanAgreementId },
+      body,
+      authInfo,
+    } = req
+    const response = await manageLoanAgreementController.setLoanAgreementLetter(
+      loanAgreementId,
+      body,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
 
 // manageLoanAgreementRoutes.put(
 //   '/loan-agreements/:loan_agreement_id',

@@ -159,8 +159,8 @@ export class LoanAgreement extends BaseEntity {
   agreement_date?: Date
 
   status: LoanAgreementStatus
-  borrower_signature?: string
-  lender_signature?: string
+  borrower_signature_doc_id?: string
+  lender_signature_doc_id?: string
 
   application_id?: string
   lender_org_id: string

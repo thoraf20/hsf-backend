@@ -1,8 +1,10 @@
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
-import { LoanAgreementFilters } from '@validators/loanAgreementValidator'
+import {
+  LoanAgreementFilters,
+  SetLoanAgreementLetterInput,
+} from '@validators/loanAgreementValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
-import { LoanAgreement } from '@domain/entities/Loans'
 import { ManageLoanAgreementService } from '@use-cases/Loan/ManageLoanAgreement'
 import { Role } from '@routes/index.t'
 import { ApplicationCustomError } from '@middleware/errors/customError'
@@ -49,45 +51,23 @@ export class ManageLoanAgreementController {
     )
   }
 
-  // async createLoanAgreement(
-  //   loanAgreement: LoanAgreement /*, authInfo: AuthInfo*/,
-  // ) {
-  //   const newLoanAgreement =
-  //     await this.manageLoanAgreementService.createLoanAgreement(loanAgreement)
-
-  //   return createResponse(
-  //     StatusCodes.CREATED,
-  //     'Loan agreement created successfully',
-  //     newLoanAgreement,
-  //   )
-  // }
-
-  async updateLoanAgreement(
+  async setLoanAgreementLetter(
     loanAgreementId: string,
-    loanAgreement: Partial<LoanAgreement>,
-    /*authInfo: AuthInfo,*/
+    input: SetLoanAgreementLetterInput,
+    authInfo: AuthInfo,
   ) {
-    const updatedLoanAgreement =
-      await this.manageLoanAgreementService.updateLoanAgreement(
+    const response =
+      await this.manageLoanAgreementService.setLoanAgreementLetter(
         loanAgreementId,
-        loanAgreement,
-        /* authInfo,*/
+        input,
+        authInfo,
       )
 
     return createResponse(
       StatusCodes.OK,
-      'Loan agreement updated successfully',
-      updatedLoanAgreement,
+      !response.lender_signature_doc_id
+        ? 'Loan agreement letter removed successfully'
+        : 'Loan agreement letter set successfully',
     )
   }
-
-  // async deleteLoanAgreement(loanAgreementId: string /*, authInfo: AuthInfo*/) {
-  //   await this.manageLoanAgreementService.deleteLoanAgreement(loanAgreementId)
-
-  //   return createResponse(
-  //     StatusCodes.NO_CONTENT,
-  //     'Loan agreement deleted successfully',
-  //     null,
-  //   )
-  // }
 }

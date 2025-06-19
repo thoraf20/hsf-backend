@@ -425,10 +425,25 @@ export class AuthService {
       }
     }
 
-    const isValid = await this.userRepository.comparedPassword(
-      input.password,
-      user.password,
-    )
+    const role = await this.userRepository.getRoleById(user.role_id)
+
+    if (!role) {
+      throw new ApplicationCustomError(
+        StatusCodes.UNAUTHORIZED,
+        'Sorry!, We are unable to sign you into your account',
+      )
+    }
+
+    let isValid = isAdminRequest ? role.name !== Role.HOME_BUYER : user.is_admin
+
+    if (isValid) {
+      isValid = Boolean(
+        await this.userRepository.comparedPassword(
+          input.password,
+          user.password,
+        ),
+      )
+    }
 
     const ipAddress = getIpAddress()
     const userAgent = getUserAgent()
@@ -495,22 +510,6 @@ export class AuthService {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         `Your account is currently ${user.status}. Please contact support for further information.`,
-      )
-    }
-
-    const role = await this.userRepository.getRoleById(user.role_id)
-
-    if (!role) {
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Sorry!, We are unable to sign you into your account',
-      )
-    }
-
-    if (!(isAdminRequest || role.name === Role.HOME_BUYER)) {
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Sorry!, We are unable to sign you into your account',
       )
     }
 
