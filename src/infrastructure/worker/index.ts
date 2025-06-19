@@ -2,6 +2,7 @@ import logger from '@middleware/logger'
 import dipWorker from './dipWorker'
 import conditionPrecedentWorker from './conditionPrecedentWorker'
 import loanRepaymentWorker from './loanRepaymentWorker'
+import emailEmailWorker from './email.worker'
 
 export async function startJobWorkers() {
   await Promise.all([
@@ -16,5 +17,9 @@ export async function startJobWorkers() {
     loanRepaymentWorker.run().catch((error) => {
       logger.error(`Loan Repayment worker failed to start: ${error}`)
     }),
+
+    emailEmailWorker.run().catch((error) => {
+      logger.error(`Email worker failed to start: ${error}`)
+    })
   ])
 }

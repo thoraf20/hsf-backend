@@ -1,4 +1,5 @@
-import sendMailInWorker from '@workers/EmailWorker'
+// import enqueueEmailJob from '@workers/EmailWorker'
+import { enqueueEmailJob } from '@infrastructure/crons/sendMailInWorker'
 import templates from './template'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import logger from '@middleware/logger'
@@ -34,7 +35,7 @@ export default {
     console.log({ emailVerify: html })
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -57,7 +58,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`MFA OTP email was sent successfully to ${email}`)
     } catch (error) {
       logger.error(
@@ -78,7 +79,7 @@ export default {
     console.log({ html })
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -99,7 +100,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -116,7 +117,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -149,7 +150,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -179,7 +180,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -199,7 +200,7 @@ export default {
       .replace(`{{full_name}}`, full_name)
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -221,7 +222,7 @@ export default {
       .replace(`{{name}}`, name)
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -269,7 +270,7 @@ export default {
       .replace(`{{property_link}}`, shareable_link)
     try {
       const emailData = { to: recipient_email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -297,7 +298,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -327,7 +328,7 @@ export default {
 
     try {
       const emailData = { to: client_email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -358,7 +359,7 @@ export default {
 
     try {
       const emailData = { to: organization_email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -388,7 +389,7 @@ export default {
 
     try {
       const emailData = { to: organization_email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -417,7 +418,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -442,7 +443,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -463,7 +464,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
       logger.error(`Unable to send email: ${error.message}`)
@@ -484,7 +485,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(
         `Organization suspended email was sent successfully to ${email}`,
       )
@@ -509,7 +510,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(
         `Organization deleted email was sent successfully to ${email}`,
       )
@@ -533,7 +534,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(
         `Organization activated email was sent successfully to ${email}`,
       )
@@ -594,7 +595,7 @@ export default {
 
     try {
       const emailData = { to: email, subject, text, html }
-      sendMailInWorker(emailData)
+      enqueueEmailJob(emailData)
       logger.info(
         `Loan repayment overdue email was sent successfully to ${email}`,
       )
@@ -602,6 +603,94 @@ export default {
       logger.error(
         `Unable to send loan repayment overdue email to ${email}: ${error.message}`,
       )
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  DocumentApproval(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    approvalStatus: string,
+    link: string,
+    org: string,
+  ) {
+    let subject = `Document Approval`
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.DocumentApproval.replace('{{name}}', fullname)
+      .replace('{{propertyName}}', propertyName)
+      .replace('{{approvalStatus}}', approvalStatus)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{link}}', link)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      enqueueEmailJob(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+
+  DocumentCompleteReview(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    applicationId: string,
+    link: string,
+    org: string,
+  ) {
+    let subject = `Document Approval`
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.DocumentCompleteReview.replace('{{name}}', fullname)
+      .replace('{{applicationId}}', applicationId)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{link}}', link)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      enqueueEmailJob(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
+      throw new ApplicationCustomError(
+        StatusCodes.GATEWAY_TIMEOUT,
+        `Unable to send email`,
+      )
+    }
+  },
+  failedDocumentApproval(
+    email: string,
+    fullname: string,
+    propertyName: string,
+    reason: string,
+    uploadLink: string,
+    org: string,
+  ) {
+    let subject = `Failed document uploaded`
+    let text = `Update on your document uploaded for ${propertyName}`
+    let html = templates.FailedDocumentApproval
+       .replace('{{name}}', fullname)
+       .replace('{{propertyName}}', propertyName)
+      .replace('{{reason}}', reason)
+      .replace('{{year}}', new Date().getFullYear().toString())
+      .replace('{{uploadLink}}', uploadLink)
+      .replace('{{org}}', org)
+
+    try {
+      const emailData = { to: email, subject, text, html }
+      enqueueEmailJob(emailData)
+      logger.info(`Email was sent successfully`)
+    } catch (error) {
+      logger.error(`Unable to send email: ${error.message}`)
       throw new ApplicationCustomError(
         StatusCodes.GATEWAY_TIMEOUT,
         `Unable to send email`,
