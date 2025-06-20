@@ -45,6 +45,7 @@ export class AuthService {
   private readonly userActivityRepository: IUserActivityLogRepository
   private readonly existingUsers: ExistingUsers
   private readonly manageOrganizations: ManageOrganizations
+  private readonly organizationRepository: IOrganizationRepository
   private readonly hashData = new Hashing()
   private readonly mfaTokenGen = new MfaToken()
   private readonly client = new RedisClient()
@@ -54,12 +55,14 @@ export class AuthService {
     organizationRepository: IOrganizationRepository,
     loginAttemptRepository: ILoginAttemptRepository,
     userActivityRepository: IUserActivityLogRepository,
+    organizationRespository: IOrganizationRepository,
   ) {
     this.userRepository = userRepository
     this.accountRepository = accountRepository
     this.existingUsers = new ExistingUsers(this.userRepository)
     this.loginAttemptRepository = loginAttemptRepository
     this.userActivityRepository = userActivityRepository
+    this.organizationRepository = organizationRepository
     this.manageOrganizations = new ManageOrganizations(
       organizationRepository,
       new UserRepository(),
@@ -434,7 +437,15 @@ export class AuthService {
       )
     }
 
-    let isValid = isAdminRequest ? role.name !== Role.HOME_BUYER : user.is_admin
+    let isValid = !!user
+    if (isAdminRequest) {
+      const orgMembership =
+        await this.organizationRepository.getOrgenizationMemberByUserId(user.id)
+
+      isValid = !!orgMembership
+    } else {
+      isValid = role.name === Role.HOME_BUYER
+    }
 
     if (isValid) {
       isValid = Boolean(
