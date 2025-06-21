@@ -345,9 +345,21 @@ export class ApplicationService {
     })
   }
 
-  async getByLender(filter: ApplicationFilters) {
+  async getByLender(filter: ApplicationFilters, authInfo: AuthInfo) {
+    const lenderProfile = await this.lenderRepository.getLenderByOrgId(
+      authInfo.currentOrganizationId,
+    )
+
+    if (!lenderProfile) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Lender profile not found',
+      )
+    }
+
     return this.applicationRepository.getAllApplication({
       ...filter,
+      lender_id: lenderProfile.id,
     })
   }
 
@@ -1852,7 +1864,6 @@ export class ApplicationService {
         currentApproval.organization_id,
       )
 
-      
     emailTemplete.DocumentApproval(
       getClientView.email,
       `${getClientView.first_name}`,
@@ -2116,33 +2127,30 @@ export class ApplicationService {
           { hsf_docs_reviewed: true },
         )
       }
-   if(ReviewRequestStatus.Pending) {
-       emailTemplete.DocumentApproval(
-        getClientView.email,
-        `${getClientView.first_name}`,
-        `${getClientView.last_name}`,
-        getProperty.property_name,
-        ReviewRequestApprovalStatus.Pending,
-        getOrganizationName.name,
-      )
-        
-     }
-    //   else {
-    //         emailTemplete.failedDocumentApproval(
-    //       getClientView.email,
-    //       `${getClientView.first_name}`,
-    //       `${getClientView.last_name}`,
-    //       getProperty.property_name,
-    //       `The document application  is not approved.`, // Reason will be added latter
-    //       getOrganizationName.name,
-    //     )
-    //  }
-  
+      if (ReviewRequestStatus.Pending) {
+        emailTemplete.DocumentApproval(
+          getClientView.email,
+          `${getClientView.first_name}`,
+          `${getClientView.last_name}`,
+          getProperty.property_name,
+          ReviewRequestApprovalStatus.Pending,
+          getOrganizationName.name,
+        )
+      }
+      //   else {
+      //         emailTemplete.failedDocumentApproval(
+      //       getClientView.email,
+      //       `${getClientView.first_name}`,
+      //       `${getClientView.last_name}`,
+      //       getProperty.property_name,
+      //       `The document application  is not approved.`, // Reason will be added latter
+      //       getOrganizationName.name,
+      //     )
+      //  }
+
       return approvals
     })
   }
-
-
 
   async lenderCompleteDocumentReview(
     applicationId: string,
@@ -2158,7 +2166,7 @@ export class ApplicationService {
         `Application with ID '${applicationId}' not found.`,
       )
     }
-  
+
     if (!application.dip) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
@@ -2395,7 +2403,7 @@ export class ApplicationService {
         )
       }
 
-     const [status] = await Promise.all(
+      const [status] = await Promise.all(
         applicationEntriesWithApproval.map((approval) =>
           this.reviewRequestRepository.updateReviewRequest(
             approval.approval.request_id,
@@ -2405,27 +2413,26 @@ export class ApplicationService {
           ),
         ),
       )
-        const user = await this.userRepository.findById(application.user_id)
-    const getClientView = user ? getUserClientView(user) : null
-    const getProperty = await this.propertyRepository.getPropertyById(
-      application.property_id,
-    )
-    const getOrganizationName =
-      await this.organizationRepository.getOrganizationById(
-        getProperty.organization_id,
+      const user = await this.userRepository.findById(application.user_id)
+      const getClientView = user ? getUserClientView(user) : null
+      const getProperty = await this.propertyRepository.getPropertyById(
+        application.property_id,
       )
-     if(status.status === ReviewRequestStatus.Approved) {
+      const getOrganizationName =
+        await this.organizationRepository.getOrganizationById(
+          getProperty.organization_id,
+        )
+      if (status.status === ReviewRequestStatus.Approved) {
         emailTemplete.DocumentCompleteReview(
-        getClientView.email,
-        `${getClientView.first_name}`,
-        `${getClientView.last_name}`,
-        getProperty.property_name,
-        application.application_id,
-        getOrganizationName.name,
-      )
-        
-     } else {
-            emailTemplete.failedDocumentApproval(
+          getClientView.email,
+          `${getClientView.first_name}`,
+          `${getClientView.last_name}`,
+          getProperty.property_name,
+          application.application_id,
+          getOrganizationName.name,
+        )
+      } else {
+        emailTemplete.failedDocumentApproval(
           getClientView.email,
           `${getClientView.first_name}`,
           `${getClientView.last_name}`,
@@ -2433,8 +2440,7 @@ export class ApplicationService {
           `The document application  is not approved.`, // Reason will be added latter
           getOrganizationName.name,
         )
-     } 
-     
+      }
     })
   }
 

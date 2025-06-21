@@ -111,9 +111,11 @@ export class ApplicationController {
     )
   }
 
-  async getByLender(filter: ApplicationFilters) {
-    const applicationContents =
-      await this.applicationService.getByLender(filter)
+  async getByLender(filter: ApplicationFilters, authInfo: AuthInfo) {
+    const applicationContents = await this.applicationService.getByLender(
+      filter,
+      authInfo,
+    )
 
     return createResponse(
       StatusCodes.OK,

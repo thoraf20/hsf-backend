@@ -524,6 +524,10 @@ export class AuthService {
       )
     }
 
+    if (user.status === UserStatus.Pending) {
+      await this.userRepository.update(user.id, { status: UserStatus.Active })
+    }
+
     if (
       user.force_password_reset === true &&
       user.is_default_password === true

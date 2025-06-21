@@ -162,7 +162,10 @@ userRoutes.put(
   validateRequest(updatePasswordSchema),
   asyncMiddleware(async (req, res) => {
     const { body, user } = req
-    const updatePassword = await userController.resetPassword(body, user.id)
+    const updatePassword = await userController.changeUserPassword(
+      user.id,
+      body,
+    )
     res.status(updatePassword.statusCode).json(updatePassword)
   }),
 )

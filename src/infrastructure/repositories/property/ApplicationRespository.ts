@@ -3,6 +3,7 @@ import db, { createUnion } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { SearchType } from '@shared/types/repoTypes'
+import { applyPagination } from '@shared/utils/paginate'
 import { ApplicationFilters } from '@validators/applicationValidator'
 import { Knex } from 'knex'
 
@@ -85,7 +86,7 @@ export class ApplicationRepository implements IApplicationRespository {
   }
 
   async getAllApplication(
-    filters?: ApplicationFilters,
+    filters: ApplicationFilters,
   ): Promise<SeekPaginationResult<Application>> {
     const page = filters?.page_number ?? 1
     const perPage = filters?.result_per_page ?? 10
@@ -98,11 +99,8 @@ export class ApplicationRepository implements IApplicationRespository {
     baseQuery = this.useFilter(baseQuery, {
       ...filters,
     })
-    const [{ count: total }] = await baseQuery
-      .clone()
-      .clearOrder()
-      .count('* as count')
-    const paginatedResults = await baseQuery
+
+    baseQuery = baseQuery
       .clone()
       .select(
         'a.*',
@@ -172,17 +170,10 @@ export class ApplicationRepository implements IApplicationRespository {
       .limit(perPage)
       .offset(offset)
 
-    const totalPages = Math.ceil(Number(total) / perPage)
-
-    const paginatedResult = new SeekPaginationResult<Application>({
-      result: paginatedResults,
-      page,
-      result_per_page: perPage,
-      total_records: Number(total),
-      total_pages: totalPages,
-      next_page: page < totalPages ? page + 1 : null,
-      prev_page: page > 1 ? page - 1 : null,
-    })
+    const paginatedResult = await applyPagination<Application>(
+      baseQuery,
+      filters,
+    )
 
     paginatedResult.result = await Promise.all(
       paginatedResult.result.map(async (application) => {

@@ -76,10 +76,9 @@ manageUserRoutes.patch(
   asyncMiddleware(async (req, res) => {
     const {
       params: { user_id },
-      body,
     } = req
 
-    const response = await userController.resetPassword(body, user_id)
+    const response = await userController.resetPassword(user_id)
     res.status(response.statusCode).json(response)
   }),
 )

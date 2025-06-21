@@ -163,9 +163,9 @@ applicationRoutes.get(
   validateRequestQuery(propertyFiltersSchema),
   authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
   asyncMiddleware(async (req, res) => {
-    const { query } = req
+    const { query, authInfo } = req
 
-    const response = await applicationController.getByLender(query)
+    const response = await applicationController.getByLender(query, authInfo)
     res.status(response.statusCode).json(response)
   }),
 )

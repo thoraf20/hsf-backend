@@ -8,7 +8,6 @@ import { RedisClient } from '@infrastructure/cache/redisClient'
 import emailTemplates from '@infrastructure/email/template/constant'
 
 import { v4 as uuidv4 } from 'uuid'
-import { changePassword } from '@shared/types/userType'
 import { Role } from '@routes/index.t'
 import { MfaFlow, UserStatus } from '@domain/enums/userEum'
 import {
@@ -124,39 +123,22 @@ export class UserService {
     await this.client.deleteKey(key)
   }
 
-  public async resetPassword(input: changePassword, id: string): Promise<void> {
+  public async resetPassword(id: string) {
     const user = await this.userRepository.findById(id)
     if (!user) {
       throw new ApplicationCustomError(StatusCodes.NOT_FOUND, 'User not found')
     }
 
-    if (
-      !(await this.userRepository.comparedPassword(
-        input.oldPassword,
-        user.password,
-      ))
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.UNAUTHORIZED,
-        'Old password is incorrect',
-      )
-    }
-
-    if (input.oldPassword === input.newPassword) {
-      throw new ApplicationCustomError(
-        StatusCodes.BAD_REQUEST,
-        "New password can't be the same as old password",
-      )
-    }
-
-    const hashedNewPassword = await this.userRepository.hashedPassword(
-      input.newPassword,
-    )
+    const newPassword = generateRandomPassword()
+    const hashedNewPassword =
+      await this.userRepository.hashedPassword(newPassword)
 
     const updatePayload: Partial<User> = { password: hashedNewPassword }
     if (user.is_default_password) updatePayload.is_default_password = false
 
     await this.userRepository.update(id, updatePayload)
+
+    return { email: user.email, password: newPassword }
   }
 
   public async DisableMfa(

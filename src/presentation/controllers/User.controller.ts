@@ -5,7 +5,6 @@ import { ApiResponse, createResponse } from '../response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
 import { Account } from '@entities/Account'
-import { changePassword } from '@shared/types/userType'
 import {
   ChangePasswordCompleteInput,
   ChangePasswordInput,
@@ -99,12 +98,13 @@ export class UserController {
     })
   }
 
-  public async resetPassword(
-    input: changePassword,
-    id: string,
-  ): Promise<ApiResponse<any>> {
-    await this.userService.resetPassword(input, id)
-    return createResponse(StatusCodes.OK, 'Password updated successfully', {})
+  public async resetPassword(id: string): Promise<ApiResponse<any>> {
+    const newCredentials = await this.userService.resetPassword(id)
+    return createResponse(
+      StatusCodes.OK,
+      'Password updated successfully',
+      newCredentials,
+    )
   }
 
   public async changeUserPassword(id: string, input: ChangePasswordInput) {
