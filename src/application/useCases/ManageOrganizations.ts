@@ -25,10 +25,7 @@ import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
-import {
-  SeekPaginationOption,
-  SeekPaginationResult,
-} from '@shared/types/paginate' // Import pagination types
+import { SeekPaginationResult } from '@shared/types/paginate' // Import pagination types
 import { generateRandomPassword } from '@shared/utils/helpers'
 import emailHelper from '@infrastructure/email/template/constant' // Import email helper
 import { AuthInfo, isHigherRoleLevel } from '@shared/utils/permission-policy'
@@ -37,6 +34,7 @@ import {
   CreateHSFAdminInput,
   CreateLenderInput,
   LenderFilters,
+  OrgMembersFilters,
   ResetOrgOwnerPasswordInput,
   SuspendOrgInput,
 } from '@validators/organizationValidator'
@@ -103,7 +101,7 @@ export class ManageOrganizations {
 
   async getOrganizationMembers(
     organizationId: string,
-    paginateOption?: SeekPaginationOption, // Accept pagination option
+    paginateOption?: OrgMembersFilters,
   ): Promise<
     SeekPaginationResult<
       UserOrganizationMember & { user: User; role: { name: string } }

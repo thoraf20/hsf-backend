@@ -83,6 +83,7 @@ export class Application {
   condition_precedent?: ConditionPrecedent
   loan_offer_id?: string
   developer_organization_id: string
+  current_loan_officer_assignment_id?: string
   dip_id?: string
   created_at?: Date
   updated_at?: Date

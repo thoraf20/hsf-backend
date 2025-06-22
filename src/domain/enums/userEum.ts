@@ -37,3 +37,17 @@ export enum MartialStatus {
   DIVORCED = 'Divorced',
   WIDOWED = 'Widowed',
 }
+
+export enum AssignableType {
+  LOAN = 'Loan',
+}
+
+export enum UserAssignmentRole {
+  LOAN_OFFICER = 'LoanOfficer',
+  REVIEWER = 'Reviewer',
+  APPROVER = 'Approver',
+  MANAGER = 'Manager',
+  COLLABORATOR = 'Collaborator',
+  OWNER = 'Owner',
+  ASSIGNEE = 'Assignee', // A general term if the specific role isn't important
+}

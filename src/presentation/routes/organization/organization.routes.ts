@@ -23,6 +23,7 @@ import {
   createHsfAdminSchema,
   createLenderAdminSchema,
   getLenderFilterSchema,
+  getOrgMemberFilterSchema,
   getOrgMemberRoleFilterSchema,
   hsfResetOrgMemberPasswordSchema,
   resetOrgMemberPasswordSchema,
@@ -188,6 +189,7 @@ router.get(
     const response = await organizationController.getOrganizationMembers(
       authInfo.currentOrganizationId,
       query,
+      authInfo,
     )
     res.status(response.statusCode).json(response)
   }),
@@ -208,15 +210,17 @@ router.post(
 router.get(
   '/:organization_id/members',
   authenticate,
-  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
+  validateRequestQuery(getOrgMemberFilterSchema),
   asyncMiddleware(async (req: Request, res: Response) => {
     const {
       params: { organization_id },
       query,
+      authInfo,
     } = req
     const response = await organizationController.getOrganizationMembers(
       organization_id,
       query,
+      authInfo,
     )
     res.status(response.statusCode).json(response)
   }),
@@ -238,14 +242,17 @@ router.get(
 )
 
 router.get(
-  '/members/roles',
+  '/:organization_id/members/roles',
   validateRequestQuery(getOrgMemberRoleFilterSchema),
   authenticate,
   authorize(isOrganizationUser),
   asyncMiddleware(async (req, res) => {
-    const { authInfo, query } = req
-    const response = await organizationController.getCurrentOrgRoles(
-      authInfo,
+    const {
+      params: { organization_id },
+      query,
+    } = req
+    const response = await organizationController.getOrgRoles(
+      organization_id,
       query,
     )
     res.status(response.statusCode).json(response)

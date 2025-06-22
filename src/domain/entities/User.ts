@@ -1,6 +1,11 @@
 // Import the Role enum
 
-import { AddressType, UserStatus } from '@domain/enums/userEum'
+import {
+  AddressType,
+  AssignableType,
+  UserAssignmentRole,
+  UserStatus,
+} from '@domain/enums/userEum'
 import { Role } from '../enums/rolesEmun'
 import { BaseEntity } from '.'
 import { Organization } from './Organization'
@@ -208,4 +213,15 @@ export class Address extends BaseEntity {
       ...data,
     })
   }
+}
+
+export class UserAssignment extends BaseEntity {
+  user_id: string
+  assignable_id: string
+  assignable_type: AssignableType
+  role: UserAssignmentRole
+  reason?: string
+  assigned_at: Date
+  unassigned_at?: Date
+  created_by_user_id?: string
 }

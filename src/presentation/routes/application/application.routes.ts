@@ -37,7 +37,7 @@ import {
   userDipResponseSchema,
   homeBuyerLoanOfferRespondSchema,
   submitSignedLoanOfferLetterSchema,
-  uploadLoanAgreementDocSchema,
+  setApplicationLoanOfficerSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -66,6 +66,7 @@ import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepaymentRepository'
 import { LoanRepaymentTransactionRepository } from '@repositories/loans/LoanRepaymentTransactionRepository'
 import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
+import { UserAssignmentRepository } from '@repositories/user/UserAssignmentRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -87,6 +88,7 @@ const applicationService = new ApplicationService(
   new LoanRepaymentScheduleRepository(),
   new LoanRepaymentTransactionRepository(),
   new LoanAgreementRepository(),
+  new UserAssignmentRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -287,6 +289,27 @@ applicationRoutes.post(
     )
 
     res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.post(
+  '/:application_id/loan-officer',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(setApplicationLoanOfficerSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      body,
+      authInfo,
+    } = req
+
+    const response = await applicationController.setApplicationLoanOfficier(
+      application_id,
+      body,
+      authInfo,
+    )
+
+    return res.status(response.statusCode).json(response)
   }),
 )
 
@@ -798,25 +821,6 @@ applicationRoutes.get(
     )
 
     res.status(response.statusCode).json(response)
-  }),
-)
-
-applicationRoutes.patch(
-  '/:application_id/loan-agreements/doc-upload/lender',
-  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
-  validateRequest(uploadLoanAgreementDocSchema),
-  asyncMiddleware(async (req, res) => {
-    const {
-      authInfo,
-      body,
-      params: { application_id },
-    } = req
-
-    applicationController.setLenderLoanAgreementDoc(
-      application_id,
-      body,
-      authInfo,
-    )
   }),
 )
 

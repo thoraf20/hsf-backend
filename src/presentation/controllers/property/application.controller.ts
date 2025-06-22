@@ -32,7 +32,7 @@ import {
   UpdateDipLoanInput,
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
-  UploadLoanAgreementDocInput,
+  SetApplicationLoanOfficerInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -653,15 +653,23 @@ export class ApplicationController {
     )
   }
 
-  async setLenderLoanAgreementDoc(
+  async setApplicationLoanOfficier(
     applicationId: string,
-    input: UploadLoanAgreementDocInput,
+    input: SetApplicationLoanOfficerInput,
     authInfo: AuthInfo,
   ) {
-    this.applicationService.setLenderLoanAgreementDoc(
+    const application = await this.applicationService.setApplicationLoanOfficer(
       applicationId,
       input,
       authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      input.loan_officer_id
+        ? 'Loan officer set successfully'
+        : 'Loan officer removed successfully',
+      application,
     )
   }
 }

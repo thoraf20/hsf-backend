@@ -35,6 +35,15 @@ export const getOrgMemberRoleFilterSchema = z.object({
 
 export type OrgMemberRoleFilters = z.infer<typeof getOrgMemberRoleFilterSchema>
 
+export const getOrgMemberFilterSchema = withPaginateSchema(
+  z.object({
+    role_id: z.string().nonempty().optional(),
+    status: z.nativeEnum(OrganizationMemberStatus).optional(),
+  }),
+)
+
+export type OrgMembersFilters = z.infer<typeof getOrgMemberFilterSchema>
+
 export const getLenderFilterSchema = withPaginateSchema(
   z.object({
     lender_name: z.string().optional(),
@@ -139,17 +148,6 @@ export const suspendOrgSchema = z.object({
 })
 
 export type SuspendOrgInput = z.infer<typeof suspendOrgSchema>
-
-export const organizationMemberFilterSchema = withPaginateSchema(
-  z.object({
-    status: z.nativeEnum(OrganizationMemberStatus).optional(),
-    organization_id: z.string().optional(),
-  }),
-)
-
-export type OrganizationMemberFilter = z.infer<
-  typeof organizationMemberFilterSchema
->
 
 export const createEmployeeSchema = z.object({
   first_name: z.string().min(2).max(100),

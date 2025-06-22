@@ -11,6 +11,7 @@ import {
   Disable2faOrgMemberInput,
   LenderFilters,
   OrgMemberRoleFilters,
+  OrgMembersFilters,
   ResetOrgOwnerPasswordInput,
   SuspendOrgInput,
   UpdateOrganizationInput,
@@ -93,7 +94,11 @@ export class OrganizationController {
   }
 
   // Modified to accept pagination and use asyncMiddleware
-  async getOrganizationMembers(organizationId: string, query: any) {
+  async getOrganizationMembers(
+    organizationId: string,
+    query: OrgMembersFilters,
+    authInfo: AuthInfo,
+  ) {
     const members = await this.manageOrganizations.getOrganizationMembers(
       organizationId,
       query,
@@ -145,17 +150,28 @@ export class OrganizationController {
     )
   }
 
-  async getRoles(authInfo: AuthInfo) {
-    const roles = await this.manageOrganizations.getCurrentOrgRoles(
-      authInfo.organizationType,
+  async getOrgRoles(organizationId: string, query: OrgMemberRoleFilters) {
+    const organization =
+      await this.manageOrganizations.getOrganizationById(organizationId)
+
+    let roles = await this.manageOrganizations.getCurrentOrgRoles(
+      organization.type,
     )
 
     if (!roles) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
-        `Roles  for organization '${authInfo.organizationType}' not found`,
+        `Roles  for organization '${organization.type}' not found`,
       )
     }
+
+    roles = roles.filter((role) =>
+      query.select === RoleSelect.SubAdmin
+        ? !ADMIN_LEVEL_ROLES.includes(role.name as Role)
+        : query.select === RoleSelect.Admin
+          ? ADMIN_LEVEL_ROLES.includes(role.name as Role)
+          : true,
+    )
 
     return createResponse(
       StatusCodes.OK,

@@ -7,10 +7,11 @@ import { User } from '@entities/User'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { exculedPasswordUserInfo } from '@shared/respositoryValues'
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { OrganizationMemberFilter } from '@validators/organizationValidator'
+
 import { Knex } from 'knex'
 import { SearchType } from '@shared/types/repoTypes'
 import { applyPagination } from '@shared/utils/paginate'
+import { OrgMembersFilters } from '@validators/organizationValidator'
 
 export class OrganizationRepository implements IOrganizationRepository {
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -74,7 +75,7 @@ export class OrganizationRepository implements IOrganizationRepository {
 
   useOrgMemberFilter(
     q: Knex.QueryBuilder<any, any[]>,
-    filters: OrganizationMemberFilter,
+    filters: OrgMembersFilters,
   ) {
     const add = createUnion(SearchType.EXCLUSIVE)
 
@@ -82,8 +83,8 @@ export class OrganizationRepository implements IOrganizationRepository {
       q = add(q).whereRaw(`uom.status = '${filters.status}'`)
     }
 
-    if (filters.organization_id) {
-      q = add(q).whereRaw(`uom.organization_id = '${filters.organization_id}'`)
+    if (filters.role_id) {
+      q = add(q).whereRaw(`r.id = '${filters.role_id}'`)
     }
 
     return q
@@ -91,7 +92,7 @@ export class OrganizationRepository implements IOrganizationRepository {
 
   async getOrganizationMembers(
     organizationId: string,
-    filters: OrganizationMemberFilter,
+    filters: OrgMembersFilters,
   ): Promise<
     SeekPaginationResult<
       UserOrganizationMember & {

@@ -879,3 +879,7 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at emitErrorCloseNT (node:internal/streams/destroy:129:3)
     at Axios.request (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/axios/lib/core/Axios.js:45:41)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-06-22 11:04:12 [ERROR]: Error: Associated lender partner not found.
+    at ApplicationService.setApplicationLoanOfficer (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/Application/application.ts:2866:13)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at ApplicationController.setApplicationLoanOfficier (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/property/application.controller.ts:661:5)

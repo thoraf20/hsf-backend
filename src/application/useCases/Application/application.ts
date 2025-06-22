@@ -21,7 +21,11 @@ import {
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
 import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEmun'
-import { UserStatus } from '@domain/enums/userEum'
+import {
+  AssignableType,
+  UserAssignmentRole,
+  UserStatus,
+} from '@domain/enums/userEum'
 import {
   ApplicationStage,
   InstallmentApplicationStage,
@@ -84,10 +88,12 @@ import {
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
   UploadLoanAgreementDocInput,
+  SetApplicationLoanOfficerInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 import emailTemplete from '@infrastructure/email/template/constant'
+import { UserAssignmentRepository } from '@repositories/user/UserAssignmentRepository'
 export class ApplicationService {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
@@ -109,6 +115,7 @@ export class ApplicationService {
     private readonly loanRepaymentScheduleRepository: ILoanRepaymentScheduleRepository,
     private readonly loanRepaymentTransactionRepository: ILoanRepaymentTransactionRepository,
     private readonly loanAgreementRepository: LoanAgreementRepository,
+    private readonly userAssignmentRepository: UserAssignmentRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -2809,12 +2816,147 @@ export class ApplicationService {
     }
 
     return runWithTransaction(async () => {
-      this.documentRepository.createApplicationDocumentEntry({
+      await this.documentRepository.createApplicationDocumentEntry({
         document_name: 'Loan agreement',
         document_url: input.url,
       })
     })
+  }
 
-    // this.loanAgreementRepository.getLoanAgreementById(loan_agreement_id)
+  async setApplicationLoanOfficer(
+    applicationId: string,
+    input: SetApplicationLoanOfficerInput,
+    authInfo: AuthInfo,
+  ) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (application.application_type !== ApplicationPurchaseType.MORTGAGE) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan officer can only be set for mortgage applications.',
+      )
+    }
+
+    const eligibility = application.eligibility_id
+      ? await this.prequalifyRepository.findEligiblityById(
+          application.eligibility_id,
+        )
+      : null
+
+    if (!eligibility) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Application eligibility information is required to set loan officer.',
+      )
+    }
+
+    const lender = await this.lenderRepository.getLenderById(
+      eligibility.lender_id,
+    )
+
+    if (!lender) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Associated lender partner not found.',
+      )
+    }
+
+    if (lender.organization_id !== authInfo.currentOrganizationId) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You do not have permission to set loan officer for this lender.',
+      )
+    }
+
+    if (input.loan_officer_id) {
+      const loanOfficer =
+        await this.organizationRepository.getOrgenizationMemberByUserId(
+          input.loan_officer_id,
+        )
+      if (!loanOfficer) {
+        throw new ApplicationCustomError(
+          StatusCodes.NOT_FOUND,
+          'Specified loan officer not found in organization.',
+        )
+      }
+      if (loanOfficer.role?.name !== Role.LENDER_LOAN_OFFICER) {
+        throw new ApplicationCustomError(
+          StatusCodes.FORBIDDEN,
+          'User does not have the required loan officer role.',
+        )
+      }
+    }
+
+    await runWithTransaction(async () => {
+      const { result: loanOfficerAssigments } =
+        await this.userAssignmentRepository.findByAssignable(
+          application.application_id,
+          AssignableType.LOAN,
+          { page_number: 1, result_per_page: Number.MAX_SAFE_INTEGER },
+        )
+
+      if (application.current_loan_officer_assignment_id) {
+        const loanOfficerAssignment = loanOfficerAssigments.find(
+          (assignment) =>
+            assignment.id === application.current_loan_officer_assignment_id,
+        )
+
+        if (loanOfficerAssignment) {
+          await this.userAssignmentRepository.update(loanOfficerAssignment.id, {
+            unassigned_at: new Date(),
+          })
+        }
+      }
+
+      if (
+        application.current_loan_officer_assignment_id &&
+        application.current_loan_officer_assignment_id === input.loan_officer_id
+      ) {
+        throw new ApplicationCustomError(
+          StatusCodes.CONFLICT,
+          'Loan officer already set',
+        )
+      }
+
+      let currentLoanOfficerAssignmentId: string | null = null
+      let existingLoanOfficer = loanOfficerAssigments.find(
+        (assignment) => assignment.user_id === input.loan_officer_id,
+      )
+
+      if (existingLoanOfficer) {
+        existingLoanOfficer = await this.userAssignmentRepository.update(
+          existingLoanOfficer.id,
+          {
+            assigned_at: new Date(),
+            unassigned_at: null,
+            created_by_user_id: authInfo.userId,
+          },
+        )
+        currentLoanOfficerAssignmentId = existingLoanOfficer.id
+      } else if (input.loan_officer_id) {
+        const currentLoanOfficer = await this.userAssignmentRepository.create({
+          assignable_id: application.application_id,
+          assignable_type: AssignableType.LOAN,
+          user_id: input.loan_officer_id,
+          role: UserAssignmentRole.LOAN_OFFICER,
+          assigned_at: new Date(),
+          created_by_user_id: authInfo.userId,
+        })
+        currentLoanOfficerAssignmentId = currentLoanOfficer.id
+      }
+
+      return this.applicationRepository.updateApplication({
+        application_id: application.application_id,
+        current_loan_officer_assignment_id: currentLoanOfficerAssignmentId,
+      })
+    })
   }
 }

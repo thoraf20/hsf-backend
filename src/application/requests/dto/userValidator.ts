@@ -1,4 +1,5 @@
 import { MfaFlow } from '@domain/enums/userEum'
+import { SeekPaginationOption } from '@shared/types/paginate'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
@@ -157,3 +158,10 @@ export const userActivityFilterSchema = withPaginateSchema(
 )
 
 export type UserActivityFilters = z.infer<typeof userActivityFilterSchema>
+
+export interface UserAssignmentFilters extends SeekPaginationOption {
+  user_id?: string
+  assignable_id?: string
+  assignable_type?: string
+  role?: string // e.g., 'LoanOfficer', 'Reviewer', 'Admin'
+}

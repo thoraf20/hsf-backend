@@ -26,6 +26,7 @@ import clientRoutes from './Agents/ManageClient.routes'
 import managePaymentRoutes from './payments/managePayments.routes'
 import manageLoanOfferRoutes from './Agents/ManageLoanOffer.routes'
 import manageLoanRoutes from './Agents/ManageLoan.routes'
+import userAssignmentRoutes from './userRoutes/userAssignmentRoutes'
 import manageLoanAgreementRoutes from './Agents/MAnageLoanAgreement.routes'
 
 const routes: Router = Router()
@@ -42,6 +43,7 @@ routes.use('/agents', authenticate, limiter, agentsRoute)
 routes.use('/manage', authenticate, limiter, managePropertyRoute)
 routes.use('/user', authenticate, limiter, userRoutes)
 routes.use('/applications', authenticate, limiter, applicationRoutes)
+routes.use('/user-assignments', authenticate, limiter, userAssignmentRoutes)
 routes.use('/file', fileRoutes)
 routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
 routes.use('/manage', authenticate, manageAgentRoutes)

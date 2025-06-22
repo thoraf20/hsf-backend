@@ -244,3 +244,11 @@ export const uploadLoanAgreementDocSchema = z.object({
 export type UploadLoanAgreementDocInput = z.infer<
   typeof uploadLoanAgreementDocSchema
 >
+
+export const setApplicationLoanOfficerSchema = z.object({
+  loan_officer_id: z.string().nonempty().nullish(),
+})
+
+export type SetApplicationLoanOfficerInput = z.infer<
+  typeof setApplicationLoanOfficerSchema
+>
