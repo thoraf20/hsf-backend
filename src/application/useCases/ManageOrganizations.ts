@@ -527,14 +527,17 @@ export class ManageOrganizations {
           return developer
         }
 
-        const owner = await this.userRepository.findById(
-          organization.owner_user_id,
-        )
-
-        const membership =
-          await this.organizationRepository.getOrgenizationMemberByUserId(
-            owner.user_id,
+        let owner: User | null = null
+        if (organization.owner_user_id) {
+          const owner = await this.userRepository.findById(
+            organization.owner_user_id,
           )
+
+          owner.membership =
+            await this.organizationRepository.getOrgenizationMemberByUserId(
+              owner.user_id,
+            )
+        }
 
         const meta = await this.propertyRepository.findPropertiesByDeveloperOrg(
           developer.organization_id,
@@ -543,7 +546,7 @@ export class ManageOrganizations {
 
         return {
           ...developer,
-          owner: getUserClientView({ ...owner, membership }),
+          owner: getUserClientView({ ...owner }),
           property_listing_counts: meta.total_records,
           organization: {
             ...organization,
