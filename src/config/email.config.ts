@@ -1,15 +1,41 @@
-import sgMail from '@sendgrid/mail'
-import { Email } from '../domain/entities/Email'
 
-const sendGridApiKey = process.env.SENDGRID_API_KEY as string
-console.log(sendGridApiKey)
-sgMail.setApiKey(sendGridApiKey)
-export const sendMail = (options: Email) => {
-  const msg = {
-    to: options.to, // recipient email
-    from: process.env.SENDGRID_SENDER_EMAIL as string, // verified sender email
-    subject: options.subject,
-    html: options.html, // HTML content
-  }
-  sgMail.send(msg)
-}
+
+import { Email } from "@entities/Email";
+import {
+  TransactionalEmailsApi,
+  SendSmtpEmail,
+  TransactionalEmailsApiApiKeys,
+} from "@getbrevo/brevo";
+import { getEnv } from "@infrastructure/config/env/env.config";
+
+
+const BREVO_API_KEY = getEnv('BREVO_API_KEY');
+const DEFAULT_SENDER_NAME = getEnv('COMPANY_NAME') || "Your Company";
+const DEFAULT_SENDER_EMAIL = getEnv('HSF_SUPPORT_EMAIL');
+
+const emailApiInstance = new TransactionalEmailsApi();
+emailApiInstance.setApiKey(
+  TransactionalEmailsApiApiKeys.apiKey,
+  BREVO_API_KEY 
+);
+
+export const sendEmail = async (payload: Email): Promise<unknown> => {
+  const sendSmtpEmail = new SendSmtpEmail(); 
+
+  sendSmtpEmail.subject = payload.subject;
+  sendSmtpEmail.htmlContent = payload.content;
+
+  sendSmtpEmail.to = payload.to;
+  sendSmtpEmail.sender = payload.sender ?? {
+    name: DEFAULT_SENDER_NAME,
+    email: DEFAULT_SENDER_EMAIL,
+  };
+
+  sendSmtpEmail.replyTo = payload.replyTo;
+  sendSmtpEmail.cc = payload.cc;
+  sendSmtpEmail.bcc = payload.bcc;
+  sendSmtpEmail.tags = payload.tags;
+
+  return emailApiInstance.sendTransacEmail(sendSmtpEmail);
+};
+

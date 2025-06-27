@@ -1,4 +1,4 @@
-import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
+ import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
 // import { esClient } from '@config/elasticSearch.config'
 import { ElasticEnum } from '@domain/enums/propertyEnum'
 export class ElasticSearchRespository implements elasticSearchRespository {

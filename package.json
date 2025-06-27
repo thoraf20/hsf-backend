@@ -27,6 +27,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.787.0",
     "@elastic/elasticsearch": "^9.0.2",
+    "@getbrevo/brevo": "^2.2.0",
     "@oslojs/binary": "^1.0.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
@@ -38,6 +39,7 @@
     "arctic": "^3.6.0",
     "axios": "^1.8.4",
     "bcryptjs": "^3.0.2",
+    "brevo": "^1.0.0",
     "bullmq": "^5.51.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",

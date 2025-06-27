@@ -34,7 +34,7 @@ export default {
     )
     console.log({ emailVerify: html })
     try {
-      const emailData = { to: email, subject, text, html }
+      const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -57,7 +57,7 @@ export default {
     html = safeReplace(html, `{{SUPPORT_LINK}}`, supportLinkUrl)
 
     try {
-      const emailData = { to: email, subject, text, html }
+      const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`MFA OTP email was sent successfully to ${email}`)
     } catch (error) {
@@ -78,7 +78,7 @@ export default {
 
     console.log({ html })
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -99,7 +99,7 @@ export default {
     )
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -116,7 +116,7 @@ export default {
     let html = templates.emailChange.replace(`{{verificationLink}}`, link)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -149,7 +149,7 @@ export default {
       .replace(`{{meet_link}}`, meet_link)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -177,9 +177,8 @@ export default {
       .replace(`{{inspection_date}}`, inspection_date)
       .replace(`{{inspection_time}}`, inspection_time)
       .replace(`{{inspection_meeting_type}}`, inspection_meeting_type)
-
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -199,7 +198,7 @@ export default {
       .replace(`{{Date}}`, new Date().toUTCString())
       .replace(`{{full_name}}`, full_name)
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -221,7 +220,7 @@ export default {
       .replace(`{{Date}}`, new Date().toUTCString())
       .replace(`{{name}}`, name)
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -269,7 +268,7 @@ export default {
       .replace(`{{message}}`, message)
       .replace(`{{property_link}}`, shareable_link)
     try {
-      const emailData = { to: recipient_email, subject, text, html }
+      const emailData = { to: [{email: recipient_email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -297,7 +296,7 @@ export default {
       .replace('{{year}}', new Date().getFullYear().toString())
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -327,7 +326,7 @@ export default {
       .replace('{{company_name}}', company_name)
 
     try {
-      const emailData = { to: client_email, subject, text, html }
+      const emailData = { to: [{email: client_email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -358,7 +357,7 @@ export default {
       .replace('{{year}}', new Date().getFullYear().toString())
 
     try {
-      const emailData = { to: organization_email, subject, text, html }
+       const emailData = { to: [{email: organization_email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -388,7 +387,7 @@ export default {
       .replace('{{year}}', new Date().getFullYear().toString())
 
     try {
-      const emailData = { to: organization_email, subject, text, html }
+       const emailData = { to: [{email: organization_email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -417,7 +416,7 @@ export default {
       .replace('{{organization_name}}', organization_name)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -442,7 +441,7 @@ export default {
       .replace(/{{year}}/g, new Date().getFullYear().toString())
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -463,7 +462,7 @@ export default {
     )
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -484,7 +483,7 @@ export default {
     )
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(
         `Organization suspended email was sent successfully to ${email}`,
@@ -509,7 +508,7 @@ export default {
     )
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(
         `Organization deleted email was sent successfully to ${email}`,
@@ -533,7 +532,7 @@ export default {
     )
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(
         `Organization activated email was sent successfully to ${email}`,
@@ -594,7 +593,7 @@ export default {
       .replace(/\{\{year\}\}/g, new Date().getFullYear().toString())
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(
         `Loan repayment overdue email was sent successfully to ${email}`,
@@ -627,7 +626,7 @@ export default {
       .replace('{{org}}', org)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -656,7 +655,7 @@ export default {
       .replace('{{org}}', org)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {
@@ -686,7 +685,7 @@ export default {
       .replace('{{org}}', org)
 
     try {
-      const emailData = { to: email, subject, text, html }
+     const emailData = { to: [{email, name: 'hsf'}], subject, text, html, content: html }
       enqueueEmailJob(emailData)
       logger.info(`Email was sent successfully`)
     } catch (error) {

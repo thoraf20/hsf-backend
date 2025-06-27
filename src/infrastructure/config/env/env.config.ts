@@ -56,6 +56,9 @@ export const envSchema = z.object({
   PLATFORM_NAME: z.string().nonempty(),
   ELASTICSEARCH_NODE: z.string().nonempty(),
   ELASTICSEARCH_API_KEY: z.string().nonempty(),
+  BREVO_API_KEY: z.string().nonempty(),
+  COMPANY_NAME: z.string().nonempty(),
+  HSF_SUPPORT_EMAIL: z.string().email(),
 })
 
 export const formatErrors = (
