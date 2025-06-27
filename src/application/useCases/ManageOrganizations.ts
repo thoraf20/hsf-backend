@@ -527,11 +527,18 @@ export class ManageOrganizations {
           return developer
         }
 
+        if (!organization.status) {
+          await this.organizationRepository.updateOrganization(
+            organization.id,
+            {
+              status: OrganizationStatus.ACTIVE,
+            },
+          )
+        }
+
         let owner: User | null = null
         if (organization.owner_user_id) {
-          const owner = await this.userRepository.findById(
-            organization.owner_user_id,
-          )
+          owner = await this.userRepository.findById(organization.owner_user_id)
 
           owner.membership =
             await this.organizationRepository.getOrgenizationMemberByUserId(
@@ -546,7 +553,7 @@ export class ManageOrganizations {
 
         return {
           ...developer,
-          owner: getUserClientView({ ...owner }),
+          owner: owner ? getUserClientView({ ...owner }) : null,
           property_listing_counts: meta.total_records,
           organization: {
             ...organization,

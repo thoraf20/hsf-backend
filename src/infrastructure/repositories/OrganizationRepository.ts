@@ -33,7 +33,7 @@ export class OrganizationRepository implements IOrganizationRepository {
 
   async getOrganizationById(id: string): Promise<Organization | null> {
     const organization = await db('organizations').where({ id }).first()
-    return organization ? new Organization(organization) : null
+    return organization ?? null
   }
 
   async getHsfOrganization(): Promise<Organization> {
