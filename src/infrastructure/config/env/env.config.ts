@@ -48,6 +48,7 @@ export const envSchema = z.object({
   AWS_BUCKET_NAME: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
+  CLIENT_ADMIN_DASHBOARD_URL: z.string().url().optional(),
 
   ORIGINS: z.string().transform((value) => value.split(',')),
   SERVICE_INSPECTION_FEE_CODE: z.string().optional(),

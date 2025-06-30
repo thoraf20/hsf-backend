@@ -55,6 +55,7 @@ import { UserActivityKind } from '@domain/enums/UserActivityKind'
 import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
 import { IContactInformationRepository } from '@interfaces/IContactInformationRepository'
 import { ContactInformation } from '@entities/ContactInformation'
+import { env } from '@infrastructure/config/env/env.config'
 
 export class ManageOrganizations {
   constructor(
@@ -292,7 +293,7 @@ export class ManageOrganizations {
       emailHelper.InvitationEmail(
         lenderOwner.email,
         fullName,
-        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        env.CLIENT_ADMIN_DASHBOARD_URL,
         lenderOrg.name,
         generatedPass,
       )
@@ -393,7 +394,7 @@ export class ManageOrganizations {
       emailHelper.InvitationEmail(
         newAdminUser.email,
         fullName,
-        'YOUR_ACTIVATION_LINK_PLACEHOLDER', // Replace with actual activation link logic
+        env.CLIENT_ADMIN_DASHBOARD_URL, // Replace with actual activation link logic
         newAdminRole.name,
         generatedPass,
       )
@@ -489,7 +490,7 @@ export class ManageOrganizations {
       emailHelper.InvitationEmail(
         newAdminUser.email,
         fullName,
-        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        env.CLIENT_ADMIN_DASHBOARD_URL,
         newAdminRole.name,
         generatedPass,
       )
@@ -724,7 +725,7 @@ export class ManageOrganizations {
       emailHelper.InvitationEmail(
         developerOwner.email,
         fullName,
-        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        env.CLIENT_ADMIN_DASHBOARD_URL,
         developerRole.name,
         generatedPass,
       )
@@ -1232,7 +1233,7 @@ export class ManageOrganizations {
       emailHelper.InvitationEmail(
         memberUser.email,
         fullName,
-        'YOUR_ACTIVATION_LINK_PLACEHOLDER',
+        env.CLIENT_ADMIN_DASHBOARD_URL,
         fullName,
         generatedPass,
       )
