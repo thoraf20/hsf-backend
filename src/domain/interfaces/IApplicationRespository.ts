@@ -1,6 +1,10 @@
 import { Application, ApplicationStage } from '@entities/Application'
+import { TrendResult } from '@shared/types/general.type'
 import { SeekPaginationResult } from '@shared/types/paginate'
-import { ApplicationFilters } from '@validators/applicationValidator'
+import {
+  ApplicationFilters,
+  ApplicationStatsFilterInput,
+} from '@validators/applicationValidator'
 
 export interface IApplicationRespository {
   createApplication(input: Application): Promise<Application>
@@ -31,4 +35,15 @@ export interface IApplicationRespository {
     applicationStageId: string,
     stage: Partial<ApplicationStage>,
   ): Promise<ApplicationStage>
+
+  getApplicationAnalytics(filters: ApplicationStatsFilterInput): Promise<{
+    total_applications: number
+    total_applications_trend: TrendResult
+    approved_clients: number
+    approved_clients_trend: TrendResult
+    pending_clients: number
+    pending_clients_trend: TrendResult
+    declined_clients: number
+    declined_clients_trend: TrendResult
+  }>
 }

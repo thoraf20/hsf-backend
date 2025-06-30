@@ -25,17 +25,23 @@ import { getEnv } from '@infrastructure/config/env/env.config'
 import { decryptToString } from '@shared/utils/encrypt'
 import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
 import { generateRandomPassword } from '@shared/utils/helpers'
+import { AuthInfo } from '@shared/utils/permission-policy'
+import { OrganizationType } from '@domain/enums/organizationEnum'
+import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 
 export class UserService {
   private userRepository: IUserRepository
   private userActivityRepository: IUserActivityLogRepository
+  private organizationRepository: IOrganizationRepository
   private readonly client = new RedisClient()
   constructor(
     userRepository: IUserRepository,
     userActivityRepository: IUserActivityLogRepository,
+    organizationRepository: IOrganizationRepository,
   ) {
     this.userRepository = userRepository
     this.userActivityRepository = userActivityRepository
+    this.organizationRepository = organizationRepository
   }
 
   public async getUserProfile(user: string): Promise<User> {
@@ -444,7 +450,31 @@ export class UserService {
     return this.userRepository.getRoles()
   }
 
-  async getUserActivites(filters: UserActivityFilters) {
+  async getUserActivites(filters: UserActivityFilters, authInfo: AuthInfo) {
+    if (filters.user_id) {
+      const user = await this.userRepository.findById(filters.user_id)
+
+      if (!user) {
+        throw new ApplicationCustomError(
+          StatusCodes.NOT_FOUND,
+          'User not found',
+        )
+      }
+
+      const membership =
+        await this.organizationRepository.getOrgenizationMemberByUserId(user.id)
+
+      if (
+        !(
+          authInfo.organizationType === OrganizationType.HSF_INTERNAL ||
+          authInfo.userId === filters.user_id ||
+          membership?.organization_id === authInfo.currentOrganizationId
+        )
+      ) {
+        throw new ApplicationCustomError(StatusCodes.FORBIDDEN, 'Access denied')
+      }
+    }
+
     return this.userActivityRepository.getAll(filters)
   }
 

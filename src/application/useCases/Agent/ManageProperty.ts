@@ -14,6 +14,7 @@ import { IUserRepository } from '@interfaces/IUserRepository'
 import { getUserClientView, UserClientView } from '@entities/User'
 import { PropertyCount } from '@shared/types/repoTypes'
 import {
+  PropertyStatsFilters,
   SetPropertyIsLiveStatusInput,
   SetPropertyStatusInput,
 } from '@validators/propertyValidator'
@@ -231,5 +232,8 @@ export class manageProperty {
       input.offer_letter_id,
       { ...input },
     )
+  }
+  async getPropertyStats(filters: PropertyStatsFilters) {
+    return this.propertyRepository.getPropertyAnalytics(filters)
   }
 }

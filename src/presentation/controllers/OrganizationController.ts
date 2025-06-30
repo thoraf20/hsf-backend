@@ -30,6 +30,7 @@ import {
 } from '@validators/developerValidator'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
+import { ContactInformationRepository } from '@repositories/user/ContactInformationRepository'
 
 export class OrganizationController {
   private manageOrganizations: ManageOrganizations
@@ -44,6 +45,7 @@ export class OrganizationController {
       new PropertyRepository(),
       new DocumentRepository(),
       new UserActivityLogRepository(),
+      new ContactInformationRepository(),
     )
   }
 
@@ -107,6 +109,24 @@ export class OrganizationController {
     return createResponse(
       StatusCodes.OK,
       'Organization members retrieved successfully',
+      members,
+    )
+  }
+
+  async getOrgMemberById(
+    organizationId: string,
+    memberId: string,
+    authInfo: AuthInfo,
+  ) {
+    const members = await this.manageOrganizations.getOrgMemberById(
+      organizationId,
+      memberId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Organization member retrieved successfully',
       members,
     )
   }

@@ -1,12 +1,16 @@
 import { Properties, shareProperty } from '@domain/entities/Property'
 import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
+import { TrendResult } from '@shared/types/general.type'
 import {
   SeekPaginationOption,
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { PropertyCount } from '@shared/types/repoTypes'
-import { PropertyFilters } from '@validators/propertyValidator'
+import {
+  PropertyFilters,
+  PropertyStatsFilters,
+} from '@validators/propertyValidator'
 
 export interface IPropertyRepository {
   createProperties(address: Properties): Promise<Properties>
@@ -104,4 +108,13 @@ export interface IPropertyRepository {
   ): Promise<EscrowInformationStatus>
 
   UpdatepropertyClosingRequest(input: Record<string, any>): Promise<void>
+  getPropertyAnalytics(filters: PropertyStatsFilters): Promise<{
+    total_properties: number
+    total_properties_trend: TrendResult
+    total_sales: number
+    total_sales_trend: TrendResult
+    pending_properties: number
+    pending_properties_trend: TrendResult
+    latest_update_date: Date | string
+  }>
 }

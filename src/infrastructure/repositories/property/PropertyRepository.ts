@@ -14,11 +14,18 @@ import {
   SeekPaginationResult,
 } from '@shared/types/paginate'
 import { Knex } from 'knex'
-import { EscrowMeetingStatus } from '@domain/enums/propertyEnum'
+import {
+  EscrowMeetingStatus,
+  PropertyApprovalStatus,
+} from '@domain/enums/propertyEnum'
 import { EscrowInformationStatus } from '@entities/PropertyPurchase'
 import { applyPagination } from '@shared/utils/paginate'
-import { PropertyFilters } from '@validators/propertyValidator'
+import {
+  PropertyFilters,
+  PropertyStatsFilters,
+} from '@validators/propertyValidator'
 import { QueryBoolean } from '@shared/utils/helpers'
+import { TrendResult } from '@shared/types/general.type'
 
 export class PropertyRepository implements IPropertyRepository {
   async createProperties(property: Properties): Promise<Properties> {
@@ -801,5 +808,151 @@ export class PropertyRepository implements IPropertyRepository {
       .returning('*')
 
     return updatedEscrowStatus
+  }
+
+  public async getPropertyAnalytics(filters: PropertyStatsFilters): Promise<{
+    total_properties: number
+    total_properties_trend: TrendResult
+    total_sales: number
+    total_sales_trend: TrendResult
+    pending_properties: number
+    pending_properties_trend: TrendResult
+    latest_update_date: Date | string
+  }> {
+    const currentWeekStart = db.raw(`NOW() - INTERVAL '7 days'`)
+    const previousWeekStart = db.raw(`NOW() - INTERVAL '14 days'`)
+    const previousWeekEnd = db.raw(
+      `NOW() - INTERVAL '7 days' - INTERVAL '1 microsecond'`,
+    ) // To exclude the start of current week
+
+    let query = db('properties').whereNull('deleted_at')
+
+    if (filters.organization_id) {
+      query = query.andWhere('organization_id', filters.organization_id)
+    }
+    if (filters.user_id) {
+      query = query.andWhere('listed_by_id', filters.user_id)
+    }
+
+    const [result] = await query
+      .select<
+        {
+          total_properties: number
+          total_sales: number
+          pending_properties: number
+          current_week_total_properties: number
+          current_week_total_sales: number
+          previous_week_total_properties: number
+          previous_week_total_sales: number
+          current_week_pending_properties: number
+          previous_week_pending_properties: number
+          latest_update_date: Date | string
+        }[]
+      >(
+        db.raw(`COUNT(id) AS "total_properties"`),
+        db.raw(`COUNT(id) FILTER (WHERE is_sold = true) AS "total_sales"`),
+        db.raw(`COUNT(id) FILTER (WHERE status = ?) AS "pending_properties"`, [
+          PropertyApprovalStatus.PENDING,
+        ]),
+        db.raw(
+          `COUNT(id) FILTER (WHERE created_at >= ${currentWeekStart}) AS "current_week_total_properties"`,
+        ),
+
+        db.raw(
+          `COUNT(id) FILTER (WHERE is_sold = true AND created_at >= ${currentWeekStart}) AS "current_week_total_sales"`,
+        ),
+        db.raw(
+          `COUNT(id) FILTER (WHERE status = ? AND created_at >= ${currentWeekStart}) AS "current_week_pending_properties"`,
+          [PropertyApprovalStatus.PENDING],
+        ),
+        db.raw(
+          `COUNT(id) FILTER (WHERE created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_total_properties"`,
+        ),
+        db.raw(
+          `COUNT(id) FILTER (WHERE is_sold = true AND created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_total_sales"`,
+        ),
+        db.raw(
+          `COUNT(id) FILTER (WHERE status = ? AND created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_pending_properties"`,
+          [PropertyApprovalStatus.PENDING],
+        ),
+
+        db.raw(`MAX(updated_at) AS "latest_update_date"`),
+      )
+      .whereNull('deleted_at') // Only consider non-deleted properties
+
+    // Ensure all counts are numbers, defaulting to 0 if null/undefined
+    const totalProperties = Number(result.total_properties) || 0
+    const totalSales = Number(result.total_sales) || 0
+    const pendingProperties = Number(result.pending_properties) || 0
+    const currentWeekTotalProperties =
+      Number(result.current_week_total_properties) || 0
+    const currentWeekTotalSales = Number(result.current_week_total_sales) || 0
+    const currentWeekPendingProperties =
+      Number(result.current_week_pending_properties) || 0
+    const previousWeekTotalProperties =
+      Number(result.previous_week_total_properties) || 0
+    const previousWeekTotalSales = Number(result.previous_week_total_sales) || 0
+    const previousWeekPendingProperties =
+      Number(result.previous_week_pending_properties) || 0
+
+    const totalPropertiesTrend = this.calculateTrend(
+      currentWeekTotalProperties,
+      previousWeekTotalProperties,
+    )
+    const totalSalesTrend = this.calculateTrend(
+      currentWeekTotalSales,
+      previousWeekTotalSales,
+    )
+    const pendingPropertiesTrend = this.calculateTrend(
+      currentWeekPendingProperties,
+      previousWeekPendingProperties,
+    )
+
+    return {
+      total_properties: totalProperties,
+      total_properties_trend: totalPropertiesTrend,
+      total_sales: totalSales,
+      total_sales_trend: totalSalesTrend,
+      pending_properties: pendingProperties,
+      pending_properties_trend: pendingPropertiesTrend,
+      latest_update_date: result.latest_update_date,
+    }
+  }
+
+  private calculateTrend(
+    currentCount: number,
+    previousCount: number,
+  ): TrendResult {
+    let trend: number | 'N/A'
+    let trendflow: 'High' | 'Low' | 'Neutral'
+    let label: string
+
+    if (previousCount === 0) {
+      if (currentCount > 0) {
+        trend = 'N/A' // Cannot calculate a meaningful percentage from zero
+        trendflow = 'High'
+        label = 'Increased significantly'
+      } else {
+        trend = 0
+        trendflow = 'Neutral'
+        label = 'No change'
+      }
+    } else {
+      const percentage = ((currentCount - previousCount) / previousCount) * 100
+      trend = parseFloat(percentage.toFixed(1)) // Keep one decimal for the number
+
+      if (percentage > 0) {
+        trendflow = 'High'
+        label = `Higher than last week`
+      } else if (percentage < 0) {
+        trendflow = 'Low'
+        label = `Less than last week`
+      } else {
+        trendflow = 'Neutral'
+        label = 'No change from last week'
+      }
+    }
+
+    return { trend, trendflow, label }
   }
 }

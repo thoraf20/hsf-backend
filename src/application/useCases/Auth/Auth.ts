@@ -32,10 +32,13 @@ import { hashData } from '@shared/utils/sha-hash'
 import { UserService } from '@use-cases/User/User'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { ManageOrganizations } from '@use-cases/ManageOrganizations'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
+import { ContactInformationRepository } from '@repositories/user/ContactInformationRepository'
 
 const userService = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
+  new OrganizationRepository(),
 )
 
 export class AuthService {
@@ -72,6 +75,7 @@ export class AuthService {
       new PropertyRepository(),
       new DocumentRepository(),
       new UserActivityLogRepository(),
+      new ContactInformationRepository(),
     )
   }
 

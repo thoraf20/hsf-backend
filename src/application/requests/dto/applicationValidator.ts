@@ -11,6 +11,7 @@ import { ReviewRequestApprovalStatus } from '@entities/Request'
 import { QueryBoolean } from '@shared/utils/helpers'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { z } from 'zod'
+import { declineRequestValidator } from './declineRequestValidator'
 
 export const createApplicationSchema = z
   .object({
@@ -200,11 +201,28 @@ export const applicationFilterSchema = withPaginateSchema(
 
 export type ApplicationFilters = z.infer<typeof applicationFilterSchema>
 
-export const applicationDocApprovalSchema = z.object({
-  approval_id: z.string().nonempty(),
-  application_doc_id: z.string().nonempty(),
-  approval: z.nativeEnum(ReviewRequestApprovalStatus),
-})
+export const applicationDocApprovalSchema = z
+  .object({
+    approval_id: z.string().nonempty(),
+    application_doc_id: z.string().nonempty(),
+    approval: z.nativeEnum(ReviewRequestApprovalStatus),
+  })
+  .and(declineRequestValidator.partial({ cases: true }))
+  .refine(
+    (value) => {
+      if (
+        value.approval === ReviewRequestApprovalStatus.Rejected &&
+        !value.cases?.length
+      ) {
+        throw new Error(
+          'At least one case must be provided when rejecting an application document',
+        )
+      }
+
+      return value
+    },
+    { params: ['cases'] },
+  )
 
 export type ApplicationDocApprovalInput = z.infer<
   typeof applicationDocApprovalSchema
@@ -251,4 +269,14 @@ export const setApplicationLoanOfficerSchema = z.object({
 
 export type SetApplicationLoanOfficerInput = z.infer<
   typeof setApplicationLoanOfficerSchema
+>
+
+export const applicationStatsFilterSchema = z.object({
+  lender_id: z.string().optional(),
+  organization_id: z.string().optional(),
+  user_id: z.string().optional(),
+})
+
+export type ApplicationStatsFilterInput = z.infer<
+  typeof applicationStatsFilterSchema
 >

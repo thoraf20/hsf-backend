@@ -10,6 +10,7 @@ import { ApplicationCustomError } from '@middleware/errors/customError'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import {
+  PropertyStatsFilters,
   SetPropertyIsLiveStatusInput,
   SetPropertyStatusInput,
 } from '@validators/propertyValidator'
@@ -142,6 +143,15 @@ export class MangagePropertyController {
       StatusCodes.OK,
       'Property retrieved successfully',
       property,
+    )
+  }
+
+  async getPropertyStats(filters: PropertyStatsFilters) {
+    const stats = await this.managePropertyService.getPropertyStats(filters)
+    return createResponse(
+      StatusCodes.OK,
+      'Property stats retrieved successfully',
+      stats,
     )
   }
 }

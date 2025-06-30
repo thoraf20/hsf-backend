@@ -1,4 +1,7 @@
-import { DocumentGroupKind } from '@domain/enums/documentEnum'
+import {
+  DocumentGroupKind,
+  LoanAgreementType,
+} from '@domain/enums/documentEnum'
 import {
   LoanAgreementStatus,
   LoanDecisionStatus,
@@ -89,11 +92,17 @@ import {
   SubmitSignedLoanOfferLetterInput,
   UploadLoanAgreementDocInput,
   SetApplicationLoanOfficerInput,
+  ApplicationStatsFilterInput,
 } from '@validators/applicationValidator'
 import { PropertyFilters } from '@validators/propertyValidator'
 import { StatusCodes } from 'http-status-codes'
 import emailTemplete from '@infrastructure/email/template/constant'
 import { UserAssignmentRepository } from '@repositories/user/UserAssignmentRepository'
+import { IDocumentDeclineEventRepository } from '@interfaces/IDocumentDeclineEventRepository'
+import { IDeclineReasonRepository } from '@interfaces/IDeclineReasonRepository'
+import { IDocumentDeclineReasonRepository } from '@interfaces/IDocumentDeclineReasonRepository'
+import { LoanAgreement } from '@entities/Loans'
+
 export class ApplicationService {
   constructor(
     private readonly applicationRepository: ApplicationRepository,
@@ -116,6 +125,9 @@ export class ApplicationService {
     private readonly loanRepaymentTransactionRepository: ILoanRepaymentTransactionRepository,
     private readonly loanAgreementRepository: LoanAgreementRepository,
     private readonly userAssignmentRepository: UserAssignmentRepository,
+    private readonly documentDeclineEventRepository: IDocumentDeclineEventRepository,
+    private readonly documentDeclineReasonRepository: IDocumentDeclineReasonRepository,
+    private readonly declineReasonRepository: IDeclineReasonRepository,
   ) {}
 
   async create(userId: string, input: CreateApplicationInput) {
@@ -330,7 +342,19 @@ export class ApplicationService {
       )
     }
 
-    return application
+    let loanAgreement: LoanAgreement | null = null
+
+    if (application.loan_offer_id) {
+      loanAgreement =
+        await this.loanAgreementRepository.getLoanAgreementByOfferId(
+          application.loan_offer_id,
+        )
+    }
+
+    return {
+      ...application,
+      loan_agreement: loanAgreement,
+    }
   }
 
   async getByDeveloperOrg(organizationId: string, filter: ApplicationFilters) {
@@ -1852,35 +1876,73 @@ export class ApplicationService {
       )
     }
 
-    const documentApprovalUpdated =
-      await this.reviewRequestRepository.updateReviewRequestApproval(
-        currentApproval.id,
-        {
-          approval_date: new Date(),
-          approval_id: authInfo.userId,
-          approval_status: input.approval,
-        },
+    return runWithTransaction(async () => {
+      const documentApprovalUpdated =
+        await this.reviewRequestRepository.updateReviewRequestApproval(
+          currentApproval.id,
+          {
+            approval_date: new Date(),
+            approval_id: authInfo.userId,
+            approval_status: input.approval,
+          },
+        )
+
+      if (input.approval === ReviewRequestApprovalStatus.Rejected) {
+        await Promise.all(
+          input.cases.map(async (rejectedCase) => {
+            let declineReasonId: string | null = null
+            if (rejectedCase.decline_reason_id) {
+              const declineReason = await this.declineReasonRepository.findById(
+                rejectedCase.decline_reason_id,
+              )
+
+              if (!declineReason) {
+                throw new ApplicationCustomError(
+                  StatusCodes.NOT_FOUND,
+                  'Decline reason not found',
+                )
+              }
+              declineReasonId = declineReason.id
+            }
+
+            const declineEvent =
+              await this.documentDeclineEventRepository.create({
+                declined_by_user_id: authInfo.userId,
+                review_request_approval_id: documentApprovalUpdated.id,
+                application_document_entry_id: applicationDocEntry.id,
+              })
+
+            await this.documentDeclineReasonRepository.create({
+              decline_reason_id: declineReasonId,
+              document_decline_event_id: declineEvent.id,
+              reason: rejectedCase.reason ?? null,
+              notes: rejectedCase.description,
+            })
+          }),
+        )
+      }
+
+      const user = await this.userRepository.findById(application.user_id)
+      const getClientView = user ? getUserClientView(user) : null
+      const getProperty = await this.propertyRepository.getPropertyById(
+        application.property_id,
       )
-    const user = await this.userRepository.findById(application.user_id)
-    const getClientView = user ? getUserClientView(user) : null
-    const getProperty = await this.propertyRepository.getPropertyById(
-      application.property_id,
-    )
-    const getOrganizationName =
-      await this.organizationRepository.getOrganizationById(
-        currentApproval.organization_id,
+      const getOrganizationName =
+        await this.organizationRepository.getOrganizationById(
+          currentApproval.organization_id,
+        )
+
+      emailTemplete.DocumentApproval(
+        getClientView.email,
+        `${getClientView.first_name}`,
+        `${getClientView.last_name}`,
+        getProperty.property_name,
+        input.approval,
+        getOrganizationName.name,
       )
 
-    emailTemplete.DocumentApproval(
-      getClientView.email,
-      `${getClientView.first_name}`,
-      `${getClientView.last_name}`,
-      getProperty.property_name,
-      input.approval,
-      getOrganizationName.name,
-    )
-
-    return documentApprovalUpdated
+      return documentApprovalUpdated
+    })
   }
 
   async hsfCompleteDocumentReview(
@@ -2559,6 +2621,43 @@ export class ApplicationService {
       )
     }
 
+    const loanAgreementDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.LoanAgreement,
+      )
+    if (!loanAgreementDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Loan agreement document group not found or not properly configured',
+      )
+    }
+
+    const loanAgreementDocGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        loanAgreementDocGroup.id,
+      )
+    if (
+      !loanAgreementDocGroupTypes ||
+      loanAgreementDocGroupTypes.length === 0
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Document group types not found or not properly configured',
+      )
+    }
+
+    const borrowerPartnerAgreementGroupType = loanAgreementDocGroupTypes.find(
+      (groupType) =>
+        groupType.document_type ===
+        LoanAgreementType.BuyerSignedAgreementLetter,
+    )
+    if (!borrowerPartnerAgreementGroupType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not authorized to upload lender signed agreement letters for this loan agreement',
+      )
+    }
+
     return runWithTransaction(async () => {
       const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(
         loanOffer.id,
@@ -2566,6 +2665,35 @@ export class ApplicationService {
           signed_loan_offer_letter_url: input.signed_loan_offer_letter_url,
         },
       )
+
+      const loanAgreement =
+        await this.loanAgreementRepository.getLoanAgreementByOfferId(
+          updatedLoanOffer.id,
+        )
+
+      if (loanAgreement) {
+        const borrowerSignatureDoc =
+          await this.documentRepository.createApplicationDocumentEntry({
+            document_url: input.signed_loan_offer_letter_url,
+            document_size: null,
+            document_group_type_id: borrowerPartnerAgreementGroupType.id,
+            application_id: application.application_id,
+            document_name:
+              borrowerPartnerAgreementGroupType.document_type.toLowerCase(),
+            user_id: application.user_id,
+            uploaded_by_id: authInfo.userId,
+            uploaded_at: new Date(),
+          })
+
+        await this.loanAgreementRepository.updateLoanAgreement(
+          loanAgreement.id,
+          {
+            borower_sign_uploaded_at: new Date(),
+            borrower_signature_doc_id: borrowerSignatureDoc.id,
+            status: LoanAgreementStatus.Completed,
+          },
+        )
+      }
 
       return updatedLoanOffer
     })
@@ -2958,5 +3086,38 @@ export class ApplicationService {
         current_loan_officer_assignment_id: currentLoanOfficerAssignmentId,
       })
     })
+  }
+
+  async getApplicationStats(
+    filters: ApplicationStatsFilterInput,
+    authInfo: AuthInfo,
+  ) {
+    if (authInfo.organizationType === OrganizationType.LENDER_INSTITUTION) {
+      const lender = await this.lenderRepository.getLenderByOrgId(
+        authInfo.currentOrganizationId,
+      )
+
+      filters.lender_id = lender.id
+    }
+
+    if (
+      filters.lender_id &&
+      authInfo.organizationType === OrganizationType.HSF_INTERNAL
+    ) {
+      const lender = await this.lenderRepository.getLenderByOrgId(
+        filters.lender_id,
+      )
+
+      if (!lender) {
+        throw new ApplicationCustomError(
+          StatusCodes.NOT_FOUND,
+          'Lender not found',
+        )
+      }
+
+      filters.lender_id = lender.id
+    }
+
+    return this.applicationRepository.getApplicationAnalytics(filters)
   }
 }

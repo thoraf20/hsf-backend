@@ -1,10 +1,15 @@
+import { ApplicationStatus } from '@domain/enums/propertyEnum'
 import { Application, ApplicationStage } from '@entities/Application'
 import db, { createUnion } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
+import { TrendResult } from '@shared/types/general.type'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { SearchType } from '@shared/types/repoTypes'
 import { applyPagination } from '@shared/utils/paginate'
-import { ApplicationFilters } from '@validators/applicationValidator'
+import {
+  ApplicationFilters,
+  ApplicationStatsFilterInput,
+} from '@validators/applicationValidator'
 import { Knex } from 'knex'
 
 export class ApplicationRepository implements IApplicationRespository {
@@ -498,5 +503,204 @@ export class ApplicationRepository implements IApplicationRespository {
       .returning('*')
 
     return updatedStage
+  }
+
+  public async getApplicationAnalytics(
+    filters: ApplicationStatsFilterInput,
+  ): Promise<{
+    total_applications: number
+    total_applications_trend: TrendResult
+    approved_clients: number
+    approved_clients_trend: TrendResult
+    pending_clients: number
+    pending_clients_trend: TrendResult
+    declined_clients: number
+    declined_clients_trend: TrendResult
+    lastest_updated_at: Date | string
+  }> {
+    const currentWeekStart = db.raw(`NOW() - INTERVAL '7 days'`)
+    const previousWeekStart = db.raw(`NOW() - INTERVAL '14 days'`)
+    const previousWeekEnd = db.raw(
+      `NOW() - INTERVAL '7 days' - INTERVAL '1 microsecond'`,
+    )
+
+    let query = db<Application>('application')
+
+    if (filters.organization_id) {
+      query = query.where({
+        developer_organization_id: filters.organization_id,
+      })
+    }
+
+    if (filters.lender_id) {
+      query = query.innerJoin(
+        'eligibility',
+        'application.id',
+        'eligibility.application_id',
+      )
+      query = query.where(
+        'eligibility.lender_organization_id',
+        filters.lender_id,
+      )
+    }
+
+    const result = await query
+      .select<
+        {
+          total_applications: number
+          approved_clients: number
+          pending_clients: number
+          declined_clients: number
+          total_applications_trend: string
+          approved_clients_trend: string
+          pending_clients_trend: string
+          declined_clients_trend: string
+          current_week_total_applications: number
+          current_week_approved_clients: number
+          current_week_pending_clients: number
+          current_week_declined_clients: number
+          previous_week_total_applications: number
+          previous_week_approved_clients: number
+          previous_week_pending_clients: number
+          previous_week_declined_clients: number
+          lastest_updated_at: Date | string
+        }[]
+      >(
+        db.raw(`COUNT(application_id) AS "total_applications"`),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ?) AS "approved_clients"`,
+          [ApplicationStatus.COMPLETED],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ?) AS "pending_clients"`,
+          [ApplicationStatus.PENDING],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ?) AS "declined_clients"`,
+          [ApplicationStatus.REJECTED],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE created_at >= ${currentWeekStart}) AS "current_week_total_applications"`,
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${currentWeekStart}) AS "current_week_approved_clients"`,
+          [ApplicationStatus.COMPLETED],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${currentWeekStart}) AS "current_week_pending_clients"`,
+          [ApplicationStatus.PENDING],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${currentWeekStart}) AS "current_week_declined_clients"`,
+          [ApplicationStatus.REJECTED],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_total_applications"`,
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_approved_clients"`,
+          [ApplicationStatus.COMPLETED],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_pending_clients"`,
+          [ApplicationStatus.PENDING],
+        ),
+        db.raw(
+          `COUNT(application_id) FILTER (WHERE status = ? AND created_at >= ${previousWeekStart} AND created_at < ${previousWeekEnd}) AS "previous_week_rejected_clients"`,
+          [ApplicationStatus.REJECTED],
+        ),
+        db.raw(`MAX(application.updated_at) AS lastest_updated_at`),
+      )
+      .first() // Use .first() to get a single row result
+
+    // Ensure all counts are numbers, defaulting to 0 if null/undefined
+    const totalApplications = Number(result?.total_applications) || 0
+    const approvedClients = Number(result?.approved_clients) || 0
+    const pendingClients = Number(result?.pending_clients) || 0
+    const declinedClients = Number(result?.declined_clients) || 0
+
+    const currentWeekTotalApplications =
+      Number(result?.current_week_total_applications) || 0
+    const currentWeekApprovedClients =
+      Number(result?.current_week_approved_clients) || 0
+    const currentWeekPendingClients =
+      Number(result?.current_week_pending_clients) || 0
+    const currentWeekDeclinedClients =
+      Number(result?.current_week_declined_clients) || 0
+
+    const previousWeekTotalApplications =
+      Number(result?.previous_week_total_applications) || 0
+    const previousWeekApprovedClients =
+      Number(result?.previous_week_approved_clients) || 0
+    const previousWeekPendingClients =
+      Number(result?.previous_week_pending_clients) || 0
+    const previousWeekDeclinedClients =
+      Number(result?.previous_week_declined_clients) || 0
+
+    const totalApplicationsTrend = this.calculateTrend(
+      currentWeekTotalApplications,
+      previousWeekTotalApplications,
+    )
+    const approvedClientsTrend = this.calculateTrend(
+      currentWeekApprovedClients,
+      previousWeekApprovedClients,
+    )
+    const pendingClientsTrend = this.calculateTrend(
+      currentWeekPendingClients,
+      previousWeekPendingClients,
+    )
+    const declinedClientsTrend = this.calculateTrend(
+      currentWeekDeclinedClients,
+      previousWeekDeclinedClients,
+    )
+
+    return {
+      total_applications: totalApplications,
+      total_applications_trend: totalApplicationsTrend,
+      approved_clients: approvedClients,
+      approved_clients_trend: approvedClientsTrend,
+      pending_clients: pendingClients,
+      pending_clients_trend: pendingClientsTrend,
+      declined_clients: declinedClients,
+      declined_clients_trend: declinedClientsTrend,
+      lastest_updated_at: result.lastest_updated_at,
+    }
+  }
+
+  private calculateTrend(
+    currentCount: number,
+    previousCount: number,
+  ): TrendResult {
+    let trend: number | 'N/A'
+    let trendflow: 'High' | 'Low' | 'Neutral'
+    let label: string
+
+    if (previousCount === 0) {
+      if (currentCount > 0) {
+        trend = 'N/A' // Cannot calculate a meaningful percentage from zero
+        trendflow = 'High'
+        label = 'Increased significantly'
+      } else {
+        trend = 0
+        trendflow = 'Neutral'
+        label = 'No change'
+      }
+    } else {
+      const percentage = ((currentCount - previousCount) / previousCount) * 100
+      trend = parseFloat(percentage.toFixed(1)) // Keep one decimal for the number
+
+      if (percentage > 0) {
+        trendflow = 'High'
+        label = `Higher than last week`
+      } else if (percentage < 0) {
+        trendflow = 'Low'
+        label = `Less than last week`
+      } else {
+        trendflow = 'Neutral'
+        label = 'No change from last week'
+      }
+    }
+
+    return { trend, trendflow, label }
   }
 }

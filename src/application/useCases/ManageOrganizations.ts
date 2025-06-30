@@ -53,6 +53,8 @@ import { runWithTransaction } from '@infrastructure/database/knex'
 import { IUserActivityLogRepository } from '@domain/repositories/IUserActivityLogRepository'
 import { UserActivityKind } from '@domain/enums/UserActivityKind'
 import { getIpAddress, getUserAgent } from '@shared/utils/request-context'
+import { IContactInformationRepository } from '@interfaces/IContactInformationRepository'
+import { ContactInformation } from '@entities/ContactInformation'
 
 export class ManageOrganizations {
   constructor(
@@ -64,6 +66,7 @@ export class ManageOrganizations {
     private readonly propertyRepository: IPropertyRepository,
     private readonly documentRepository: IDocumentRepository,
     private readonly userActivityLogRepository: IUserActivityLogRepository,
+    private readonly contactInformationRepository: IContactInformationRepository,
   ) {}
 
   async createOrganization(organization: Organization): Promise<Organization> {
@@ -1213,6 +1216,17 @@ export class ManageOrganizations {
           memberUser.id,
         )
 
+      await this.contactInformationRepository.create({
+        user_id: memberUser.id,
+        contact_number: input.contact_phone_number,
+        country_code: input.contact_phone_country_code,
+        email: input.contact_email,
+        emergency_address: input.contact_emergency_address,
+        emergency_contact: input.contact_emergency_address,
+        emergency_relationship: input.contact_emergency_relation,
+        emergency_name: input.contact_emergency_name,
+      })
+
       const fullName = `${memberUser.first_name} ${memberUser.last_name}`
 
       emailHelper.InvitationEmail(
@@ -1231,5 +1245,76 @@ export class ManageOrganizations {
         password: generatedPass,
       }
     })
+  }
+
+  async getOrgMemberById(
+    organizationId: string,
+    memberId: string,
+    authInfo: AuthInfo,
+  ) {
+    const org =
+      await this.organizationRepository.getOrganizationById(organizationId)
+
+    if (!org) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    if (
+      !(
+        authInfo.organizationType === OrganizationType.HSF_INTERNAL ||
+        org.id === authInfo.currentOrganizationId
+      )
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'You are not authorized to access this organization',
+      )
+    }
+
+    const membership =
+      await this.organizationRepository.getOrganizationMemberByMemberID(
+        memberId,
+        organizationId,
+      )
+
+    if (!membership) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Member not found',
+      )
+    }
+
+    const memberUser = await this.userRepository.findById(membership.user_id)
+    const addresses = await this.addressRepository.getUserAddresses(
+      membership.user_id,
+    )
+
+    if (membership?.created_by_user_id) {
+      const createdByUser = await this.userRepository.findById(
+        membership.created_by_user_id,
+      )
+      membership.created_by_user = createdByUser
+        ? getUserClientView(createdByUser)
+        : null
+    }
+
+    let contactInformation: ContactInformation | null = null
+    if (membership?.user_id) {
+      contactInformation = await this.contactInformationRepository.findByUserId(
+        membership.user_id,
+      )
+    }
+
+    return {
+      ...membership,
+      user: getUserClientView({
+        ...memberUser,
+      }),
+      contact_information: contactInformation,
+      addresses,
+    }
   }
 }

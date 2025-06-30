@@ -33,6 +33,7 @@ import {
   HomeBuyserLoanOfferRespondInput,
   SubmitSignedLoanOfferLetterInput,
   SetApplicationLoanOfficerInput,
+  ApplicationStatsFilterInput,
 } from '@validators/applicationValidator'
 import { InspectionFilters } from '@validators/inspectionVaidator'
 import { PaymentFilters } from '@validators/paymentValidator'
@@ -670,6 +671,19 @@ export class ApplicationController {
         ? 'Loan officer set successfully'
         : 'Loan officer removed successfully',
       application,
+    )
+  }
+
+  async getStats(filters: ApplicationStatsFilterInput, authInfo: AuthInfo) {
+    const stats = await this.applicationService.getApplicationStats(
+      filters,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Application stats retrieved successfully',
+      stats,
     )
   }
 }

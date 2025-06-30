@@ -3,6 +3,7 @@
 import {
   AddressType,
   AssignableType,
+  Gender,
   UserAssignmentRole,
   UserStatus,
 } from '@domain/enums/userEum'
@@ -21,6 +22,7 @@ export class User extends BaseEntity {
   role_id?: string
   password: string
   image?: string
+  gender?: Gender
   user_agent?: string
   date_of_birth?: Date | string
   is_admin: boolean
@@ -110,6 +112,7 @@ export function getUserClientView(
   | 'is_default_password'
   | 'user_id'
   | 'status'
+  | 'gender'
   | 'require_authenticator_mfa'
   | 'role'
   | 'role_id'
@@ -140,6 +143,7 @@ export function getUserClientView(
     role: user.role,
     date_of_birth: user.date_of_birth,
     membership: user.membership,
+    gender: user.gender,
     role_id: user.role_id,
     profile: user.profile,
     force_password_reset: user.force_password_reset,

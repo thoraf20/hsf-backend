@@ -169,3 +169,12 @@ export const propertyFiltersSchema = withPaginateSchema(
 )
 
 export type PropertyFilters = z.infer<typeof propertyFiltersSchema>
+
+export const propertyStatsFiltersSchema = withPaginateSchema(
+  z.object({
+    organization_id: z.string().optional(),
+    user_id: z.string().optional(),
+  }),
+)
+
+export type PropertyStatsFilters = z.infer<typeof propertyStatsFiltersSchema>

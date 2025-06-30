@@ -1,5 +1,6 @@
 import { OrganizationMemberStatus } from '@domain/enums/organizationEnum'
 import { BaseEntity } from '.'
+import { UserClientView } from './User'
 
 export class UserOrganizationMember extends BaseEntity {
   user_id: string
@@ -9,6 +10,9 @@ export class UserOrganizationMember extends BaseEntity {
 
   deleted_at?: Date
   suspended_at?: Date
+
+  created_by_user_id?: string
+  created_by_user?: UserClientView
 
   constructor(data: Partial<UserOrganizationMember>) {
     super()

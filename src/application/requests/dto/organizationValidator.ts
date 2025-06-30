@@ -167,6 +167,36 @@ export const createEmployeeSchema = z.object({
   street_address: z.string().nonempty().max(500),
   state_code: z.string().optional(),
   country_code: z.string().optional(),
+
+  contact_email: z
+    .string()
+    .email('Please enter a valid email address')
+    .max(255, 'Email cannot exceed 255 characters'),
+  contact_phone_country_code: z.string().nonempty('Phone code is required'),
+  contact_phone_number: z
+    .string()
+    .nonempty('Phone number is required')
+    .max(20, 'Phone number cannot exceed 20 characters'),
+
+  contact_emergency_name: z
+    .string()
+    .nonempty('Contact emergency name is required'),
+  contact_emergency_email: z
+    .string()
+    .email('Please enter a valid email address')
+    .max(255, 'Email cannot exceed 255 characters'),
+  contact_emergency_phone_number: z
+    .string()
+    .nonempty('Phone number is required')
+    .max(20, 'Phone number cannot exceed 20 characters'),
+  contact_emergency_address: z
+    .string()
+    .max(500, 'Address cannot exceed 500 characters')
+    .optional(),
+  contact_emergency_relation: z
+    .string()
+    .max(50, 'Relation cannot exceed 50 characters')
+    .optional(),
 })
 
 export type CreateEmployeeInput = z.infer<typeof createEmployeeSchema>

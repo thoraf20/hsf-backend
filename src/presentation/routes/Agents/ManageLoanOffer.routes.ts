@@ -2,6 +2,7 @@ import { ManageLoanOfferController } from '@controllers/Agent/ManageLoanOffer.co
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { authorize } from '@middleware/authorization'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
+import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
@@ -24,6 +25,7 @@ const manageLoanOfferSevice = new ManageLoanOfferService(
   new UserRepository(),
   new OrganizationRepository(),
   new ApplicationRepository(),
+  new LoanAgreementRepository(),
   new LenderRepository(),
 )
 

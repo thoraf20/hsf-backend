@@ -22,6 +22,8 @@ import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { DocumentRepository } from '@repositories/property/DcoumentRepository'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
+import { AuthInfo } from '@shared/utils/permission-policy'
+import { ContactInformationRepository } from '@repositories/user/ContactInformationRepository'
 
 export class UserController {
   private manageOrganizations: ManageOrganizations
@@ -39,6 +41,7 @@ export class UserController {
       new PropertyRepository(),
       new DocumentRepository(),
       new UserActivityLogRepository(),
+      new ContactInformationRepository(),
     )
   }
 
@@ -150,8 +153,11 @@ export class UserController {
     )
   }
 
-  async getUserActivites(filters: UserActivityFilters) {
-    const activityContents = await this.userService.getUserActivites(filters)
+  async getUserActivites(filters: UserActivityFilters, authInfo: AuthInfo) {
+    const activityContents = await this.userService.getUserActivites(
+      filters,
+      authInfo,
+    )
     return createResponse(
       StatusCodes.OK,
       'User activities retrieved successfully',

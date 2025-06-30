@@ -1,6 +1,7 @@
 import { UserController } from '@controllers/User.controller'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { authorize } from '@middleware/authorization'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { AccountRepository } from '@repositories/user/AccountRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
@@ -19,6 +20,7 @@ const manageUserRoutes = Router()
 const userServices = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
+  new OrganizationRepository(),
 )
 const accountRepository = new AccountRepository()
 const addressRepository = new AddressRepository()
@@ -55,17 +57,20 @@ manageUserRoutes.get(
 manageUserRoutes.get(
   '/users/:user_id/activities',
   validateRequestQuery(userActivityFilterSchema),
-  authorize(requireOrganizationType(OrganizationType.HSF_INTERNAL)),
   asyncMiddleware(async (req, res) => {
     const {
       params: { user_id },
       query,
+      authInfo,
     } = req
 
-    const response = await userController.getUserActivites({
-      ...query,
-      user_id: user_id,
-    })
+    const response = await userController.getUserActivites(
+      {
+        ...query,
+        user_id: user_id,
+      },
+      authInfo,
+    )
     res.status(response.statusCode).json(response)
   }),
 )

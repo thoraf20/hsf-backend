@@ -1,4 +1,7 @@
-import { LoanOfferWorkflowStatus } from '@domain/enums/loanEnum'
+import {
+  LoanAgreementStatus,
+  LoanOfferWorkflowStatus,
+} from '@domain/enums/loanEnum'
 import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
 import { Application, MortgageApplicationStage } from '@entities/Application'
 import { Lender } from '@entities/Lender'
@@ -7,6 +10,7 @@ import { getUserClientView, UserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
+import { ILoanAgreementRepository } from '@interfaces/ILoanAgreementRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
@@ -26,6 +30,7 @@ export class ManageLoanOfferService {
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly applicationRepository: IApplicationRespository,
+    private readonly loanAgreementRepository: ILoanAgreementRepository,
 
     private readonly lenderProfileRepository: ILenderRepository,
   ) {}
@@ -220,6 +225,19 @@ export class ManageLoanOfferService {
           `Loan offer is already in the '${loanOffer.workflow_status}' state.`,
         )
       }
+    }
+
+    const loanAgreement =
+      await this.loanAgreementRepository.getLoanAgreementByOfferId(loanOfferId)
+
+    if (
+      loanAgreement &&
+      loanAgreement.status !== LoanAgreementStatus.Completed
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.CONFLICT,
+        `Loan agreement is not completed.`,
+      )
     }
 
     return runWithTransaction(async () => {

@@ -23,7 +23,10 @@ import {
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
-import { ApplicationPurchaseType, ElasticEnum } from '@domain/enums/propertyEnum'
+import {
+  ApplicationPurchaseType,
+  ElasticEnum,
+} from '@domain/enums/propertyEnum'
 import { ApplicationFilters } from '@validators/applicationValidator'
 import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
 export class PropertyService {
@@ -44,7 +47,7 @@ export class PropertyService {
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
     documentRepository: IDocumentRepository,
-    elasticSearchRepository: elasticSearchRespository
+    elasticSearchRepository: elasticSearchRespository,
   ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository
@@ -58,64 +61,69 @@ export class PropertyService {
   }
 
   async createProperty(
-  input: CreatePropertyInput,
-  organization_id: string,
-): Promise<Properties> {
-  const propertyReportDocGroup = await this.documentRepository.findDocumentGroupByTag(
-    DocumentGroupKind.PropertyReport,
-  );
+    input: CreatePropertyInput,
+    organization_id: string,
+  ): Promise<Properties> {
+    const propertyReportDocGroup =
+      await this.documentRepository.findDocumentGroupByTag(
+        DocumentGroupKind.PropertyReport,
+      )
 
-  if (!propertyReportDocGroup) {
-    throw new ApplicationCustomError(
-      StatusCodes.INTERNAL_SERVER_ERROR,
-      'Property Reports document group not found. Please check server configuration.',
-    );
+    if (!propertyReportDocGroup) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Property Reports document group not found. Please check server configuration.',
+      )
+    }
+
+    const documentGroupTypes =
+      await this.documentRepository.findGroupDocumentTypesByGroupId(
+        propertyReportDocGroup.id,
+      )
+
+    const missingDocType = documentGroupTypes
+      .filter((documentGroupType) => documentGroupType.is_user_uploadable)
+      .find(
+        (documentType) =>
+          !input.documents.find(
+            (providedDoc) => providedDoc.id === documentType.id,
+          ) || documentType.is_required_for_group,
+      )
+
+    if (missingDocType) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Missing document type ${missingDocType.display_label} not uploaded.`,
+      )
+    }
+
+    input.financial_types = Array.from(
+      new Set([...input.financial_types, ApplicationPurchaseType.OUTRIGHT]),
+    )
+
+    input.postal_code = ''
+    input.payment_duration = ''
+
+    const address = await this.propertyRepository.createProperties(
+      new Properties({
+        ...input,
+        property_price: String(input.property_price),
+        documents: JSON.stringify(input.documents),
+        organization_id,
+      }),
+    )
+
+    await this.elasticSearchRepository.indexPropertyToES(
+      ElasticEnum.PROPERTIES,
+      {
+        ...address,
+        documents: JSON.stringify(address.documents),
+        organization_id,
+      },
+    )
+
+    return { ...address }
   }
-
-  const documentGroupTypes =
-    await this.documentRepository.findGroupDocumentTypesByGroupId(
-      propertyReportDocGroup.id,
-    );
-
-  const missingDocType = documentGroupTypes
-    .filter((documentGroupType) => documentGroupType.is_user_uploadable)
-    .find(
-      (documentType) =>
-        !input.documents.find((providedDoc) => providedDoc.id === documentType.id) ||
-        documentType.is_required_for_group,
-    );
-
-  if (missingDocType) {
-    throw new ApplicationCustomError(
-      StatusCodes.FORBIDDEN,
-      `Missing document type ${missingDocType.display_label} not uploaded.`,
-    );
-  }
-
-  input.financial_types = Array.from(
-    new Set([...input.financial_types, ApplicationPurchaseType.OUTRIGHT]),
-  );
-
-  input.postal_code = '';
-  input.payment_duration = '';
-
-  const address = await this.propertyRepository.createProperties(
-    new Properties({
-      ...input,
-      property_price: String(input.property_price),
-      documents: JSON.stringify(input.documents),
-      organization_id,
-    }),
-  );
-
-  await this.elasticSearchRepository.indexPropertyToES(ElasticEnum.PROPERTIES, {
-      ...address,
-      documents: JSON.stringify(address.documents),
-      organization_id,
-  });
-
-  return { ...address };
-}
 
   public async getAllProperties(
     filter?: PropertyFilters,

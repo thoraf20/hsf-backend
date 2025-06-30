@@ -38,6 +38,7 @@ import {
   homeBuyerLoanOfferRespondSchema,
   submitSignedLoanOfferLetterSchema,
   setApplicationLoanOfficerSchema,
+  applicationStatsFilterSchema,
 } from '@validators/applicationValidator'
 import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
@@ -67,6 +68,9 @@ import { LoanRepaymentScheduleRepository } from '@repositories/loans/LoanRepayme
 import { LoanRepaymentTransactionRepository } from '@repositories/loans/LoanRepaymentTransactionRepository'
 import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { UserAssignmentRepository } from '@repositories/user/UserAssignmentRepository'
+import { DocumentDeclineEventRepository } from '@repositories/DeclineRequest/DocumentDeclineEventRepository'
+import { DocumentDeclineReasonRepository } from '@repositories/DeclineRequest/DocumentDeclineReasonRepository'
+import { DeclineReasonRepository } from '@repositories/DeclineRequest/DeclineReasonRepository'
 
 const applicationService = new ApplicationService(
   new ApplicationRepository(),
@@ -89,6 +93,9 @@ const applicationService = new ApplicationService(
   new LoanRepaymentTransactionRepository(),
   new LoanAgreementRepository(),
   new UserAssignmentRepository(),
+  new DocumentDeclineEventRepository(),
+  new DocumentDeclineReasonRepository(),
+  new DeclineReasonRepository(),
 )
 const manageDipService = new ManageDipUseCase(
   new MortageRepository(),
@@ -130,6 +137,16 @@ applicationRoutes.post(
   asyncMiddleware(async (req, res) => {
     const { user: claim, body } = req
     const response = await applicationController.create(claim.id, body)
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+applicationRoutes.get(
+  '/stats',
+  validateRequestQuery(applicationStatsFilterSchema),
+  asyncMiddleware(async (req, res) => {
+    const { query, authInfo } = req
+    const response = await applicationController.getStats(query, authInfo)
     res.status(response.statusCode).json(response)
   }),
 )

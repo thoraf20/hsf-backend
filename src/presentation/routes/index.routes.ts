@@ -25,6 +25,7 @@ import developerIndexRoutes from './developer/developerIndex.routes'
 import clientRoutes from './Agents/ManageClient.routes'
 import managePaymentRoutes from './payments/managePayments.routes'
 import manageLoanOfferRoutes from './Agents/ManageLoanOffer.routes'
+import miscRoutes from './Misc/Misc.routes'
 import manageLoanRoutes from './Agents/ManageLoan.routes'
 import userAssignmentRoutes from './userRoutes/userAssignmentRoutes'
 import manageLoanAgreementRoutes from './Agents/MAnageLoanAgreement.routes'
@@ -46,6 +47,7 @@ routes.use('/applications', authenticate, limiter, applicationRoutes)
 routes.use('/user-assignments', authenticate, limiter, userAssignmentRoutes)
 routes.use('/file', fileRoutes)
 routes.use('/service-offering', authenticate, limiter, serviceOfferingRoutes)
+routes.use('/misc', authenticate, limiter, miscRoutes)
 routes.use('/manage', authenticate, manageAgentRoutes)
 routes.use('/manage', authenticate, limiter, manageInspectionRoutes)
 routes.use('/manage', authenticate, limiter, manageUserRoutes)

@@ -22,11 +22,13 @@ import {
 } from '@validators/addressValidator'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
+import { OrganizationRepository } from '@repositories/OrganizationRepository'
 const userRoutes: Router = Router()
 
 const userServices = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
+  new OrganizationRepository(),
 )
 const accountRepository = new AccountRepository()
 const userController = new UserController(
@@ -183,10 +185,13 @@ userRoutes.get(
   '/activities',
   asyncMiddleware(async (req, res) => {
     const { query, authInfo } = req
-    const response = await userController.getUserActivites({
-      ...query,
-      user_id: authInfo.userId,
-    })
+    const response = await userController.getUserActivites(
+      {
+        ...query,
+        user_id: authInfo.userId,
+      },
+      authInfo,
+    )
 
     res.status(response.statusCode).json(response)
   }),

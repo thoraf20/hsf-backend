@@ -10,6 +10,7 @@ import {
 } from '../index.t'
 import {
   approvePropertyClosingSchema,
+  propertyStatsFiltersSchema,
   setPropertyIsLiveStatus,
   setPropertyStatusSchema,
 } from '@application/requests/dto/propertyValidator'
@@ -25,6 +26,7 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
+import { validateRequestQuery } from '@shared/utils/paginate'
 
 const managePropertyRoute: Router = Router()
 const application = new ApplicationRepository()
@@ -38,6 +40,16 @@ const service = new manageProperty(
   new UserActivityLogRepository(),
 )
 const controller = new MangagePropertyController(service, purchasrRepo)
+
+managePropertyRoute.get(
+  '/property/stats',
+  validateRequestQuery(propertyStatsFiltersSchema),
+  asyncMiddleware(async (req, res) => {
+    const { query } = req
+    const stats = await controller.getPropertyStats(query)
+    res.status(stats.statusCode).json(stats)
+  }),
+)
 
 managePropertyRoute.get(
   '/property/fetch',
