@@ -883,3 +883,109 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at ApplicationService.setApplicationLoanOfficer (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/application/useCases/Application/application.ts:2866:13)
     at processTicksAndRejections (node:internal/process/task_queues:105:5)
     at ApplicationController.setApplicationLoanOfficier (/home/buildthings/Documents/projects/actives/HSF-Backend-New/src/presentation/controllers/property/application.controller.ts:661:5)
+2025-06-30 08:22:59 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN pqi.id IS NOT NULL THEN json_build_object(
+                            'prequalification_input', row_to_json(pqi),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, row_to_json(ld) as loan_decision, row_to_json(cp) as condition_precedent, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "condition_precedents" as "cp" on "cp"."id" = "a"."condition_precedent_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "prequalification_inputs" as "pqi" on "el"."prequalifier_input_id" = "pqi"."id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "loan_offers" as "lo" on "a"."loan_offer_id" = "lo"."id" left join "loan_decisions" as "ld" on "ld"."loan_offer_id" = "lo"."id" left join "dip" as "dp" on "dp"."eligibility_id" = "el"."eligibility_id" and "a"."application_id" = "dp"."application_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "hsf[object Object]"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+    at TCP.callbackTrampoline (node:internal/async_hooks:130:17)
+2025-06-30 08:25:22 [ERROR]: error: select "es"."escrow_status", "es"."is_escrow_set", "pc"."closing_status", row_to_json(dp) as dip, 
+                    CASE
+                        WHEN pqi.id IS NOT NULL THEN json_build_object(
+                            'prequalification_input', row_to_json(pqi),
+                            'eligibility', row_to_json(el)
+                        )
+                        ELSE NULL
+                    END as prequalify_personal_information
+                , 
+        CASE
+            WHEN es.escrow_status_id IS NOT NULL  THEN json_build_object(
+                'escrow_status', row_to_json(es),
+                'escrow_meeting_info', row_to_json(ei)
+            )
+            ELSE NULL
+        END as escrow_status_info
+        , 
+                json_build_object(
+                    'id', organizations.id,
+                    'name', developers_profile.company_name,
+                    'type', organizations.type,
+                    'office_address', developers_profile.office_address,
+                    'company_email', developers_profile.company_email,
+                    'company_image', developers_profile.company_image,
+                    'specialization', developers_profile.specialization,
+                    'state', developers_profile.state,
+                    'city', developers_profile.city,
+                    'created_at', developers_profile.created_at,
+                    'updated_at', developers_profile.updated_at
+                ) as developer
+            , 
+            json_build_object(
+            'id', u.id,
+            'first_name', u.first_name,
+            'last_name', u.last_name,
+            'image', u.image,
+            'role', r.name,
+            'status', u.status,
+            'role_id', u.role_id,
+            'email', u.email,
+            'created_at', u.created_at
+           ) as buyer
+          , row_to_json(lo) as loan_offer, row_to_json(ol) as offer_letter, row_to_json(pc) as property_closing, row_to_json(dp) as dip, row_to_json(ld) as loan_decision, row_to_json(cp) as condition_precedent, "p".*, "a".* from "application" as "a" left join "properties" as "p" on "a"."property_id" = "p"."id" inner join "organizations" on "p"."organization_id" = "organizations"."id" inner join "developers_profile" on "developers_profile"."organization_id" = "p"."organization_id" left join "escrow_status" as "es" on "a"."escrow_status_id" = "es"."escrow_status_id" left join "escrow_information" as "ei" on "a"."escrow_information_id" = "ei"."escrow_id" left join "users" as "u" on "u"."id" = "a"."user_id" left join "roles" as "r" on "r"."id" = "u"."role_id" left join "property_closing" as "pc" on "a"."property_closing_id" = "pc"."property_closing_id" left join "condition_precedents" as "cp" on "cp"."id" = "a"."condition_precedent_id" left join "eligibility" as "el" on "a"."eligibility_id" = "el"."eligibility_id" left join "prequalification_inputs" as "pqi" on "el"."prequalifier_input_id" = "pqi"."id" left join "offer_letter" as "ol" on "a"."offer_letter_id" = "ol"."offer_letter_id" left join "loan_offers" as "lo" on "a"."loan_offer_id" = "lo"."id" left join "loan_decisions" as "ld" on "ld"."loan_offer_id" = "lo"."id" left join "dip" as "dp" on "dp"."eligibility_id" = "el"."eligibility_id" and "a"."application_id" = "dp"."application_id" where "a"."application_id" = $1 limit $2 - invalid input syntax for type uuid: "hsf[object Object]"
+    at Parser.parseErrorMessage (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:368:69)
+    at Parser.handlePacket (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:187:21)
+    at Parser.parse (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/parser.ts:102:30)
+    at Socket.<anonymous> (/home/buildthings/Documents/projects/actives/HSF-Backend-New/node_modules/pg-protocol/src/index.ts:7:48)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Socket.Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
+    at TCP.callbackTrampoline (node:internal/async_hooks:130:17)

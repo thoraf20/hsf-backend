@@ -227,25 +227,6 @@ router.get(
 )
 
 router.get(
-  '/:organization_id/members/:member_id',
-  authenticate,
-  asyncMiddleware(async (req, res) => {
-    const {
-      params: { organization_id, member_id },
-      authInfo,
-    } = req
-
-    const response = await organizationController.getOrgMemberById(
-      organization_id,
-      member_id,
-      authInfo,
-    )
-
-    return res.status(response.statusCode).json(response)
-  }),
-)
-
-router.get(
   '/members/current-org-roles',
   authenticate,
   validateRequestQuery(getOrgMemberRoleFilterSchema),
@@ -262,14 +243,16 @@ router.get(
 
 router.get(
   '/:organization_id/members/roles',
-  validateRequestQuery(getOrgMemberRoleFilterSchema),
   authenticate,
-  authorize(isOrganizationUser),
+  // authorize(isOrganizationUser),
+  validateRequestQuery(getOrgMemberRoleFilterSchema),
   asyncMiddleware(async (req, res) => {
     const {
       params: { organization_id },
       query,
     } = req
+
+    console.log('organization_id:', organization_id, req)
     const response = await organizationController.getOrgRoles(
       organization_id,
       query,
@@ -390,4 +373,22 @@ router.get(
   }),
 )
 
+router.get(
+  '/:organization_id/members/:member_id',
+  authenticate,
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { organization_id, member_id },
+      authInfo,
+    } = req
+
+    const response = await organizationController.getOrgMemberById(
+      organization_id,
+      member_id,
+      authInfo,
+    )
+
+    return res.status(response.statusCode).json(response)
+  }),
+)
 export default router

@@ -24,9 +24,17 @@ export const setLoanAgreementLetterSchema = z.object({
       size: z.number().nullish(),
       ext: z.string().nullish(),
     })
-    .nullable(),
+    .nullish(),
 })
 
 export type SetLoanAgreementLetterInput = z.infer<
   typeof setLoanAgreementLetterSchema
+>
+
+export const approveLenderLoanAgreementSchema = z.object({
+  lender_approval_notes: z.string().max(1000).optional(),
+})
+
+export type ApproveLenderLoanAgreementInput = z.infer<
+  typeof approveLenderLoanAgreementSchema
 >

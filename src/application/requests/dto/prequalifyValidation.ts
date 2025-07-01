@@ -73,7 +73,7 @@ export const preQualifiyRequestSchema = z.object({
       lender_id: z.string({
         message: 'Lender ID is required',
       }),
-      rsa: z.string({ message: 'RSA is required' }),
+      rsa: z.string({ message: 'RSA is required' }).nullish().default(''),
     })
     .optional()
     .nullable(),

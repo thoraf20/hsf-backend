@@ -2,6 +2,7 @@ import { ILoanAgreementRepository } from '@interfaces/ILoanAgreementRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { StatusCodes } from 'http-status-codes'
 import {
+  ApproveLenderLoanAgreementInput,
   LoanAgreementFilters,
   SetLoanAgreementLetterInput,
 } from '@validators/loanAgreementValidator'
@@ -20,6 +21,7 @@ import {
 } from '@domain/enums/documentEnum'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { ApplicationDocumentEntry } from '@entities/ApplicationDocuments'
+import { LoanAgreementStatus } from '@domain/enums/loanEnum'
 
 export class ManageLoanAgreementService {
   constructor(
@@ -247,6 +249,7 @@ export class ManageLoanAgreementService {
               {
                 lender_sign_uploaded_at: null,
                 lender_signature_doc_id: null,
+                status: LoanAgreementStatus.Draft,
               },
             ),
           ])
@@ -277,6 +280,7 @@ export class ManageLoanAgreementService {
             {
               lender_sign_uploaded_at: new Date(),
               lender_signature_doc_id: lenderSignatureDoc.id,
+              status: LoanAgreementStatus.PendingApproval,
             },
           )
 
@@ -291,5 +295,37 @@ export class ManageLoanAgreementService {
         )
       }
     })
+  }
+
+  async approveLenderLoanAgreement(
+    loanAgreementId: string,
+    input: ApproveLenderLoanAgreementInput,
+    authInfo: AuthInfo,
+  ) {
+    const loanAgreement =
+      await this.loanAgreementRepository.getLoanAgreementById(loanAgreementId)
+
+    if (!loanAgreement) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan agreement not found.',
+      )
+    }
+
+    if (loanAgreement.status !== LoanAgreementStatus.PendingApproval) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan agreement is not pending approval.',
+      )
+    }
+
+    const updatedLoanAgreement =
+      await this.loanAgreementRepository.updateLoanAgreement(loanAgreement.id, {
+        status: LoanAgreementStatus.BorrowerSignAndUploadPending,
+        borrower_signature_doc_id: null,
+        borower_sign_uploaded_at: null,
+      })
+
+    return updatedLoanAgreement
   }
 }

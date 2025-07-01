@@ -9,6 +9,7 @@ import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { ManageLoanAgreementController } from '@controllers/Agent/ManageLoanAgreement.controller'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import {
+  approveLenderLoanAgreementSchema,
   loanAgreementFilterSchema,
   setLoanAgreementLetterSchema,
 } from '@validators/loanAgreementValidator'
@@ -100,6 +101,27 @@ manageLoanAgreementRoutes.post(
       body,
       authInfo,
     )
+
+    res.status(response.statusCode).json(response)
+  }),
+)
+
+manageLoanAgreementRoutes.patch(
+  '/loan-agreements/:loanAgreementId/approve-by-lender',
+  authorize(requireOrganizationType(OrganizationType.LENDER_INSTITUTION)),
+  validateRequest(approveLenderLoanAgreementSchema),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { loanAgreementId },
+      body,
+      authInfo,
+    } = req
+    const response =
+      await manageLoanAgreementController.approveLenderLoanAgreement(
+        loanAgreementId,
+        body,
+        authInfo,
+      )
 
     res.status(response.statusCode).json(response)
   }),

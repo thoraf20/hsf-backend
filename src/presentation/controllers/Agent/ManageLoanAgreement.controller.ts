@@ -1,6 +1,7 @@
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import {
+  ApproveLenderLoanAgreementInput,
   LoanAgreementFilters,
   SetLoanAgreementLetterInput,
 } from '@validators/loanAgreementValidator'
@@ -68,6 +69,25 @@ export class ManageLoanAgreementController {
       !response.lender_signature_doc_id
         ? 'Loan agreement letter removed successfully'
         : 'Loan agreement letter set successfully',
+    )
+  }
+
+  async approveLenderLoanAgreement(
+    loanAgreementId: string,
+    input: ApproveLenderLoanAgreementInput,
+    authInfo: AuthInfo,
+  ) {
+    const response =
+      await this.manageLoanAgreementService.approveLenderLoanAgreement(
+        loanAgreementId,
+        input,
+        authInfo,
+      )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Loan agreement approved successfully',
+      response,
     )
   }
 }

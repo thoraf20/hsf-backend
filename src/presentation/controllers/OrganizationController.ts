@@ -174,6 +174,8 @@ export class OrganizationController {
     const organization =
       await this.manageOrganizations.getOrganizationById(organizationId)
 
+    console.log({ organization })
+
     let roles = await this.manageOrganizations.getCurrentOrgRoles(
       organization.type,
     )

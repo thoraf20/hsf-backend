@@ -1,5 +1,5 @@
 import {
-  LoanAgreementStatus,
+  // LoanAgreementStatus,
   LoanOfferWorkflowStatus,
 } from '@domain/enums/loanEnum'
 import { ApplicationPurchaseType } from '@domain/enums/propertyEnum'
@@ -10,7 +10,7 @@ import { getUserClientView, UserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
-import { ILoanAgreementRepository } from '@interfaces/ILoanAgreementRepository'
+// import { ILoanAgreementRepository } from '@interfaces/ILoanAgreementRepository'
 import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
@@ -30,7 +30,7 @@ export class ManageLoanOfferService {
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly applicationRepository: IApplicationRespository,
-    private readonly loanAgreementRepository: ILoanAgreementRepository,
+    // private readonly loanAgreementRepository: ILoanAgreementRepository,
 
     private readonly lenderProfileRepository: ILenderRepository,
   ) {}
@@ -227,18 +227,18 @@ export class ManageLoanOfferService {
       }
     }
 
-    const loanAgreement =
-      await this.loanAgreementRepository.getLoanAgreementByOfferId(loanOfferId)
+    // const loanAgreement =
+    //   await this.loanAgreementRepository.getLoanAgreementByOfferId(loanOfferId)
 
-    if (
-      loanAgreement &&
-      loanAgreement.status !== LoanAgreementStatus.Completed
-    ) {
-      throw new ApplicationCustomError(
-        StatusCodes.CONFLICT,
-        `Loan agreement is not completed.`,
-      )
-    }
+    // if (
+    //   loanAgreement &&
+    //   loanAgreement.status !== LoanAgreementStatus.
+    // ) {
+    //   throw new ApplicationCustomError(
+    //     StatusCodes.CONFLICT,
+    //     `Loan agreement is not completed.`,
+    //   )
+    // }
 
     return runWithTransaction(async () => {
       const updatedLoanOffer = await this.loanOfferRepository.updateLoanOffer(

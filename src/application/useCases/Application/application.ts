@@ -2690,7 +2690,7 @@ export class ApplicationService {
           {
             borower_sign_uploaded_at: new Date(),
             borrower_signature_doc_id: borrowerSignatureDoc.id,
-            status: LoanAgreementStatus.Completed,
+            status: LoanAgreementStatus.Approved,
           },
         )
       }

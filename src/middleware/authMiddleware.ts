@@ -77,6 +77,7 @@ const authenticate = asyncMiddleware(
           type: OrganizationType
         }>('uom.id', 'uom.organization_id', 'uom.role_id', 'o.type')
         .first() // Select organization_id and role_id
+      console.log({ user_id: userId, path: req.path, organizationMembership })
 
       // 4. Construct AuthInfo object.  Only include the first membership.
       let authInfo: AuthInfo = {
