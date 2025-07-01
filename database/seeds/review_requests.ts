@@ -47,6 +47,11 @@ async function reviewRequestStageSeed(knex: Knex): Promise<void> {
     },
 
     {
+      name: ReviewRequestStageKind.HsfEscrowMeetingRespond,
+      organization_type: OrganizationType.HSF_INTERNAL,
+    },
+
+    {
       name: ReviewRequestStageKind.DeveloperEscrowMeetingRespond,
       organization_type: OrganizationType.DEVELOPER_COMPANY,
     },
@@ -312,6 +317,16 @@ async function escrowMeetingRequest(knex: Knex): Promise<void> {
     {
       name: ReviewRequestStageKind.DeveloperEscrowMeetingRespond,
       roles: [Role.DEVELOPER_ADMIN, Role.DEVELOPER_AGENT],
+    },
+
+    {
+      name: ReviewRequestStageKind.HsfEscrowMeetingRespond,
+      roles: [
+        Role.SUPER_ADMIN,
+        Role.HSF_ADMIN,
+        Role.HSF_LOAN_OFFICER,
+        Role.HSF_INSPECTION_MANAGER,
+      ],
     },
 
     {

@@ -11,6 +11,7 @@ export enum ReviewRequestStageKind {
   HsfOfferLetterReview = 'Hsf Offer Letter Review',
   DeveloperOfferLetterReview = 'Developer Offer Letter Review',
 
+  HsfEscrowMeetingRespond = 'Hsf Escrow Meeting Respond',
   DeveloperEscrowMeetingRespond = 'Developer Escrow Meeting Respond',
   HomeBuyerEscrowMeetingRespond = 'Home buyer Escrow Meeting Respond',
 

@@ -7,7 +7,10 @@ import {
   LoanDecisionStatus,
   LoanOfferWorkflowStatus,
 } from '@domain/enums/loanEnum'
-import { OrganizationType } from '@domain/enums/organizationEnum'
+import {
+  OrganizationStatus,
+  OrganizationType,
+} from '@domain/enums/organizationEnum'
 import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 
 import {
@@ -880,32 +883,10 @@ export class ApplicationService {
       )
     }
 
-    // const members = await this.organizationRepository.getOrganizationMembers(
-    //   authInfo.currentOrganizationId,
-    //   {
-    //     page_number: 1,
-    //     result_per_page: Number.MAX_SAFE_INTEGER,
-    //   },
-    // )
-
-    // const notMember = input.attendees.find(
-    //   (attendeeId) =>
-    //     !members.result.find((member) => member.user_id === attendeeId),
-    // )
-
-    // if (notMember) {
-    //   throw new ApplicationCustomError(
-    //     StatusCodes.FORBIDDEN,
-    //     `We found the user with id '${notMember} not an HSF member'`,
-    //   )
-    // }
-
     const escrowMeetingRequestType =
       await this.reviewRequestRepository.getReviewRequestTypeByKind(
         ReviewRequestTypeKind.EscrowMeetingRequest,
       )
-
-    console.log({ escrowMeetingRequestType })
 
     if (!escrowMeetingRequestType) {
       throw new ApplicationCustomError(
@@ -926,9 +907,54 @@ export class ApplicationService {
       )
     }
 
-    escrowMeetingRequestStage = escrowMeetingRequestStage.sort(
-      (stageA, stageB) => (stageA.stage_order > stageB.stage_order ? 1 : -1),
+    const organization = await this.organizationRepository.getOrganizationById(
+      application.application_id,
     )
+
+    if (organization) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Organization not found',
+      )
+    }
+
+    if (
+      organization.status === OrganizationStatus.DELETED ||
+      organization.state === OrganizationStatus.DELETED
+    ) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        `Organization is currently ${organization.status.toLowerCase()}`,
+      )
+    }
+
+    const developerOrgStage = await Promise.all(
+      escrowMeetingRequestStage.map(async (requestStage) => {
+        const stage =
+          await this.reviewRequestRepository.getReviewRequestStageByID(
+            requestStage.stage_id,
+          )
+        return {
+          ...requestStage,
+          stage,
+        }
+      }),
+    ).then((requestStages) =>
+      requestStages.find((requestStage) =>
+        organization.type === OrganizationType.HSF_INTERNAL
+          ? requestStage.stage.name ===
+            ReviewRequestStageKind.HsfEscrowMeetingRespond
+          : requestStage.stage.name ===
+            ReviewRequestStageKind.DeveloperEscrowMeetingRespond,
+      ),
+    )
+
+    if (!developerOrgStage) {
+      throw new ApplicationCustomError(
+        StatusCodes.INTERNAL_SERVER_ERROR,
+        'Unable to process escrow meeting request - review stage configuration not found',
+      )
+    }
 
     return runWithTransaction(async () => {
       const reviewRequest =
@@ -940,28 +966,11 @@ export class ApplicationService {
           status: ReviewRequestStatus.Pending,
         })
 
-      const firstRequestTypeStage = escrowMeetingRequestStage[0]
-
-      const firstStage =
-        await this.reviewRequestRepository.getReviewRequestStageByID(
-          firstRequestTypeStage.stage_id,
-        )
-
-      let organizationId = application.developer_organization_id
-
-      if (firstStage.organization_type === OrganizationType.HSF_INTERNAL) {
-        organizationId = authInfo.currentOrganizationId
-      } else if (
-        firstStage.organization_type === OrganizationType.DEVELOPER_COMPANY
-      ) {
-        organizationId = application.developer_organization_id
-      }
-
       await this.reviewRequestRepository.createReviewRequestApproval({
         request_id: reviewRequest.id,
-        review_request_stage_type_id: firstRequestTypeStage.id,
+        review_request_stage_type_id: developerOrgStage.id,
         approval_status: ReviewRequestApprovalStatus.Pending,
-        organization_id: organizationId,
+        organization_id: application.developer_organization_id,
       })
 
       const escrowAttendance =
@@ -1093,12 +1102,7 @@ export class ApplicationService {
         (approver) => approver.role_id === authInfo.roleId,
       )
 
-    if (
-      !(
-        allowRoleApprover ||
-        application.developer_organization_id === authInfo.currentOrganizationId
-      )
-    ) {
+    if (!allowRoleApprover) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
         'Insufficient permissions to perform this action',
