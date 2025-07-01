@@ -1087,19 +1087,21 @@ export class ApplicationService {
         approval.request_id,
       )
 
-    const allowRoleApprover = approvals.find(
-      (a) =>
-        a.id === approval.id &&
-        a.organization_id === authInfo.currentOrganizationId,
-    )
-    // .request_approvers.find(
-    //   (approver) => approver.role_id === authInfo.roleId,
-    // )
+    const allowRoleApprover = approvals
+      .find((a) => a.id === approval.id)
+      .request_approvers.find(
+        (approver) => approver.role_id === authInfo.roleId,
+      )
 
-    if (!allowRoleApprover) {
+    if (
+      !(
+        allowRoleApprover ||
+        application.developer_organization_id === authInfo.currentOrganizationId
+      )
+    ) {
       throw new ApplicationCustomError(
         StatusCodes.FORBIDDEN,
-        'You are not allowed to approve this document',
+        'Insufficient permissions to perform this action',
       )
     }
 
