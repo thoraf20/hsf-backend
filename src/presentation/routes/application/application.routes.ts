@@ -410,7 +410,10 @@ applicationRoutes.patch(
   '/:application_id/escrow-meeting/respond',
   authorize(
     RequireAny(
-      requireOrganizationType(OrganizationType.DEVELOPER_COMPANY),
+      requireOrganizationType(
+        OrganizationType.DEVELOPER_COMPANY,
+        OrganizationType.HSF_INTERNAL,
+      ),
       isHomeBuyer,
     ),
   ),

@@ -1087,11 +1087,14 @@ export class ApplicationService {
         approval.request_id,
       )
 
-    const allowRoleApprover = approvals
-      .find((a) => a.id === approval.id)
-      .request_approvers.find(
-        (approver) => approver.role_id === authInfo.roleId,
-      )
+    const allowRoleApprover = approvals.find(
+      (a) =>
+        a.id === approval.id &&
+        a.organization_id === authInfo.currentOrganizationId,
+    )
+    // .request_approvers.find(
+    //   (approver) => approver.role_id === authInfo.roleId,
+    // )
 
     if (!allowRoleApprover) {
       throw new ApplicationCustomError(
