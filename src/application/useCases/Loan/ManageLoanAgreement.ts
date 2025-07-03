@@ -319,6 +319,13 @@ export class ManageLoanAgreementService {
       )
     }
 
+    if (!loanAgreement.lender_signature_doc_id) {
+      throw new ApplicationCustomError(
+        StatusCodes.BAD_REQUEST,
+        'Lender signature document is required.',
+      )
+    }
+
     const updatedLoanAgreement =
       await this.loanAgreementRepository.updateLoanAgreement(loanAgreement.id, {
         status: LoanAgreementStatus.BorrowerSignAndUploadPending,

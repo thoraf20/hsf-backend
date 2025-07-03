@@ -844,9 +844,21 @@ applicationRoutes.get(
   }),
 )
 
-applicationRoutes.patch(
-  '/:application_id/loan-agreements/doc-upload/buyer',
+applicationRoutes.get(
+  '/:application_id/loan-agreement',
   authorize(isHomeBuyer),
-  asyncMiddleware(async () => {}),
+  asyncMiddleware(async (req, res) => {
+    const {
+      params: { application_id },
+      authInfo,
+    } = req
+
+    const response = await applicationController.getLoanAgreement(
+      application_id,
+      authInfo,
+    )
+
+    res.status(response.statusCode).json(response)
+  }),
 )
 export default applicationRoutes

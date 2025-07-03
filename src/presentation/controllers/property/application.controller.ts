@@ -686,4 +686,17 @@ export class ApplicationController {
       stats,
     )
   }
+
+  async getLoanAgreement(applicationId: string, authInfo: AuthInfo) {
+    const loanAgreement = await this.applicationService.getLoanAgreement(
+      applicationId,
+      authInfo,
+    )
+
+    return createResponse(
+      StatusCodes.OK,
+      'Loan agreements retrieved successfully',
+      loanAgreement,
+    )
+  }
 }

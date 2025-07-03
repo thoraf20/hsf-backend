@@ -535,7 +535,7 @@ export class ApplicationRepository implements IApplicationRespository {
     if (filters.lender_id) {
       query = query.innerJoin(
         'eligibility',
-        'application.id',
+        'application.application_Id',
         'eligibility.application_id',
       )
       query = query.where(

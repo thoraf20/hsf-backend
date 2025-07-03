@@ -105,6 +105,7 @@ import { IDocumentDeclineEventRepository } from '@interfaces/IDocumentDeclineEve
 import { IDeclineReasonRepository } from '@interfaces/IDeclineReasonRepository'
 import { IDocumentDeclineReasonRepository } from '@interfaces/IDocumentDeclineReasonRepository'
 import { LoanAgreement } from '@entities/Loans'
+import { ApplicationDocumentEntry } from '@entities/ApplicationDocuments'
 
 export class ApplicationService {
   constructor(
@@ -3128,5 +3129,119 @@ export class ApplicationService {
     }
 
     return this.applicationRepository.getApplicationAnalytics(filters)
+  }
+
+  async getLoanAgreement(applicationId: string, authInfo: AuthInfo) {
+    const application =
+      await this.applicationRepository.getApplicationById(applicationId)
+
+    if (!canAccessApplication(application)(authInfo)) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        `Application with ID '${applicationId}' not found.`,
+      )
+    }
+
+    if (application.application_type !== ApplicationPurchaseType.MORTGAGE) {
+      throw new ApplicationCustomError(
+        StatusCodes.FORBIDDEN,
+        'Loan officer can only be set for mortgage applications.',
+      )
+    }
+
+    let loanOffer = application.loan_offer_id
+      ? null
+      : await this.loanOfferRepository.getLoanOfferById(
+          application.loan_offer_id,
+        )
+    if (!loanOffer) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan offer not found',
+      )
+    }
+    const loanAgreement =
+      await this.loanAgreementRepository.getLoanAgreementByOfferId(loanOffer.id)
+
+    if (!loanAgreement) {
+      throw new ApplicationCustomError(
+        StatusCodes.NOT_FOUND,
+        'Loan agreement not found',
+      )
+    }
+
+    const lender_org = await this.organizationRepository.getOrganizationById(
+      loanAgreement.lender_org_id,
+    )
+
+    let loan = await this.loanRepository.getLoanByOfferId(
+      loanAgreement.loan_offer_id,
+    )
+
+    let user = await this.userRepository.findById(loanAgreement.user_id)
+
+    let lenderSignatureDoc: ApplicationDocumentEntry | null = null
+
+    if (loanAgreement.lender_signature_doc_id) {
+      lenderSignatureDoc =
+        await this.documentRepository.findApplicationDocumentEntryById(
+          loanAgreement.lender_signature_doc_id,
+        )
+
+      if (lenderSignatureDoc) {
+        lenderSignatureDoc.document_group_type =
+          await this.documentRepository.findGroupDocumentTypeById(
+            lenderSignatureDoc.document_group_type_id,
+          )
+
+        if (lenderSignatureDoc.uploaded_by_id) {
+          const lenderSignatureUplaodedBy = await this.userRepository.findById(
+            lenderSignatureDoc.uploaded_by_id,
+          )
+
+          lenderSignatureDoc.uploaded_by = lenderSignatureUplaodedBy
+            ? getUserClientView(lenderSignatureUplaodedBy)
+            : null
+        }
+      }
+    }
+
+    let borrowerSignatureDoc: ApplicationDocumentEntry | null = null
+
+    if (loanAgreement.borrower_signature_doc_id) {
+      borrowerSignatureDoc =
+        await this.documentRepository.findApplicationDocumentEntryById(
+          loanAgreement.borrower_signature_doc_id,
+        )
+
+      if (borrowerSignatureDoc) {
+        borrowerSignatureDoc.document_group_type =
+          await this.documentRepository.findGroupDocumentTypeById(
+            lenderSignatureDoc.document_group_type_id,
+          )
+
+        if (borrowerSignatureDoc.uploaded_by_id) {
+          const borrowerSignatureUploadedBy =
+            await this.userRepository.findById(
+              borrowerSignatureDoc.uploaded_by_id,
+            )
+
+          borrowerSignatureDoc.uploaded_by = borrowerSignatureUploadedBy
+            ? getUserClientView(borrowerSignatureUploadedBy)
+            : null
+        }
+      }
+    }
+
+    return {
+      ...loanAgreement,
+      application,
+      loan_offer: loanOffer,
+      user: user ? getUserClientView(user) : null,
+      lender_signature_doc: lenderSignatureDoc,
+      borrower_signature_doc: borrowerSignatureDoc,
+      lender_org,
+      loan,
+    }
   }
 }
