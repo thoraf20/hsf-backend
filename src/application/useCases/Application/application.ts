@@ -3150,10 +3150,11 @@ export class ApplicationService {
     }
 
     let loanOffer = application.loan_offer_id
-      ? null
-      : await this.loanOfferRepository.getLoanOfferById(
+      ? await this.loanOfferRepository.getLoanOfferById(
           application.loan_offer_id,
         )
+      : null
+
     if (!loanOffer) {
       throw new ApplicationCustomError(
         StatusCodes.NOT_FOUND,
