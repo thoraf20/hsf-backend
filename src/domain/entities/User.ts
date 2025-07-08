@@ -7,7 +7,7 @@ import {
   UserAssignmentRole,
   UserStatus,
 } from '@domain/enums/userEum'
-import { Role } from '../enums/rolesEmun'
+import { Role } from '../enums/rolesEnum'
 import { BaseEntity } from '.'
 import { Organization } from './Organization'
 import { UserOrganizationMember } from './UserOrganizationMember'

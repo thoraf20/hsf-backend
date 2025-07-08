@@ -12,7 +12,7 @@ import {
 } from '@shared/utils/helpers'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { OtpEnum } from '@domain/enums/otpEnum'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 import { Developer, DevelopeReg } from '@entities/Developer'
 import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
 import { IAdminRepository } from '@interfaces/IAdminRespository'

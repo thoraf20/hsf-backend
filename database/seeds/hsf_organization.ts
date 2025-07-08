@@ -6,7 +6,7 @@ import { User } from '../../src/domain/entities/User'
 import { OrganizationType } from '../../src/domain/enums/organizationEnum'
 import { UserStatus } from '../../src/domain/enums/userEum'
 import bcrypt from 'bcryptjs'
-import { Role } from '../../src/domain/enums/rolesEmun'
+import { Role } from '../../src/domain/enums/rolesEnum'
 import { Organization } from '../../src/domain/entities/Organization'
 import { Developer } from '../../src/domain/entities/Developer'
 

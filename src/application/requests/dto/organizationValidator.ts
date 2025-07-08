@@ -3,7 +3,7 @@ import {
   OrganizationMemberStatus,
   OrganizationType,
 } from '@domain/enums/organizationEnum'
-import { Role, RoleSelect } from '@domain/enums/rolesEmun'
+import { Role, RoleSelect } from '@domain/enums/rolesEnum'
 import { withPaginateSchema } from '@shared/utils/paginate'
 import { parse } from 'date-fns'
 

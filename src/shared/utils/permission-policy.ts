@@ -1,5 +1,5 @@
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 import { Application } from '@entities/Application'
 import { UserRolePermission } from '@entities/User'
 

@@ -15,7 +15,7 @@ import {
   isLenderInstitutionRole,
   LENDER_INSTITUTION_ROLES,
   Role,
-} from '@domain/enums/rolesEmun'
+} from '@domain/enums/rolesEnum'
 import { AddressType, UserStatus } from '@domain/enums/userEum'
 import emailTemplates from '@infrastructure/email/template/constant'
 

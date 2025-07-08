@@ -26,7 +26,7 @@ import {
   OfferLetterStatus,
   PropertyClosingStatus,
 } from '@domain/enums/propertyEnum'
-import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEmun'
+import { ADMIN_LEVEL_ROLES } from '@domain/enums/rolesEnum'
 import {
   AssignableType,
   UserAssignmentRole,

@@ -18,7 +18,7 @@ import {
 } from '@validators/organizationValidator'
 import { AuthInfo } from '@shared/utils/permission-policy'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEmun'
+import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEnum'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserFilters } from '@validators/userValidator'

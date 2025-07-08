@@ -3,7 +3,7 @@ import { Request, Response, NextFunction } from 'express'
 import { StatusCodes } from 'http-status-codes'
 import jwt from 'jsonwebtoken'
 import { AuthInfo } from '../shared/utils/permission-policy' // Adjust path if needed
-import { Role } from '../domain/enums/rolesEmun'
+import { Role } from '../domain/enums/rolesEnum'
 import { asyncMiddleware } from '@routes/index.t'
 import { ApplicationCustomError } from './errors/customError'
 import { UserOrganizationMember } from '@entities/UserOrganizationMember'

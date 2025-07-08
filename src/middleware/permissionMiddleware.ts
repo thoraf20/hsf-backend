@@ -1,6 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import { Request } from 'express'
-import { DefaulPasswordAccess, Role } from '../domain/enums/rolesEmun'
+import { DefaulPasswordAccess, Role } from '../domain/enums/rolesEnum'
 
 interface AuthRequest extends Request {
   user?: { id: string; role: Role }

@@ -9,7 +9,7 @@ import { OtpEnum } from '@domain/enums/otpEnum'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
 import { loginType, ResetPasswordType } from '@shared/types/userType'
 import { ExistingUsers } from '../utils'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 import emailTemplates from '@infrastructure/email/template/constant'
 import { v4 as uuidv4 } from 'uuid'
 import { IAccountRepository } from '@interfaces/IAccountRepository'
@@ -133,6 +133,7 @@ export class AuthService {
     input: Omit<User, 'email' | 'tempId'> & { tempId: string },
   ): Promise<User> {
     const tempKey = `${CacheEnumKeys.CONTINUE_REGISTRATION}-${input.tempId}`
+    console.log(tempKey, 'key from CACHE >>>>');
     const regDetails = await this.client.getKey(tempKey)
 
     if (!regDetails || !regDetails.is_email_verified) {

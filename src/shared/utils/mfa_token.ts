@@ -2,7 +2,7 @@ import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import configs from '@config/config'
 import Jwt from 'jsonwebtoken'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 import { getEnv } from '@infrastructure/config/env/env.config'
 
 export class MfaToken {

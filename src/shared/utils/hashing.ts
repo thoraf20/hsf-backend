@@ -2,7 +2,7 @@ import 'dotenv/config'
 import bcrypt from 'bcryptjs'
 import configs from '@config/config'
 import Jwt from 'jsonwebtoken'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 
 export class Hashing {
   private readonly bcrHash = bcrypt

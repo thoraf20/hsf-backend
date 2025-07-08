@@ -1,6 +1,6 @@
 import { Knex } from 'knex'
 import { v4 as uuidv4 } from 'uuid'
-import { Role } from '@domain/enums/rolesEmun'
+import { Role } from '@domain/enums/rolesEnum'
 
 export async function DIPDocumentReviewRequest(knex: Knex): Promise<void> {
   let dipDocumentRequestType = await knex

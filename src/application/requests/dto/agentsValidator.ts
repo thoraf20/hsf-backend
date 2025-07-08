@@ -1,5 +1,5 @@
 import { PropertyApprovalStatus } from '@domain/enums/propertyEnum'
-import { adminRole, subAdminRole } from '@domain/enums/rolesEmun'
+import { adminRole, subAdminRole } from '@domain/enums/rolesEnum'
 import { z } from 'zod'
 import { DocumentSchema } from './purchaseValidation'
 
