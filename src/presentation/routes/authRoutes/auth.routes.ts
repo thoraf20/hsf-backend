@@ -31,7 +31,6 @@ const service = new AuthService(
   new OrganizationRepository(),
   new LoginAttemptRepository(),
   new UserActivityLogRepository(),
-  new OrganizationRepository(),
 )
 const mfaTokenGen = new MfaToken()
 const controller = new AuthController(service)
