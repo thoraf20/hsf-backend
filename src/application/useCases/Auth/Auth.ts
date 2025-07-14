@@ -58,7 +58,6 @@ export class AuthService {
     organizationRepository: IOrganizationRepository,
     loginAttemptRepository: ILoginAttemptRepository,
     userActivityRepository: IUserActivityLogRepository,
-    organizationRespository: IOrganizationRepository,
   ) {
     this.userRepository = userRepository
     this.accountRepository = accountRepository
