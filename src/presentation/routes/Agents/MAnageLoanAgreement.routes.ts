@@ -4,7 +4,7 @@ import { asyncMiddleware, validateRequest } from '@routes/index.t'
 import { Router } from 'express'
 import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { ManageLoanAgreementService } from '@use-cases/Loan/ManageLoanAgreement'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { LoanRepository } from '@repositories/loans/LoanRepository'
 import { ManageLoanAgreementController } from '@controllers/Agent/ManageLoanAgreement.controller'
 import { validateRequestQuery } from '@shared/utils/paginate'
@@ -21,7 +21,7 @@ import {
 } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { DocumentRepository } from '@repositories/property/DocumentRepository'
 
 const manageLoanAgreementRoutes = Router()
 

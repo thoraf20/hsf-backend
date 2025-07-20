@@ -1,7 +1,7 @@
- import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
+ import { elasticSearchRepository } from '@interfaces/ElasticSearchRepository'
 // import { esClient } from '@config/elasticSearch.config'
 import { ElasticEnum } from '@domain/enums/propertyEnum'
-export class ElasticSearchRespository implements elasticSearchRespository {
+export class ElasticSearchRepository implements elasticSearchRepository {
   async indexPropertyToES(
     index: ElasticEnum,
     object: Record<string, any>,

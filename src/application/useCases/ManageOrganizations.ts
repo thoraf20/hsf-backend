@@ -40,7 +40,7 @@ import {
 } from '@validators/organizationValidator'
 import { StatusCodes } from 'http-status-codes'
 import { UserFilters } from '@validators/userValidator'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 import {
   CreateDeveloperInput,
   DeveloperFilters,

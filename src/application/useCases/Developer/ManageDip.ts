@@ -11,7 +11,7 @@ import { runWithTransaction } from '@infrastructure/database/knex'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 import { IPreQualify } from '@interfaces/IpreQualifyRepoitory'
 import { IUserRepository } from '@interfaces/IUserRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
@@ -26,7 +26,7 @@ import { StatusCodes } from 'http-status-codes'
 
 export class ManageDipUseCase {
   constructor(
-    private readonly mortgageRepository: IMortageRespository,
+    private readonly mortgageRepository: IMortgageRepository,
     private readonly userRepository: IUserRepository,
     private readonly preQualifyRepositoy: IPreQualify,
     private readonly applicationRepository: IApplicationRespository,

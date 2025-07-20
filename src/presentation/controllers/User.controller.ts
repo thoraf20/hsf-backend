@@ -17,9 +17,9 @@ import { ManageOrganizations } from '@application/useCases/ManageOrganizations'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
-import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { DocumentRepository } from '@repositories/property/DocumentRepository'
 import { IAddressRepository } from '@interfaces/IAddressRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { AuthInfo } from '@shared/utils/permission-policy'
@@ -37,7 +37,7 @@ export class UserController {
       new UserRepository(),
       new LenderRepository(),
       new AddressRepository(),
-      new DeveloperRespository(),
+      new DeveloperRepository(),
       new PropertyRepository(),
       new DocumentRepository(),
       new UserActivityLogRepository(),
@@ -153,8 +153,8 @@ export class UserController {
     )
   }
 
-  async getUserActivites(filters: UserActivityFilters, authInfo: AuthInfo) {
-    const activityContents = await this.userService.getUserActivites(
+  async getUserActivities(filters: UserActivityFilters, authInfo: AuthInfo) {
+    const activityContents = await this.userService.getUserActivities(
       filters,
       authInfo,
     )
@@ -166,4 +166,11 @@ export class UserController {
   }
 
   async hsfResetUserPassword(userId: string) {}
+
+  async createTestByUser(body: any){
+    const data = await this.userService.createTestByUser(body)
+
+    let message = 'Test user created successfully'
+    return createResponse(StatusCodes.OK, message, data);
+  }
 }

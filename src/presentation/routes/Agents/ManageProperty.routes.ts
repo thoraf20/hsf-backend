@@ -19,11 +19,11 @@ import {
   approvePrequalifyRequestSchema,
   confirmPropertyPurchase,
 } from '@validators/agentsValidator'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { authorize } from '@middleware/authorization'
 import { requireOrganizationType } from '@shared/utils/permission-policy'
 import { OrganizationType } from '@domain/enums/organizationEnum'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { validateRequestQuery } from '@shared/utils/paginate'
@@ -35,7 +35,7 @@ const service = new manageProperty(
   new PropertyRepository(),
   purchasrRepo,
   application,
-  new DeveloperRespository(),
+  new DeveloperRepository(),
   new UserRepository(),
   new UserActivityLogRepository(),
 )

@@ -38,7 +38,7 @@ export class DIP {
   }
 }
 
-export class MortagePaymentStatus {
+export class MortgagePaymentStatus {
   pay_due_deligence?: boolean
   pay_brokage_fee: boolean
   pay_management_fee: boolean

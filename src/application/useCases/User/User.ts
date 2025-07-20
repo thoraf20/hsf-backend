@@ -1,5 +1,5 @@
-import { getUserClientView, User } from '@domain/entities/User'
-import { IUserRepository } from '@domain/interfaces/IUserRepository'
+import { getUserClientView, User, UserTest } from '@domain/entities/User'
+import { IUserRepository, IUserTestRepository } from '@domain/interfaces/IUserRepository'
 import { StatusCodes } from 'http-status-codes'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { CacheEnumKeys } from '@domain/enums/cacheEnum'
@@ -33,15 +33,18 @@ export class UserService {
   private userRepository: IUserRepository
   private userActivityRepository: IUserActivityLogRepository
   private organizationRepository: IOrganizationRepository
+  private userTestRepository: IUserTestRepository
   private readonly client = new RedisClient()
   constructor(
     userRepository: IUserRepository,
     userActivityRepository: IUserActivityLogRepository,
     organizationRepository: IOrganizationRepository,
+    userTestRepository: IUserTestRepository,
   ) {
     this.userRepository = userRepository
     this.userActivityRepository = userActivityRepository
     this.organizationRepository = organizationRepository
+    this.userTestRepository = userTestRepository
   }
 
   public async getUserProfile(user: string): Promise<User> {
@@ -275,6 +278,19 @@ export class UserService {
     }
   }
 
+  async createTestByUser(input: UserTest) {
+    const findRole = await this.userRepository.getRoleByName(Role.HOME_BUYER)
+    input.is_admin = false;
+    input.status = UserStatus.Active;
+    input.role_id = findRole.id;
+    console.log(input, 'checking payload >>>>')
+    const testUser = await this.userTestRepository.create(input);
+
+      return {
+        ...testUser
+      }
+  }
+
   async verifyChangePasswordMfa(
     user: User,
     flow: MfaFlow,
@@ -450,7 +466,7 @@ export class UserService {
     return this.userRepository.getRoles()
   }
 
-  async getUserActivites(filters: UserActivityFilters, authInfo: AuthInfo) {
+  async getUserActivities(filters: UserActivityFilters, authInfo: AuthInfo) {
     if (filters.user_id) {
       const user = await this.userRepository.findById(filters.user_id)
 

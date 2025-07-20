@@ -1,10 +1,10 @@
 import { InspectionController } from '@controllers/property/Inspection.controller'
 import { OrganizationType } from '@domain/enums/organizationEnum'
 import { authorize } from '@middleware/authorization'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { InspectionRepository } from '@repositories/property/Inspection'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
@@ -24,7 +24,7 @@ const manageInspectionService = new ManageInspectionUseCase(
   new ApplicationRepository(),
   new PropertyRepository(),
   new UserRepository(),
-  new DeveloperRespository(),
+  new DeveloperRepository(),
   new InspectionRepository(),
 )
 

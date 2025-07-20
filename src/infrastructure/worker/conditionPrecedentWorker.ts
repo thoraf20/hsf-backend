@@ -8,7 +8,7 @@ import logger from '@middleware/logger'
 import redis from '@infrastructure/cache/redisClient'
 import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
 import { LoanRepository } from '@repositories/loans/LoanRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { LoanRepaymentSchedule } from '@entities/Loans'
 import { LoanOfferRepository } from '@repositories/loans/LoanOfferRepository'
 import {

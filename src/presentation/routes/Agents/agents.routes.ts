@@ -15,7 +15,7 @@ import {
   SubAdminSchema,
 } from '@validators/agentsValidator'
 import { AgentsController } from '@controllers/Agent/Agent.controller'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { AdminRepository } from '@repositories/Agents/AdminRepository'
 import { optionalAuth } from '@middleware/authMiddleware'
 import { DefaulPasswordAccess } from '@domain/enums/rolesEnum'
@@ -25,7 +25,7 @@ import { OrganizationRepository } from '@repositories/OrganizationRepository'
 
 const agentsRoute: Router = Router()
 
-const developerRepo = new DeveloperRespository()
+const developerRepo = new DeveloperRepository()
 const userRepo = new UserRepository()
 const lenderRepo = new LenderRepository()
 const adminRepo = new AdminRepository()

@@ -55,7 +55,7 @@ import {
 import { getUserClientView } from '@entities/User'
 import { runWithTransaction } from '@infrastructure/database/knex'
 import { IConditionPrecedentRepository } from '@interfaces/IConditionPrecedentRepository'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
@@ -63,14 +63,14 @@ import { ILoanOfferRepository } from '@interfaces/ILoanOfferRepository'
 import { ILoanRepaymentScheduleRepository } from '@interfaces/ILoanRepaymentScheduleRepository'
 import { ILoanRepaymentTransactionRepository } from '@interfaces/ILoanRepaymentTransactionRepository'
 import { ILoanRepository } from '@interfaces/ILoanRepository'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 import { IOfferLetterRepository } from '@interfaces/IOfferLetterRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
 import { IReviewRequestRepository } from '@interfaces/IReviewRequestRepository'
 import { ApplicationCustomError } from '@middleware/errors/customError'
 import { LoanAgreementRepository } from '@repositories/loans/LoanAgreementRepository'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
@@ -119,7 +119,7 @@ export class ApplicationService {
     private readonly organizationRepository: IOrganizationRepository,
     private readonly documentRepository: IDocumentRepository,
     private readonly developerRepository: IDeveloperRepository,
-    private readonly mortgageRepository: IMortageRespository,
+    private readonly mortgageRepository: IMortgageRepository,
     private readonly lenderRepository: ILenderRepository,
     private readonly loanOfferRepository: ILoanOfferRepository,
     private readonly loanDecisionRepository: ILoanDecisionRepository,

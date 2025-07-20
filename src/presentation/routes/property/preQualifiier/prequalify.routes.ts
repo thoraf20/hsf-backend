@@ -22,10 +22,10 @@ import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { validateRequestQuery } from '@shared/utils/paginate'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
-import { MortageRepository } from '@repositories/property/MortageRepository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
+import { MortgageRepository } from '@repositories/property/MortgageRepository'
 
 const preQualifierRoutes: Router = Router()
 
@@ -35,8 +35,8 @@ const service = new preQualifyService(
   new LenderRepository(),
   new UserRepository(),
   new OrganizationRepository(),
-  new DeveloperRespository(),
-  new MortageRepository(),
+  new DeveloperRepository(),
+  new MortgageRepository(),
   new ApplicationRepository(),
 )
 const controller = new preQualifyController(service)
@@ -67,7 +67,7 @@ preQualifierRoutes.get(
 
 preQualifierRoutes.post(
   '/request',
-  requireRoles(Role.HOME_BUYER),
+  // requireRoles(Role.HOME_BUYER),
   validateRequest(preQualifiyRequestSchema),
   asyncMiddleware(async (req, res) => {
     const { user, body } = req
@@ -78,7 +78,7 @@ preQualifierRoutes.post(
 
 preQualifierRoutes.post(
   '/verification',
-  requireRoles(Role.HOME_BUYER),
+  // requireRoles(Role.HOME_BUYER),
   validateRequest(verifyOtpSchema),
   asyncMiddleware(async (req, res) => {
     const { body } = req
@@ -100,7 +100,7 @@ preQualifierRoutes.get(
 preQualifierRoutes.get(
   '/status',
   validateRequestQuery(preQualifierStatusQuerySchema),
-  requireRoles(Role.HOME_BUYER),
+  // requireRoles(Role.HOME_BUYER),
   asyncMiddleware(async (req, res) => {
     const { user, query } = req
     const prequalify = await controller.getPrequalifierByUserId(user.id, query)

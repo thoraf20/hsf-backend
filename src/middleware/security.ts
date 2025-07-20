@@ -25,7 +25,7 @@ export const speedLimiter = slowDown({
   delayAfter: 100,
   delayMs: () => 500,
   validate: { delayMs: false }, // Suppress warning
-});;
+});
 
 
 

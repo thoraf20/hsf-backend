@@ -6,11 +6,11 @@ import {
   uploadDocument,
   uploadPrecedentDocument,
 } from '@entities/PurchasePayment'
-import { MortagePayment } from '@entities/Transaction'
+import { MortgagePayment } from '@entities/Transaction'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { DipFilters } from '@validators/applicationValidator'
 
-export interface IMortageRespository {
+export interface IMortgageRepository {
   initiate(input: DIP): Promise<DIP>
   acceptDip(input: DIP): Promise<DIP>
   getDipByEligibilityID(id: string): Promise<DIP>
@@ -34,11 +34,11 @@ export interface IMortageRespository {
   savePaymentStatus(
     property_id: string,
     user_id: string,
-  ): Promise<MortagePayment>
+  ): Promise<MortgagePayment>
   getPaymentStatusByIds(
     property_id: string,
     user_id: string,
-  ): Promise<MortagePayment>
+  ): Promise<MortgagePayment>
   updateLoanOffer(
     input: Partial<LoanOffer>,
     property_id: string,

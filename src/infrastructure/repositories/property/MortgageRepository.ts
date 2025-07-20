@@ -7,11 +7,11 @@ import {
   uploadDocument,
   uploadPrecedentDocument,
 } from '@entities/PurchasePayment'
-import { MortagePayment } from '@entities/Transaction'
+import { MortgagePayment } from '@entities/Transaction'
 import db, { createUnion } from '@infrastructure/database/knex'
 import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
 // import { ApplicationRepository } from './ApplicationRespository'
 import { LoanOfferStatus } from '@domain/enums/propertyEnum'
@@ -22,7 +22,7 @@ import { SearchType } from '@shared/types/repoTypes'
 import { applyPagination } from '@shared/utils/paginate'
 import { Application } from '@entities/Application'
 
-export class MortageRepository implements IMortageRespository {
+export class MortgageRepository implements IMortgageRepository {
   private paymentService = new PaymentService(new PaymentProcessorFactory())
   // private applicationRepo = new ApplicationRepository()
   private transactionRepo = new TransactionRepository()
@@ -43,7 +43,7 @@ export class MortageRepository implements IMortageRespository {
   async savePaymentStatus(
     property_id: string,
     user_id: string,
-  ): Promise<MortagePayment> {
+  ): Promise<MortgagePayment> {
     const [status] = await db('mortage_payment_status')
       .insert({ property_id, user_id })
       .returning('*')
@@ -53,7 +53,7 @@ export class MortageRepository implements IMortageRespository {
   async getPaymentStatusByIds(
     property_id: string,
     user_id: string,
-  ): Promise<MortagePayment> {
+  ): Promise<MortgagePayment> {
     return await db('mortage_payment_status')
       .where({ property_id, user_id })
       .first()

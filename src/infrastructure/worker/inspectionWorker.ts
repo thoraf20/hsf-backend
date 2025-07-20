@@ -7,7 +7,7 @@ import {
   createPendingInspectionCacheKey,
 } from '@infrastructure/queue/inspectionQueue'
 import logger from '@middleware/logger'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { InspectionRepository } from '@repositories/property/Inspection'
 import { TransactionRepository } from '@repositories/transaction/TransactionRepository'
 import { Job, Worker } from 'bullmq'

@@ -13,7 +13,7 @@ import {
 } from '@entities/PropertyPurchase'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { IInspectionRepository } from '@interfaces/IInspectionRepository'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 
 // import { PaymentProcessorFactory } from '@infrastructure/services/factoryProducer'
 // import { PaymentService } from '@infrastructure/services/paymentService.service'
@@ -34,7 +34,7 @@ export class PropertyPurchase {
   private purchaseRepository: IPurchaseProperty
   private applicationRepository: IApplicationRespository
   private readonly preQualifieRepository: IPreQualify
-  private readonly mortgageRespository: IMortageRespository
+  private readonly mortgageRespository: IMortgageRepository
   private readonly inspectionRespository: IInspectionRepository
   private readonly serviceRepository: IServiceOfferingRepository
   // private readonly paymentRepository: IPaymentRespository
@@ -46,7 +46,7 @@ export class PropertyPurchase {
     preQualifieRepository: IPreQualify,
     paymentRepository: IPaymentProviderRespository,
     applicationRepository: IApplicationRespository,
-    mortgageRepository: IMortageRespository,
+    mortgageRepository: IMortgageRepository,
     inspectionRespository: IInspectionRepository,
     serviceRepository: IServiceOfferingRepository,
   ) {

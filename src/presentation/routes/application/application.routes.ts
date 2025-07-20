@@ -4,7 +4,7 @@ import { OrganizationType } from '@domain/enums/organizationEnum'
 import { authorize } from '@middleware/authorization'
 import { validateRequest } from '@middleware/validateRequest'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { PropertyPurchaseRepository } from '@repositories/property/PropertyPurchaseRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
@@ -44,13 +44,13 @@ import { propertyFiltersSchema } from '@validators/propertyValidator'
 import { Router } from 'express'
 import { ReviewRequestRepository } from '@application/repositories/ReviewRequestRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
-import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { DocumentRepository } from '@repositories/property/DocumentRepository'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
 import { ManageInspectionRepository } from '@repositories/Developer/ManageInspectionsRespository'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { InspectionRepository } from '@repositories/property/Inspection'
 import { ManageDipUseCase } from '@use-cases/Developer/ManageDip'
-import { MortageRepository } from '@repositories/property/MortageRepository'
+import { MortgageRepository } from '@repositories/property/MortgageRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { inspectionFiltersSchema } from '@validators/inspectionVaidator'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
@@ -82,8 +82,8 @@ const applicationService = new ApplicationService(
   new ReviewRequestRepository(),
   new OrganizationRepository(),
   new DocumentRepository(),
-  new DeveloperRespository(),
-  new MortageRepository(),
+  new DeveloperRepository(),
+  new MortgageRepository(),
   new LenderRepository(),
   new LoanOfferRepository(),
   new LoanDecisionRepository(),
@@ -98,7 +98,7 @@ const applicationService = new ApplicationService(
   new DeclineReasonRepository(),
 )
 const manageDipService = new ManageDipUseCase(
-  new MortageRepository(),
+  new MortgageRepository(),
   new UserRepository(),
   new PrequalifyRepository(),
   new ApplicationRepository(),
@@ -116,7 +116,7 @@ const applicationController = new ApplicationController(
     new ApplicationRepository(),
     new PropertyRepository(),
     new UserRepository(),
-    new DeveloperRespository(),
+    new DeveloperRepository(),
     new InspectionRepository(),
   ),
   manageDipService,
@@ -125,7 +125,7 @@ const applicationController = new ApplicationController(
     new ServiceOfferingRepository(),
     new UserRepository(),
     new PaymentService(new PaymentProcessorFactory()),
-    new MortageRepository(),
+    new MortgageRepository(),
     new LoanDecisionRepository(),
   ),
 )

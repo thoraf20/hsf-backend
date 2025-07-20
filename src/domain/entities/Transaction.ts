@@ -23,14 +23,14 @@ export class Transaction {
 
 }
 
-export class MortagePayment {
+export class MortgagePayment {
     mortage_payment_status_id?: string;
     pay_due_deligence?: boolean;
     pay_brokage_fee?: boolean;
     pay_management_fee?: boolean;
     created_at?: Date
     updated_at?: Date
-    constructor(data: Partial<MortagePayment>) {
+    constructor(data: Partial<MortgagePayment>) {
         Object.assign(this, {
             created_at: new Date(),
             updated_at: new Date(),

@@ -14,7 +14,7 @@ import {
   sharePropertySchema,
   UpdateSchema,
 } from '@application/requests/dto/propertyValidator'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { authorize } from '@middleware/authorization'
 import {
   All,
@@ -29,20 +29,20 @@ import { validateRequestQuery } from '@shared/utils/paginate'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
-import { DocumentRepository } from '@repositories/property/DcoumentRepository'
-import { ElasticSearchRespository } from '@repositories/Elastic Search/ElasticSearchRespository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
+import { DocumentRepository } from '@repositories/property/DocumentRepository'
+import { ElasticSearchRepository } from '@repositories/Elastic Search/ElasticSearchRepository'
 
 const propertyRoute: Router = Router()
 const application = new ApplicationRepository()
-const elasticSearch = new ElasticSearchRespository()
+const elasticSearch = new ElasticSearchRepository()
 const service = new PropertyService(
   new PropertyRepository(),
   application,
   new OrganizationRepository(),
   new LenderRepository(),
   new UserRepository(),
-  new DeveloperRespository(),
+  new DeveloperRepository(),
   new DocumentRepository(),
   elasticSearch
 )
@@ -284,7 +284,7 @@ propertyRoute.get(
 propertyRoute.get(
   '/application/:application_id',
   authenticate,
-  authorize(isHomeBuyer),
+  // authorize(isHomeBuyer),
   asyncMiddleware(async (req, res) => {
     const { params } = req
     const property = await controller.getApplicationById(params.application_id)

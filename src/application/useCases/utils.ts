@@ -7,7 +7,7 @@ import { IInspectionRepository } from '@domain/interfaces/IInspectionRepository'
 import { Inspection } from '@domain/entities/Inspection'
 import { IEnquiresRepository } from '@interfaces/IEnquiresRepository'
 import { Enquiry } from '@entities/Enquires'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 
 export class ExistingUsers {
   private userRepository: IUserRepository

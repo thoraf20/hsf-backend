@@ -23,8 +23,8 @@ import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { ManageInspectionUseCase } from '@use-cases/Developer/ManageInpections'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 
 const inspectionRoutes: Router = Router()
 
@@ -34,7 +34,7 @@ const manageInspectionService = new ManageInspectionUseCase(
   new ApplicationRepository(),
   new PropertyRepository(),
   new UserRepository(),
-  new DeveloperRespository(),
+  new DeveloperRepository(),
   new InspectionRepository(),
 )
 

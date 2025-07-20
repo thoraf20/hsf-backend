@@ -8,7 +8,7 @@ import { Payment } from '@entities/Payment'
 import { getUserClientView, UserClientView, UserRole } from '@entities/User'
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { ILoanDecisionRepository } from '@interfaces/ILoanDecisionRepository'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 import { PaymentIntent } from '@interfaces/IPaymentProcessor'
 import { IPaymentRepository } from '@interfaces/IPaymentRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
@@ -27,7 +27,7 @@ export class PaymentUseCase {
     private readonly serviceOfferingRepository: ServiceOfferingRepository,
     private readonly userRepository: IUserRepository,
     private readonly paymentService: PaymentService,
-    private readonly mortgageRepository: IMortageRespository,
+    private readonly mortgageRepository: IMortgageRepository,
     private readonly loanDecisionRepository: ILoanDecisionRepository,
   ) {}
 

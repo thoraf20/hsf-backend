@@ -20,7 +20,7 @@ import {
   DeveloperClientView,
   getDeveloperClientView,
 } from '@entities/Developer'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 import { IDocumentRepository } from '@interfaces/IDocumentRepository'
 import { DocumentGroupKind } from '@domain/enums/documentEnum'
 import {
@@ -28,7 +28,7 @@ import {
   ElasticEnum,
 } from '@domain/enums/propertyEnum'
 import { ApplicationFilters } from '@validators/applicationValidator'
-import { elasticSearchRespository } from '@interfaces/ElasticSearchRespository'
+import { elasticSearchRepository } from '@interfaces/ElasticSearchRepository'
 export class PropertyService {
   private propertyRepository: IPropertyRepository
   private readonly utilsProperty: PropertyBaseUtils
@@ -38,7 +38,7 @@ export class PropertyService {
   private readonly userRepository: IUserRepository
   private readonly developerRepository: IDeveloperRepository
   private readonly documentRepository: IDocumentRepository
-  private readonly elasticSearchRepository: elasticSearchRespository
+  private readonly elasticSearchRepository: elasticSearchRepository
   constructor(
     propertyRepository: IPropertyRepository,
     applicationRepository: IApplicationRespository,
@@ -47,7 +47,7 @@ export class PropertyService {
     userRepository: IUserRepository,
     developerRepository: IDeveloperRepository,
     documentRepository: IDocumentRepository,
-    elasticSearchRepository: elasticSearchRespository,
+    elasticSearchRepository: elasticSearchRepository,
   ) {
     this.propertyRepository = propertyRepository
     this.applicationRepository = applicationRepository

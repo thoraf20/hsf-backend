@@ -22,13 +22,13 @@ import { ADMIN_LEVEL_ROLES, Role, RoleSelect } from '@domain/enums/rolesEnum'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { UserFilters } from '@validators/userValidator'
-import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
+import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
 import { PropertyRepository } from '@repositories/property/PropertyRepository'
 import {
   CreateDeveloperInput,
   DeveloperFilters,
 } from '@validators/developerValidator'
-import { DocumentRepository } from '@repositories/property/DcoumentRepository'
+import { DocumentRepository } from '@repositories/property/DocumentRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { ContactInformationRepository } from '@repositories/user/ContactInformationRepository'
 
@@ -41,7 +41,7 @@ export class OrganizationController {
       new UserRepository(),
       new LenderRepository(),
       new AddressRepository(),
-      new DeveloperRespository(),
+      new DeveloperRepository(),
       new PropertyRepository(),
       new DocumentRepository(),
       new UserActivityLogRepository(),

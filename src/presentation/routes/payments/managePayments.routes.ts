@@ -3,7 +3,7 @@ import { PaymentProcessorFactory } from '@infrastructure/services/factoryProduce
 import { PaymentService } from '@infrastructure/services/paymentService.service'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
-import { MortageRepository } from '@repositories/property/MortageRepository'
+import { MortgageRepository } from '@repositories/property/MortgageRepository'
 import { ServiceOfferingRepository } from '@repositories/serviceOffering/serviceOfferingRepository'
 import { UserRepository } from '@repositories/user/UserRepository'
 import { asyncMiddleware } from '@routes/index.t'
@@ -17,7 +17,7 @@ const paymentService = new PaymentUseCase(
   new ServiceOfferingRepository(),
   new UserRepository(),
   new PaymentService(new PaymentProcessorFactory()),
-  new MortageRepository(),
+  new MortgageRepository(),
   new LoanDecisionRepository(),
 )
 const controller = new PaymentController(paymentService)

@@ -2,7 +2,7 @@ import { MfaController } from '@controllers/Mfa.controller'
 import { validateRequest } from '@middleware/validateRequest'
 import { createResponse } from '@presentation/response/responseType'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
-import { UserRepository } from '@repositories/user/UserRepository'
+import { UserRepository, UserTestRepository } from '@repositories/user/UserRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { asyncMiddleware } from '@routes/index.t'
 import { UserService } from '@use-cases/User/User'
@@ -20,6 +20,7 @@ const userService = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
   new OrganizationRepository(),
+  new UserTestRepository(),
 )
 const mfaController = new MfaController(userService, new UserRepository())
 

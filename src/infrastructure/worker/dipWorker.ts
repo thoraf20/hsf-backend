@@ -1,14 +1,14 @@
 import { Job, Worker } from 'bullmq'
 import { PrequalifyRepository } from '@repositories/prequalify/prequalifyRepository'
-import { MortageRepository } from '@repositories/property/MortageRepository'
+import { MortgageRepository } from '@repositories/property/MortgageRepository'
 import logger from '@middleware/logger'
 import redis from '@infrastructure/cache/redisClient'
 import { DIPStatus } from '@domain/enums/propertyEnum'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import dipCron, { dipGenerationJob } from '@infrastructure/crons/dipCron'
 
 const prequalifyRepository = new PrequalifyRepository()
-const mortgageRepository = new MortageRepository()
+const mortgageRepository = new MortgageRepository()
 const applicationRepository = new ApplicationRepository()
 
 const dipWorker = new Worker(

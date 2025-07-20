@@ -3,29 +3,23 @@ import cors from 'cors'
 import setupSecurity, { speedLimiter } from '../middleware/security'
 // import rateLimiter from '../middleware/rateLimiter'
 import { ErrorHandler } from '../middleware/errors/errorHandler'
-import '../infrastructure/database/dbConnect'
 import morgan from 'morgan'
 import helmet from 'helmet'
 import { StatusCodes } from 'http-status-codes'
 import IndexRouters from '../presentation/routes/index'
-import '../infrastructure/cache/redisClient'
 import hpp from 'hpp'
 import xssClean from 'xss-clean'
 import cookieParser from 'cookie-parser'
 import path from 'path'
 import http from 'http'
 import { getEnv } from '@infrastructure/config/env/env.config'
-import '@infrastructure/worker/inspectionWorker'
 import { asyncMiddleware } from '@routes/index.t'
 import { startJobWorkers } from '@infrastructure/worker'
-import '../config/elasticSearch.config'
 import { requestContextMiddleware } from '@middleware/requestContext' 
-// import { DeveloperRespository } from '@repositories/Agents/DeveloperRepository'
-// import { LenderRepository } from '@repositories/Agents/LeaderRepository'
-// import { AdminRepository } from '@repositories/Agents/AdminRepository'
-
-// import { UserRepository } from '../infrastructure/repositories/user/UserRepository'
-// import { Agents } from '@use-cases/Agent/agent'
+import '../infrastructure/database/dbConnect'
+import '../infrastructure/cache/redisClient'
+import '@infrastructure/worker/inspectionWorker'
+import '../config/elasticSearch.config'
 
 const app: Application = express()
 
@@ -63,7 +57,7 @@ app.use(morgan('dev'))
 app.use(requestContextMiddleware)
 
 // const userRepo = new UserRepository()
-// const create_admin = new Agents(userRepo, new DeveloperRespository(), new AdminRepository(), new LenderRepository())
+// const create_admin = new Agents(userRepo, new DeveloperRepository(), new AdminRepository(), new LenderRepository())
 
 // create_admin.createAdmin({
 //   first_name: 'Super',

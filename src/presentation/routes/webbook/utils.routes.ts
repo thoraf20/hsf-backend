@@ -10,9 +10,9 @@ import { SseService } from '@infrastructure/services/sse.service'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
 import { PaymentRepostory } from '@repositories/PaymentRepository'
-import { ApplicationRepository } from '@repositories/property/ApplicationRespository'
+import { ApplicationRepository } from '@repositories/property/ApplicationRepository'
 import { LoanDecisionRepository } from '@repositories/loans/LoanDecisionRepository'
-import { MortageRepository } from '@repositories/property/MortageRepository'
+import { MortgageRepository } from '@repositories/property/MortgageRepository'
 import {
   ConditionPrecedentDocumentStatus,
   ConditionPrecedentStatus,
@@ -26,7 +26,7 @@ import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrece
 const WebhookRouter: Router = Router()
 const applicationRepository = new ApplicationRepository()
 const loanDecisionRepository = new LoanDecisionRepository()
-const mortgageRepository = new MortageRepository()
+const mortgageRepository = new MortgageRepository()
 const conditionPrecedentRepository = new ConditionPrecedentRepository()
 const sse = new SseService()
 

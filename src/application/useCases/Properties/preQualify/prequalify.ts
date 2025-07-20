@@ -19,10 +19,10 @@ import { EligibilityStatus } from '@domain/enums/prequalifyEnum'
 import { ILenderRepository } from '@interfaces/ILenderRepository'
 import { IUserRepository } from '@interfaces/IUserRepository'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 import { getDeveloperClientView } from '@entities/Developer'
 import { getUserClientView } from '@entities/User'
-import { IMortageRespository } from '@interfaces/IMortageRespository'
+import { IMortgageRepository } from '@interfaces/IMortgageRepository'
 import { IApplicationRespository } from '@interfaces/IApplicationRespository'
 import { DipDocumentReviewStatus, DIPStatus } from '@domain/enums/propertyEnum'
 import { runWithTransaction } from '@infrastructure/database/knex'
@@ -37,7 +37,7 @@ export class preQualifyService {
     private readonly userRepository: IUserRepository,
     private readonly organizationRepository: IOrganizationRepository,
     private readonly developerRepository: IDeveloperRepository,
-    private readonly mortgageRepository: IMortageRespository,
+    private readonly mortgageRepository: IMortgageRepository,
     private readonly applicationRepository: IApplicationRespository,
   ) {
     this.prequalify = prequalify

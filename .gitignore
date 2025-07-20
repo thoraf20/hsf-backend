@@ -8,3 +8,5 @@ uploads
 /src/logs/**
 *.pem
 apiRoute.txt
+.DS_Store
+

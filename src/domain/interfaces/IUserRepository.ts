@@ -1,5 +1,5 @@
 import { Role } from '@routes/index.t'
-import { RecoveryCode, User, UserRole } from '../entities/User'
+import { RecoveryCode, User, UserRole, UserTest } from '../entities/User'
 import { UserFilters } from '@validators/userValidator'
 import { SeekPaginationResult } from '@shared/types/paginate'
 
@@ -30,4 +30,14 @@ export interface IUserRepository {
   getRolesByType(types: Array<Role>): Promise<UserRole[]>
   getRoles(): Promise<UserRole[]>
   hashedPassword(input: string): Promise<string | any>
+}
+
+export interface IUserTestRepository {
+  create(user: UserTest): Promise<UserTest>
+  // findByEmail(email: string): Promise<UserTest | null>
+  // getAllUsers(
+  //   filters: UserFilters & { type?: 'admin' | 'sub-admin' },
+  // ): Promise<SeekPaginationResult<UserTest>>
+  // findById(id: string): Promise<UserTest | null>
+  // update(id: string, user: Partial<UserTest>): Promise<UserTest | null>
 }

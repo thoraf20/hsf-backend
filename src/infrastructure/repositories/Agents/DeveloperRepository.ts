@@ -1,12 +1,12 @@
 import { Developer, DevelopeReg } from '@entities/Developer'
 import db from '@infrastructure/database/knex'
-import { IDeveloperRepository } from '@interfaces/IDeveloperRespository'
+import { IDeveloperRepository } from '@interfaces/IDeveloperRepository'
 import { SeekPaginationResult } from '@shared/types/paginate'
 import { applyPagination } from '@shared/utils/paginate'
 import { DeveloperFilters } from '@validators/developerValidator'
 import { Knex } from 'knex'
 
-export class DeveloperRespository implements IDeveloperRepository {
+export class DeveloperRepository implements IDeveloperRepository {
   private readonly tableName = 'developers_profile'
 
   async createDeveloperProfile(data: Developer): Promise<DevelopeReg> {
