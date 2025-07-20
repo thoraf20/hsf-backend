@@ -18,7 +18,7 @@ import { MfaToken } from '@shared/utils/mfa_token'
 import { TimeSpan } from '@shared/utils/time-unit'
 import { MfaFlow, UserStatus } from '@domain/enums/userEum'
 import { IOrganizationRepository } from '@interfaces/IOrganizationRepository'
-import { UserRepository, UserTestRepository } from '@repositories/user/UserRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 import { LenderRepository } from '@repositories/Agents/LenderRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
 import { DeveloperRepository } from '@repositories/Agents/DeveloperRepository'
@@ -39,7 +39,6 @@ const userService = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
   new OrganizationRepository(),
-    new UserTestRepository(),
 )
 
 export class AuthService {

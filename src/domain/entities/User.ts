@@ -58,32 +58,6 @@ export class User extends BaseEntity {
   }
 }
 
-export class UserTest extends BaseEntity {
-  first_name: string
-  last_name: string
-  email?: string
-  phone_number: string
-  role_id?: string
-  password: string
-  is_admin: boolean
-  user_id?: string
-  role?: Role
-  status: UserStatus
-
-  is_email_verified?: boolean
-  is_phone_verified?: boolean
-  is_mfa_enabled?: boolean
-  is_default_password?: boolean
-  constructor(data: Partial<User>) {
-    super()
-    Object.assign(this, {
-      created_at: new Date(),
-      updated_at: new Date(),
-      ...data,
-    })
-  }
-}
-
 export class AgentProfile {
   id?: string
   street_address: string
