@@ -4,7 +4,7 @@ import { authorize } from '@middleware/authorization'
 import { OrganizationRepository } from '@repositories/OrganizationRepository'
 import { AccountRepository } from '@repositories/user/AccountRepository'
 import { AddressRepository } from '@repositories/user/AddressRepository'
-import { UserRepository, UserTestRepository } from '@repositories/user/UserRepository'
+import { UserRepository } from '@repositories/user/UserRepository'
 import { UserActivityLogRepository } from '@repositories/UserActivityLogRepository'
 import { asyncMiddleware } from '@routes/index.t'
 import { validateRequestQuery } from '@shared/utils/paginate'
@@ -21,7 +21,6 @@ const userServices = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
   new OrganizationRepository(),
-  new UserTestRepository(),
 )
 const accountRepository = new AccountRepository()
 const addressRepository = new AddressRepository()

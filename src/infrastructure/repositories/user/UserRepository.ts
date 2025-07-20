@@ -1,6 +1,6 @@
 import db, { createUnion } from '@infrastructure/database/knex'
-import { IUserRepository, IUserTestRepository } from '@domain/interfaces/IUserRepository'
-import { RecoveryCode, User, UserRole, UserTest } from '@domain/entities/User'
+import { IUserRepository } from '@domain/interfaces/IUserRepository'
+import { RecoveryCode, User, UserRole } from '@domain/entities/User'
 import { Hashing } from '@shared/utils/hashing'
 import { userValue } from '@shared/respositoryValues'
 import { Knex } from 'knex'
@@ -174,12 +174,5 @@ export class UserRepository implements IUserRepository {
 
   async getRoles(): Promise<UserRole[]> {
     return db.table<UserRole>('roles').select()
-  }
-}
-
-export class UserTestRepository implements IUserTestRepository {
-  async create(input: UserTest): Promise<UserTest> {
-    const [newUserTest] = await db.table<UserTest>('user_tests').insert(input).returning('*');
-    return newUserTest;
   }
 }

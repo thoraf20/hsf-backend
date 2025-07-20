@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import { asyncMiddleware, validateRequest } from '../index.t'
 import { UserController } from '@presentation/controllers/User.controller'
 import { UserService } from '@application/useCases/User/User'
-import { UserRepository, UserTestRepository } from '@infrastructure/repositories/user/UserRepository'
+import { UserRepository } from '@infrastructure/repositories/user/UserRepository'
 import {
   changePasswordCompleteSchema,
   changeUserPasswordSchema,
@@ -29,7 +29,6 @@ const userServices = new UserService(
   new UserRepository(),
   new UserActivityLogRepository(),
   new OrganizationRepository(),
-  new UserTestRepository()
 )
 const accountRepository = new AccountRepository()
 const userController = new UserController(
@@ -184,33 +183,6 @@ userRoutes.get(
 
 userRoutes.get(
   '/activities',
-  asyncMiddleware(async (req, res) => {
-    const { query, authInfo } = req
-    const response = await userController.getUserActivities(
-      {
-        ...query,
-        user_id: authInfo.userId,
-      },
-      authInfo,
-    )
-
-    res.status(response.statusCode).json(response)
-  }),
-)
-
-userRoutes.post(
-  '/test-user',
-  // validateRequest(createAddressSchema),
-  asyncMiddleware(async (req, res) => {
-    const { body } = req
-
-    const response = await userController.createTestByUser(body)
-    res.status(response.statusCode).json(response)
-  }),
-);
-
-userRoutes.get(
-  '/test-user',
   asyncMiddleware(async (req, res) => {
     const { query, authInfo } = req
     const response = await userController.getUserActivities(
