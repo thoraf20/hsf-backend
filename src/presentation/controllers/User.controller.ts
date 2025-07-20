@@ -166,11 +166,4 @@ export class UserController {
   }
 
   async hsfResetUserPassword(userId: string) {}
-
-  async createTestByUser(body: any){
-    const data = await this.userService.createTestByUser(body)
-
-    let message = 'Test user created successfully'
-    return createResponse(StatusCodes.OK, message, data);
-  }
 }
