@@ -1,5 +1,5 @@
 import Redis from 'ioredis'
-import logger from '@middleware/logger'
+import logger from '../../middleware/logger'
 
 if (!process.env.REDIS_URL) {
   logger.error('Redis Error: REDIS_URL environment variable is not set.')
