@@ -80,7 +80,6 @@ export class AuthService {
 
   async checkRegisterEmail(input: Record<string, any>): Promise<void> {
     const user = await this.userRepository.findByEmail(input.email)
-
     if (user) {
       if (!user.password || user.password.length === 0) {
         const account = await this.accountRepository.findByUserID(user.id)

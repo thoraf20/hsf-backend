@@ -1,6 +1,6 @@
 import { Knex } from 'knex'
 import * as uuid from 'uuid'
-import { Role } from '../../src/domain/enums/rolesEmun'
+import { Role } from '../../src/domain/enums/rolesEnum'
 import { Permission } from '../../src/domain/enums/permissionEnum'
 
 const uuidv4 = uuid.v4
