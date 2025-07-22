@@ -8,8 +8,9 @@
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "outDir": "./dist",
-    "baseUrl": "./src",
+    "rootDir": "src",
+    "outDir": "dist",
+    "baseUrl": "src",
     "noUnusedLocals": true,
 
     "paths": {
@@ -30,12 +31,12 @@
       "@server/*": ["server/*"],
       "@shared/*": ["shared/*"],
       "@workers/*": ["workers/*"],
-      "*": ["node_modules/*"],
+      "*": ["node_modules/*"]
     }
   },
   "ts-node": {
     "esm": true
   },
-  "include": ["src/**/*", "database", "scripts"],
+  "include": ["src/**/*", "database"],
   "exclude": ["database/**/*", "node_modules/**/*", ]
 }
