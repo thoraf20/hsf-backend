@@ -989,3 +989,30 @@ Instead change the require of index.js in C:\Users\jarvis\Documents\Github\HSF-B
     at Socket.Readable.push (node:internal/streams/readable:392:5)
     at TCP.onStreamRead (node:internal/stream_base_commons:189:23)
     at TCP.callbackTrampoline (node:internal/async_hooks:130:17)
+2025-07-21 18:14:31 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-21 18:21:05 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-21 18:23:59 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-21 18:24:53 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-21 18:24:57 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-22 02:40:15 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-22 02:41:09 [ERROR]: Error: Redis version needs to be greater or equal than 5.0.0 Current: 3.0.504
+    at RedisConnection.init (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\bullmq\src\classes\redis-connection.ts:258:17)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)
+2025-07-22 03:03:06 [ERROR]: ReplyError: WRONGPASS invalid username-password pair or user is disabled.
+    at parseError (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\redis-parser\lib\parser.js:302:14)
+2025-07-22 03:17:40 [ERROR]: ReplyError: NOAUTH Authentication required.
+    at parseError (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\redis-parser\lib\parser.js:179:12)
+    at parseType (C:\Users\USER\Desktop\HSF\hsf-backend\node_modules\redis-parser\lib\parser.js:302:14)

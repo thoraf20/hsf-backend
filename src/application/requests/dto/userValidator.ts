@@ -32,6 +32,7 @@ export const RegisterEmail = z.object({
 export const verifyOtpSchema = z.object({
   otp: z.string().length(6, 'OTP must be 6 digits'),
 })
+
 export const verifyTokenSchema = z.object({
   token: z.string().nonempty(),
 })

@@ -11,6 +11,7 @@ export const ErrorHandler: ErrorRequestHandler = (
   next: NextFunction,
 ) => {
   if (error instanceof ApplicationError) {
+    console.log(error.stack, 'check the error >>>>')
     const response = createResponse(
       error.statusCode,
       error.serialize().message,

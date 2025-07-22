@@ -44,7 +44,7 @@ const service = new PropertyService(
   new UserRepository(),
   new DeveloperRepository(),
   new DocumentRepository(),
-  elasticSearch
+  elasticSearch,
 )
 const controller = new PropertyController(service)
 

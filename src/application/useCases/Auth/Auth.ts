@@ -214,7 +214,7 @@ export class AuthService {
 
     await this.client.deleteKey(emailKey)
     await this.client.deleteKey(passwordKey)
-
+    console.log(tempId)
     return { tempId }
   }
 

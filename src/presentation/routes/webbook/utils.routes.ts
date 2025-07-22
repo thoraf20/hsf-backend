@@ -5,7 +5,7 @@ import {
   MortgagePaymentType,
   PaymentStatus,
 } from '@domain/enums/PaymentEnum'
-import { asyncMiddleware } from '@routes/index.t'
+// import { asyncMiddleware } from '@routes/indext'
 import { SseService } from '@infrastructure/services/sse.service'
 import { createResponse } from '@presentation/response/responseType'
 import { StatusCodes } from 'http-status-codes'
@@ -22,6 +22,7 @@ import {
 import { LoanDecisionStatus } from '@domain/enums/loanEnum'
 import { MortgageApplicationStage } from '@entities/Application'
 import { ConditionPrecedentRepository } from '@repositories/loans/ConditionPrecedentRepository'
+import { asyncMiddleware } from '@routes/index.t'
 
 const WebhookRouter: Router = Router()
 const applicationRepository = new ApplicationRepository()

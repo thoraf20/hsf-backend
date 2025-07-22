@@ -7,7 +7,7 @@ import {
   requireRoles,
   Role,
   validateRequest,
-} from '@presentation/routes/index.t'
+} from '@routes/index.t'
 import {
   preQualifierEligibleSchema,
   preQualifierFiltersSchema,

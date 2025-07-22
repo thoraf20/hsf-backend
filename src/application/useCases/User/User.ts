@@ -33,7 +33,7 @@ export class UserService {
   private userRepository: IUserRepository
   private userActivityRepository: IUserActivityLogRepository
   private organizationRepository: IOrganizationRepository
-private readonly client = new RedisClient()
+  private readonly client = new RedisClient()
   constructor(
     userRepository: IUserRepository,
     userActivityRepository: IUserActivityLogRepository,
